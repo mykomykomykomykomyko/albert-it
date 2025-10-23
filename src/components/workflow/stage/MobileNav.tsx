@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Library, Workflow, Settings, Plus, Play, Save, Upload, Trash2, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRef, useState } from "react";
-import { HelpModal } from "@/components/workflow/stage/HelpModal";
+import { HelpModal } from "./HelpModal";
 
 interface MobileNavProps {
   activeTab: "library" | "workflow" | "properties";
