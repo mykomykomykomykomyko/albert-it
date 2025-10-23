@@ -1,14 +1,22 @@
-import { Moon, Sun, Home, LogOut } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 export function ChatHeader() {
   const navigate = useNavigate();
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const currentTab = location.pathname.startsWith('/agents') ? 'agents' :
                      location.pathname.startsWith('/chat') ? 'chat' :
@@ -46,6 +54,19 @@ export function ChatHeader() {
     navigate("/");
   };
 
+  const navItems = [
+    { name: 'Agents', path: '/agents', value: 'agents' },
+    { name: 'Chat', path: '/chat', value: 'chat' },
+    { name: 'Stage', path: '/stage', value: 'stage' },
+    { name: 'Image', path: '/image', value: 'image' },
+    { name: 'Voice', path: '/voice', value: 'voice' },
+  ];
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-3">
       <div className="flex items-center justify-between max-w-full">
@@ -59,58 +80,22 @@ export function ChatHeader() {
           <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Albert</h1>
         </button>
         
-        <div className="flex items-center gap-4">
+        {/* Desktop Navigation */}
+        <div className="hidden lg:flex items-center gap-4">
           <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary">
-            <button
-              onClick={() => navigate('/agents')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentTab === 'agents' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent'
-              }`}
-            >
-              Agents
-            </button>
-            <button
-              onClick={() => navigate('/chat')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentTab === 'chat' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent'
-              }`}
-            >
-              Chat
-            </button>
-            <button
-              onClick={() => navigate('/stage')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentTab === 'stage' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent'
-              }`}
-            >
-              Stage
-            </button>
-            <button
-              onClick={() => navigate('/image')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentTab === 'image' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent'
-              }`}
-            >
-              Image
-            </button>
-            <button
-              onClick={() => navigate('/voice')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentTab === 'voice' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent'
-              }`}
-            >
-              Voice
-            </button>
+            {navItems.map((item) => (
+              <button
+                key={item.value}
+                onClick={() => navigate(item.path)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  currentTab === item.value
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'hover:bg-accent'
+                }`}
+              >
+                {item.name}
+              </button>
+            ))}
             <button
               disabled
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors opacity-50 cursor-not-allowed"
@@ -151,6 +136,79 @@ export function ChatHeader() {
             <LogOut className="h-5 w-5" />
           </Button>
         </div>
+
+        {/* Mobile Hamburger Menu */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild className="lg:hidden">
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-64">
+            <SheetHeader>
+              <SheetTitle>Menu</SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col gap-2 mt-6">
+              {navItems.map((item) => (
+                <Button
+                  key={item.value}
+                  variant={currentTab === item.value ? "default" : "ghost"}
+                  className="justify-start"
+                  onClick={() => handleNavClick(item.path)}
+                >
+                  {item.name}
+                </Button>
+              ))}
+              <Button
+                disabled
+                variant="ghost"
+                className="justify-start opacity-50"
+              >
+                Canvas
+              </Button>
+              <div className="border-t border-border my-2" />
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => handleNavClick('/')}
+              >
+                <Home className="h-4 w-4 mr-2" />
+                Home
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => {
+                  toggleTheme();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="h-4 w-4 mr-2" />
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-4 w-4 mr-2" />
+                    Dark Mode
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start text-destructive hover:text-destructive"
+                onClick={() => {
+                  handleSignOut();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   );

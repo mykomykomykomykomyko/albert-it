@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, MessageSquare, Zap, Shield, Moon, Sun } from "lucide-react";
+import { Brain, MessageSquare, Zap, Shield, Moon, Sun, Bot, Workflow, Image as ImageIcon, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 const Landing = () => {
   const navigate = useNavigate();
@@ -78,37 +78,73 @@ const Landing = () => {
         </section>
 
         <section className="container mx-auto px-4 py-20">
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+            Powerful Features for Every Need
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Natural Conversations</h3>
+              <h3 className="text-xl font-semibold mb-3">Chat</h3>
               <p className="text-muted-foreground">
-                Engage in fluid, context-aware conversations with advanced AI models that
-                understand your needs.
+                Engage in natural conversations with advanced AI models. Upload files, share images, 
+                and get instant, context-aware responses powered by Google's latest Gemini technology.
               </p>
             </div>
 
             <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-accent" />
+                <Bot className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Lightning Fast</h3>
+              <h3 className="text-xl font-semibold mb-3">Agents</h3>
               <p className="text-muted-foreground">
-                Powered by Google's latest Gemini models for instant, accurate responses to all
-                your questions.
+                Create and manage custom AI agents tailored to your specific needs. Define personalities, 
+                system prompts, and tools to build specialized assistants for any task.
               </p>
             </div>
 
             <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <Shield className="w-6 h-6 text-primary" />
+                <Workflow className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Stage Workflows</h3>
+              <p className="text-muted-foreground">
+                Build multi-stage AI workflows by connecting agents and functions. Automate complex 
+                processes, chain reasoning steps, and create sophisticated AI pipelines visually.
+              </p>
+            </div>
+
+            <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                <ImageIcon className="w-6 h-6 text-accent" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Image Analysis</h3>
+              <p className="text-muted-foreground">
+                Upload images and PDFs for AI-powered visual analysis. Extract text, detect objects, 
+                analyze content, and get intelligent insights from visual data.
+              </p>
+            </div>
+
+            <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Mic className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Voice Processing</h3>
+              <p className="text-muted-foreground">
+                Convert speech to text and text to speech with advanced voice models. Support for 
+                multiple languages, natural-sounding voices, and real-time transcription.
+              </p>
+            </div>
+
+            <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
+                <Shield className="w-6 h-6 text-accent" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Secure & Private</h3>
               <p className="text-muted-foreground">
-                Your conversations are encrypted and private. Built with security and compliance in
-                mind.
+                Your data is encrypted and private. Built with security and compliance in mind, 
+                ensuring your conversations and information remain confidential.
               </p>
             </div>
           </div>
