@@ -237,6 +237,48 @@ const Stage = () => {
     }
   };
 
+  // Helper to get input for a node based on connections
+  const getNodeInput = (nodeId: string): string => {
+    // Find incoming connections to this node
+    const incomingConnections = workflow.connections.filter(c => c.toNodeId === nodeId);
+    
+    if (incomingConnections.length === 0) {
+      // No incoming connections, use the global user input
+      return userInput;
+    }
+    
+    // Get outputs from connected nodes
+    const inputs: string[] = [];
+    for (const conn of incomingConnections) {
+      const sourceNode = workflow.stages
+        .flatMap(s => s.nodes)
+        .find(n => n.id === conn.fromNodeId);
+      
+      if (sourceNode?.output) {
+        inputs.push(sourceNode.output);
+      }
+    }
+    
+    // Join multiple inputs with newlines
+    return inputs.join('\n\n');
+  };
+
+  // Helper to substitute variables in prompts
+  const substituteVariables = (text: string, nodeId: string): string => {
+    if (!text) return text;
+    
+    let result = text;
+    
+    // Always replace {prompt} with the global prompt
+    result = result.replace(/\{prompt\}/g, userInput);
+    
+    // Replace {input} with the node's input
+    const nodeInput = getNodeInput(nodeId);
+    result = result.replace(/\{input\}/g, nodeInput);
+    
+    return result;
+  };
+
   const handleRun = async () => {
     addLog("running", "Starting workflow execution...");
     
@@ -273,10 +315,15 @@ const Stage = () => {
     
     try {
       const agentNode = node as any;
+      
+      // Substitute variables in prompts
+      const processedSystemPrompt = substituteVariables(agentNode.systemPrompt || '', agentId);
+      const processedUserPrompt = customInput || substituteVariables(agentNode.userPrompt || '', agentId);
+      
       const { data, error } = await supabase.functions.invoke('run-agent', {
         body: {
-          systemPrompt: agentNode.systemPrompt || '',
-          userPrompt: customInput || agentNode.userPrompt || userInput,
+          systemPrompt: processedSystemPrompt,
+          userPrompt: processedUserPrompt,
           tools: agentNode.tools || []
         }
       });
@@ -305,7 +352,11 @@ const Stage = () => {
     try {
       const functionNode = node as any;
       const { FunctionExecutor } = await import('@/lib/functionExecutor');
-      const result = await FunctionExecutor.execute(functionNode, customInput || userInput);
+      
+      // Get input for this function (either custom or from connections)
+      const functionInput = customInput || getNodeInput(functionId);
+      
+      const result = await FunctionExecutor.execute(functionNode, functionInput);
       
       if (result.success) {
         handleUpdateNode(functionId, { 
