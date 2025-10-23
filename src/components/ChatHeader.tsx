@@ -15,43 +15,32 @@ export function ChatHeader() {
                      location.pathname.startsWith('/canvas') ? 'canvas' : 'chat';
 
   useEffect(() => {
-    // Check system preference on mount
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // Initialize theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const initialTheme = savedTheme || (isDark ? 'dark' : 'light');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
     
     setTheme(initialTheme);
-    if (initialTheme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
+    document.documentElement.classList.toggle('light', initialTheme === 'light');
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
-    
-    if (newTheme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
+    document.documentElement.classList.toggle('light', newTheme === 'light');
   };
 
-  const handleSignOut = async () => {
-    try {
-      // Force clear local session without server call
-      await supabase.auth.signOut({ scope: 'local' });
-    } catch (error) {
-      // Ignore errors - we're clearing anyway
-      console.log("Clearing invalid session");
-    } finally {
-      // Always show success and redirect to home
-      toast.success("Signed out successfully");
-      navigate("/");
-    }
+  const handleSignOut = () => {
+    // Bypass server signOut - just clear local storage directly
+    localStorage.removeItem('sb-yxoyugnvklqepvlujmjn-auth-token');
+    localStorage.clear(); // Clear all local storage to be safe
+    
+    // Manually trigger auth state change
+    window.dispatchEvent(new Event('storage'));
+    
+    toast.success("Signed out successfully");
+    navigate("/");
   };
 
   return (

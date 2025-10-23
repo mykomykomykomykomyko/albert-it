@@ -60,9 +60,9 @@ const Chat = () => {
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const initialTheme = savedTheme || (isDark ? 'dark' : 'light');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
     
     if (initialTheme === 'light') {
       document.documentElement.classList.add('light');
@@ -79,7 +79,20 @@ const Chat = () => {
       }
     });
     
-    return () => subscription.unsubscribe();
+    // Listen for manual logout (localStorage clear)
+    const handleStorageChange = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          navigate("/auth");
+        }
+      });
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [navigate]);
 
   useEffect(() => {
