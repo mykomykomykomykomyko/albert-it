@@ -368,30 +368,40 @@ export const Sidebar = ({
   // Get unique categories for filter
   const categories = ["all", ...new Set(functionDefinitions.map(f => f.category))];
   return <div className="bg-card flex flex-col h-full">
-      {/* Header with Hamburger */}
-      <div className="p-4 border-b border-border flex items-center justify-between">
-        {!isCollapsed && <h3 className="text-sm font-semibold text-foreground">Workflow Library</h3>}
-        {onToggleCollapse && (
+      {isCollapsed && onToggleCollapse && (
+        <div className="p-4 border-b border-border flex items-center justify-center">
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleCollapse}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={isCollapsed ? "mx-auto" : "ml-auto"}
+            title="Expand sidebar"
           >
             <Menu className="h-4 w-4" />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
       
       {!isCollapsed && (
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-6">
           {/* Workflow Name */}
           <div className="space-y-2">
-            <Label htmlFor="workflow-name" className="text-sm font-semibold text-foreground">
-              Workflow Name
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="workflow-name" className="text-sm font-semibold text-foreground">
+                Workflow Name
+              </Label>
+              {onToggleCollapse && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onToggleCollapse}
+                  title="Collapse sidebar"
+                  className="h-7 w-7"
+                >
+                  <Menu className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <Input id="workflow-name" placeholder="Untitled Workflow" value={workflowName} onChange={e => onWorkflowNameChange(e.target.value)} className="h-9" />
           </div>
 
