@@ -1,5 +1,6 @@
 import { ChatHeader } from "@/components/ChatHeader";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Toolbar } from "@/components/workflow/stage/Toolbar";
 import { ResponsiveLayout } from "@/components/workflow/stage/ResponsiveLayout";
 import { WorkflowCanvas } from "@/components/workflow/stage/WorkflowCanvas";
@@ -16,7 +17,28 @@ import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 
 const Stage = () => {
+  const navigate = useNavigate();
   const { agents: savedAgents } = useAgents();
+  
+  useEffect(() => {
+    // Check auth and listen for changes
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+      }
+    };
+    
+    checkAuth();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate("/auth");
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
   
   const [workflow, setWorkflow] = useState<Workflow>({
     stages: [],

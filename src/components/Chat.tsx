@@ -60,7 +60,16 @@ const Chat = () => {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate("/auth");
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     if (id) {
