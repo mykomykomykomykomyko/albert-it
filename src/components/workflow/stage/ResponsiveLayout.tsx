@@ -30,7 +30,7 @@ export const ResponsiveLayout = ({
   const [mobileTab, setMobileTab] = useState<"library" | "workflow" | "properties">("workflow");
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden">
       {/* Mobile Layout */}
       <div className="lg:hidden flex flex-col flex-1 overflow-hidden">
         <MobileNav
@@ -73,19 +73,19 @@ export const ResponsiveLayout = ({
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden lg:flex flex-1 overflow-hidden">
-        <div className="w-80 border-r border-border overflow-y-auto">
+      <div className="hidden lg:flex flex-1 overflow-hidden w-full">
+        <div className="w-80 flex-shrink-0 border-r border-border overflow-y-auto bg-card">
           {sidebar}
         </div>
         
-        <div className="flex-1 flex flex-col overflow-hidden min-w-[600px]">
+        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {desktopCanvas}
         </div>
         
-        <div className="w-80 xl:w-96 border-l border-border overflow-y-auto">
+        <div className="w-80 xl:w-96 flex-shrink-0 border-l border-border overflow-y-auto bg-card">
           {properties}
         </div>
       </div>
-    </>
+    </div>
   );
 };

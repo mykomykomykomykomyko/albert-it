@@ -89,9 +89,9 @@ export const WorkflowCanvas = ({
   };
 
   return (
-    <div className="h-full bg-gradient-to-br from-canvas-background to-muted/20 overflow-hidden relative" id={`workflow-canvas-${layoutId}`}>
-      <div className="h-full p-2 lg:p-3">
-        <Card className="h-full bg-canvas-background/50 backdrop-blur-sm border-2 border-dashed border-border/50 rounded-xl overflow-x-hidden overflow-y-auto flex flex-col relative" id={`workflow-scroll-container-${layoutId}`}>
+    <div className="flex-1 flex flex-col bg-gradient-to-br from-canvas-background to-muted/20 overflow-hidden relative" id={`workflow-canvas-${layoutId}`}>
+      <div className="flex-1 flex flex-col p-2 lg:p-3">
+        <Card className="flex-1 bg-canvas-background/50 backdrop-blur-sm border-2 border-dashed border-border/50 rounded-xl overflow-x-hidden overflow-y-auto flex flex-col relative" id={`workflow-scroll-container-${layoutId}`}>
           <svg 
             key={forceUpdate}
             className="absolute top-0 left-0 pointer-events-none" 
