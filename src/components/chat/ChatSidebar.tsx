@@ -2,10 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Plus, MessageSquare, Trash2, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Conversation } from "@/types/chat";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,12 +37,6 @@ const ChatSidebar = ({
 }: ChatSidebarProps) => {
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("Signed out successfully");
-    navigate("/auth");
-  };
 
   return (
     <div className={`border-r border-border bg-card flex flex-col shrink-0 transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-64'}`}>
@@ -127,7 +119,7 @@ const ChatSidebar = ({
         </ScrollArea>
       )}
 
-      <div className="p-4 border-t border-border space-y-2">
+      <div className="p-4 border-t border-border">
         {onToggleCollapse && (
           <Button
             variant="ghost"
@@ -140,28 +132,12 @@ const ChatSidebar = ({
               <ChevronRight className="w-4 h-4" />
             ) : (
               <>
-                <ChevronLeft className="w-4 h-4 mr-2" />
+                <ChevronLeft className="w-4 w-4 mr-2" />
                 Collapse
               </>
             )}
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size={isCollapsed ? "icon" : "sm"}
-          className={isCollapsed ? "w-full" : "w-full justify-start"}
-          onClick={handleSignOut}
-          title="Sign Out"
-        >
-          {isCollapsed ? (
-            <LogOut className="w-4 h-4" />
-          ) : (
-            <>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </>
-          )}
-        </Button>
       </div>
     </div>
   );

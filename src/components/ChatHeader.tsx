@@ -1,7 +1,9 @@
-import { Moon, Sun, Home } from 'lucide-react';
+import { Moon, Sun, Home, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -36,6 +38,12 @@ export function ChatHeader() {
     } else {
       document.documentElement.classList.remove('light');
     }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out successfully");
+    navigate("/auth");
   };
 
   return (
@@ -106,6 +114,15 @@ export function ChatHeader() {
             ) : (
               <Moon className="h-5 w-5" />
             )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSignOut}
+            title="Sign Out"
+            className="hover:bg-accent"
+          >
+            <LogOut className="h-5 w-5" />
           </Button>
         </div>
       </div>

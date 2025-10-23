@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -16,6 +16,9 @@ import { ExcelSelector } from './ExcelSelector';
 import { extractTextFromFiles, isTextFile } from '@/utils/parseText';
 import { isExcelFile, parseExcelFile } from '@/utils/parseExcel';
 import { processPDFFile } from '@/utils/parsePdf';
+import { AgentSelectorDialog } from './agents/AgentSelectorDialog';
+import { Agent } from '@/hooks/useAgents';
+import { Badge } from './ui/badge';
 
 interface ImageAttachment {
   name: string;
@@ -50,6 +53,8 @@ const Chat = () => {
   const [currentPdfData, setCurrentPdfData] = useState<any>(null);
   const [currentExcelData, setCurrentExcelData] = useState<any>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [showAgentSelector, setShowAgentSelector] = useState(false);
+  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -272,6 +277,22 @@ const Chat = () => {
         }))
       };
 
+      // Apply agent persona if selected
+      if (currentAgent) {
+        requestPayload.systemPrompt = currentAgent.system_prompt;
+        // Check if this is the first message or if agent just changed
+        const lastMessage = updatedMessages[updatedMessages.length - 2]; // -2 because we just added user message
+        const isFirstMessage = updatedMessages.length === 1;
+        
+        if (isFirstMessage) {
+          // Prepend agent prompt for first message
+          requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
+        } else {
+          // For subsequent messages, keep using agent's user prompt template
+          requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
+        }
+      }
+
       if (images.length > 0) {
         requestPayload.images = images.map(img => img.dataUrl);
       }
@@ -378,6 +399,16 @@ const Chat = () => {
     }
   };
 
+  const handleSelectAgent = (agent: Agent) => {
+    // If there are existing messages, add a transition message
+    if (messages.length > 0 && currentAgent?.id !== agent.id) {
+      toast.info(`Switching to ${agent.name}. The assistant will adopt this persona from this point forward.`);
+    } else if (messages.length === 0) {
+      toast.success(`${agent.name} selected`);
+    }
+    setCurrentAgent(agent);
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -469,6 +500,23 @@ const Chat = () => {
 
             <div className="border-t border-border bg-card/50 backdrop-blur-sm p-4">
               <div className="max-w-4xl mx-auto">
+                {currentAgent && (
+                  <div className="mb-3 flex items-center gap-2 bg-secondary/50 px-3 py-2 rounded-lg border">
+                    <Bot className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">{currentAgent.name}</span>
+                    <Badge variant="secondary" className="ml-auto">Active</Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setCurrentAgent(null)}
+                      title="Remove agent"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                
                 {(images.length > 0 || files.length > 0) && (
                   <div className="mb-3 flex flex-wrap gap-2">
                     {images.map((img, idx) => (
@@ -501,6 +549,15 @@ const Chat = () => {
                 )}
                 
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowAgentSelector(true)}
+                    disabled={isLoading}
+                    title="Select Agent"
+                  >
+                    <Bot className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="outline"
                     size="icon"
@@ -580,6 +637,12 @@ const Chat = () => {
             }}
           />
         )}
+
+        <AgentSelectorDialog
+          open={showAgentSelector}
+          onOpenChange={setShowAgentSelector}
+          onSelectAgent={handleSelectAgent}
+        />
       </div>
     </div>
   );
