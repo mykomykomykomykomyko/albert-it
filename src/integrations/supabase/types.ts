@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_history: {
+        Row: {
+          content: string
+          created_at: string | null
+          files: Json | null
+          id: string
+          images: Json | null
+          role: string
+          user_email: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          files?: Json | null
+          id?: string
+          images?: Json | null
+          role: string
+          user_email: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          files?: Json | null
+          id?: string
+          images?: Json | null
+          role?: string
+          user_email?: string
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           created_at: string | null
