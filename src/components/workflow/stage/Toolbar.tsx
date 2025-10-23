@@ -22,18 +22,6 @@ export const Toolbar = ({
 
   return (
     <header className="h-16 border-b border-border bg-card items-center justify-between px-6 shadow-sm hidden lg:flex">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <span className="font-bold text-primary-foreground text-lg">ABC</span>
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Agent Builder Console</h1>
-            <p className="text-xs text-muted-foreground">From the Alberta AI Academy</p>
-          </div>
-        </div>
-      </div>
-
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" className="gap-2" onClick={onAddStage}>
           <Plus className="h-4 w-4" />
