@@ -27,6 +27,7 @@ import { processPDFFile } from '@/utils/parsePdf';
 import { isTextFile, extractTextFromFiles } from '@/utils/parseText';
 import { PDFSelector } from './PDFSelector';
 import { ExcelSelector } from './ExcelSelector';
+import { ChatHeader } from './ChatHeader';
 
 interface PendingPDF {
   file: File;
@@ -220,7 +221,25 @@ export function Chat() {
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const { user } = useAuth();
-  const { messages, loading, isLoadingHistory, sendMessage, resetChat, downloadChat } = useChat();
+  const { messages, loading, isLoadingHistory, sendMessage, resetChat } = useChat();
+
+  // Download chat as markdown
+  const downloadChat = () => {
+    const content = messages.map(msg => {
+      const role = msg.role === 'user' ? 'You' : 'Assistant';
+      return `## ${role}\n\n${msg.content}\n\n`;
+    }).join('---\n\n');
+    
+    const blob = new Blob([content], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${new Date().toISOString()}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   // Check if user is at bottom of scroll
   const isAtBottom = useCallback(() => {
@@ -588,8 +607,9 @@ export function Chat() {
 
   return (
     <>
+      <ChatHeader />
       <div 
-        className={`flex flex-col bg-gray-50 dark:bg-gray-900 ${isDragOver ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+        className={`flex flex-col bg-background ${isDragOver ? 'bg-accent/10' : ''}`}
         style={{ height: 'calc(100vh - 70px)' }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}

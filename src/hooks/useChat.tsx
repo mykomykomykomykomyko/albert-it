@@ -71,14 +71,13 @@ export function useChat() {
 
       console.log('✅ Formatted messages:', formattedMessages);
       setMessages(formattedMessages);
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 Error loading chat history:', {
         message: error.message,
         details: error.details,
         hint: error.hint,
         code: error.code
       });
-      // Don't show error to user for chat history - just start with empty chat
     } finally {
       setIsLoadingHistory(false);
     }
@@ -88,11 +87,13 @@ export function useChat() {
     if (!user?.email) return;
     
     try {
-      await supabase
+      const { error } = await supabase
         .from('chat_history')
         .delete()
         .eq('user_email', user.email);
-      
+
+      if (error) throw error;
+
       setMessages([]);
     } catch (error) {
       console.error('Error resetting chat:', error);
@@ -149,6 +150,12 @@ export function useChat() {
     await saveMessageToHistory(userMessage);
 
     try {
+      // Get the user's session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session. Please sign in again.');
+      }
+
       // Prepare the request payload
       const requestPayload: any = {
         message,
@@ -183,21 +190,22 @@ export function useChat() {
       
       // Call the appropriate endpoint based on whether we have images
       const endpoint = images.length > 0 
-        ? 'https://hzttqloyamcivctsfxkk.supabase.co/functions/v1/gemini-chat-with-images'
-        : 'https://hzttqloyamcivctsfxkk.supabase.co/functions/v1/gemini-chat';
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`
+        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`;
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestPayload),
       });
 
       console.log('📡 Response status:', response.status);
       if (!response.ok) {
-        console.error('❌ Response failed:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('❌ Response failed:', response.status, errorText);
         throw new Error(`Failed to send message: ${response.status}`);
       }
 
@@ -213,90 +221,68 @@ export function useChat() {
 
       // Process streaming response
       const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
       let accumulatedContent = '';
 
       if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n');
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.substring(6));
-                if (data.text) {
-                  accumulatedContent += data.text;
-                  
-                  setMessages(prev => prev.map(msg => 
-                    msg.id === assistantMessage.id 
-                      ? { ...msg, content: accumulatedContent }
-                      : msg
-                  ));
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const jsonStr = line.substring(6).trim();
+                  if (jsonStr) {
+                    const data = JSON.parse(jsonStr);
+                    if (data.text) {
+                      accumulatedContent += data.text;
+                      
+                      setMessages(prev => prev.map(msg => 
+                        msg.id === assistantMessage.id 
+                          ? { ...msg, content: accumulatedContent }
+                          : msg
+                      ));
+                    } else if (data.error) {
+                      throw new Error(data.error);
+                    }
+                  }
+                } catch (e: any) {
+                  if (e.message && !e.message.includes('JSON')) {
+                    throw e;
+                  }
+                  console.error('Error parsing streaming data:', e);
                 }
-              } catch (e) {
-                // Ignore parsing errors
               }
             }
           }
+        } catch (streamError: any) {
+          console.error('Streaming error:', streamError);
+          throw streamError;
         }
       }
 
-      // Save final assistant message to history
-      const finalAssistantMessage = { ...assistantMessage, content: accumulatedContent };
-      await saveMessageToHistory(finalAssistantMessage);
-
-    } catch (error) {
-      console.error('💥 Error sending message:', error);
-      console.error('💥 Full error details:', {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
+      // Save final assistant message
+      await saveMessageToHistory({
+        ...assistantMessage,
+        content: accumulatedContent
       });
+
+    } catch (error: any) {
+      console.error('💥 sendMessage error:', error);
       
-      // Add error message
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
-        role: 'assistant',
-        content: `Sorry, I encountered an error: ${error.message}. Please try again.`,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
-      await saveMessageToHistory(errorMessage);
+      // Remove the last assistant message if it failed
+      setMessages(prev => prev.filter(msg => msg.id !== `assistant-${Date.now()}`));
+      
+      throw error;
     } finally {
       setLoading(false);
     }
-  }, [user, loading, messages]);
-
-  const downloadChat = useCallback(() => {
-    const chatContent = messages
-      .map(msg => {
-        let content = `**${msg.role.toUpperCase()}** (${new Date(msg.timestamp).toLocaleString()})\n${msg.content}\n\n`;
-        
-        if (msg.images && msg.images.length > 0) {
-          content += `Images: ${msg.images.map(img => img.name).join(', ')}\n\n`;
-        }
-        
-        if (msg.files && msg.files.length > 0) {
-          content += `Files: ${msg.files.map(file => file.filename).join(', ')}\n\n`;
-        }
-        
-        return content;
-      })
-      .join('');
-
-    const blob = new Blob([chatContent], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chat-${new Date().toISOString().split('T')[0]}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, [messages]);
+  }, [user, messages, loading]);
 
   return {
     messages,
@@ -304,7 +290,5 @@ export function useChat() {
     isLoadingHistory,
     sendMessage,
     resetChat,
-    downloadChat,
   };
 }
-
