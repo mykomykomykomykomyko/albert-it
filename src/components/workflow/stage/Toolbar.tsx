@@ -8,13 +8,15 @@ interface ToolbarProps {
   onSave: () => void;
   onLoad: () => void;
   onClear: () => void;
+  onRun: () => void;
 }
 
 export const Toolbar = ({
   onAddStage,
   onSave,
   onLoad,
-  onClear
+  onClear,
+  onRun
 }: ToolbarProps) => {
   const [helpOpen, setHelpOpen] = useState(false);
 
@@ -41,6 +43,11 @@ export const Toolbar = ({
         <Button variant="outline" size="sm" className="gap-2" onClick={() => setHelpOpen(true)}>
           <HelpCircle className="h-4 w-4" />
           Help
+        </Button>
+        <div className="w-px h-6 bg-border mx-2" />
+        <Button className="gap-2 bg-gradient-to-r from-primary to-primary-hover hover:opacity-90" onClick={onRun}>
+          <Play className="h-4 w-4" />
+          Run Workflow
         </Button>
       </div>
       <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
