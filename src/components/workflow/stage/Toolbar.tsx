@@ -5,6 +5,7 @@ import { HelpModal } from "./HelpModal";
 
 interface ToolbarProps {
   onAddStage: () => void;
+  onRun: () => void;
   onSave: () => void;
   onLoad: () => void;
   onClear: () => void;
@@ -12,6 +13,7 @@ interface ToolbarProps {
 
 export const Toolbar = ({
   onAddStage,
+  onRun,
   onSave,
   onLoad,
   onClear
@@ -43,6 +45,14 @@ export const Toolbar = ({
           Help
         </Button>
       </div>
+      <Button
+        size="sm"
+        className="gap-2 bg-gradient-to-r from-primary to-primary-hover"
+        onClick={onRun}
+      >
+        <Play className="h-4 w-4" />
+        Run
+      </Button>
       <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
     </header>
   );

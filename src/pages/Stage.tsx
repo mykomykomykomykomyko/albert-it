@@ -423,6 +423,7 @@ const Stage = () => {
       <ChatHeader />
       <Toolbar
         onAddStage={addStage}
+        onRun={handleRun}
         onSave={handleSave}
         onLoad={() => setLoadDialogOpen(true)}
         onClear={handleClear}
