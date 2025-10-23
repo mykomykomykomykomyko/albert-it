@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "npm:@google/generative-ai"
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.sh/@google/generative-ai@0.21.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,7 +21,6 @@ const getSafetySettings = () => [
   { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
   { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-  { category: HarmCategory.HARM_CATEGORY_CIVIC_INTEGRITY, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
 // Helper: Process image data URL to base64
@@ -142,7 +141,8 @@ serve(async (req) => {
           controller.close();
         } catch (error) {
           console.error('❌ Streaming error:', error);
-          const errorData = `data: ${JSON.stringify({ error: error.message || 'Streaming failed' })}\n\n`;
+          const errorMessage = error instanceof Error ? error.message : 'Streaming failed';
+          const errorData = `data: ${JSON.stringify({ error: errorMessage })}\n\n`;
           controller.enqueue(encoder.encode(errorData));
           controller.enqueue(encoder.encode('event: complete\ndata: {}\n\n'));
           controller.close();
@@ -165,7 +165,8 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        const errorData = `data: ${JSON.stringify({ error: error.message || 'Internal server error' })}\n\n`;
+        const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+        const errorData = `data: ${JSON.stringify({ error: errorMessage })}\n\n`;
         controller.enqueue(encoder.encode(errorData));
         controller.enqueue(encoder.encode('event: complete\ndata: {}\n\n'));
         controller.close();
