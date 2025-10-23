@@ -42,21 +42,10 @@ const ChatSidebar = ({
     <div className={`border-r border-border bg-card flex flex-col shrink-0 transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-64'}`}>
       <div className={`p-4 border-b border-border ${isCollapsed ? 'p-2' : ''}`}>
         {!isCollapsed && (
-          <>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-sm text-foreground">Albert</h2>
-                <p className="text-xs text-muted-foreground">AI Assistant</p>
-              </div>
-            </div>
-            <Button onClick={onNewConversation} className="w-full" size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              New Chat
-            </Button>
-          </>
+          <Button onClick={onNewConversation} className="w-full" size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            New Chat
+          </Button>
         )}
         {isCollapsed && (
           <Button onClick={onNewConversation} className="w-full" size="icon" variant="ghost">
