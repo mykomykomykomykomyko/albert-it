@@ -28,6 +28,9 @@ export function ImageGallery({
   onImageClick,
   onResizeToggle
 }: ImageGalleryProps) {
+  console.log('ImageGallery render - images count:', images.length);
+  console.log('ImageGallery images:', images);
+  
   const formatFileSize = (bytes: number) => {
     return formatBytes ? formatBytes(bytes) : `${Math.round(bytes / 1024)}KB`;
   };
@@ -45,6 +48,8 @@ export function ImageGallery({
       </Card>
     );
   }
+
+  console.log('ImageGallery rendering with', images.length, 'images');
 
   return (
     <div className="space-y-4">

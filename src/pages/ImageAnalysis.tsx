@@ -39,9 +39,11 @@ export default function ImageAnalysis() {
 
   const handleFilesAdded = (newImages: ProcessedImage[]) => {
     console.log('handleFilesAdded called with:', newImages.length, 'images');
+    console.log('New images data:', newImages);
     setImages(prev => {
       const updated = [...prev, ...newImages];
       console.log('Updated images state:', updated.length, 'total images');
+      console.log('Full images array:', updated);
       return updated;
     });
   };
@@ -334,7 +336,7 @@ export default function ImageAnalysis() {
           </div>
 
           {/* Image Gallery */}
-          <div className="flex-1 overflow-hidden p-6">
+          <div className="flex-1 overflow-auto p-6 min-h-0">
             <ImageGallery
               images={images}
               onImageSelect={handleImageSelect}
