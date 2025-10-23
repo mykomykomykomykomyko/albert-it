@@ -39,7 +39,7 @@ const ChatSidebar = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   return (
-    <div className={`border-r border-border bg-card flex flex-col shrink-0 transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-64'}`}>
+    <div className={`border-r border-border bg-card flex-col shrink-0 transition-all duration-300 ${isCollapsed ? 'w-0 lg:w-14 hidden lg:flex' : 'w-64 flex'}`}>
       <div className={`p-4 border-b border-border ${isCollapsed ? 'p-2' : ''}`}>
         {!isCollapsed && (
           <Button onClick={onNewConversation} className="w-full" size="sm">

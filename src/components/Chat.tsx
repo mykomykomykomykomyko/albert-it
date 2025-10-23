@@ -58,6 +58,21 @@ const Chat = () => {
   const [lastPayload, setLastPayload] = useState<any>(null);
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
 
+  // Auto-collapse sidebar on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) { // lg breakpoint
+        setSidebarCollapsed(true);
+      }
+    };
+    
+    // Initial check
+    handleResize();
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     // Initialize theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -586,41 +601,8 @@ const Chat = () => {
                   </div>
                 )}
                 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowAgentSelector(true)}
-                    disabled={isLoading}
-                    title="Select Agent"
-                  >
-                    <Bot className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setShowTroubleshoot(true)}
-                    disabled={!lastPayload}
-                    title="View Last LLM Payload"
-                  >
-                    <Bug className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                    disabled={isLoading}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    multiple
-                    accept="image/*,.pdf,.txt,.doc,.docx,.xlsx,.xls"
-                    onChange={handleFileUpload}
-                  />
+                <div className="flex flex-col gap-2">
+                  {/* Textarea on its own row */}
                   <Textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -631,17 +613,56 @@ const Chat = () => {
                       }
                     }}
                     placeholder="Type your message..."
-                    className="flex-1 min-h-[60px] max-h-[200px] resize-none"
+                    className="min-h-[60px] max-h-[200px] resize-none w-full"
                     disabled={isLoading}
                   />
-                  <Button
-                    onClick={handleSend}
-                    disabled={(!input.trim() && images.length === 0 && files.length === 0) || isLoading}
-                    size="icon"
-                    className="h-[60px] w-[60px] shrink-0"
-                  >
-                    <Send className="w-5 h-5" />
-                  </Button>
+                  
+                  {/* Buttons row below on mobile, inline on desktop */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowAgentSelector(true)}
+                      disabled={isLoading}
+                      title="Select Agent"
+                    >
+                      <Bot className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowTroubleshoot(true)}
+                      disabled={!lastPayload}
+                      title="View Last LLM Payload"
+                    >
+                      <Bug className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => document.getElementById('file-upload')?.click()}
+                      disabled={isLoading}
+                      title="Attach files"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      className="hidden"
+                      multiple
+                      accept="image/*,.pdf,.txt,.doc,.docx,.xlsx,.xls"
+                      onChange={handleFileUpload}
+                    />
+                    <Button
+                      onClick={handleSend}
+                      disabled={(!input.trim() && images.length === 0 && files.length === 0) || isLoading}
+                      className="ml-auto"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Send
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
