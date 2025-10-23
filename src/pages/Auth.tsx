@@ -17,7 +17,24 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Initialize theme from localStorage or system preference
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const initialTheme = savedTheme || (isDark ? 'dark' : 'light');
+    
+    if (initialTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+
+    // Check if user is already logged in
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/chat");
+      }
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && event === 'SIGNED_IN') {
         navigate("/chat");
@@ -26,13 +43,6 @@ const Auth = () => {
         if (window.location.pathname !== '/auth') {
           navigate("/auth");
         }
-      }
-    });
-
-    // THEN check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/chat");
       }
     });
 

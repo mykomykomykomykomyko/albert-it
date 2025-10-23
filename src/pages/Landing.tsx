@@ -1,11 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Brain, MessageSquare, Zap, Shield } from "lucide-react";
+import { Brain, MessageSquare, Zap, Shield, Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     // Check if user is already logged in
@@ -14,7 +15,31 @@ const Landing = () => {
         navigate("/chat");
       }
     });
+    
+    // Initialize theme from localStorage or system preference
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const initialTheme = savedTheme || (isDark ? 'dark' : 'light');
+    
+    setTheme(initialTheme);
+    if (initialTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
   }, [navigate]);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    
+    if (newTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -26,9 +51,23 @@ const Landing = () => {
             </div>
             <span className="text-xl font-bold text-gradient">Albert</span>
           </div>
-          <Button onClick={() => navigate("/auth")} variant="outline">
-            Sign In
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+            <Button onClick={() => navigate("/auth")} variant="outline">
+              Sign In
+            </Button>
+          </div>
         </div>
       </nav>
 
