@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import {
   AlertDialog,
@@ -15,6 +15,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -37,9 +44,10 @@ const ChatSidebar = ({
 }: ChatSidebarProps) => {
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  return (
-    <div className={`border-r border-border bg-card flex-col shrink-0 transition-all duration-300 ${isCollapsed ? 'w-0 lg:w-14 hidden lg:flex' : 'w-64 flex'}`}>
+  const sidebarContent = (
+    <>
       <div className={`p-4 border-b border-border ${isCollapsed ? 'p-2' : ''}`}>
         {!isCollapsed && (
           <Button onClick={onNewConversation} className="w-full" size="sm">
@@ -65,7 +73,10 @@ const ChatSidebar = ({
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50 text-foreground"
                 }`}
-                onClick={() => onSelectConversation(conversation.id)}
+                onClick={() => {
+                  onSelectConversation(conversation.id);
+                  setMobileMenuOpen(false);
+                }}
               >
                 <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate text-sm">{conversation.title}</span>
@@ -128,7 +139,38 @@ const ChatSidebar = ({
           </Button>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className={`hidden lg:flex border-r border-border bg-card flex-col shrink-0 transition-all duration-300 ${isCollapsed ? 'w-14' : 'w-64'}`}>
+        {sidebarContent}
+      </div>
+
+      {/* Mobile Menu Button - Fixed position */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="lg:hidden fixed top-20 left-4 z-40 bg-card border border-border shadow-lg"
+        onClick={() => setMobileMenuOpen(true)}
+      >
+        <Menu className="h-5 w-5" />
+      </Button>
+
+      {/* Mobile Sidebar Sheet */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="w-64 p-0 flex flex-col">
+          <SheetHeader className="p-4 border-b">
+            <SheetTitle>Conversations</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {sidebarContent}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 };
 

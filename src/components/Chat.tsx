@@ -58,21 +58,6 @@ const Chat = () => {
   const [lastPayload, setLastPayload] = useState<any>(null);
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
 
-  // Auto-collapse sidebar on mobile
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) { // lg breakpoint
-        setSidebarCollapsed(true);
-      }
-    };
-    
-    // Initial check
-    handleResize();
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   useEffect(() => {
     // Initialize theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
