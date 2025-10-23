@@ -456,6 +456,7 @@ const Stage = () => {
               onWorkflowNameChange={setWorkflowName}
               customAgents={customAgents}
               onCustomAgentsChange={setCustomAgents}
+              savedAgents={savedAgents}
             />
           }
           mobileCanvas={

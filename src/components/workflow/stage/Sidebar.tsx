@@ -26,6 +26,8 @@ import { toast } from "@/hooks/use-toast";
 import { extractTextFromFile, formatExtractedContent, ExtractedContent } from "@/utils/fileTextExtraction";
 import { parseExcelFile, ExcelData } from "@/utils/parseExcel";
 import { ExcelSelector } from "@/components/ExcelSelector";
+import { AgentSelectorDialog } from "@/components/agents/AgentSelectorDialog";
+import { Agent } from "@/hooks/useAgents";
 
 // Icon mapping for serialization
 const iconMap: Record<string, LucideIcon> = {
@@ -33,28 +35,6 @@ const iconMap: Record<string, LucideIcon> = {
   FileText,
   Bot
 };
-const agentTemplates = [{
-  id: "researcher",
-  name: "Researcher",
-  iconName: "Search",
-  description: "Gather and analyze information",
-  defaultSystemPrompt: "You are a research assistant specializing in gathering and analyzing information from various sources.",
-  defaultUserPrompt: "Research the following topic and provide detailed findings: {input}"
-}, {
-  id: "summarizer",
-  name: "Summarizer",
-  iconName: "FileText",
-  description: "Condense long content",
-  defaultSystemPrompt: "You are a summarization expert who creates concise, accurate summaries of long content.",
-  defaultUserPrompt: "Summarize the following content: {input}"
-}, {
-  id: "analyst",
-  name: "Analyst",
-  iconName: "Bot",
-  description: "Deep data analysis",
-  defaultSystemPrompt: "You are a data analyst who provides insightful analysis and identifies patterns in data.",
-  defaultUserPrompt: "Analyze the following data and provide insights: {input}"
-}];
 const tools = [{
   id: "google_search",
   name: "Google Search",
@@ -96,6 +76,7 @@ interface SidebarProps {
   onWorkflowNameChange: (value: string) => void;
   customAgents: any[];
   onCustomAgentsChange: (agents: any[]) => void;
+  savedAgents: Agent[];
 }
 export const Sidebar = ({
   onAddAgent,
@@ -106,7 +87,8 @@ export const Sidebar = ({
   workflowName,
   onWorkflowNameChange,
   customAgents,
-  onCustomAgentsChange
+  onCustomAgentsChange,
+  savedAgents
 }: SidebarProps) => {
   const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
   const [newAgentName, setNewAgentName] = useState("");
@@ -123,6 +105,18 @@ export const Sidebar = ({
   const [isViewInputOpen, setIsViewInputOpen] = useState(false);
   const [editedInput, setEditedInput] = useState("");
   const [inputTab, setInputTab] = useState("edit");
+  const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
+  
+  // Convert saved agents to agent templates format and get the 5 most recent
+  const recentAgentTemplates = savedAgents.slice(0, 5).map(agent => ({
+    id: agent.id,
+    name: agent.name,
+    iconName: agent.icon_name || "Bot",
+    description: agent.description || "",
+    defaultSystemPrompt: agent.system_prompt,
+    defaultUserPrompt: agent.user_prompt,
+    profile_picture_url: agent.profile_picture_url
+  }));
   const handleDragStart = (e: React.DragEvent, template: any, nodeType: "agent" | "function" | "tool" = "agent") => {
     e.dataTransfer.setData("agentTemplate", JSON.stringify(template));
     e.dataTransfer.setData("nodeType", nodeType);
@@ -410,7 +404,36 @@ export const Sidebar = ({
       description: "Your changes have been saved"
     });
   };
-  const allAgents = [...agentTemplates, ...customAgents];
+  const allAgents = [...recentAgentTemplates, ...customAgents];
+  
+  const handleAgentSelect = (agent: Agent) => {
+    const agentTemplate = {
+      id: agent.id,
+      name: agent.name,
+      iconName: agent.icon_name || "Bot",
+      description: agent.description || "",
+      defaultSystemPrompt: agent.system_prompt,
+      defaultUserPrompt: agent.user_prompt,
+      profile_picture_url: agent.profile_picture_url
+    };
+    
+    // Get the first stage or create one if none exists
+    const firstStageId = workflow.stages[0]?.id;
+    if (firstStageId) {
+      onAddAgent(firstStageId, agentTemplate);
+      setIsAgentSelectorOpen(false);
+      toast({
+        title: "Agent added",
+        description: `${agent.name} has been added to the workflow`
+      });
+    } else {
+      toast({
+        title: "No stage available",
+        description: "Please create a stage first",
+        variant: "destructive"
+      });
+    }
+  };
 
   // Filter functions based on search and category
   const filteredFunctions = functionDefinitions.filter(func => {
@@ -458,6 +481,15 @@ export const Sidebar = ({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Agent Library</h3>
               <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-7 w-7 p-0" 
+                  onClick={() => setIsAgentSelectorOpen(true)}
+                  title="Select agent"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
                 <input ref={uploadInputRef} type="file" accept=".json" multiple className="hidden" onChange={handleUploadAgents} />
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => uploadInputRef.current?.click()} title="Upload agent(s)">
                   <Upload className="h-4 w-4" />
@@ -664,5 +696,12 @@ export const Sidebar = ({
       
       {/* Excel Selector Modal */}
       {excelData && <ExcelSelector excelData={excelData} onClose={handleExcelClose} onSelect={handleExcelSelect} />}
+      
+      {/* Agent Selector Dialog */}
+      <AgentSelectorDialog
+        open={isAgentSelectorOpen}
+        onOpenChange={setIsAgentSelectorOpen}
+        onSelectAgent={handleAgentSelect}
+      />
     </div>;
 };
