@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -55,6 +55,8 @@ const Chat = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
+  const [lastPayload, setLastPayload] = useState<any>(null);
+  const [showTroubleshoot, setShowTroubleshoot] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -268,7 +270,7 @@ const Chat = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Prepare request
+      // Prepare request - maintain full message history
       const requestPayload: any = {
         message: fullContent,
         messageHistory: updatedMessages.map(msg => ({
@@ -277,21 +279,24 @@ const Chat = () => {
         }))
       };
 
-      // Apply agent persona if selected
+      // Apply agent persona if selected - only affects system prompt and current message wrapping
       if (currentAgent) {
         requestPayload.systemPrompt = currentAgent.system_prompt;
-        // Check if this is the first message or if agent just changed
-        const lastMessage = updatedMessages[updatedMessages.length - 2]; // -2 because we just added user message
-        const isFirstMessage = updatedMessages.length === 1;
-        
-        if (isFirstMessage) {
-          // Prepend agent prompt for first message
-          requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
-        } else {
-          // For subsequent messages, keep using agent's user prompt template
-          requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
-        }
+        // Wrap the current message with agent's user prompt template
+        requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
       }
+
+      // Store payload for troubleshooting
+      setLastPayload({
+        timestamp: new Date().toISOString(),
+        endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'gemini-chat',
+        payload: requestPayload,
+        agent: currentAgent ? {
+          name: currentAgent.name,
+          system_prompt: currentAgent.system_prompt,
+          user_prompt: currentAgent.user_prompt
+        } : null
+      });
 
       if (images.length > 0) {
         requestPayload.images = images.map(img => img.dataUrl);
@@ -400,9 +405,9 @@ const Chat = () => {
   };
 
   const handleSelectAgent = (agent: Agent) => {
-    // If there are existing messages, add a transition message
+    // Messages are maintained, only the system prompt and message wrapping changes
     if (messages.length > 0 && currentAgent?.id !== agent.id) {
-      toast.info(`Switching to ${agent.name}. The assistant will adopt this persona from this point forward.`);
+      toast.info(`Switching to ${agent.name}. History maintained, new persona applied.`);
     } else if (messages.length === 0) {
       toast.success(`${agent.name} selected`);
     }
@@ -561,6 +566,15 @@ const Chat = () => {
                   <Button
                     variant="outline"
                     size="icon"
+                    onClick={() => setShowTroubleshoot(true)}
+                    disabled={!lastPayload}
+                    title="View Last LLM Payload"
+                  >
+                    <Bug className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={() => document.getElementById('file-upload')?.click()}
                     disabled={isLoading}
                   >
@@ -643,6 +657,79 @@ const Chat = () => {
           onOpenChange={setShowAgentSelector}
           onSelectAgent={handleSelectAgent}
         />
+
+        {/* Troubleshoot Dialog */}
+        {showTroubleshoot && lastPayload && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="bg-card border border-border rounded-lg w-[90%] h-[90%] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-semibold">Last LLM Payload</h3>
+                <Button variant="ghost" size="icon" onClick={() => setShowTroubleshoot(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4 font-mono text-sm">
+                  <div>
+                    <div className="text-muted-foreground mb-1">Timestamp:</div>
+                    <div className="bg-secondary/50 p-3 rounded">{lastPayload.timestamp}</div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-muted-foreground mb-1">Endpoint:</div>
+                    <div className="bg-secondary/50 p-3 rounded">{lastPayload.endpoint}</div>
+                  </div>
+
+                  {lastPayload.agent && (
+                    <div>
+                      <div className="text-muted-foreground mb-1">Active Agent:</div>
+                      <div className="bg-secondary/50 p-3 rounded space-y-2">
+                        <div><strong>Name:</strong> {lastPayload.agent.name}</div>
+                        <div><strong>System Prompt:</strong><br/>{lastPayload.agent.system_prompt}</div>
+                        <div><strong>User Prompt Template:</strong><br/>{lastPayload.agent.user_prompt}</div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                    <div className="text-muted-foreground mb-1">Current Message:</div>
+                    <div className="bg-secondary/50 p-3 rounded whitespace-pre-wrap break-words">
+                      {lastPayload.payload.message}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-muted-foreground mb-1">System Prompt:</div>
+                    <div className="bg-secondary/50 p-3 rounded whitespace-pre-wrap">
+                      {lastPayload.payload.systemPrompt || '(none)'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-muted-foreground mb-1">Message History ({lastPayload.payload.messageHistory.length} messages):</div>
+                    <div className="bg-secondary/50 p-3 rounded space-y-3">
+                      {lastPayload.payload.messageHistory.map((msg: any, idx: number) => (
+                        <div key={idx} className="border-b border-border pb-2 last:border-0">
+                          <div className="font-semibold text-primary">{msg.role}:</div>
+                          <div className="whitespace-pre-wrap break-words mt-1">{msg.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {lastPayload.payload.images && (
+                    <div>
+                      <div className="text-muted-foreground mb-1">Images:</div>
+                      <div className="bg-secondary/50 p-3 rounded">
+                        {lastPayload.payload.images.length} image(s) attached
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
