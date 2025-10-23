@@ -12,6 +12,8 @@ import type { Workflow, Stage as StageType, AgentNode, FunctionNode, Connection 
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Play } from "lucide-react";
 
 const Stage = () => {
   const { agents: savedAgents } = useAgents();
@@ -382,7 +384,6 @@ const Stage = () => {
         onSave={handleSave}
         onLoad={() => setLoadDialogOpen(true)}
         onClear={handleClear}
-        onRun={handleRun}
       />
       
       <SaveWorkflowDialog
@@ -397,6 +398,16 @@ const Stage = () => {
         onOpenChange={setLoadDialogOpen}
         onLoad={handleLoad}
       />
+      
+      {/* Floating Run Button */}
+      <Button
+        onClick={handleRun}
+        className="fixed right-6 top-24 z-50 gap-2 bg-gradient-to-r from-primary to-primary-hover hover:opacity-90 shadow-lg"
+        size="lg"
+      >
+        <Play className="h-5 w-5" />
+        Run Workflow
+      </Button>
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <ResponsiveLayout
