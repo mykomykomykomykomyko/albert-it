@@ -42,15 +42,15 @@ export function ChatHeader() {
 
   const handleSignOut = async () => {
     try {
-      // Sign out regardless of session state
+      // Force clear local session without server call
       await supabase.auth.signOut({ scope: 'local' });
-      toast.success("Signed out successfully");
-    } catch (error: any) {
-      // Even if there's an error, clear local state
-      console.error("Sign out error:", error);
+    } catch (error) {
+      // Ignore errors - we're clearing anyway
+      console.log("Clearing invalid session");
     } finally {
-      // Always navigate to auth page
-      navigate("/auth");
+      // Always show success and redirect to home
+      toast.success("Signed out successfully");
+      navigate("/");
     }
   };
 
