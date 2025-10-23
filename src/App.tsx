@@ -9,6 +9,7 @@ import EnhancedChat from "./components/Chat";
 import Stage from "./pages/Stage";
 import Canvas from "./pages/Canvas";
 import ImageAnalysis from "./pages/ImageAnalysis";
+import VoiceAnalysis from "./pages/VoiceAnalysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
         <Route path="/stage" element={<Stage />} />
         <Route path="/canvas" element={<Canvas />} />
         <Route path="/image" element={<ImageAnalysis />} />
+        <Route path="/voice" element={<VoiceAnalysis />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

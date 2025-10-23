@@ -295,9 +295,9 @@ export default function ImageAnalysis() {
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
       
-      <div className="flex-1 overflow-hidden flex min-h-0">
+      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
         {/* Left Panel - Images & Controls */}
-        <div className="w-1/2 border-r border-border flex flex-col min-h-0">
+        <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0 max-h-[50vh] lg:max-h-none">
           {/* Controls Section - Fixed max height */}
           <div className="max-h-[50vh] overflow-y-auto border-b border-border flex-shrink-0">
             <div className="p-6 space-y-4">
@@ -356,7 +356,7 @@ export default function ImageAnalysis() {
         </div>
 
         {/* Right Panel - Results */}
-        <div className="w-1/2 flex flex-col min-h-0">
+        <div className="w-full lg:w-1/2 flex flex-col min-h-0 overflow-hidden flex-1">
           <div className="p-6 border-b border-border flex-shrink-0">
             <h3 className="text-xl font-semibold">Analysis Results</h3>
             <p className="text-sm text-muted-foreground mt-1">

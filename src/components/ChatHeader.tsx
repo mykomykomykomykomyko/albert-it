@@ -13,7 +13,8 @@ export function ChatHeader() {
   const currentTab = location.pathname.startsWith('/chat') ? 'chat' :
                      location.pathname.startsWith('/stage') ? 'stage' :
                      location.pathname.startsWith('/canvas') ? 'canvas' :
-                     location.pathname.startsWith('/image') ? 'image' : 'chat';
+                     location.pathname.startsWith('/image') ? 'image' :
+                     location.pathname.startsWith('/voice') ? 'voice' : 'chat';
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -80,16 +81,6 @@ export function ChatHeader() {
               Stage
             </button>
             <button
-              onClick={() => navigate('/canvas')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                currentTab === 'canvas' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'hover:bg-accent'
-              }`}
-            >
-              Canvas
-            </button>
-            <button
               onClick={() => navigate('/image')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                 currentTab === 'image' 
@@ -98,6 +89,22 @@ export function ChatHeader() {
               }`}
             >
               Image
+            </button>
+            <button
+              onClick={() => navigate('/voice')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'voice' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Voice
+            </button>
+            <button
+              disabled
+              className="px-4 py-2 rounded-md text-sm font-medium transition-colors opacity-50 cursor-not-allowed"
+            >
+              Canvas
             </button>
           </div>
           
