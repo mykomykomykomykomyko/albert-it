@@ -3,37 +3,35 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Brain, MessageSquare, Zap, Shield, Moon, Sun } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-
 const Landing = () => {
   const navigate = useNavigate();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({
+      data: {
+        session
+      }
+    }) => {
       if (session) {
         navigate("/chat");
       }
     });
-    
+
     // Initialize theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-    
     setTheme(initialTheme);
     document.documentElement.classList.toggle('light', initialTheme === 'light');
   }, [navigate]);
-
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('light', newTheme === 'light');
   };
-
-  return (
-    <div className="min-h-screen bg-background text-foreground">
+  return <div className="min-h-screen bg-background text-foreground">
       <nav className="border-b border-border backdrop-blur-sm bg-card/50 fixed w-full z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -43,17 +41,8 @@ const Landing = () => {
             <span className="text-xl font-bold text-gradient">Albert</span>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
             <Button onClick={() => navigate("/auth")} variant="outline">
               Sign In
@@ -67,7 +56,7 @@ const Landing = () => {
           <div className="animate-fade-in max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm text-primary">Powered by Lovable AI</span>
+              <span className="text-sm text-primary">Always Open Source (MIT License)</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-slide-up">
               Your AI Assistant from the{" "}
@@ -78,11 +67,7 @@ const Landing = () => {
               specifically for Albertans.
             </p>
             <div className="flex gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={() => navigate("/auth")}
-                className="glow-effect text-lg h-14 px-8"
-              >
+              <Button size="lg" onClick={() => navigate("/auth")} className="glow-effect text-lg h-14 px-8">
                 Get Started Free
               </Button>
               <Button size="lg" variant="outline" className="text-lg h-14 px-8">
@@ -147,22 +132,13 @@ const Landing = () => {
           <p>© 2025 Government of Alberta. All rights reserved.</p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
-const Sparkles = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
+const Sparkles = ({
+  className
+}: {
+  className?: string;
+}) => <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3v18M3 12h18M6.5 6.5l11 11M6.5 17.5l11-11" />
-  </svg>
-);
-
+  </svg>;
 export default Landing;
