@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { HelpModal } from '@/components/workflow/stage/HelpModal';
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -232,19 +233,9 @@ export function ChatHeader() {
         </Sheet>
       </div>
       
-      {/* Help Modal - Only render on /stage route */}
+      {/* Help Modal - Only show on /stage route */}
       {location.pathname === '/stage' && (
-        <>
-          {/* Dynamically import HelpModal to avoid issues on other pages */}
-          {helpOpen && (
-            <div>
-              {(() => {
-                const { HelpModal } = require('@/components/workflow/stage/HelpModal');
-                return <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />;
-              })()}
-            </div>
-          )}
-        </>
+        <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
       )}
     </header>
   );
