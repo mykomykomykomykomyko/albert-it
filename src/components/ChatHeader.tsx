@@ -1,12 +1,16 @@
 import { Moon, Sun, Home } from 'lucide-react';
 import { Button } from './ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 export function ChatHeader() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+
+  const currentTab = location.pathname.startsWith('/chat') ? 'chat' :
+                     location.pathname.startsWith('/stage') ? 'stage' :
+                     location.pathname.startsWith('/canvas') ? 'canvas' : 'chat';
 
   useEffect(() => {
     // Check system preference on mount
@@ -48,19 +52,38 @@ export function ChatHeader() {
         </button>
         
         <div className="flex items-center gap-4">
-          <Tabs defaultValue="chat" className="w-[280px]">
-            <TabsList className="grid w-full grid-cols-3 bg-secondary">
-              <TabsTrigger value="chat" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Chat
-              </TabsTrigger>
-              <TabsTrigger value="stage" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Stage
-              </TabsTrigger>
-              <TabsTrigger value="canvas" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                Canvas
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary">
+            <button
+              onClick={() => navigate('/chat')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'chat' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => navigate('/stage')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'stage' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Stage
+            </button>
+            <button
+              onClick={() => navigate('/canvas')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'canvas' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Canvas
+            </button>
+          </div>
           
           <Button
             variant="ghost"

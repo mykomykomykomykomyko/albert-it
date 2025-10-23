@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import EnhancedChat from "./components/Chat";
+import Stage from "./pages/Stage";
+import Canvas from "./pages/Canvas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +23,8 @@ const App = () => (
         <Route path="/auth" element={<Auth />} />
         <Route path="/chat" element={<EnhancedChat />} />
         <Route path="/chat/:id" element={<EnhancedChat />} />
+        <Route path="/stage" element={<Stage />} />
+        <Route path="/canvas" element={<Canvas />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
