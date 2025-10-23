@@ -93,16 +93,32 @@ export const PropertiesPanel = ({
 
   if (!activeNode) {
     return (
-      <div className="bg-card flex items-center justify-center p-6 h-full">
-        <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto">
-            <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+      <div className="bg-card flex flex-col h-full">
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <h3 className="font-semibold text-foreground">Properties</h3>
+          {onClosePanel && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={onClosePanel}
+              className="lg:flex hidden"
+              title="Close panel"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center space-y-3">
+            <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Select a node to view and edit its properties
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Select a node to view and edit its properties
-          </p>
         </div>
       </div>
     );

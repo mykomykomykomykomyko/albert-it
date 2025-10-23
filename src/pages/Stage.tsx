@@ -61,7 +61,7 @@ const Stage = () => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(true);
+  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(false);
 
   // Auto-open properties panel when a node is selected
   useEffect(() => {
