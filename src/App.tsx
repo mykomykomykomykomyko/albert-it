@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Chat from "./pages/Chat";
+import EnhancedChat from "./components/Chat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -17,10 +18,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/chat/:id" element={<Chat />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/chat" element={<Chat />} />
+        <Route path="/chat/:id" element={<Chat />} />
+        <Route path="/enhanced-chat" element={<EnhancedChat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
