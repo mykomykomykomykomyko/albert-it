@@ -27,6 +27,8 @@ const Agents = () => {
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPromptOpen, setIsPromptOpen] = useState(false);
+  const [imagePrompt, setImagePrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
@@ -139,21 +141,23 @@ const Agents = () => {
   };
 
   const handleGenerateImage = async () => {
-    if (!formData.name) {
-      toast.error("Please enter an agent name first");
+    if (!imagePrompt.trim()) {
+      toast.error("Please enter a prompt for the image");
       return;
     }
 
     setIsGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-agent-image', {
-        body: { prompt: formData.name }
+        body: { prompt: imagePrompt }
       });
 
       if (error) throw error;
 
       setFormData({ ...formData, profile_picture_url: data.imageUrl });
       toast.success("Profile image generated!");
+      setIsPromptOpen(false);
+      setImagePrompt("");
     } catch (error) {
       console.error('Error generating image:', error);
       toast.error("Failed to generate image");
@@ -297,12 +301,12 @@ const Agents = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={handleGenerateImage}
-                          disabled={isGenerating || !formData.name}
+                          onClick={() => setIsPromptOpen(true)}
+                          disabled={isGenerating}
                           className="flex-1"
                         >
                           <Sparkles className="h-4 w-4 mr-2" />
-                          {isGenerating ? "Generating..." : "Generate"}
+                          Generate
                         </Button>
                         <Button
                           type="button"
@@ -366,6 +370,46 @@ const Agents = () => {
               </DialogContent>
             </Dialog>
           </div>
+
+          {/* Image Generation Prompt Dialog */}
+          <Dialog open={isPromptOpen} onOpenChange={setIsPromptOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Generate Agent Image</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Image Description</label>
+                  <Textarea
+                    value={imagePrompt}
+                    onChange={(e) => setImagePrompt(e.target.value)}
+                    placeholder="Describe the image you want to generate (e.g., 'A professional AI assistant robot with blue accents in a modern tech style')"
+                    rows={4}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleGenerateImage}
+                    disabled={isGenerating || !imagePrompt.trim()}
+                    className="flex-1"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isGenerating ? "Generating..." : "Generate Image"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsPromptOpen(false);
+                      setImagePrompt("");
+                    }}
+                    disabled={isGenerating}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <div className="flex gap-4">
             <div className="relative flex-1">

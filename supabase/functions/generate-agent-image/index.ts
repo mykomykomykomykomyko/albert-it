@@ -21,8 +21,14 @@ serve(async (req) => {
 
     console.log('Prompt received:', prompt);
 
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY not found');
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
     
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error('Supabase configuration missing');
@@ -31,51 +37,61 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Generate a simple colored avatar based on prompt
-    let backgroundColor = '6366f1';
-    let textColor = 'ffffff';
-    
-    if (prompt.toLowerCase().includes('research') || prompt.toLowerCase().includes('analysis')) {
-      backgroundColor = '3b82f6'; // Blue
-    } else if (prompt.toLowerCase().includes('creative') || prompt.toLowerCase().includes('art')) {
-      backgroundColor = '8b5cf6'; // Purple
-    } else if (prompt.toLowerCase().includes('assistant') || prompt.toLowerCase().includes('helper')) {
-      backgroundColor = '10b981'; // Green
-    } else if (prompt.toLowerCase().includes('expert') || prompt.toLowerCase().includes('professional')) {
-      backgroundColor = 'f59e0b'; // Orange
+    console.log('Generating image with Lovable AI...');
+
+    // Use Lovable AI to generate the image
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a professional, high-quality avatar image for an AI agent with this description: ${prompt}. The image should be suitable as a profile picture, visually appealing, and represent the agent's purpose or personality.`
+          }
+        ],
+        modalities: ['image', 'text']
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error('Lovable AI error:', errorText);
+      throw new Error(`Failed to generate image: ${aiResponse.status}`);
     }
 
-    // Extract initials from prompt (first two words)
-    const words = prompt.split(' ').filter((w: string) => w.length > 0);
-    const initials = words.slice(0, 2).map((w: string) => w[0].toUpperCase()).join('');
-    
-    const svg = `
-      <svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#${backgroundColor};stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#${backgroundColor}DD;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#gradient)" rx="20"/>
-        <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#${textColor}" text-anchor="middle" dominant-baseline="middle">
-          ${initials}
-        </text>
-      </svg>
-    `;
-    
-    const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+    const aiData = await aiResponse.json();
+    const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageUrl) {
+      throw new Error('No image was generated');
+    }
+
+    console.log('Image generated, converting to blob...');
+
+    // Convert base64 to blob
+    const base64Data = imageUrl.split(',')[1];
+    const binaryData = atob(base64Data);
+    const bytes = new Uint8Array(binaryData.length);
+    for (let i = 0; i < binaryData.length; i++) {
+      bytes[i] = binaryData.charCodeAt(i);
+    }
+    const imageBlob = new Blob([bytes], { type: 'image/png' });
     
     // Generate unique filename
-    const fileName = `agent-${Date.now()}-${Math.random().toString(36).substring(2)}.svg`;
+    const fileName = `agent-${Date.now()}-${Math.random().toString(36).substring(2)}.png`;
     const filePath = fileName;
 
     console.log('Uploading generated image to profile-images bucket...');
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('profile-images')
-      .upload(filePath, svgBlob, {
-        contentType: 'image/svg+xml',
+      .upload(filePath, imageBlob, {
+        contentType: 'image/png',
         upsert: false
       });
 
