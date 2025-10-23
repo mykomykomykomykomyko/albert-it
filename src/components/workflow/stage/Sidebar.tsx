@@ -516,32 +516,6 @@ export const Sidebar = ({
         </div>
       </ScrollArea>
       
-      {/* Desktop Action Buttons */}
-      <div className="hidden lg:flex border-t border-border p-3 gap-2">
-        <Button
-          variant="outline"
-          className="flex-1 gap-2"
-          onClick={() => setIsAgentSelectorOpen(true)}
-        >
-          <Bot className="h-4 w-4" />
-          Add Agent
-        </Button>
-        <Button
-          variant="outline"
-          className="flex-1 gap-2"
-          onClick={() => {
-            // Scroll to functions section
-            const functionsSection = document.querySelector('[data-section="functions"]');
-            if (functionsSection) {
-              functionsSection.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
-        >
-          <Zap className="h-4 w-4" />
-          Add Function
-        </Button>
-      </div>
-      
       {/* View/Edit Input Modal */}
       <Dialog open={isViewInputOpen} onOpenChange={setIsViewInputOpen}>
         <DialogContent className="w-[90vw] max-w-[90vw] h-[90vh] max-h-[90vh] flex flex-col p-6">

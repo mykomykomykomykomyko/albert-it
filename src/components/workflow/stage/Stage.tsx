@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { AgentNode } from "./AgentNode";
 import { FunctionNode } from "./FunctionNode";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FunctionSelector } from "@/components/workflow/FunctionSelector";
@@ -158,15 +158,15 @@ export const Stage = ({
           <p className="text-xs text-muted-foreground hidden lg:block">Drag agents here to add them</p>
         </div>
         
-        {/* Mobile Add Agent and Add Function Buttons */}
+        {/* Add Agent and Add Function Buttons */}
         <Button 
           variant="outline" 
           size="sm" 
-          className="lg:hidden gap-2"
+          className="gap-2"
           onClick={() => setIsAddAgentOpen(true)}
         >
-          <Plus className="h-4 w-4" />
-          Add Agent
+          <Bot className="h-4 w-4" />
+          <span className="lg:hidden">Add Agent</span>
         </Button>
 
         <AgentSelector
@@ -178,11 +178,11 @@ export const Stage = ({
         <Button 
           variant="outline" 
           size="sm" 
-          className="lg:hidden gap-2"
+          className="gap-2"
           onClick={() => setIsAddFunctionOpen(true)}
         >
-          <Plus className="h-4 w-4" />
-          Add Function
+          <Zap className="h-4 w-4" />
+          <span className="lg:hidden">Add Function</span>
         </Button>
 
         <FunctionSelector
