@@ -84,7 +84,7 @@ export function ImageGallery({
       </div>
 
       {/* Image Grid */}
-      <div className="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+      <div className="space-y-3">
         {images.map((image) => (
           <Card 
             key={image.id} 

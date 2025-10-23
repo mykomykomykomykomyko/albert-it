@@ -295,71 +295,76 @@ export default function ImageAnalysis() {
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
       
-      <div className="flex-1 overflow-hidden flex">
+      <div className="flex-1 overflow-hidden flex min-h-0">
         {/* Left Panel - Images & Controls */}
-        <div className="w-1/2 border-r border-border flex flex-col">
-          <div className="p-6 space-y-4 border-b border-border">
-            <h2 className="text-2xl font-bold">Image Analysis</h2>
-            
-            {/* File Uploader */}
-            <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
+        <div className="w-1/2 border-r border-border flex flex-col min-h-0">
+          {/* Controls Section - Scrollable */}
+          <div className="overflow-y-auto border-b border-border">
+            <div className="p-6 space-y-4">
+              <h2 className="text-2xl font-bold">Image Analysis</h2>
+              
+              {/* File Uploader */}
+              <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
 
-            {/* Prompt Manager */}
-            <PromptManager
-              prompts={prompts}
-              selectedPromptIds={selectedPromptIds}
-              onPromptsChange={setPrompts}
-              onSelectionChange={setSelectedPromptIds}
-              onOpenAgentSelector={() => setShowAgentSelector(true)}
-              disabled={isAnalyzing}
-            />
+              {/* Prompt Manager */}
+              <PromptManager
+                prompts={prompts}
+                selectedPromptIds={selectedPromptIds}
+                onPromptsChange={setPrompts}
+                onSelectionChange={setSelectedPromptIds}
+                onOpenAgentSelector={() => setShowAgentSelector(true)}
+                disabled={isAnalyzing}
+              />
 
-            {/* Analysis Button */}
-            <Button
-              onClick={startAnalysis}
-              disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
-              className="w-full"
-              size="lg"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Analyze {selectedImageCount} Image{selectedImageCount !== 1 ? 's' : ''} × {selectedPromptIds.length} Prompt{selectedPromptIds.length !== 1 ? 's' : ''}
-                </>
-              )}
-            </Button>
+              {/* Analysis Button */}
+              <Button
+                onClick={startAnalysis}
+                disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
+                className="w-full"
+                size="lg"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Analyze {selectedImageCount} Image{selectedImageCount !== 1 ? 's' : ''} × {selectedPromptIds.length} Prompt{selectedPromptIds.length !== 1 ? 's' : ''}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
-          {/* Image Gallery */}
-          <div className="flex-1 overflow-auto p-6 min-h-0">
-            <ImageGallery
-              images={images}
-              onImageSelect={handleImageSelect}
-              onImageRemove={handleImageRemove}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-              selectedCount={selectedImageCount}
-              onImageClick={handleImageClick}
-              onResizeToggle={handleResizeToggle}
-            />
+          {/* Image Gallery Section - Fixed Height, Scrollable */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="p-6">
+              <ImageGallery
+                images={images}
+                onImageSelect={handleImageSelect}
+                onImageRemove={handleImageRemove}
+                onSelectAll={handleSelectAll}
+                onDeselectAll={handleDeselectAll}
+                selectedCount={selectedImageCount}
+                onImageClick={handleImageClick}
+                onResizeToggle={handleResizeToggle}
+              />
+            </div>
           </div>
         </div>
 
         {/* Right Panel - Results */}
-        <div className="w-1/2 flex flex-col">
-          <div className="p-6 border-b border-border">
+        <div className="w-1/2 flex flex-col min-h-0">
+          <div className="p-6 border-b border-border flex-shrink-0">
             <h3 className="text-xl font-semibold">Analysis Results</h3>
             <p className="text-sm text-muted-foreground mt-1">
               {results.length} result{results.length !== 1 ? 's' : ''} generated
             </p>
           </div>
 
-          <div className="flex-1 overflow-hidden p-6">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6">
             <ResultsDisplay
               results={results}
               images={images}
