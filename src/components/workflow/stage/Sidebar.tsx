@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -107,8 +108,8 @@ export const Sidebar = ({
   const [inputTab, setInputTab] = useState("edit");
   const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
   
-  // Convert saved agents to agent templates format and get the 5 most recent
-  const recentAgentTemplates = savedAgents.slice(0, 5).map(agent => ({
+  // Convert saved agents to agent templates format and get the 3 most recent
+  const recentAgentTemplates = savedAgents.slice(0, 3).map(agent => ({
     id: agent.id,
     name: agent.name,
     iconName: agent.icon_name || "Bot",
@@ -488,7 +489,7 @@ export const Sidebar = ({
                   onClick={() => setIsAgentSelectorOpen(true)}
                   title="Select agent"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Bot className="h-4 w-4" />
                 </Button>
                 <input ref={uploadInputRef} type="file" accept=".json" multiple className="hidden" onChange={handleUploadAgents} />
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => uploadInputRef.current?.click()} title="Upload agent(s)">
@@ -535,9 +536,16 @@ export const Sidebar = ({
               const isCustom = customAgents.some(a => a.id === agent.id);
               return <Card key={agent.id} className="p-3 cursor-move hover:shadow-md transition-shadow bg-gradient-to-br from-card to-muted/20 group" draggable onDragStart={e => handleDragStart(e, agent)}>
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <IconComponent className="h-4 w-4 text-primary" />
-                      </div>
+                      {agent.profile_picture_url ? (
+                        <Avatar className="h-8 w-8 flex-shrink-0">
+                          <AvatarImage src={agent.profile_picture_url} />
+                          <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <IconComponent className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-foreground">{agent.name}</h4>
                         <p className="text-xs text-muted-foreground mt-0.5">{agent.description}</p>
