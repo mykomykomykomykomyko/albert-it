@@ -5,7 +5,8 @@ import { GripVertical, Plus, Trash2, Bot, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FunctionSelector } from "@/components/workflow/FunctionSelector";
-import { AgentSelector } from "@/components/workflow/AgentSelector";
+import { AgentSelectorDialog } from "@/components/agents/AgentSelectorDialog";
+import { Agent } from "@/hooks/useAgents";
 import { useState } from "react";
 import type { Stage as StageType } from "@/types/workflow";
 
@@ -97,8 +98,17 @@ export const Stage = ({
   const completedNodes = stage.nodes.filter((n) => n.status === "complete").length;
   const progress = stage.nodes.length > 0 ? (completedNodes / stage.nodes.length) * 100 : 0;
 
-  const handleAddAgent = (template: any) => {
-    onAddAgent(stage.id, template);
+  const handleAddAgent = (agent: Agent) => {
+    const agentTemplate = {
+      id: agent.id,
+      name: agent.name,
+      iconName: agent.icon_name || "Bot",
+      description: agent.description || "",
+      defaultSystemPrompt: agent.system_prompt,
+      defaultUserPrompt: agent.user_prompt,
+      profile_picture_url: agent.profile_picture_url
+    };
+    onAddAgent(stage.id, agentTemplate);
     setIsAddAgentOpen(false);
   };
 
@@ -169,7 +179,7 @@ export const Stage = ({
           <span className="lg:hidden">Add Agent</span>
         </Button>
 
-        <AgentSelector
+        <AgentSelectorDialog
           open={isAddAgentOpen}
           onOpenChange={setIsAddAgentOpen}
           onSelectAgent={handleAddAgent}
