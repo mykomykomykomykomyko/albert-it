@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu } from "lucide-react";
+import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import {
   AlertDialog,
@@ -22,12 +22,23 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ChatSidebarProps {
   conversations: Conversation[];
   currentConversationId?: string;
   onNewConversation: () => void;
   onSelectConversation: (id: string) => void;
+  onRenameConversation: (id: string, newTitle: string) => void;
   onDeleteConversation: (id: string) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -38,6 +49,7 @@ const ChatSidebar = ({
   currentConversationId,
   onNewConversation,
   onSelectConversation,
+  onRenameConversation,
   onDeleteConversation,
   isCollapsed = false,
   onToggleCollapse,
@@ -45,6 +57,8 @@ const ChatSidebar = ({
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [renamingConversation, setRenamingConversation] = useState<Conversation | null>(null);
+  const [newTitle, setNewTitle] = useState("");
 
   const sidebarContent = (
     <>
@@ -80,20 +94,34 @@ const ChatSidebar = ({
               >
                 <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate text-sm">{conversation.title}</span>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingId(conversation.id);
-                      }}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </AlertDialogTrigger>
+                <div className="flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setRenamingConversation(conversation);
+                      setNewTitle(conversation.title);
+                    }}
+                    title="Rename conversation"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingId(conversation.id);
+                        }}
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
@@ -113,11 +141,57 @@ const ChatSidebar = ({
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                </div>
               </div>
             ))}
           </div>
         </ScrollArea>
       )}
+
+      {/* Rename Dialog */}
+      <Dialog open={!!renamingConversation} onOpenChange={() => setRenamingConversation(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename conversation</DialogTitle>
+            <DialogDescription>
+              Enter a new name for this conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newTitle.trim()) {
+                    onRenameConversation(renamingConversation!.id, newTitle.trim());
+                    setRenamingConversation(null);
+                  }
+                }}
+                placeholder="Enter conversation title"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenamingConversation(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (newTitle.trim()) {
+                  onRenameConversation(renamingConversation!.id, newTitle.trim());
+                  setRenamingConversation(null);
+                }
+              }}
+              disabled={!newTitle.trim()}
+            >
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="p-4 border-t border-border">
         {onToggleCollapse && (

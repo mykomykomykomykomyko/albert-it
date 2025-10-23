@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -189,6 +189,24 @@ const Chat = () => {
     navigate(`/chat/${data.id}`);
   };
 
+  const handleRenameConversation = async (conversationId: string, newTitle: string) => {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ title: newTitle })
+      .eq("id", conversationId);
+
+    if (error) {
+      toast.error("Failed to rename conversation");
+      return;
+    }
+
+    await loadConversations();
+    if (currentConversation?.id === conversationId) {
+      setCurrentConversation({ ...currentConversation, title: newTitle });
+    }
+    toast.success("Conversation renamed");
+  };
+
   const handleDeleteConversation = async (conversationId: string) => {
     const { error } = await supabase
       .from("conversations")
@@ -205,6 +223,36 @@ const Chat = () => {
       navigate("/chat");
     }
     toast.success("Conversation deleted");
+  };
+
+  const handleDownloadHistory = () => {
+    if (!currentConversation || messages.length === 0) {
+      toast.error("No messages to download");
+      return;
+    }
+
+    // Generate markdown content
+    let markdown = `# ${currentConversation.title}\n\n`;
+    markdown += `*Generated on ${new Date().toLocaleString()}*\n\n`;
+    markdown += `---\n\n`;
+
+    messages.forEach((message) => {
+      const role = message.role === "user" ? "**You**" : "**Assistant**";
+      markdown += `### ${role}\n\n${message.content}\n\n---\n\n`;
+    });
+
+    // Create and download file
+    const blob = new Blob([markdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${currentConversation.title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success("Chat history downloaded");
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -475,6 +523,7 @@ const Chat = () => {
         currentConversationId={currentConversation?.id}
         onNewConversation={handleNewConversation}
         onSelectConversation={(id) => navigate(`/chat/${id}`)}
+        onRenameConversation={handleRenameConversation}
         onDeleteConversation={handleDeleteConversation}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -652,6 +701,15 @@ const Chat = () => {
                       title="Attach files"
                     >
                       <Paperclip className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleDownloadHistory}
+                      disabled={!currentConversation || messages.length === 0}
+                      title="Download chat history"
+                    >
+                      <Download className="h-4 w-4" />
                     </Button>
                     <input
                       id="file-upload"
