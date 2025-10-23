@@ -111,6 +111,16 @@ const Chat = () => {
       return;
     }
 
+    console.log('📥 Loaded messages from DB:', messagesData);
+    messagesData?.forEach((msg, idx) => {
+      console.log(`Message ${idx}:`, {
+        id: msg.id,
+        role: msg.role,
+        contentLength: msg.content?.length || 0,
+        content: msg.content
+      });
+    });
+
     setCurrentConversation(convData);
     setMessages((messagesData || []) as Message[]);
   };
@@ -303,9 +313,13 @@ const Chat = () => {
       let accumulatedContent = '';
 
       if (reader) {
+        console.log('📖 Starting to read stream...');
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log('✅ Stream complete. Final content length:', accumulatedContent.length);
+            break;
+          }
 
           const chunk = decoder.decode(value);
           const lines = chunk.split('\n');
@@ -314,10 +328,11 @@ const Chat = () => {
             if (line.startsWith('data: ')) {
               try {
                 const jsonStr = line.substring(6).trim();
-                if (jsonStr) {
+                if (jsonStr && jsonStr !== '{}') {
                   const data = JSON.parse(jsonStr);
                   if (data.text) {
                     accumulatedContent += data.text;
+                    console.log('📝 Accumulated content:', accumulatedContent);
                     setMessages(prev => prev.map(msg => 
                       msg.id === assistantMessage.id 
                         ? { ...msg, content: accumulatedContent }
@@ -326,18 +341,26 @@ const Chat = () => {
                   }
                 }
               } catch (e) {
-                // Ignore parse errors
+                console.warn('Failed to parse line:', line, e);
               }
             }
           }
         }
       }
 
+      console.log('💾 Saving final content to DB. Length:', accumulatedContent.length, 'Content:', accumulatedContent);
+      
       // Save final assistant message
-      await supabase
+      const { error: updateError } = await supabase
         .from("messages")
         .update({ content: accumulatedContent })
         .eq("id", assistantMessage.id);
+
+      if (updateError) {
+        console.error('❌ Failed to update message:', updateError);
+      } else {
+        console.log('✅ Message saved successfully');
+      }
 
       // Update conversation timestamp
       await supabase
@@ -407,18 +430,24 @@ const Chat = () => {
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
                     )}
-                    <div
+                     <div
                       className={`rounded-2xl px-4 py-3 max-w-[80%] ${
                         message.role === "user"
                           ? "bg-primary text-primary-foreground"
                           : "bg-card border border-border"
                       }`}
                     >
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {message.content}
-                        </ReactMarkdown>
-                      </div>
+                      {message.content ? (
+                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div className="text-muted-foreground italic text-sm">
+                          [Empty message]
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
