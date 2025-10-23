@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye } from "lucide-react";
+import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye, Zap } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useRef } from "react";
@@ -91,14 +91,8 @@ export const Sidebar = ({
   onCustomAgentsChange,
   savedAgents
 }: SidebarProps) => {
-  const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
-  const [newAgentName, setNewAgentName] = useState("");
-  const [newAgentDescription, setNewAgentDescription] = useState("");
-  const [newAgentSystemPrompt, setNewAgentSystemPrompt] = useState("");
-  const [newAgentUserPrompt, setNewAgentUserPrompt] = useState("");
   const [functionSearch, setFunctionSearch] = useState("");
   const [functionCategory, setFunctionCategory] = useState<string>("all");
-  const uploadInputRef = useRef<HTMLInputElement>(null);
   const fileUploadInputRef = useRef<HTMLInputElement>(null);
   const [excelData, setExcelData] = useState<ExcelData | null>(null);
   const [excelQueue, setExcelQueue] = useState<File[]>([]);
@@ -107,9 +101,10 @@ export const Sidebar = ({
   const [editedInput, setEditedInput] = useState("");
   const [inputTab, setInputTab] = useState("edit");
   const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
+  const [agentSearch, setAgentSearch] = useState("");
   
-  // Convert saved agents to agent templates format and get the 3 most recent
-  const recentAgentTemplates = savedAgents.slice(0, 3).map(agent => ({
+  // Convert saved agents to agent templates format
+  const allSavedAgentTemplates = savedAgents.map(agent => ({
     id: agent.id,
     name: agent.name,
     iconName: agent.icon_name || "Bot",
@@ -118,28 +113,20 @@ export const Sidebar = ({
     defaultUserPrompt: agent.user_prompt,
     profile_picture_url: agent.profile_picture_url
   }));
+  
+  // Filter agents based on search
+  const filteredAgents = agentSearch 
+    ? allSavedAgentTemplates.filter(agent => 
+        agent.name.toLowerCase().includes(agentSearch.toLowerCase()) ||
+        agent.description.toLowerCase().includes(agentSearch.toLowerCase())
+      )
+    : allSavedAgentTemplates.slice(0, 3); // Show top 3 by default when not searching
+  
   const handleDragStart = (e: React.DragEvent, template: any, nodeType: "agent" | "function" | "tool" = "agent") => {
     e.dataTransfer.setData("agentTemplate", JSON.stringify(template));
     e.dataTransfer.setData("nodeType", nodeType);
   };
-  const handleAddCustomAgent = () => {
-    if (!newAgentName.trim()) return;
-    const newAgent = {
-      id: `custom-${Date.now()}`,
-      name: newAgentName,
-      iconName: "Bot",
-      // Store as string, not component
-      description: newAgentDescription || "Custom agent",
-      defaultSystemPrompt: newAgentSystemPrompt || `You are a ${newAgentName} agent.`,
-      defaultUserPrompt: newAgentUserPrompt || "Process the following: {input}"
-    };
-    onCustomAgentsChange([...customAgents, newAgent]);
-    setNewAgentName("");
-    setNewAgentDescription("");
-    setNewAgentSystemPrompt("");
-    setNewAgentUserPrompt("");
-    setIsAddAgentOpen(false);
-  };
+  
   const handleDownloadAgent = (agent: any) => {
     const agentData = {
       ...agent,
@@ -173,75 +160,7 @@ export const Sidebar = ({
       });
     }
   };
-  const handleUploadAgents = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-    let importedCount = 0;
-    const newAgents: any[] = [];
-    Array.from(files).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-
-          // Check if it's a workflow file with customAgents
-          if (data.workflow && data.customAgents) {
-            // Import custom agents from workflow
-            data.customAgents.forEach((agent: any) => {
-              // Generate new ID to avoid conflicts
-              const importedAgent = {
-                ...agent,
-                id: `custom-${Date.now()}-${Math.random()}`
-              };
-              newAgents.push(importedAgent);
-              importedCount++;
-            });
-          }
-          // Check if it's a single agent definition
-          else if (data.type === "agent-definition" || data.defaultSystemPrompt) {
-            const importedAgent = {
-              id: data.id || `custom-${Date.now()}-${Math.random()}`,
-              name: data.name,
-              iconName: data.iconName || "Bot",
-              description: data.description || "Imported agent",
-              defaultSystemPrompt: data.defaultSystemPrompt,
-              defaultUserPrompt: data.defaultUserPrompt
-            };
-            newAgents.push(importedAgent);
-            importedCount++;
-          } else {
-            toast({
-              title: "Invalid file",
-              description: `Invalid agent file: ${file.name}`,
-              variant: "destructive"
-            });
-          }
-
-          // Update state after processing all files
-          if (importedCount > 0 && newAgents.length > 0) {
-            onCustomAgentsChange([...customAgents, ...newAgents]);
-            toast({
-              title: "Agents imported",
-              description: `Imported ${importedCount} agent(s)`
-            });
-          }
-        } catch (error) {
-          console.error("Failed to import agent:", error);
-          toast({
-            title: "Import failed",
-            description: `Failed to import ${file.name}`,
-            variant: "destructive"
-          });
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    // Reset file input
-    if (uploadInputRef.current) {
-      uploadInputRef.current.value = "";
-    }
-  };
+  
   const processNextExcel = async () => {
     if (excelQueue.length === 0) {
       setIsProcessingFiles(false);
@@ -405,7 +324,6 @@ export const Sidebar = ({
       description: "Your changes have been saved"
     });
   };
-  const allAgents = [...recentAgentTemplates, ...customAgents];
   
   const handleAgentSelect = (agent: Agent) => {
     const agentTemplate = {
@@ -481,57 +399,32 @@ export const Sidebar = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Agent Library</h3>
-              <div className="flex items-center gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-7 w-7 p-0" 
-                  onClick={() => setIsAgentSelectorOpen(true)}
-                  title="Select agent"
-                >
-                  <Bot className="h-4 w-4" />
-                </Button>
-                <input ref={uploadInputRef} type="file" accept=".json" multiple className="hidden" onChange={handleUploadAgents} />
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => uploadInputRef.current?.click()} title="Upload agent(s)">
-                  <Upload className="h-4 w-4" />
-                </Button>
-                <Dialog open={isAddAgentOpen} onOpenChange={setIsAddAgentOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Add Custom Agent</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="agent-name">Agent Name</Label>
-                        <Input id="agent-name" placeholder="e.g., Code Reviewer" value={newAgentName} onChange={e => setNewAgentName(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label htmlFor="agent-desc">Description</Label>
-                        <Input id="agent-desc" placeholder="Brief description" value={newAgentDescription} onChange={e => setNewAgentDescription(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label htmlFor="agent-system">System Prompt</Label>
-                        <Textarea id="agent-system" placeholder="You are a helpful assistant..." value={newAgentSystemPrompt} onChange={e => setNewAgentSystemPrompt(e.target.value)} className="min-h-[80px]" />
-                      </div>
-                      <div>
-                        <Label htmlFor="agent-user">User Prompt Template</Label>
-                        <Textarea id="agent-user" placeholder="Process: {input}" value={newAgentUserPrompt} onChange={e => setNewAgentUserPrompt(e.target.value)} className="min-h-[60px]" />
-                      </div>
-                      <Button onClick={handleAddCustomAgent} className="w-full">
-                        Add Agent
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 w-7 p-0" 
+                onClick={() => setIsAgentSelectorOpen(true)}
+                title="Select agent"
+              >
+                <Bot className="h-4 w-4" />
+              </Button>
             </div>
+            
+            {/* Agent Search */}
+            <Input 
+              placeholder="Search agents..." 
+              value={agentSearch} 
+              onChange={e => setAgentSearch(e.target.value)} 
+              className="h-8 text-xs" 
+            />
+            
             <div className="space-y-2">
-              {allAgents.map(agent => {
+              {filteredAgents.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  No agents found
+                </p>
+              ) : (
+                filteredAgents.map(agent => {
               const IconComponent = iconMap[agent.iconName] || Bot;
               const isCustom = customAgents.some(a => a.id === agent.id);
               return <Card key={agent.id} className="p-3 cursor-move hover:shadow-md transition-shadow bg-gradient-to-br from-card to-muted/20 group" draggable onDragStart={e => handleDragStart(e, agent)}>
@@ -566,12 +459,13 @@ export const Sidebar = ({
                       </div>
                     </div>
                   </Card>;
-            })}
+                })
+              )}
             </div>
           </div>
 
           {/* Tools Library - Now replaced with Functions */}
-          <div className="space-y-3">
+          <div className="space-y-3" data-section="functions">
             <h3 className="text-sm font-semibold text-foreground">Functions Library</h3>
             
             {/* Search and Filter */}
@@ -621,6 +515,32 @@ export const Sidebar = ({
           </div>
         </div>
       </ScrollArea>
+      
+      {/* Desktop Action Buttons */}
+      <div className="hidden lg:flex border-t border-border p-3 gap-2">
+        <Button
+          variant="outline"
+          className="flex-1 gap-2"
+          onClick={() => setIsAgentSelectorOpen(true)}
+        >
+          <Bot className="h-4 w-4" />
+          Add Agent
+        </Button>
+        <Button
+          variant="outline"
+          className="flex-1 gap-2"
+          onClick={() => {
+            // Scroll to functions section
+            const functionsSection = document.querySelector('[data-section="functions"]');
+            if (functionsSection) {
+              functionsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
+        >
+          <Zap className="h-4 w-4" />
+          Add Function
+        </Button>
+      </div>
       
       {/* View/Edit Input Modal */}
       <Dialog open={isViewInputOpen} onOpenChange={setIsViewInputOpen}>
