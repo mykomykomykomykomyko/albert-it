@@ -33,8 +33,8 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <nav className="border-b border-border/50 backdrop-blur-sm bg-background/50 fixed w-full z-10">
+    <div className="min-h-screen bg-background text-foreground">
+      <nav className="border-b border-border backdrop-blur-sm bg-card/50 fixed w-full z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-effect">
@@ -94,7 +94,7 @@ const Landing = () => {
 
         <section className="container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 hover:shadow-glow transition-all">
+            <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-primary" />
               </div>
@@ -105,7 +105,7 @@ const Landing = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 hover:shadow-glow transition-all">
+            <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                 <Zap className="w-6 h-6 text-accent" />
               </div>
@@ -116,7 +116,7 @@ const Landing = () => {
               </p>
             </div>
 
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl p-8 hover:shadow-glow transition-all">
+            <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Shield className="w-6 h-6 text-primary" />
               </div>
@@ -130,7 +130,7 @@ const Landing = () => {
         </section>
 
         <section className="container mx-auto px-4 py-20 text-center">
-          <div className="max-w-3xl mx-auto bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-3xl p-12">
+          <div className="max-w-3xl mx-auto bg-primary/10 border border-primary/20 rounded-3xl p-12">
             <h2 className="text-4xl font-bold mb-6">Ready to get started?</h2>
             <p className="text-xl text-muted-foreground mb-8">
               Join thousands of Albertans already using Albert to enhance their productivity.
@@ -142,7 +142,7 @@ const Landing = () => {
         </section>
       </main>
 
-      <footer className="border-t border-border/50 mt-20">
+      <footer className="border-t border-border mt-20 bg-card/30">
         <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
           <p>© 2025 Government of Alberta. All rights reserved.</p>
         </div>
