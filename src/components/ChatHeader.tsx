@@ -2,6 +2,7 @@ import { Moon, Sun, Home } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Tabs, TabsList, TabsTrigger } from './ui/tabs';
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -46,7 +47,14 @@ export function ChatHeader() {
           <h1 className="text-xl font-bold text-gradient">Albert</h1>
         </button>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <Tabs defaultValue="stage" className="w-[200px]">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="stage">Stage</TabsTrigger>
+              <TabsTrigger value="canvas">Canvas</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
           <Button
             variant="ghost"
             size="icon"
