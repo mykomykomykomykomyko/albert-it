@@ -99,6 +99,16 @@ All colors MUST be HSL.
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(210 40% 98%));
     --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(210 40% 99%));
     
+    /* Light mode sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 250 95% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 250 95% 65%;
+    
     --shadow-glow: 0 0 40px hsl(250 95% 65% / 0.2);
     --shadow-card: 0 10px 40px -10px hsl(0 0% 0% / 0.1);
   }

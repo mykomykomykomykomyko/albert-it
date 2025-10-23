@@ -43,14 +43,14 @@ const ChatSidebar = ({
   };
 
   return (
-    <div className="w-64 border-r border-border bg-card/30 backdrop-blur-sm flex flex-col">
+    <div className="w-64 border-r border-border bg-card flex flex-col shrink-0">
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <Brain className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="font-semibold text-sm">Albert</h2>
+            <h2 className="font-semibold text-sm text-foreground">Albert</h2>
             <p className="text-xs text-muted-foreground">AI Assistant</p>
           </div>
         </div>
@@ -68,7 +68,7 @@ const ChatSidebar = ({
               className={`group relative flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
                 currentConversationId === conversation.id
                   ? "bg-accent text-accent-foreground"
-                  : "hover:bg-accent/50"
+                  : "hover:bg-accent/50 text-foreground"
               }`}
               onClick={() => onSelectConversation(conversation.id)}
             >
