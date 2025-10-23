@@ -402,11 +402,12 @@ const Stage = () => {
       {/* Floating Run Button */}
       <Button
         onClick={handleRun}
-        className="fixed right-6 top-24 z-50 gap-2 bg-gradient-to-r from-primary to-primary-hover hover:opacity-90 shadow-lg"
+        className="fixed right-6 top-20 z-50 gap-2 bg-gradient-to-r from-primary to-primary-hover hover:opacity-90 shadow-lg"
         size="lg"
       >
         <Play className="h-5 w-5" />
-        Run Workflow
+        <span className="hidden lg:inline">Run Workflow</span>
+        <span className="lg:hidden">Run</span>
       </Button>
       
       <div className="flex-1 flex flex-col overflow-hidden">
