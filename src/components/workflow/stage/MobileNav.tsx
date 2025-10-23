@@ -51,7 +51,7 @@ export const MobileNav = ({
           onClick={onAddStage}
         >
           <Plus className="h-4 w-4" />
-          Add Stage
+          Stage
         </Button>
         <Button
           size="sm"
