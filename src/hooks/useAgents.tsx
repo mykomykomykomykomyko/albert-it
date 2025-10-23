@@ -13,6 +13,8 @@ export interface Agent {
   icon_name: string;
   created_at: string;
   updated_at: string;
+  metadata_tags?: string[];
+  profile_picture_url?: string;
 }
 
 export interface AgentTemplate {
@@ -22,6 +24,8 @@ export interface AgentTemplate {
   system_prompt: string;
   user_prompt: string;
   icon_name: string;
+  metadata_tags?: string[];
+  profile_picture_url?: string;
 }
 
 export const useAgents = () => {

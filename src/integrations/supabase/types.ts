@@ -20,7 +20,9 @@ export type Database = {
           description: string | null
           icon_name: string
           id: string
+          metadata_tags: string[] | null
           name: string
+          profile_picture_url: string | null
           system_prompt: string
           type: string
           updated_at: string
@@ -32,7 +34,9 @@ export type Database = {
           description?: string | null
           icon_name?: string
           id?: string
+          metadata_tags?: string[] | null
           name: string
+          profile_picture_url?: string | null
           system_prompt: string
           type: string
           updated_at?: string
@@ -44,7 +48,9 @@ export type Database = {
           description?: string | null
           icon_name?: string
           id?: string
+          metadata_tags?: string[] | null
           name?: string
+          profile_picture_url?: string | null
           system_prompt?: string
           type?: string
           updated_at?: string
@@ -210,7 +216,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      agent_type: "Text" | "Voice" | "Image" | "Audio" | "Multimodal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -337,6 +343,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      agent_type: ["Text", "Voice", "Image", "Audio", "Multimodal"],
+    },
   },
 } as const

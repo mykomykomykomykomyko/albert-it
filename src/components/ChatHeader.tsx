@@ -10,7 +10,8 @@ export function ChatHeader() {
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
-  const currentTab = location.pathname.startsWith('/chat') ? 'chat' :
+  const currentTab = location.pathname.startsWith('/agents') ? 'agents' :
+                     location.pathname.startsWith('/chat') ? 'chat' :
                      location.pathname.startsWith('/stage') ? 'stage' :
                      location.pathname.startsWith('/canvas') ? 'canvas' :
                      location.pathname.startsWith('/image') ? 'image' :
@@ -60,6 +61,16 @@ export function ChatHeader() {
         
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary">
+            <button
+              onClick={() => navigate('/agents')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'agents' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Agents
+            </button>
             <button
               onClick={() => navigate('/chat')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
