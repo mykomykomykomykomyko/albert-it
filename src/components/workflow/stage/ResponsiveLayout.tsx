@@ -78,11 +78,9 @@ export const ResponsiveLayout = ({
 
       {/* Desktop Layout */}
       <div className="hidden lg:flex flex-1 overflow-hidden w-full">
-        {!sidebarCollapsed && (
-          <div className="w-80 flex-shrink-0 border-r border-border overflow-y-auto bg-card">
-            {sidebar}
-          </div>
-        )}
+        <div className={`flex-shrink-0 border-r border-border overflow-y-auto bg-card transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-80'}`}>
+          {sidebar}
+        </div>
         
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {desktopCanvas}

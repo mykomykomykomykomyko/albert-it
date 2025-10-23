@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye, Zap, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye, Zap, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useRef } from "react";
@@ -368,8 +368,25 @@ export const Sidebar = ({
   // Get unique categories for filter
   const categories = ["all", ...new Set(functionDefinitions.map(f => f.category))];
   return <div className="bg-card flex flex-col h-full">
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+      {/* Header with Hamburger */}
+      <div className="p-4 border-b border-border flex items-center justify-between">
+        {!isCollapsed && <h3 className="text-sm font-semibold text-foreground">Workflow Library</h3>}
+        {onToggleCollapse && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={isCollapsed ? "mx-auto" : "ml-auto"}
+          >
+            <Menu className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      
+      {!isCollapsed && (
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-6">
           {/* Workflow Name */}
           <div className="space-y-2">
             <Label htmlFor="workflow-name" className="text-sm font-semibold text-foreground">
@@ -517,29 +534,9 @@ export const Sidebar = ({
             })}
             </div>
           </div>
-        </div>
-      </ScrollArea>
-      
-      {/* Collapse Button */}
-      {onToggleCollapse && (
-        <div className="p-4 border-t border-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-start"
-            onClick={onToggleCollapse}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4 mr-2" />
-            ) : (
-              <>
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Collapse
-              </>
-            )}
-          </Button>
-        </div>
+
+          </div>
+        </ScrollArea>
       )}
       
       {/* View/Edit Input Modal */}
