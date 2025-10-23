@@ -42,12 +42,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFilesAdded, disabl
         } finally {
           setIsProcessingPdf(false);
         }
-      } else {
-        // Handle regular image files
+      } else if (file.type.startsWith('image/')) {
+        // Handle regular image files - create blob URL immediately
+        const id = generateId();
+        const url = URL.createObjectURL(file);
+        
         const processedFile: ProcessedImage = {
-          id: generateId(),
+          id,
           file: file,
-          url: URL.createObjectURL(file),
+          url: url,
           name: file.name,
           type: file.type,
           size: file.size,
@@ -56,10 +59,12 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFilesAdded, disabl
           uploadedAt: new Date()
         };
         processedImages.push(processedFile);
+        console.log('Processed image:', processedFile.name, 'URL:', url);
       }
     }
 
     if (processedImages.length > 0) {
+      console.log('Adding images to gallery:', processedImages.length);
       onFilesAdded(processedImages);
       toast({
         title: "Files uploaded successfully",
@@ -70,18 +75,25 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFilesAdded, disabl
 
   const handlePdfSelection = useCallback((selectedImages: ImageAttachment[]) => {
     // Convert PDF pages to ProcessedImage objects
-    const processedImages: ProcessedImage[] = selectedImages.map(img => ({
-      id: generateId(),
-      file: new File([img.dataUrl], img.name, { type: 'image/png' }),
-      url: img.dataUrl,
-      name: img.name,
-      type: 'image/png',
-      size: img.size,
-      selected: false,
-      resizeEnabled: false,
-      uploadedAt: new Date()
-    }));
+    const processedImages: ProcessedImage[] = selectedImages.map(img => {
+      // Create a mock File object for the PDF page
+      const blob = dataURLtoBlob(img.dataUrl);
+      const file = new File([blob], img.name, { type: 'image/png' });
+      
+      return {
+        id: generateId(),
+        file: file,
+        url: img.dataUrl, // Use the dataUrl directly as display URL
+        name: img.name,
+        type: 'image/png',
+        size: blob.size,
+        selected: false,
+        resizeEnabled: false,
+        uploadedAt: new Date()
+      };
+    });
 
+    console.log('Adding PDF pages to gallery:', processedImages.length);
     onFilesAdded(processedImages);
     setPdfData(null);
     
@@ -90,6 +102,20 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFilesAdded, disabl
       description: `Added ${processedImages.length} page(s) from PDF to your collection.`,
     });
   }, [onFilesAdded]);
+
+  // Helper function to convert dataURL to Blob
+  const dataURLtoBlob = (dataUrl: string): Blob => {
+    const arr = dataUrl.split(',');
+    const mimeMatch = arr[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  };
 
   const handlePdfClose = useCallback(() => {
     setPdfData(null);

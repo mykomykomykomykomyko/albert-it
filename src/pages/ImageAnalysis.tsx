@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Loader2, X } from 'lucide-react';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentSelectorDialog } from '@/components/agents/AgentSelectorDialog';
 import { Agent } from '@/hooks/useAgents';
@@ -13,18 +11,18 @@ import { FileUploader } from '@/components/imageAnalysis/FileUploader';
 import { ImageGallery } from '@/components/imageAnalysis/ImageGallery';
 import { ResultsDisplay } from '@/components/imageAnalysis/ResultsDisplay';
 import { ResultsViewer } from '@/components/imageAnalysis/ResultsViewer';
+import { PromptManager } from '@/components/imageAnalysis/PromptManager';
 import { ProcessedImage, AnalysisResult, AnalysisPrompt } from '@/types/imageAnalysis';
 import { generateId } from '@/lib/utils';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
   const [images, setImages] = useState<ProcessedImage[]>([]);
-  const [customPrompt, setCustomPrompt] = useState('');
+  const [prompts, setPrompts] = useState<AnalysisPrompt[]>([]);
+  const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
   const [showAgentSelector, setShowAgentSelector] = useState(false);
-  const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<AnalysisResult[]>([]);
-  const [prompts, setPrompts] = useState<AnalysisPrompt[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [showResultsViewer, setShowResultsViewer] = useState(false);
 
@@ -40,7 +38,12 @@ export default function ImageAnalysis() {
   };
 
   const handleFilesAdded = (newImages: ProcessedImage[]) => {
-    setImages(prev => [...prev, ...newImages]);
+    console.log('handleFilesAdded called with:', newImages.length, 'images');
+    setImages(prev => {
+      const updated = [...prev, ...newImages];
+      console.log('Updated images state:', updated.length, 'total images');
+      return updated;
+    });
   };
 
   const handleImageSelect = (imageId: string) => {
@@ -71,10 +74,18 @@ export default function ImageAnalysis() {
   };
 
   const handleSelectAgent = (agent: Agent) => {
-    setCurrentAgent(agent);
-    setCustomPrompt(agent.user_prompt);
+    // Add agent as a new prompt
+    const agentPrompt: AnalysisPrompt = {
+      id: generateId(),
+      name: agent.name,
+      content: agent.user_prompt,
+      createdAt: new Date()
+    };
+    
+    setPrompts(prev => [...prev, agentPrompt]);
+    setSelectedPromptIds(prev => [...prev, agentPrompt.id]);
     setShowAgentSelector(false);
-    toast.success(`Agent "${agent.name}" selected`);
+    toast.success(`Agent "${agent.name}" added to prompts`);
   };
 
   const handleImageClick = (imageId: string) => {
@@ -113,6 +124,13 @@ export default function ImageAnalysis() {
 
   const convertImageToDataUrl = (image: ProcessedImage): Promise<string> => {
     return new Promise((resolve, reject) => {
+      // If URL is already a data URL, return it
+      if (image.url.startsWith('data:')) {
+        resolve(image.url);
+        return;
+      }
+
+      // Otherwise read from file
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target?.result as string);
       reader.onerror = reject;
@@ -122,148 +140,144 @@ export default function ImageAnalysis() {
 
   const startAnalysis = async () => {
     const selectedImages = images.filter(img => img.selected);
+    const selectedPrompts = prompts.filter(p => selectedPromptIds.includes(p.id));
     
     if (selectedImages.length === 0) {
       toast.error('Please select at least one image');
       return;
     }
 
-    const prompt = customPrompt.trim();
-    if (!prompt) {
-      toast.error('Please enter a prompt or select an agent');
+    if (selectedPrompts.length === 0) {
+      toast.error('Please select at least one prompt');
       return;
     }
 
     setIsAnalyzing(true);
 
-    // Create a prompt entry
-    const promptEntry: AnalysisPrompt = {
-      id: generateId(),
-      name: currentAgent?.name || 'Custom Prompt',
-      content: prompt,
-      createdAt: new Date()
-    };
-    setPrompts(prev => [...prev, promptEntry]);
-
-    const newResults: AnalysisResult[] = [];
+    const totalAnalyses = selectedImages.length * selectedPrompts.length;
+    let completedAnalyses = 0;
 
     try {
+      // Run analysis for each image-prompt combination
       for (const image of selectedImages) {
-        const resultId = generateId();
-        
-        // Create pending result
-        const pendingResult: AnalysisResult = {
-          id: resultId,
-          imageId: image.id,
-          promptId: promptEntry.id,
-          content: '',
-          status: 'processing',
-          processingTime: 0,
-          createdAt: new Date()
-        };
-        newResults.push(pendingResult);
-        setResults(prev => [...prev, pendingResult]);
-
-        const startTime = Date.now();
-
-        try {
-          // Get image data URL
-          let imageDataUrl = image.url;
-          if (image.url.startsWith('blob:')) {
-            imageDataUrl = await convertImageToDataUrl(image);
-          }
-
-          // Resize if enabled
-          if (image.resizeEnabled) {
-            imageDataUrl = await resizeImage(imageDataUrl, 1000);
-          }
-
-          const systemPrompt = currentAgent?.system_prompt || 'You are a helpful AI assistant that analyzes images.';
+        for (const prompt of selectedPrompts) {
+          const resultId = generateId();
           
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-              },
-              body: JSON.stringify({
-                message: prompt,
-                images: [imageDataUrl],
-                systemPrompt,
-                messageHistory: []
-              })
+          // Create pending result
+          const pendingResult: AnalysisResult = {
+            id: resultId,
+            imageId: image.id,
+            promptId: prompt.id,
+            content: '',
+            status: 'processing',
+            processingTime: 0,
+            createdAt: new Date()
+          };
+          setResults(prev => [...prev, pendingResult]);
+
+          const startTime = Date.now();
+
+          try {
+            // Get image data URL
+            let imageDataUrl = await convertImageToDataUrl(image);
+
+            // Resize if enabled
+            if (image.resizeEnabled) {
+              imageDataUrl = await resizeImage(imageDataUrl, 1000);
             }
-          );
 
-          if (!response.ok) {
-            throw new Error(`Failed to analyze ${image.name}`);
-          }
+            const systemPrompt = 'You are a helpful AI assistant that analyzes images.';
+            
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+                },
+                body: JSON.stringify({
+                  message: prompt.content,
+                  images: [imageDataUrl],
+                  systemPrompt,
+                  messageHistory: []
+                })
+              }
+            );
 
-          const reader = response.body?.getReader();
-          const decoder = new TextDecoder();
-          let resultText = '';
+            if (!response.ok) {
+              throw new Error(`Failed to analyze ${image.name} with ${prompt.name}`);
+            }
 
-          if (reader) {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              
-              const chunk = decoder.decode(value);
-              const lines = chunk.split('\n');
-              
-              for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                  try {
-                    const data = JSON.parse(line.slice(6));
-                    if (data.text) {
-                      resultText += data.text;
-                      // Update result in real-time
-                      setResults(prev =>
-                        prev.map(r =>
-                          r.id === resultId
-                            ? { ...r, content: resultText }
-                            : r
-                        )
-                      );
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let resultText = '';
+
+            if (reader) {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+                
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    try {
+                      const data = JSON.parse(line.slice(6));
+                      if (data.text) {
+                        resultText += data.text;
+                        // Update result in real-time
+                        setResults(prev =>
+                          prev.map(r =>
+                            r.id === resultId
+                              ? { ...r, content: resultText }
+                              : r
+                          )
+                        );
+                      }
+                    } catch (e) {
+                      // Ignore parse errors
                     }
-                  } catch (e) {
-                    // Ignore parse errors
                   }
                 }
               }
             }
+
+            const processingTime = Date.now() - startTime;
+
+            // Update result to completed
+            setResults(prev =>
+              prev.map(r =>
+                r.id === resultId
+                  ? { ...r, status: 'completed', processingTime }
+                  : r
+              )
+            );
+
+            completedAnalyses++;
+            console.log(`Completed ${completedAnalyses}/${totalAnalyses} analyses`);
+
+          } catch (error) {
+            console.error(`Error analyzing ${image.name} with ${prompt.name}:`, error);
+            setResults(prev =>
+              prev.map(r =>
+                r.id === resultId
+                  ? {
+                      ...r,
+                      status: 'error',
+                      content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                      processingTime: Date.now() - startTime
+                    }
+                  : r
+              )
+            );
+            completedAnalyses++;
           }
-
-          const processingTime = Date.now() - startTime;
-
-          // Update result to completed
-          setResults(prev =>
-            prev.map(r =>
-              r.id === resultId
-                ? { ...r, status: 'completed', processingTime }
-                : r
-            )
-          );
-        } catch (error) {
-          console.error(`Error analyzing ${image.name}:`, error);
-          setResults(prev =>
-            prev.map(r =>
-              r.id === resultId
-                ? {
-                    ...r,
-                    status: 'error',
-                    content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                    processingTime: Date.now() - startTime
-                  }
-                : r
-            )
-          );
         }
       }
 
-      toast.success(`Analysis complete for ${selectedImages.length} image(s)`);
+      toast.success(`Analysis complete: ${completedAnalyses} results generated`);
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error('Analysis failed');
@@ -272,7 +286,7 @@ export default function ImageAnalysis() {
     }
   };
 
-  const selectedCount = images.filter(img => img.selected).length;
+  const selectedImageCount = images.filter(img => img.selected).length;
   const selectedImage = selectedImageId ? images.find(img => img.id === selectedImageId) || null : null;
 
   return (
@@ -288,64 +302,35 @@ export default function ImageAnalysis() {
             {/* File Uploader */}
             <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
 
-            {/* Agent & Prompt Controls */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Analysis Configuration</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setShowAgentSelector(true)}
-                    variant="outline"
-                    className="flex-1"
-                    disabled={isAnalyzing}
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {currentAgent ? currentAgent.name : 'Select Agent'}
-                  </Button>
-                  {currentAgent && (
-                    <Button
-                      onClick={() => {
-                        setCurrentAgent(null);
-                        setCustomPrompt('');
-                      }}
-                      variant="ghost"
-                      size="icon"
-                      disabled={isAnalyzing}
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
+            {/* Prompt Manager */}
+            <PromptManager
+              prompts={prompts}
+              selectedPromptIds={selectedPromptIds}
+              onPromptsChange={setPrompts}
+              onSelectionChange={setSelectedPromptIds}
+              onOpenAgentSelector={() => setShowAgentSelector(true)}
+              disabled={isAnalyzing}
+            />
 
-                <Textarea
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="Enter your analysis prompt here..."
-                  className="min-h-[100px]"
-                  disabled={isAnalyzing}
-                />
-
-                <Button
-                  onClick={startAnalysis}
-                  disabled={isAnalyzing || selectedCount === 0 || !customPrompt.trim()}
-                  className="w-full"
-                >
-                  {isAnalyzing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Analyze {selectedCount} Image{selectedCount !== 1 ? 's' : ''}
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Analysis Button */}
+            <Button
+              onClick={startAnalysis}
+              disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
+              className="w-full"
+              size="lg"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Analyze {selectedImageCount} Image{selectedImageCount !== 1 ? 's' : ''} × {selectedPromptIds.length} Prompt{selectedPromptIds.length !== 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
           </div>
 
           {/* Image Gallery */}
@@ -356,7 +341,7 @@ export default function ImageAnalysis() {
               onImageRemove={handleImageRemove}
               onSelectAll={handleSelectAll}
               onDeselectAll={handleDeselectAll}
-              selectedCount={selectedCount}
+              selectedCount={selectedImageCount}
               onImageClick={handleImageClick}
               onResizeToggle={handleResizeToggle}
             />
@@ -368,7 +353,7 @@ export default function ImageAnalysis() {
           <div className="p-6 border-b border-border">
             <h3 className="text-xl font-semibold">Analysis Results</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {results.length} result{results.length !== 1 ? 's' : ''}
+              {results.length} result{results.length !== 1 ? 's' : ''} generated
             </p>
           </div>
 
