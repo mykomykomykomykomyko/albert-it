@@ -298,8 +298,8 @@ export default function ImageAnalysis() {
       <div className="flex-1 overflow-hidden flex min-h-0">
         {/* Left Panel - Images & Controls */}
         <div className="w-1/2 border-r border-border flex flex-col min-h-0">
-          {/* Controls Section - Scrollable */}
-          <div className="overflow-y-auto border-b border-border">
+          {/* Controls Section - Fixed max height */}
+          <div className="max-h-[50vh] overflow-y-auto border-b border-border flex-shrink-0">
             <div className="p-6 space-y-4">
               <h2 className="text-2xl font-bold">Image Analysis</h2>
               
@@ -338,8 +338,8 @@ export default function ImageAnalysis() {
             </div>
           </div>
 
-          {/* Image Gallery Section - Fixed Height, Scrollable */}
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          {/* Image Gallery Section - Takes remaining space */}
+          <div className="flex-1 overflow-y-auto bg-background">
             <div className="p-6">
               <ImageGallery
                 images={images}
