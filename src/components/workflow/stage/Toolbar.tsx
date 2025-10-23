@@ -1,7 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Play, Plus, Save, Upload, Trash2, HelpCircle } from "lucide-react";
-import { useRef, useState } from "react";
-import { HelpModal } from "./HelpModal";
+import { Play, Plus, Save, Upload, Trash2 } from "lucide-react";
 
 interface ToolbarProps {
   onAddStage: () => void;
@@ -18,12 +16,10 @@ export const Toolbar = ({
   onLoad,
   onClear
 }: ToolbarProps) => {
-  const [helpOpen, setHelpOpen] = useState(false);
-
   return (
     <header className="h-16 border-b border-border bg-card items-center justify-between px-6 shadow-sm hidden lg:flex">
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" className="gap-2" onClick={onAddStage}>
+        <Button variant="outline" size="sm" className="gap-2" onClick={onAddStage}>
           <Plus className="h-4 w-4" />
           Stage
         </Button>
@@ -40,10 +36,6 @@ export const Toolbar = ({
           <Trash2 className="h-4 w-4" />
           Clear
         </Button>
-        <Button variant="outline" size="sm" className="gap-2" onClick={() => setHelpOpen(true)}>
-          <HelpCircle className="h-4 w-4" />
-          Help
-        </Button>
       </div>
       <Button
         size="sm"
@@ -53,7 +45,6 @@ export const Toolbar = ({
         <Play className="h-4 w-4" />
         Run
       </Button>
-      <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
     </header>
   );
 };

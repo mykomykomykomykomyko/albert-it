@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, X } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, X, HelpCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -17,6 +17,7 @@ export function ChatHeader() {
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const currentTab = location.pathname.startsWith('/agents') ? 'agents' :
                      location.pathname.startsWith('/chat') ? 'chat' :
@@ -116,6 +117,15 @@ export function ChatHeader() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => setHelpOpen(true)}
+            title="Help"
+            className="hover:bg-accent"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleTheme}
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className="hover:bg-accent"
@@ -179,6 +189,17 @@ export function ChatHeader() {
                 variant="ghost"
                 className="justify-start"
                 onClick={() => {
+                  setHelpOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Help
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => {
                   toggleTheme();
                   setMobileMenuOpen(false);
                 }}
@@ -210,6 +231,21 @@ export function ChatHeader() {
           </SheetContent>
         </Sheet>
       </div>
+      
+      {/* Help Modal - Only render on /stage route */}
+      {location.pathname === '/stage' && (
+        <>
+          {/* Dynamically import HelpModal to avoid issues on other pages */}
+          {helpOpen && (
+            <div>
+              {(() => {
+                const { HelpModal } = require('@/components/workflow/stage/HelpModal');
+                return <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />;
+              })()}
+            </div>
+          )}
+        </>
+      )}
     </header>
   );
 }
