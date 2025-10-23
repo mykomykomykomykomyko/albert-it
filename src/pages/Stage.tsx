@@ -61,8 +61,16 @@ const Stage = () => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(true);
 
-  const selectedAgent = selectedNode 
+  // Auto-open properties panel when a node is selected
+  useEffect(() => {
+    if (selectedNode) {
+      setPropertiesPanelOpen(true);
+    }
+  }, [selectedNode]);
+
+  const selectedAgent = selectedNode
     ? workflow.stages.flatMap(s => s.nodes).find(n => n.id === selectedNode && n.nodeType === "agent") as AgentNode | undefined
     : undefined;
 
@@ -509,8 +517,10 @@ const Stage = () => {
               onDeselectAgent={() => setSelectedNode(null)}
               onRunAgent={handleRunAgent}
               onRunFunction={handleRunFunction}
+              onClosePanel={() => setPropertiesPanelOpen(false)}
             />
           }
+          propertiesPanelOpen={propertiesPanelOpen}
           onAddStage={addStage}
           onRun={handleRun}
           onSave={handleSave}

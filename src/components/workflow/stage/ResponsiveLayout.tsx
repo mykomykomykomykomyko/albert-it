@@ -7,6 +7,7 @@ interface ResponsiveLayoutProps {
   mobileCanvas: ReactNode;
   desktopCanvas: ReactNode;
   properties: ReactNode;
+  propertiesPanelOpen: boolean;
   onAddStage: () => void;
   onRun: () => void;
   onSave: () => void;
@@ -20,6 +21,7 @@ export const ResponsiveLayout = ({
   mobileCanvas,
   desktopCanvas,
   properties,
+  propertiesPanelOpen,
   onAddStage,
   onRun,
   onSave,
@@ -82,9 +84,11 @@ export const ResponsiveLayout = ({
           {desktopCanvas}
         </div>
         
-        <div className="w-80 xl:w-96 flex-shrink-0 border-l border-border overflow-y-auto bg-card">
-          {properties}
-        </div>
+        {propertiesPanelOpen && (
+          <div className="w-80 xl:w-96 flex-shrink-0 border-l border-border overflow-y-auto bg-card">
+            {properties}
+          </div>
+        )}
       </div>
     </div>
   );

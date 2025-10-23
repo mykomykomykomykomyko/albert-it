@@ -51,6 +51,7 @@ interface PropertiesPanelProps {
   onDeselectAgent: () => void;
   onRunAgent: (agentId: string, customInput?: string) => void;
   onRunFunction?: (functionId: string, customInput?: string) => void;
+  onClosePanel?: () => void;
 }
 
 const availableTools = [
@@ -72,6 +73,7 @@ export const PropertiesPanel = ({
   onDeselectAgent,
   onRunAgent,
   onRunFunction,
+  onClosePanel,
 }: PropertiesPanelProps) => {
   const [toolDialogOpen, setToolDialogOpen] = useState(false);
   const [configDialogInstance, setConfigDialogInstance] = useState<string | null>(null);
@@ -586,7 +588,15 @@ export const PropertiesPanel = ({
             {activeNode.nodeType === "function" && "Function Properties"}
             {activeNode.nodeType === "tool" && "Tool Properties"}
           </h3>
-          <Button variant="ghost" size="sm" onClick={onDeselectAgent} className="lg:flex hidden">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => {
+              if (onClosePanel) onClosePanel();
+            }} 
+            className="lg:flex hidden"
+            title="Close panel"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
