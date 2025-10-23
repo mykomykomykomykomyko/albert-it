@@ -25,7 +25,7 @@ export const Toolbar = ({
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="sm" className="gap-2" onClick={onAddStage}>
           <Plus className="h-4 w-4" />
-          Add Stage
+          Stage
         </Button>
         <div className="w-px h-6 bg-border mx-2" />
         <Button variant="outline" size="sm" className="gap-2" onClick={onLoad}>
