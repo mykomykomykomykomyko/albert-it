@@ -233,7 +233,7 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
             <StatusIcon className="h-3 w-3" />
             <span className="text-xs capitalize">{agent.status || 'idle'}</span>
           </div>
-          {agent.tools.length > 0 && (
+          {agent.tools && agent.tools.length > 0 && (
             <Badge variant="outline" className="text-xs">
               {agent.tools.length} tools
             </Badge>

@@ -1,9 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { AgentNode } from "./AgentNode";
 import { FunctionNode } from "./FunctionNode";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { FunctionSelector } from "@/components/workflow/FunctionSelector";
+import { AgentSelector } from "@/components/workflow/AgentSelector";
 import { useState } from "react";
 import type { Stage as StageType } from "@/types/workflow";
 
@@ -33,15 +35,77 @@ export const Stage = ({
   connectingFrom,
   layoutId = 'default',
   onSelectNode,
+  onAddAgent,
+  onAddNode,
   onDeleteAgent,
   onDeleteStage,
   onRenameStage,
+  onReorderStages,
   onToggleMinimize,
   onPortClick,
 }: StageProps) => {
+  const [isAddAgentOpen, setIsAddAgentOpen] = useState(false);
+  const [isAddFunctionOpen, setIsAddFunctionOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const displayName = stage.name || `Stage ${stageNumber}`;
   const [editedName, setEditedName] = useState(displayName);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("stageIndex", stageIndex.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    const templateData = e.dataTransfer.types.includes("agenttemplate");
+    const stageData = e.dataTransfer.types.includes("text/plain");
+    
+    if (templateData) {
+      e.currentTarget.classList.add("border-primary");
+    } else if (stageData) {
+      e.dataTransfer.dropEffect = "move";
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.currentTarget.classList.remove("border-primary");
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove("border-primary");
+    
+    const templateData = e.dataTransfer.getData("agentTemplate");
+    const nodeType = e.dataTransfer.getData("nodeType") as "agent" | "function" | "tool";
+    const draggedStageIndex = e.dataTransfer.getData("stageIndex");
+    
+    if (templateData) {
+      const template = JSON.parse(templateData);
+      if (nodeType && nodeType !== "agent") {
+        onAddNode(stage.id, template, nodeType);
+      } else {
+        onAddAgent(stage.id, template);
+      }
+    } else if (draggedStageIndex) {
+      const fromIndex = parseInt(draggedStageIndex);
+      if (fromIndex !== stageIndex) {
+        onReorderStages(fromIndex, stageIndex);
+      }
+    }
+  };
+
+  const completedNodes = stage.nodes.filter((n) => n.status === "complete").length;
+  const progress = stage.nodes.length > 0 ? (completedNodes / stage.nodes.length) * 100 : 0;
+
+  const handleAddAgent = (template: any) => {
+    onAddAgent(stage.id, template);
+    setIsAddAgentOpen(false);
+  };
+
+  const handleAddFunction = (functionDef: any) => {
+    onAddNode(stage.id, functionDef, "function");
+    setIsAddFunctionOpen(false);
+  };
 
   const handleNameBlur = () => {
     if (editedName.trim() && editedName !== displayName) {
@@ -61,12 +125,14 @@ export const Stage = ({
     }
   };
 
-  const completedNodes = stage.nodes.filter((n) => n.status === "complete").length;
-  const progress = stage.nodes.length > 0 ? (completedNodes / stage.nodes.length) * 100 : 0;
-
   return (
     <Card
       className="p-3 bg-card/80 backdrop-blur border-border/60 shadow-md transition-colors w-full max-w-full"
+      draggable
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       style={{ position: 'relative', zIndex: 1 }}
     >
       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/60">
@@ -91,6 +157,39 @@ export const Stage = ({
           )}
           <p className="text-xs text-muted-foreground hidden lg:block">Drag agents here to add them</p>
         </div>
+        
+        {/* Mobile Add Agent and Add Function Buttons */}
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="lg:hidden gap-2"
+          onClick={() => setIsAddAgentOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+          Add Agent
+        </Button>
+
+        <AgentSelector
+          open={isAddAgentOpen}
+          onOpenChange={setIsAddAgentOpen}
+          onSelectAgent={handleAddAgent}
+        />
+
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="lg:hidden gap-2"
+          onClick={() => setIsAddFunctionOpen(true)}
+        >
+          <Plus className="h-4 w-4" />
+          Add Function
+        </Button>
+
+        <FunctionSelector
+          open={isAddFunctionOpen}
+          onOpenChange={setIsAddFunctionOpen}
+          onSelectFunction={handleAddFunction}
+        />
         
         <Button variant="ghost" size="sm" onClick={() => onDeleteStage(stage.id)}>
           <Trash2 className="h-4 w-4 text-destructive" />
