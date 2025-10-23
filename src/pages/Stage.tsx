@@ -6,9 +6,12 @@ import { WorkflowCanvas } from "@/components/workflow/stage/WorkflowCanvas";
 import { Sidebar } from "@/components/workflow/stage/Sidebar";
 import { PropertiesPanel } from "@/components/workflow/stage/PropertiesPanel";
 import { OutputLog, LogEntry } from "@/components/workflow/stage/OutputLog";
+import { SaveWorkflowDialog } from "@/components/workflow/SaveWorkflowDialog";
+import { LoadWorkflowDialog } from "@/components/workflow/LoadWorkflowDialog";
 import type { Workflow, Stage as StageType, AgentNode, FunctionNode, Connection } from "@/types/workflow";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
+import { supabase } from "@/integrations/supabase/client";
 
 const Stage = () => {
   const { agents: savedAgents } = useAgents();
@@ -205,40 +208,21 @@ const Stage = () => {
     }));
   };
 
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+
   const handleSave = () => {
-    const json = JSON.stringify({ workflow, workflowName, customAgents, userInput }, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${workflowName || 'workflow'}-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Workflow saved successfully");
-    addLog("success", "Workflow saved");
+    setSaveDialogOpen(true);
   };
 
-  const handleLoad = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = JSON.parse(e.target?.result as string);
-        if (data.workflow) {
-          setWorkflow(data.workflow);
-          setWorkflowName(data.workflowName || "");
-          setCustomAgents(data.customAgents || []);
-          setUserInput(data.userInput || "");
-          toast.success("Workflow loaded successfully");
-          addLog("success", "Workflow loaded");
-        }
-      } catch (error) {
-        toast.error("Failed to load workflow");
-        addLog("error", "Failed to load workflow");
-      }
-    };
-    reader.readAsText(file);
+  const handleLoad = (data: any) => {
+    if (data.workflow) {
+      setWorkflow(data.workflow);
+      setWorkflowName(data.workflowName || "");
+      setCustomAgents(data.customAgents || []);
+      setUserInput(data.userInput || "");
+      addLog("success", "Workflow loaded");
+    }
   };
 
   const handleClear = () => {
@@ -253,24 +237,90 @@ const Stage = () => {
     }
   };
 
-  const handleRun = () => {
+  const handleRun = async () => {
     addLog("running", "Starting workflow execution...");
-    toast.info("Workflow execution coming soon!");
-    setTimeout(() => {
-      addLog("info", "Workflow execution complete");
-    }, 1000);
+    
+    try {
+      // Execute stages in sequence
+      for (const stage of workflow.stages) {
+        addLog("info", `Executing stage: ${stage.name}`);
+        
+        // Execute nodes in parallel within each stage
+        await Promise.all(stage.nodes.map(async (node) => {
+          if (node.nodeType === 'agent') {
+            await handleRunAgent(node.id);
+          } else if (node.nodeType === 'function') {
+            await handleRunFunction(node.id);
+          }
+        }));
+      }
+      
+      addLog("success", "Workflow execution complete");
+      toast.success("Workflow execution complete");
+    } catch (error) {
+      console.error('Workflow execution error:', error);
+      addLog("error", `Workflow execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error("Workflow execution failed");
+    }
   };
 
-  const handleRunAgent = (agentId: string, customInput?: string) => {
+  const handleRunAgent = async (agentId: string, customInput?: string) => {
     const node = workflow.stages.flatMap(s => s.nodes).find(n => n.id === agentId);
-    addLog("running", `Running ${node?.name}...`);
-    toast.info(`Running ${node?.name}...`);
+    if (!node || node.nodeType !== 'agent') return;
+
+    handleUpdateNode(agentId, { status: 'running' });
+    addLog("running", `Running ${node.name}...`);
+    
+    try {
+      const agentNode = node as any;
+      const { data, error } = await supabase.functions.invoke('run-agent', {
+        body: {
+          systemPrompt: agentNode.systemPrompt || '',
+          userPrompt: customInput || agentNode.userPrompt || userInput,
+          tools: agentNode.tools || []
+        }
+      });
+
+      if (error) throw error;
+      
+      handleUpdateNode(agentId, { 
+        status: 'complete',
+        output: data.output 
+      });
+      addLog("success", `${node.name} completed`);
+    } catch (error) {
+      console.error('Agent execution error:', error);
+      handleUpdateNode(agentId, { status: 'error' });
+      addLog("error", `${node.name} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
-  const handleRunFunction = (functionId: string, customInput?: string) => {
+  const handleRunFunction = async (functionId: string, customInput?: string) => {
     const node = workflow.stages.flatMap(s => s.nodes).find(n => n.id === functionId);
-    addLog("running", `Executing ${node?.name}...`);
-    toast.info(`Executing ${node?.name}...`);
+    if (!node || node.nodeType !== 'function') return;
+
+    handleUpdateNode(functionId, { status: 'running' });
+    addLog("running", `Executing ${node.name}...`);
+    
+    try {
+      const functionNode = node as any;
+      const { FunctionExecutor } = await import('@/lib/functionExecutor');
+      const result = await FunctionExecutor.execute(functionNode, customInput || userInput);
+      
+      if (result.success) {
+        handleUpdateNode(functionId, { 
+          status: 'complete',
+          output: JSON.stringify(result.outputs)
+        });
+        addLog("success", `${node.name} completed`);
+      } else {
+        throw new Error(result.error || 'Function execution failed');
+      }
+    } catch (error) {
+      console.error('Function execution error:', error);
+      handleUpdateNode(functionId, { status: 'error' });
+      addLog("error", `${node.name} failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   return (
@@ -279,9 +329,22 @@ const Stage = () => {
       <Toolbar
         onAddStage={addStage}
         onSave={handleSave}
-        onLoad={handleLoad}
+        onLoad={() => setLoadDialogOpen(true)}
         onClear={handleClear}
         onRun={handleRun}
+      />
+      
+      <SaveWorkflowDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        workflowData={{ workflow, workflowName, customAgents, userInput }}
+        currentName={workflowName}
+      />
+      
+      <LoadWorkflowDialog
+        open={loadDialogOpen}
+        onOpenChange={setLoadDialogOpen}
+        onLoad={handleLoad}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">

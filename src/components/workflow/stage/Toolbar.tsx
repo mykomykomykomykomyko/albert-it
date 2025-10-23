@@ -6,7 +6,7 @@ import { HelpModal } from "./HelpModal";
 interface ToolbarProps {
   onAddStage: () => void;
   onSave: () => void;
-  onLoad: (file: File) => void;
+  onLoad: () => void;
   onClear: () => void;
   onRun: () => void;
 }
@@ -18,20 +18,7 @@ export const Toolbar = ({
   onClear,
   onRun
 }: ToolbarProps) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [helpOpen, setHelpOpen] = useState(false);
-
-  const handleLoadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onLoad(file);
-      e.target.value = "";
-    }
-  };
 
   return (
     <header className="h-16 border-b border-border bg-card items-center justify-between px-6 shadow-sm hidden lg:flex">
@@ -53,11 +40,10 @@ export const Toolbar = ({
           Add Stage
         </Button>
         <div className="w-px h-6 bg-border mx-2" />
-        <Button variant="outline" size="sm" className="gap-2" onClick={handleLoadClick}>
+        <Button variant="outline" size="sm" className="gap-2" onClick={onLoad}>
           <Upload className="h-4 w-4" />
           Load
         </Button>
-        <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleFileChange} />
         <Button variant="outline" size="sm" className="gap-2" onClick={onSave}>
           <Save className="h-4 w-4" />
           Save
