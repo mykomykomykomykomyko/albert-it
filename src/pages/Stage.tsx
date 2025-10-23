@@ -62,6 +62,7 @@ const Stage = () => {
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Auto-open properties panel when a node is selected
   useEffect(() => {
@@ -465,6 +466,8 @@ const Stage = () => {
               customAgents={customAgents}
               onCustomAgentsChange={setCustomAgents}
               savedAgents={savedAgents}
+              isCollapsed={sidebarCollapsed}
+              onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             />
           }
           mobileCanvas={
@@ -521,6 +524,7 @@ const Stage = () => {
             />
           }
           propertiesPanelOpen={propertiesPanelOpen}
+          sidebarCollapsed={sidebarCollapsed}
           onAddStage={addStage}
           onRun={handleRun}
           onSave={handleSave}

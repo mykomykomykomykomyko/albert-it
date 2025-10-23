@@ -3,7 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye, Zap } from "lucide-react";
+import { Upload, Search, FileText, Bot, Plus, Download, Trash2, X, Eye, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useRef } from "react";
@@ -78,6 +78,8 @@ interface SidebarProps {
   customAgents: any[];
   onCustomAgentsChange: (agents: any[]) => void;
   savedAgents: Agent[];
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 export const Sidebar = ({
   onAddAgent,
@@ -89,7 +91,9 @@ export const Sidebar = ({
   onWorkflowNameChange,
   customAgents,
   onCustomAgentsChange,
-  savedAgents
+  savedAgents,
+  isCollapsed = false,
+  onToggleCollapse
 }: SidebarProps) => {
   const [functionSearch, setFunctionSearch] = useState("");
   const [functionCategory, setFunctionCategory] = useState<string>("all");
@@ -515,6 +519,28 @@ export const Sidebar = ({
           </div>
         </div>
       </ScrollArea>
+      
+      {/* Collapse Button */}
+      {onToggleCollapse && (
+        <div className="p-4 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-start"
+            onClick={onToggleCollapse}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-4 h-4 mr-2" />
+            ) : (
+              <>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Collapse
+              </>
+            )}
+          </Button>
+        </div>
+      )}
       
       {/* View/Edit Input Modal */}
       <Dialog open={isViewInputOpen} onOpenChange={setIsViewInputOpen}>

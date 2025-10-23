@@ -8,6 +8,7 @@ interface ResponsiveLayoutProps {
   desktopCanvas: ReactNode;
   properties: ReactNode;
   propertiesPanelOpen: boolean;
+  sidebarCollapsed: boolean;
   onAddStage: () => void;
   onRun: () => void;
   onSave: () => void;
@@ -22,6 +23,7 @@ export const ResponsiveLayout = ({
   desktopCanvas,
   properties,
   propertiesPanelOpen,
+  sidebarCollapsed,
   onAddStage,
   onRun,
   onSave,
@@ -76,9 +78,11 @@ export const ResponsiveLayout = ({
 
       {/* Desktop Layout */}
       <div className="hidden lg:flex flex-1 overflow-hidden w-full">
-        <div className="w-80 flex-shrink-0 border-r border-border overflow-y-auto bg-card">
-          {sidebar}
-        </div>
+        {!sidebarCollapsed && (
+          <div className="w-80 flex-shrink-0 border-r border-border overflow-y-auto bg-card">
+            {sidebar}
+          </div>
+        )}
         
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {desktopCanvas}
