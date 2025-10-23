@@ -149,15 +149,24 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         f.id === fileId ? { ...f, progress: 50 } : f
       ));
 
-      // Call our Supabase edge function
-      const { data, error } = await supabase.functions.invoke('speech-to-text', {
+      // Call our Supabase edge function - use fetch directly for FormData
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/speech-to-text`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        },
         body: formData,
       });
 
-      if (error) {
-        throw new Error(error.message || 'Failed to transcribe audio');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to transcribe audio' }));
+        throw new Error(errorData.error || 'Failed to transcribe audio');
       }
 
+      const data = await response.json();
       console.log('Transcription response:', data); // Debug log
 
       setFiles(prev => prev.map(f => 

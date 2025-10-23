@@ -48,14 +48,17 @@ export const useStreamingAudio = () => {
 
       console.log(`Starting ${streaming ? 'streaming' : 'standard'} audio generation...`);
 
-      // Direct fetch to our edge function
+      // Use Supabase client to call the edge function
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
       const response = await fetch(
-        'https://idvecjbgndwpsspmsrsb.supabase.co/functions/v1/text-to-speech',
+        `${SUPABASE_URL}/functions/v1/text-to-speech`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkdmVjamJnbmR3cHNzcG1zcnNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc5Nzc2NDcsImV4cCI6MjA3MzU1MzY0N30.DbCUItHLys-zKRGLf6O0ypdVg7D0KoOejSDOW_bMGn0`,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           },
           body: JSON.stringify({
             text,

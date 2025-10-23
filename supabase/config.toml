@@ -39,3 +39,15 @@ verify_jwt = false
 
 [functions.web-scrape]
 verify_jwt = false
+
+[functions.get-elevenlabs-models]
+verify_jwt = false
+
+[functions.get-elevenlabs-voices]
+verify_jwt = false
+
+[functions.speech-to-text]
+verify_jwt = false
+
+[functions.text-to-speech]
+verify_jwt = false
