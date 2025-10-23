@@ -13,9 +13,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
 import { ExcelSelector } from './ExcelSelector';
-import { extractTextFromFiles, isTextFile } from '@/utils/parseText';
+import { isTextFile } from '@/utils/parseText';
 import { isExcelFile, parseExcelFile } from '@/utils/parseExcel';
 import { processPDFFile } from '@/utils/parsePdf';
+import { extractTextFromFile } from '@/utils/fileTextExtraction';
 import { AgentSelectorDialog } from './agents/AgentSelectorDialog';
 import { Agent } from '@/hooks/useAgents';
 import { Badge } from './ui/badge';
@@ -222,7 +223,7 @@ const Chat = () => {
           setImages(prev => [...prev, img]);
         };
         reader.readAsDataURL(file);
-      } else if (file.name.endsWith('.pdf')) {
+      } else if (file.name.toLowerCase().endsWith('.pdf')) {
         try {
           const pdfData = await processPDFFile(file);
           setCurrentPdfData(pdfData);
@@ -238,11 +239,20 @@ const Chat = () => {
         } catch (error) {
           toast.error(`Failed to process Excel: ${file.name}`);
         }
-      } else if (isTextFile(file)) {
-        const results = await extractTextFromFiles([file]);
-        if (results.length > 0) {
-          setFiles(prev => [...prev, ...results]);
+      } else if (file.name.toLowerCase().endsWith('.docx') || isTextFile(file)) {
+        // Handle DOCX and all text-based files (txt, json, js, css, html, etc.)
+        try {
+          const result = await extractTextFromFile(file);
+          setFiles(prev => [...prev, {
+            filename: result.filename,
+            content: result.content,
+            type: 'text'
+          }]);
+        } catch (error) {
+          toast.error(`Failed to process file: ${file.name}`);
         }
+      } else {
+        toast.error(`Unsupported file type: ${file.name}`);
       }
     }
     event.target.value = '';
@@ -573,11 +583,23 @@ const Chat = () => {
                     ))}
                     {files.map((file, idx) => (
                       <div key={idx} className="relative group flex items-center gap-2 bg-secondary text-secondary-foreground px-3 py-2 rounded-lg border">
-                        {file.type === 'pdf' ? <FileText className="h-4 w-4" /> : <FileSpreadsheet className="h-4 w-4" />}
-                        <span className="text-sm">{file.filename}</span>
+                        {file.type === 'excel' ? <FileSpreadsheet className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                        <span className="text-sm truncate max-w-[200px]" title={file.filename}>
+                          {file.filename}
+                        </span>
+                        {file.pageCount && (
+                          <span className="text-xs text-muted-foreground">
+                            ({file.pageCount} pages)
+                          </span>
+                        )}
+                        {file.totalRows && (
+                          <span className="text-xs text-muted-foreground">
+                            ({file.totalRows} rows)
+                          </span>
+                        )}
                         <button
                           onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
-                          className="ml-2"
+                          className="ml-2 hover:text-destructive transition-colors"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -636,7 +658,7 @@ const Chat = () => {
                       type="file"
                       className="hidden"
                       multiple
-                      accept="image/*,.pdf,.txt,.doc,.docx,.xlsx,.xls"
+                      accept="image/*,.pdf,.txt,.docx,.doc,.xlsx,.xls,.csv,.json,.js,.jsx,.ts,.tsx,.html,.css,.xml,.md,.log,.py,.java,.c,.cpp,.h,.hpp,.rb,.go,.rs,.php,.sh,.bat,.yaml,.yml"
                       onChange={handleFileUpload}
                     />
                     <Button
