@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, Trash2, Upload, Sparkles } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download } from "lucide-react";
 import { toast } from "sonner";
 
 const agentTypes = ['Text', 'Voice', 'Image', 'Audio', 'Multimodal'] as const;
@@ -30,6 +30,7 @@ const Agents = () => {
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [imagePrompt, setImagePrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const agentImportInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
   const [formData, setFormData] = useState<Partial<Agent & { metadata_tags_input: string }>>({
@@ -207,6 +208,100 @@ const Agents = () => {
     }
   };
 
+  const handleDownloadAllAgents = () => {
+    if (agents.length === 0) {
+      toast.error("No agents to download");
+      return;
+    }
+
+    const agentsJson = JSON.stringify(agents, null, 2);
+    const blob = new Blob([agentsJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `agents_export_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${agents.length} agent(s)`);
+  };
+
+  const handleDownloadAgent = (agent: Agent) => {
+    const agentJson = JSON.stringify(agent, null, 2);
+    const blob = new Blob([agentJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${agent.name.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded agent: ${agent.name}`);
+  };
+
+  const handleImportAgents = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.json')) {
+      toast.error("Please upload a JSON file");
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Handle both single agent and array of agents
+      const agentsToImport = Array.isArray(data) ? data : [data];
+      
+      if (agentsToImport.length === 0) {
+        toast.error("No agents found in file");
+        return;
+      }
+
+      // Validate agent structure
+      for (const agent of agentsToImport) {
+        if (!agent.name || !agent.system_prompt || !agent.user_prompt) {
+          toast.error("Invalid agent data: missing required fields");
+          return;
+        }
+      }
+
+      // Import agents
+      let successCount = 0;
+      for (const agent of agentsToImport) {
+        const agentData: AgentTemplate = {
+          name: agent.name,
+          type: agent.type || "Text",
+          description: agent.description || "",
+          system_prompt: agent.system_prompt,
+          user_prompt: agent.user_prompt,
+          icon_name: agent.icon_name || "Bot",
+          metadata_tags: agent.metadata_tags || [],
+          profile_picture_url: agent.profile_picture_url || "",
+        };
+        
+        const result = await createAgent(agentData);
+        if (result) successCount++;
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully imported ${successCount} agent(s)`);
+        await refreshAgents();
+      } else {
+        toast.error("Failed to import agents");
+      }
+    } catch (error) {
+      console.error('Error importing agents:', error);
+      toast.error("Failed to parse agent file");
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <ChatHeader />
@@ -218,20 +313,45 @@ const Agents = () => {
               <h1 className="text-3xl font-bold">Agents</h1>
               <p className="text-muted-foreground">Manage your AI agents</p>
             </div>
-            <Dialog open={isCreateOpen} onOpenChange={(open) => {
-              setIsCreateOpen(open);
-              if (!open) {
-                setEditingAgent(null);
-                resetForm();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Agent
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleDownloadAllAgents}
+                disabled={agents.length === 0}
+                title="Download all agents"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => agentImportInputRef.current?.click()}
+                title="Upload agents"
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
+              <input
+                ref={agentImportInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportAgents}
+                className="hidden"
+              />
+              <Dialog open={isCreateOpen} onOpenChange={(open) => {
+                setIsCreateOpen(open);
+                if (!open) {
+                  setEditingAgent(null);
+                  resetForm();
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Agent
+                  </Button>
+                </DialogTrigger>
+              <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>{editingAgent ? 'Edit Agent' : 'Create New Agent'}</DialogTitle>
                 </DialogHeader>
@@ -369,6 +489,7 @@ const Agents = () => {
                 </div>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           {/* Image Generation Prompt Dialog */}
@@ -458,11 +579,14 @@ const Agents = () => {
                           <Badge variant="secondary" className="mt-1">{agent.type}</Badge>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(agent)}>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => handleEdit(agent)} title="Edit agent">
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete(agent.id)}>
+                        <Button size="icon" variant="ghost" onClick={() => handleDownloadAgent(agent)} title="Download agent">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" onClick={() => handleDelete(agent.id)} title="Delete agent">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
