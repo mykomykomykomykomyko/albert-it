@@ -40,6 +40,9 @@ verify_jwt = false
 [functions.web-scrape]
 verify_jwt = false
 
+[functions.generate-agent-image]
+verify_jwt = false
+
 [functions.get-elevenlabs-models]
 verify_jwt = false
 

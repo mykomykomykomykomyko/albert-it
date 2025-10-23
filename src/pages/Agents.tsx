@@ -1,5 +1,5 @@
 import { ChatHeader } from "@/components/ChatHeader";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAgents, Agent, AgentTemplate } from "@/hooks/useAgents";
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, Trash2, Upload } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const agentTypes = ['Text', 'Voice', 'Image', 'Audio', 'Multimodal'] as const;
@@ -25,6 +25,9 @@ const Agents = () => {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
   const [formData, setFormData] = useState<Partial<Agent & { metadata_tags_input: string }>>({
@@ -135,6 +138,71 @@ const Agents = () => {
     }
   };
 
+  const handleGenerateImage = async () => {
+    if (!formData.name) {
+      toast.error("Please enter an agent name first");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-agent-image', {
+        body: { prompt: formData.name }
+      });
+
+      if (error) throw error;
+
+      setFormData({ ...formData, profile_picture_url: data.imageUrl });
+      toast.success("Profile image generated!");
+    } catch (error) {
+      console.error('Error generating image:', error);
+      toast.error("Failed to generate image");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleUploadImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image size should be less than 2MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-images')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-images')
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, profile_picture_url: publicUrl });
+      toast.success("Image uploaded successfully!");
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <ChatHeader />
@@ -207,12 +275,59 @@ const Agents = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">Profile Picture URL</label>
-                    <Input
-                      value={formData.profile_picture_url}
-                      onChange={(e) => setFormData({ ...formData, profile_picture_url: e.target.value })}
-                      placeholder="https://example.com/avatar.jpg"
-                    />
+                    <label className="text-sm font-medium">Profile Picture</label>
+                    <div className="space-y-3">
+                      {formData.profile_picture_url && (
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage src={formData.profile_picture_url} />
+                            <AvatarFallback>{formData.name?.charAt(0) || '?'}</AvatarFallback>
+                          </Avatar>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setFormData({ ...formData, profile_picture_url: "" })}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleGenerateImage}
+                          disabled={isGenerating || !formData.name}
+                          className="flex-1"
+                        >
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          {isGenerating ? "Generating..." : "Generate"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="flex-1"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {isUploading ? "Uploading..." : "Upload"}
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleUploadImage}
+                          className="hidden"
+                        />
+                      </div>
+                      <Input
+                        value={formData.profile_picture_url}
+                        onChange={(e) => setFormData({ ...formData, profile_picture_url: e.target.value })}
+                        placeholder="Or paste image URL"
+                      />
+                    </div>
                   </div>
 
                   <div>
