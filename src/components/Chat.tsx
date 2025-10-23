@@ -443,13 +443,6 @@ const Chat = () => {
         {!currentConversation ? (
           <div className="flex-1 flex items-center justify-center p-4">
             <div className="text-center max-w-md">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-10 h-10 text-white" />
-              </div>
-              <h2 className="text-3xl font-bold mb-4">Welcome to Albert</h2>
-              <p className="text-muted-foreground mb-6">
-                Your AI assistant from the Government of Alberta. Start a new conversation to begin.
-              </p>
               <Button onClick={handleNewConversation} size="lg">
                 Start New Conversation
               </Button>
