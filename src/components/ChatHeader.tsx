@@ -12,7 +12,8 @@ export function ChatHeader() {
 
   const currentTab = location.pathname.startsWith('/chat') ? 'chat' :
                      location.pathname.startsWith('/stage') ? 'stage' :
-                     location.pathname.startsWith('/canvas') ? 'canvas' : 'chat';
+                     location.pathname.startsWith('/canvas') ? 'canvas' :
+                     location.pathname.startsWith('/image') ? 'image' : 'chat';
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -87,6 +88,16 @@ export function ChatHeader() {
               }`}
             >
               Canvas
+            </button>
+            <button
+              onClick={() => navigate('/image')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'image' 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Image
             </button>
           </div>
           
