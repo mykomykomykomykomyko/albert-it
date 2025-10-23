@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_name: string
+          id: string
+          name: string
+          system_prompt: string
+          type: string
+          updated_at: string
+          user_id: string
+          user_prompt: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          name: string
+          system_prompt: string
+          type: string
+          updated_at?: string
+          user_id: string
+          user_prompt: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          name?: string
+          system_prompt?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+          user_prompt?: string
+        }
+        Relationships: []
+      }
       chat_history: {
         Row: {
           content: string

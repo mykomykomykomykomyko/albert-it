@@ -49,6 +49,7 @@ const Chat = () => {
   const [showExcelSelector, setShowExcelSelector] = useState(false);
   const [currentPdfData, setCurrentPdfData] = useState<any>(null);
   const [currentExcelData, setCurrentExcelData] = useState<any>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -396,6 +397,8 @@ const Chat = () => {
         onNewConversation={handleNewConversation}
         onSelectConversation={(id) => navigate(`/chat/${id}`)}
         onDeleteConversation={handleDeleteConversation}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
       
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
