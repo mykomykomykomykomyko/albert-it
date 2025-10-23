@@ -48,8 +48,11 @@ export function ChatHeader() {
         </button>
         
         <div className="flex items-center gap-4">
-          <Tabs defaultValue="stage" className="w-[180px]">
-            <TabsList className="grid w-full grid-cols-2 bg-secondary">
+          <Tabs defaultValue="chat" className="w-[280px]">
+            <TabsList className="grid w-full grid-cols-3 bg-secondary">
+              <TabsTrigger value="chat" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Chat
+              </TabsTrigger>
               <TabsTrigger value="stage" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 Stage
               </TabsTrigger>
