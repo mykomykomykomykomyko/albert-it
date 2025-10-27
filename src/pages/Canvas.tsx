@@ -308,7 +308,7 @@ const Canvas = () => {
     toast.success(`${template.name} added`);
   };
 
-  const handleRunNode = async (nodeId: string) => {
+  const handleRunNode = async (nodeId: string, outputsMap?: Record<string, string>) => {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
 
@@ -323,11 +323,17 @@ const Canvas = () => {
       const incomingEdges = edges.filter(e => e.target === nodeId);
       let input = globalInput;
       
+      // Prefer freshest outputs during a workflow run
+      const getOutput = (sourceId: string) => {
+        if (outputsMap && outputsMap[sourceId] !== undefined) return outputsMap[sourceId];
+        const src = nodes.find(n => n.id === sourceId);
+        return (src?.data as any)?.output ?? '';
+      };
+      
       if (incomingEdges.length > 0) {
-        const sourceNode = nodes.find(n => n.id === incomingEdges[0].source);
-        if (sourceNode && (sourceNode.data as any).output) {
-          input = (sourceNode.data as any).output;
-        }
+        const firstSource = incomingEdges[0].source;
+        const fromSource = getOutput(firstSource);
+        if (fromSource) input = fromSource;
       }
       
       let output = '';
@@ -361,10 +367,9 @@ const Canvas = () => {
           break;
           
         case 'join':
-          const joinInputs = incomingEdges.map(edge => {
-            const source = nodes.find(n => n.id === edge.source);
-            return (source?.data as any)?.output || '';
-          }).filter(Boolean);
+          const joinInputs = incomingEdges
+            .map(edge => getOutput(edge.source) || '')
+            .filter(Boolean);
           output = joinInputs.join('\n\n---\n\n');
           break;
           
@@ -376,6 +381,11 @@ const Canvas = () => {
           output = input;
       }
       
+      // Update in-memory outputs map for this run before updating UI state
+      if (outputsMap) {
+        outputsMap[nodeId] = output;
+      }
+
       setNodes(nds => nds.map(n => 
         n.id === nodeId 
           ? { ...n, data: { ...n.data, status: 'success', output } }
@@ -401,6 +411,7 @@ const Canvas = () => {
       // Build execution order based on dependencies
       const executed = new Set<string>();
       const executing = new Set<string>();
+      const outputs: Record<string, string> = {};
       
       const canExecute = (nodeId: string): boolean => {
         // Find all incoming edges to this node
@@ -412,7 +423,7 @@ const Canvas = () => {
       const executeNode = async (nodeId: string) => {
         if (executed.has(nodeId) || executing.has(nodeId)) return;
         executing.add(nodeId);
-        await handleRunNode(nodeId);
+        await handleRunNode(nodeId, outputs);
         executing.delete(nodeId);
         executed.add(nodeId);
       };
