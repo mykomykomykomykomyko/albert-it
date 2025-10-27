@@ -136,31 +136,13 @@ export default function MeetingTranscripts() {
     setIsAnalyzing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("gemini-chat", {
-        body: {
-          messages: [
-            {
-              role: "system",
-              content: "You are an expert meeting analyst. Extract key information from meeting transcripts."
-            },
-            {
-              role: "user",
-              content: `Analyze this meeting transcript and provide:
-1. A concise executive summary (2-3 sentences)
-2. Action items in JSON format: [{\\"task\\": \\"...\\", \\"owner\\": \\"...\\", \\"deadline\\": \\"...\\"}]
-3. Key decisions made
-4. Important topics discussed
-
-Transcript:
-${transcript.content}`
-            }
-          ]
-        }
+      const { data, error } = await supabase.functions.invoke("analyze-transcript", {
+        body: { transcript: transcript.content }
       });
 
       if (error) throw error;
 
-      const analysis = data.response;
+      const analysis = data.analysis;
       
       // Try to extract action items JSON from response
       const actionItemsMatch = analysis.match(/\[[\s\S]*?\]/);

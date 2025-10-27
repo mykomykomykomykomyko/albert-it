@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.get-elevenlabs-models]
 verify_jwt = false
+
+[functions.analyze-transcript]
+verify_jwt = false
