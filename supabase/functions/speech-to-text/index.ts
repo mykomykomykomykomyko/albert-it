@@ -70,7 +70,7 @@ serve(async (req) => {
   }
 
   try {
-    const { audio, model = 'base' } = await req.json();
+    const { audio, model } = await req.json();
 
     if (!audio) {
       throw new Error('No audio data provided');
@@ -81,7 +81,10 @@ serve(async (req) => {
       throw new Error('ELEVENLABS_API_KEY is not configured');
     }
 
-    console.log(`Processing speech-to-text with model: ${model}`);
+    // Normalize model to ElevenLabs supported IDs
+    const modelId = (!model || model === 'base' || model === 'default' || model === 'scribe') ? 'scribe_v1' : model;
+
+    console.log(`Processing speech-to-text with model: ${modelId}`);
 
     // Convert base64 to binary
     const binaryAudio = Uint8Array.from(atob(audio), c => c.charCodeAt(0));
@@ -90,7 +93,7 @@ serve(async (req) => {
     // Create form data for ElevenLabs API
     const elevenlabsFormData = new FormData();
     elevenlabsFormData.append('file', audioBlob, 'audio.webm');
-    elevenlabsFormData.append('model_id', model);
+    elevenlabsFormData.append('model_id', modelId);
     elevenlabsFormData.append('response_format', 'json');
     elevenlabsFormData.append('diarize', 'true');  // Enable speaker diarization
 
