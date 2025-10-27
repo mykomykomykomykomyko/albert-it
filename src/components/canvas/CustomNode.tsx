@@ -115,9 +115,9 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       {data.output && (
         <div className="px-4 py-3 border-b bg-muted/10">
           <div className="text-xs font-medium text-muted-foreground mb-1.5">Latest Output</div>
-          <div className="text-xs bg-background rounded-md p-2.5 max-h-24 overflow-y-auto font-mono text-foreground border">
-            {data.output.substring(0, 150)}
-            {data.output.length > 150 && '...'}
+          <div className="text-xs bg-background rounded-md p-2.5 max-h-24 overflow-y-auto font-mono text-foreground border break-words whitespace-pre-wrap">
+            {data.output.substring(0, 200)}
+            {data.output.length > 200 && '...'}
           </div>
         </div>
       )}
