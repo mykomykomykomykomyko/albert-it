@@ -24,6 +24,7 @@ export function ChatHeader() {
                      location.pathname.startsWith('/chat') ? 'chat' :
                      location.pathname.startsWith('/stage') ? 'stage' :
                      location.pathname.startsWith('/canvas') ? 'canvas' :
+                     location.pathname.startsWith('/transcripts') ? 'transcripts' :
                      location.pathname.startsWith('/image') ? 'image' :
                      location.pathname.startsWith('/voice') ? 'voice' : 'chat';
 
@@ -63,6 +64,7 @@ export function ChatHeader() {
     { name: 'Stage', path: '/stage', value: 'stage' },
     { name: 'Canvas', path: '/canvas', value: 'canvas' },
     { name: 'Workflow Marketplace', path: '/workflow-marketplace', value: 'workflow-marketplace' },
+    { name: 'Meeting Transcripts', path: '/transcripts', value: 'transcripts' },
     { name: 'Image', path: '/image', value: 'image' },
     { name: 'Voice', path: '/voice', value: 'voice' },
   ];
@@ -147,6 +149,16 @@ export function ChatHeader() {
               }`}
             >
               Canvas
+            </button>
+            <button
+              onClick={() => navigate('/transcripts')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'transcripts'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Transcripts
             </button>
           </div>
           

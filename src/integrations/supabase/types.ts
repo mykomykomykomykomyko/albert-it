@@ -225,6 +225,60 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_transcripts: {
+        Row: {
+          action_items: Json | null
+          content: string
+          created_at: string | null
+          file_format: string | null
+          id: string
+          is_in_knowledge_base: boolean | null
+          meeting_date: string | null
+          original_filename: string
+          participants: string[] | null
+          structured_data: Json | null
+          summary: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          action_items?: Json | null
+          content: string
+          created_at?: string | null
+          file_format?: string | null
+          id?: string
+          is_in_knowledge_base?: boolean | null
+          meeting_date?: string | null
+          original_filename: string
+          participants?: string[] | null
+          structured_data?: Json | null
+          summary?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          action_items?: Json | null
+          content?: string
+          created_at?: string | null
+          file_format?: string | null
+          id?: string
+          is_in_knowledge_base?: boolean | null
+          meeting_date?: string | null
+          original_filename?: string
+          participants?: string[] | null
+          structured_data?: Json | null
+          summary?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           agent_id: string | null
