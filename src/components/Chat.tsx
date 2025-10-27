@@ -446,10 +446,11 @@ const Chat = () => {
       const finalMessages = [...updatedMessages, assistantMessage as Message];
       setMessages(finalMessages);
 
-      // Stream response
+      // Stream response (robust SSE parsing supporting multiple formats)
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let accumulatedContent = '';
+      let textBuffer = '';
 
       if (reader) {
         console.log('📖 Starting to read stream...');
@@ -460,28 +461,40 @@ const Chat = () => {
             break;
           }
 
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
+          textBuffer += decoder.decode(value, { stream: true });
 
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const jsonStr = line.substring(6).trim();
-                if (jsonStr && jsonStr !== '{}') {
-                  const data = JSON.parse(jsonStr);
-                  if (data.text) {
-                    accumulatedContent += data.text;
-                    console.log('📝 Accumulated content:', accumulatedContent);
-                    setMessages(prev => prev.map(msg => 
-                      msg.id === assistantMessage.id 
-                        ? { ...msg, content: accumulatedContent }
-                        : msg
-                    ));
-                  }
-                }
-              } catch (e) {
-                console.warn('Failed to parse line:', line, e);
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+
+            if (line.endsWith('\r')) line = line.slice(0, -1); // handle CRLF
+            if (line.startsWith(':') || line.trim() === '') continue; // SSE comments/keepalive
+            if (!line.startsWith('data: ')) continue;
+
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') break; // Lovable AI terminator
+
+            try {
+              const data = JSON.parse(jsonStr);
+              // Support both legacy and Lovable AI formats
+              const content =
+                data.text ??
+                data.choices?.[0]?.delta?.content ??
+                data.choices?.[0]?.message?.content;
+
+              if (content) {
+                accumulatedContent += content as string;
+                setMessages(prev => prev.map(msg =>
+                  msg.id === (assistantMessage as any).id
+                    ? { ...msg, content: accumulatedContent }
+                    : msg
+                ));
               }
+            } catch (e) {
+              // Incomplete JSON; put it back and wait for more
+              textBuffer = line + '\n' + textBuffer;
+              break;
             }
           }
         }
