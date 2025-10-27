@@ -15,6 +15,23 @@ export interface Agent {
   updated_at: string;
   metadata_tags?: string[];
   profile_picture_url?: string;
+  visibility?: 'private' | 'shared' | 'pending_review' | 'published';
+  submitted_at?: string;
+  reviewed_at?: string;
+  reviewer_id?: string;
+  is_template?: boolean;
+  usage_count?: number;
+  rating?: number;
+  category?: string;
+}
+
+export interface AgentShare {
+  id: string;
+  agent_id: string;
+  shared_with_user_id: string;
+  shared_by_user_id: string;
+  permission: 'view' | 'edit';
+  created_at: string;
 }
 
 export interface AgentTemplate {
@@ -40,7 +57,7 @@ export const useAgents = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setAgents(data || []);
+      setAgents((data || []) as Agent[]);
     } catch (error) {
       console.error('Error loading agents:', error);
       toast.error('Failed to load agents');
@@ -65,9 +82,9 @@ export const useAgents = () => {
 
       if (error) throw error;
       
-      setAgents(prev => [data, ...prev]);
+      setAgents(prev => [data as Agent, ...prev]);
       toast.success('Agent created successfully');
-      return data;
+      return data as Agent;
     } catch (error) {
       console.error('Error creating agent:', error);
       toast.error('Failed to create agent');
@@ -119,6 +136,80 @@ export const useAgents = () => {
     loadAgents();
   }, []);
 
+  const shareAgent = async (agentId: string, userEmail: string, permission: 'view' | 'edit' = 'view'): Promise<boolean> => {
+    try {
+      const { data: targetUser, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', userEmail)
+        .single();
+
+      if (userError || !targetUser) {
+        toast.error('User not found');
+        return false;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      const { error } = await supabase
+        .from('agent_shares')
+        .insert({
+          agent_id: agentId,
+          shared_with_user_id: targetUser.id,
+          shared_by_user_id: user.id,
+          permission
+        });
+
+      if (error) throw error;
+
+      toast.success('Agent shared successfully');
+      return true;
+    } catch (error) {
+      console.error('Error sharing agent:', error);
+      toast.error('Failed to share agent');
+      return false;
+    }
+  };
+
+  const submitForReview = async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('agents')
+        .update({ 
+          visibility: 'pending_review',
+          submitted_at: new Date().toISOString()
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await loadAgents();
+      toast.success('Agent submitted for review');
+      return true;
+    } catch (error) {
+      console.error('Error submitting agent:', error);
+      toast.error('Failed to submit agent');
+      return false;
+    }
+  };
+
+  const loadMarketplaceAgents = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('visibility', 'published')
+        .order('usage_count', { ascending: false });
+
+      if (error) throw error;
+      return (data || []) as Agent[];
+    } catch (error) {
+      console.error('Error loading marketplace agents:', error);
+      return [];
+    }
+  };
+
   return {
     agents,
     loading,
@@ -126,5 +217,8 @@ export const useAgents = () => {
     updateAgent,
     deleteAgent,
     refreshAgents: loadAgents,
+    shareAgent,
+    submitForReview,
+    loadMarketplaceAgents,
   };
 };

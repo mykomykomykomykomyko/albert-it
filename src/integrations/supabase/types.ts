@@ -14,16 +14,418 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agent_shares: {
+        Row: {
+          agent_id: string | null
+          created_at: string | null
+          id: string
+          permission: string | null
+          shared_by_user_id: string | null
+          shared_with_user_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string | null
+          id?: string
+          permission?: string | null
+          shared_by_user_id?: string | null
+          shared_with_user_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string | null
+          id?: string
+          permission?: string | null
+          shared_by_user_id?: string | null
+          shared_with_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_shares_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          icon_name: string
+          id: string
+          is_template: boolean | null
+          metadata_tags: string[] | null
+          name: string
+          profile_picture_url: string | null
+          rating: number | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          submitted_at: string | null
+          system_prompt: string
+          type: string
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+          user_prompt: string
+          visibility: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          is_template?: boolean | null
+          metadata_tags?: string[] | null
+          name: string
+          profile_picture_url?: string | null
+          rating?: number | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          submitted_at?: string | null
+          system_prompt: string
+          type: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+          user_prompt: string
+          visibility?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          is_template?: boolean | null
+          metadata_tags?: string[] | null
+          name?: string
+          profile_picture_url?: string | null
+          rating?: number | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          submitted_at?: string | null
+          system_prompt?: string
+          type?: string
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+          user_prompt?: string
+          visibility?: string | null
+        }
+        Relationships: []
+      }
+      chat_history: {
+        Row: {
+          content: string
+          created_at: string | null
+          files: Json | null
+          id: string
+          images: Json | null
+          role: string
+          user_email: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          files?: Json | null
+          id?: string
+          images?: Json | null
+          role: string
+          user_email: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          files?: Json | null
+          id?: string
+          images?: Json | null
+          role?: string
+          user_email?: string
+        }
+        Relationships: []
+      }
+      conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          model: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          model?: string
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          model?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      frameworks: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          name: string
+          order_index: number | null
+          tags: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          name: string
+          order_index?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          name?: string
+          order_index?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prompt_executions: {
+        Row: {
+          created_at: string | null
+          execution_time_ms: number | null
+          id: string
+          input_variables: Json | null
+          output: string | null
+          prompt_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_variables?: Json | null
+          output?: string | null
+          prompt_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_variables?: Json | null
+          output?: string | null
+          prompt_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_executions_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompts: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_public: boolean | null
+          is_template: boolean | null
+          name: string
+          prompt_text: string
+          tags: string[] | null
+          updated_at: string | null
+          usage_count: number | null
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_template?: boolean | null
+          name: string
+          prompt_text: string
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_template?: boolean | null
+          name?: string
+          prompt_text?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          usage_count?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      workflows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+          workflow_data: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+          workflow_data: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+          workflow_data?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      agent_type: "Text" | "Voice" | "Image" | "Audio" | "Multimodal"
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +552,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      agent_type: ["Text", "Voice", "Image", "Audio", "Multimodal"],
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const
