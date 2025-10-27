@@ -341,7 +341,7 @@ const Canvas = () => {
           const { data, error } = await supabase.functions.invoke('run-agent', {
             body: {
               systemPrompt: nodeData.systemPrompt || '',
-              userPrompt: nodeData.userPrompt || input,
+              userPrompt: input || nodeData.userPrompt || '',
               tools: []
             }
           });
