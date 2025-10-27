@@ -377,29 +377,52 @@ const Chat = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Prepare request - maintain full message history
-      const requestPayload: any = {
-        message: fullContent,
-        messageHistory: updatedMessages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
-      };
+      // Prepare request depending on attachments
+      let requestPayload: any;
+      let endpoint = '';
 
-      // Apply agent persona if selected - only affects system prompt and current message wrapping
-      if (currentAgent) {
-        requestPayload.systemPrompt = currentAgent.system_prompt;
-        // Wrap the current message with agent's user prompt template
-        requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
+      if (images.length > 0) {
+        // Legacy image path (Gemini images function)
+        requestPayload = {
+          message: fullContent,
+          messageHistory: updatedMessages.map(msg => ({ role: msg.role, content: msg.content })),
+        };
+        if (currentAgent) {
+          requestPayload.systemPrompt = currentAgent.system_prompt;
+          requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
+        }
+        requestPayload.images = images.map(img => img.dataUrl);
+        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`;
+      } else {
+        // Default path via Lovable AI Gateway (preferred)
+        const systemPrompt = currentAgent?.system_prompt
+          || 'You are Albert, an AI assistant. Be clear, concise, and helpful.';
+
+        const chatHistory = updatedMessages.map(msg => ({ role: msg.role as 'user' | 'assistant', content: msg.content }));
+        const finalUser = currentAgent
+          ? currentAgent.user_prompt.replace('{input}', fullContent)
+          : fullContent;
+
+        const chatMessages = [
+          { role: 'system' as const, content: systemPrompt },
+          ...chatHistory,
+          { role: 'user' as const, content: finalUser },
+        ];
+
+        requestPayload = {
+          messages: chatMessages,
+          model: 'google/gemini-2.5-flash',
+        };
+        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
       }
 
       // Store payload for troubleshooting
       setLastPayload({
         timestamp: new Date().toISOString(),
-        endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'gemini-chat',
+        endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'chat',
         model: 'google/gemini-2.5-flash',
-        systemPrompt: requestPayload.systemPrompt,
-        messages: requestPayload.messageHistory,
+        systemPrompt: currentAgent?.system_prompt,
+        messages: images.length > 0 ? requestPayload.messageHistory : requestPayload.messages,
         attachments: [...images.map(img => ({ type: 'image', name: img.name })), ...files.map(f => ({ type: 'file', name: f.filename }))],
         fullRequest: requestPayload,
         payload: requestPayload,
@@ -410,20 +433,11 @@ const Chat = () => {
         } : null
       });
 
-      if (images.length > 0) {
-        requestPayload.images = images.map(img => img.dataUrl);
-      }
-
-      // Call appropriate endpoint
-      const endpoint = images.length > 0 
-        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`
-        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`;
-
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify(requestPayload),
       });
