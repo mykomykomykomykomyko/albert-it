@@ -377,52 +377,33 @@ const Chat = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Prepare request depending on attachments
-      let requestPayload: any;
-      let endpoint = '';
+      // Prepare request - maintain full message history
+      const requestPayload: any = {
+        message: fullContent,
+        messageHistory: updatedMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
+      };
+
+      // Apply agent persona if selected - only affects system prompt and current message wrapping
+      if (currentAgent) {
+        requestPayload.systemPrompt = currentAgent.system_prompt;
+        // Wrap the current message with agent's user prompt template
+        requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
+      }
 
       if (images.length > 0) {
-        // Legacy image path (Gemini images function)
-        requestPayload = {
-          message: fullContent,
-          messageHistory: updatedMessages.map(msg => ({ role: msg.role, content: msg.content })),
-        };
-        if (currentAgent) {
-          requestPayload.systemPrompt = currentAgent.system_prompt;
-          requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
-        }
         requestPayload.images = images.map(img => img.dataUrl);
-        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`;
-      } else {
-        // Default path via Lovable AI Gateway (preferred)
-        const systemPrompt = currentAgent?.system_prompt
-          || 'You are Albert, an AI assistant. Be clear, concise, and helpful.';
-
-        const chatHistory = updatedMessages.map(msg => ({ role: msg.role as 'user' | 'assistant', content: msg.content }));
-        const finalUser = currentAgent
-          ? currentAgent.user_prompt.replace('{input}', fullContent)
-          : fullContent;
-
-        const chatMessages = [
-          { role: 'system' as const, content: systemPrompt },
-          ...chatHistory,
-          { role: 'user' as const, content: finalUser },
-        ];
-
-        requestPayload = {
-          messages: chatMessages,
-          model: 'google/gemini-2.5-flash',
-        };
-        endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
       }
 
       // Store payload for troubleshooting
       setLastPayload({
         timestamp: new Date().toISOString(),
-        endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'chat',
-        model: 'google/gemini-2.5-flash',
-        systemPrompt: currentAgent?.system_prompt,
-        messages: images.length > 0 ? requestPayload.messageHistory : requestPayload.messages,
+        endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'gemini-chat',
+        model: 'gemini-2.5-flash',
+        systemPrompt: requestPayload.systemPrompt,
+        messages: requestPayload.messageHistory,
         attachments: [...images.map(img => ({ type: 'image', name: img.name })), ...files.map(f => ({ type: 'file', name: f.filename }))],
         fullRequest: requestPayload,
         payload: requestPayload,
@@ -433,11 +414,16 @@ const Chat = () => {
         } : null
       });
 
+      // Call appropriate endpoint - both use Gemini API
+      const endpoint = images.length > 0 
+        ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`
+        : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`;
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(requestPayload),
       });
@@ -460,11 +446,10 @@ const Chat = () => {
       const finalMessages = [...updatedMessages, assistantMessage as Message];
       setMessages(finalMessages);
 
-      // Stream response (robust SSE parsing supporting multiple formats)
+      // Stream response using Gemini format
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let accumulatedContent = '';
-      let textBuffer = '';
 
       if (reader) {
         console.log('📖 Starting to read stream...');
@@ -475,40 +460,27 @@ const Chat = () => {
             break;
           }
 
-          textBuffer += decoder.decode(value, { stream: true });
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
-          let newlineIndex: number;
-          while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-            let line = textBuffer.slice(0, newlineIndex);
-            textBuffer = textBuffer.slice(newlineIndex + 1);
-
-            if (line.endsWith('\r')) line = line.slice(0, -1); // handle CRLF
-            if (line.startsWith(':') || line.trim() === '') continue; // SSE comments/keepalive
-            if (!line.startsWith('data: ')) continue;
-
-            const jsonStr = line.slice(6).trim();
-            if (jsonStr === '[DONE]') break; // Lovable AI terminator
-
-            try {
-              const data = JSON.parse(jsonStr);
-              // Support both legacy and Lovable AI formats
-              const content =
-                data.text ??
-                data.choices?.[0]?.delta?.content ??
-                data.choices?.[0]?.message?.content;
-
-              if (content) {
-                accumulatedContent += content as string;
-                setMessages(prev => prev.map(msg =>
-                  msg.id === (assistantMessage as any).id
-                    ? { ...msg, content: accumulatedContent }
-                    : msg
-                ));
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonStr = line.substring(6).trim();
+                if (jsonStr && jsonStr !== '{}') {
+                  const data = JSON.parse(jsonStr);
+                  if (data.text) {
+                    accumulatedContent += data.text;
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === (assistantMessage as any).id 
+                        ? { ...msg, content: accumulatedContent }
+                        : msg
+                    ));
+                  }
+                }
+              } catch (e) {
+                console.warn('Failed to parse line:', line, e);
               }
-            } catch (e) {
-              // Incomplete JSON; put it back and wait for more
-              textBuffer = line + '\n' + textBuffer;
-              break;
             }
           }
         }
