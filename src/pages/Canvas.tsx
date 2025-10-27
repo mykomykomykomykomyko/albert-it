@@ -297,8 +297,8 @@ const Canvas = () => {
         files: [],
         config: template.config || {},
         onEdit: () => {
-          const node = nodes.find(n => n.id === id);
-          if (node) setSelectedNode(node);
+          setSelectedNode(newNode);
+          setIsRightSidebarOpen(true);
         },
         onRun: () => handleRunNode(id),
       },
@@ -484,7 +484,10 @@ const Canvas = () => {
         ...node,
         data: {
           ...node.data,
-          onEdit: () => setSelectedNode(node),
+          onEdit: () => {
+            setSelectedNode(node);
+            setIsRightSidebarOpen(true);
+          },
           onRun: () => handleRunNode(node.id),
         }
       }));
@@ -516,7 +519,10 @@ const Canvas = () => {
         ...node,
         data: {
           ...node.data,
-          onEdit: () => setSelectedNode(node as Node),
+          onEdit: () => {
+            setSelectedNode(node as Node);
+            setIsRightSidebarOpen(true);
+          },
           onRun: () => handleRunNode(node.id),
         }
       }));
@@ -530,6 +536,7 @@ const Canvas = () => {
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
+    setIsRightSidebarOpen(true);
   }, []);
 
   return (
