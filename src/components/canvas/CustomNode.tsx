@@ -57,10 +57,10 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
   return (
     <div
       className={`
-        min-w-[220px] rounded-lg border-2 shadow-lg bg-gradient-to-br
+        min-w-[240px] rounded-lg border-2 shadow-md bg-card
         transition-all duration-200
         ${getNodeColor()}
-        ${selected ? 'ring-2 ring-primary shadow-xl scale-105' : 'hover:shadow-xl'}
+        ${selected ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md hover:border-primary/30'}
       `}
     >
       {/* Input Handle */}
@@ -68,60 +68,60 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-primary !border-2 !border-primary-foreground !w-3 !h-3"
+          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
       )}
 
       {/* Node Header */}
-      <div className="px-3 py-2 border-b border-border/50 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="p-1.5 rounded-md bg-background/50">
+      <div className="px-4 py-3 border-b flex items-center justify-between gap-2 bg-muted/30">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          <div className="p-2 rounded-lg bg-background shadow-sm">
             {getIcon()}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="font-semibold text-sm truncate">{data.label}</div>
+            <div className="font-semibold text-sm truncate text-foreground">{data.label}</div>
             {data.description && (
-              <div className="text-xs text-muted-foreground truncate">{data.description}</div>
+              <div className="text-xs text-muted-foreground truncate mt-0.5">{data.description}</div>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {getStatusIcon()}
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 w-6 p-0"
+            className="h-7 w-7 p-0 hover:bg-background"
             onClick={(e) => {
               e.stopPropagation();
               data.onEdit?.();
             }}
           >
-            <Settings className="h-3 w-3" />
+            <Settings className="h-3.5 w-3.5" />
           </Button>
         </div>
       </div>
 
       {/* Node Body */}
       {data.output && (
-        <div className="px-3 py-2 border-b border-border/50">
-          <div className="text-xs text-muted-foreground mb-1">Output:</div>
-          <div className="text-xs bg-background/50 rounded p-2 max-h-20 overflow-y-auto font-mono">
-            {data.output.substring(0, 100)}
-            {data.output.length > 100 && '...'}
+        <div className="px-4 py-3 border-b bg-muted/10">
+          <div className="text-xs font-medium text-muted-foreground mb-1.5">Latest Output</div>
+          <div className="text-xs bg-background rounded-md p-2.5 max-h-24 overflow-y-auto font-mono text-foreground border">
+            {data.output.substring(0, 150)}
+            {data.output.length > 150 && '...'}
           </div>
         </div>
       )}
 
       {/* Node Footer */}
-      <div className="px-3 py-2 flex items-center justify-between">
-        <Badge variant="outline" className="text-xs">
+      <div className="px-4 py-2.5 flex items-center justify-between bg-background/50">
+        <Badge variant="secondary" className="text-xs font-medium">
           {data.nodeType}
         </Badge>
         {data.onRun && (
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-xs gap-1"
+            className="h-7 px-3 text-xs gap-1.5 hover:bg-primary hover:text-primary-foreground"
             onClick={(e) => {
               e.stopPropagation();
               data.onRun?.();
@@ -138,7 +138,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-primary !border-2 !border-primary-foreground !w-3 !h-3"
+        className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
       />
     </div>
   );

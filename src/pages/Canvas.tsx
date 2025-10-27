@@ -22,7 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, Zap, Database, X } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, Zap, Database, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -286,162 +286,180 @@ const Canvas = () => {
       <ChatHeader />
       
       {/* Toolbar */}
-      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shadow-sm">
-        <div className="flex items-center gap-2">
+      <header className="h-16 border-b bg-card flex items-center justify-between px-6 shadow-sm">
+        <div className="flex items-center gap-3">
           <Input
             value={workflowName}
             onChange={(e) => setWorkflowName(e.target.value)}
-            className="w-44 h-8 text-sm"
-            placeholder="Workflow name"
+            className="w-52 h-9 font-medium"
+            placeholder="Untitled Workflow"
           />
-          <div className="w-px h-6 bg-border mx-1" />
+          <div className="w-px h-7 bg-border mx-1" />
           <Button variant="outline" size="sm" onClick={handleLoad}>
-            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            <Upload className="h-4 w-4 mr-2" />
             Load
           </Button>
           <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="h-3.5 w-3.5 mr-1.5" />
+            <Save className="h-4 w-4 mr-2" />
             Save
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace')}>
-            <Store className="h-3.5 w-3.5 mr-1.5" />
+            <Store className="h-4 w-4 mr-2" />
             Marketplace
           </Button>
           <Button variant="outline" size="sm" onClick={handleClear}>
-            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+            <Trash2 className="h-4 w-4 mr-2" />
             Clear
           </Button>
         </div>
         <Button
-          size="sm"
-          className="gap-2 bg-gradient-to-r from-primary to-primary/80"
+          size="default"
+          className="gap-2"
           onClick={handleRunWorkflow}
+          disabled={nodes.length === 0}
         >
-          <Play className="h-3.5 w-3.5" />
+          <Play className="h-4 w-4" />
           Run Workflow
         </Button>
       </header>
       
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Node Library */}
-        <Card className="w-64 m-3 flex flex-col border-2">
-          <div className="p-3 border-b bg-muted/30">
-            <h3 className="font-semibold text-sm">Node Library</h3>
+        <Card className="w-72 m-4 flex flex-col shadow-md">
+          <div className="p-4 border-b bg-muted/20">
+            <h3 className="font-semibold text-base">Add Nodes</h3>
+            <p className="text-xs text-muted-foreground mt-1">Drag or click to add to canvas</p>
           </div>
 
           <ScrollArea className="flex-1">
-            <div className="p-3">
-              <Accordion type="single" collapsible defaultValue="agents" className="w-full">
-                <AccordionItem value="triggers">
-                  <AccordionTrigger className="text-sm py-2">
-                    <div className="flex items-center gap-2">
-                      <Database className="h-4 w-4" />
-                      Triggers
+            <div className="p-4">
+              <Accordion type="single" collapsible defaultValue="triggers" className="w-full">
+                <AccordionItem value="triggers" className="border-none">
+                  <AccordionTrigger className="text-sm py-3 hover:no-underline">
+                    <div className="flex items-center gap-2.5">
+                      <Database className="h-4 w-4 text-secondary" />
+                      <span className="font-medium">Triggers</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-1 pt-1">
+                  <AccordionContent className="space-y-1.5 pt-2 pb-3">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-8 text-xs"
+                      className="w-full justify-start h-9 hover:bg-muted"
                       onClick={() => addNode('trigger', { name: 'Manual Trigger', description: 'Start workflow manually' })}
                     >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Manual Trigger
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Manual Trigger</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-8 text-xs"
+                      className="w-full justify-start h-9 hover:bg-muted"
                       onClick={() => addNode('trigger', { name: 'Webhook', description: 'Trigger via webhook' })}
                     >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Webhook
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Webhook</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="agents">
-                  <AccordionTrigger className="text-sm py-2">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      AI Agents
+                <AccordionItem value="agents" className="border-none">
+                  <AccordionTrigger className="text-sm py-3 hover:no-underline">
+                    <div className="flex items-center gap-2.5">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="font-medium">AI Agents</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-1 pt-1">
-                    {savedAgents.slice(0, 6).map((agent) => (
-                      <Button
-                        key={agent.id}
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-start h-8 text-xs"
-                        onClick={() => addNode('agent', { 
-                          name: agent.name, 
-                          description: agent.description || 'AI Agent',
-                          systemPrompt: agent.system_prompt 
-                        })}
-                      >
-                        <Plus className="h-3 w-3 mr-2" />
-                        {agent.name}
-                      </Button>
-                    ))}
+                  <AccordionContent className="space-y-1.5 pt-2 pb-3">
+                    {savedAgents.length === 0 ? (
+                      <p className="text-xs text-muted-foreground px-2 py-3">No agents available. Create one first.</p>
+                    ) : (
+                      savedAgents.slice(0, 8).map((agent) => (
+                        <Button
+                          key={agent.id}
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start h-9 hover:bg-muted"
+                          onClick={() => addNode('agent', { 
+                            name: agent.name, 
+                            description: agent.description || 'AI Agent',
+                            systemPrompt: agent.system_prompt 
+                          })}
+                        >
+                          <Plus className="h-4 w-4 mr-2.5" />
+                          <span className="text-sm truncate">{agent.name}</span>
+                        </Button>
+                      ))
+                    )}
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="functions">
-                  <AccordionTrigger className="text-sm py-2">
-                    <div className="flex items-center gap-2">
-                      <Zap className="h-4 w-4" />
-                      Functions
+                <AccordionItem value="functions" className="border-none">
+                  <AccordionTrigger className="text-sm py-3 hover:no-underline">
+                    <div className="flex items-center gap-2.5">
+                      <Zap className="h-4 w-4 text-accent" />
+                      <span className="font-medium">Functions</span>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="space-y-1 pt-1">
+                  <AccordionContent className="space-y-1.5 pt-2 pb-3">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-8 text-xs"
+                      className="w-full justify-start h-9 hover:bg-muted"
                       onClick={() => addNode('function', { name: 'Transform', description: 'Transform data' })}
                     >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Transform Data
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Transform Data</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-8 text-xs"
+                      className="w-full justify-start h-9 hover:bg-muted"
                       onClick={() => addNode('function', { name: 'Filter', description: 'Filter results' })}
                     >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Filter
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Filter</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-8 text-xs"
+                      className="w-full justify-start h-9 hover:bg-muted"
                       onClick={() => addNode('function', { name: 'Merge', description: 'Merge data' })}
                     >
-                      <Plus className="h-3 w-3 mr-2" />
-                      Merge Data
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Merge Data</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
-              <div className="mt-4 pt-4 border-t">
-                <Label className="text-xs text-muted-foreground mb-2 block">Global Input</Label>
+              <div className="mt-5 pt-5 border-t">
+                <Label className="text-sm font-medium mb-2.5 block">Global Input</Label>
                 <Textarea
                   value={globalInput}
                   onChange={(e) => setGlobalInput(e.target.value)}
-                  placeholder="Enter workflow input..."
-                  className="min-h-[80px] text-xs"
+                  placeholder="Enter initial workflow input (optional)..."
+                  className="min-h-[100px] text-sm"
                 />
+                <p className="text-xs text-muted-foreground mt-2">This input will be available to all trigger nodes</p>
               </div>
             </div>
           </ScrollArea>
         </Card>
 
         {/* Canvas */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative bg-muted/5">
+          {nodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+              <div className="text-center space-y-3 p-8 bg-card/80 backdrop-blur-sm rounded-lg border shadow-sm max-w-md">
+                <Sparkles className="h-12 w-12 mx-auto text-primary/50" />
+                <h3 className="text-lg font-semibold">Start Building Your Workflow</h3>
+                <p className="text-sm text-muted-foreground">
+                  Add nodes from the sidebar to create your automated workflow. Connect them to define the execution flow.
+                </p>
+              </div>
+            </div>
+          )}
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -451,17 +469,17 @@ const Canvas = () => {
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
             fitView
-            className="bg-muted/20"
+            className="bg-background"
           >
             <Background 
               variant={BackgroundVariant.Dots} 
-              gap={20} 
+              gap={16} 
               size={1}
-              className="bg-background"
+              className="bg-muted/10"
             />
-            <Controls className="bg-card border border-border rounded-lg" />
+            <Controls className="bg-card border shadow-md rounded-lg" />
             <MiniMap 
-              className="bg-card border border-border rounded-lg"
+              className="bg-card border shadow-md rounded-lg"
               nodeColor={(node) => {
                 const data = node.data as CustomNodeData;
                 return data.nodeType === 'agent' 
@@ -476,13 +494,16 @@ const Canvas = () => {
 
         {/* Right Sidebar - Properties Panel */}
         {selectedNode && (
-          <Card className="w-80 m-3 flex flex-col border-2">
-            <div className="p-3 border-b bg-muted/30 flex items-center justify-between">
-              <h3 className="font-semibold text-sm">Node Settings</h3>
+          <Card className="w-96 m-4 flex flex-col shadow-md">
+            <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-base">Node Configuration</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Configure selected node</p>
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0"
+                className="h-8 w-8 p-0"
                 onClick={() => setSelectedNode(null)}
               >
                 <X className="h-4 w-4" />
@@ -490,70 +511,82 @@ const Canvas = () => {
             </div>
 
             <ScrollArea className="flex-1">
-              <div className="p-4 space-y-4">
-                <div>
-                  <Label className="text-xs">Node Name</Label>
+              <div className="p-4 space-y-5">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Node Name</Label>
                   <Input
                     value={selectedNode.data.label}
                     onChange={(e) => updateNodeData({ label: e.target.value })}
-                    className="mt-1.5 h-8 text-sm"
+                    className="h-9"
+                    placeholder="Enter node name"
                   />
                 </div>
 
                 {selectedNode.data.nodeType === 'agent' && editingNode && (
                   <>
-                    <div>
-                      <Label className="text-xs">System Prompt</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">System Prompt</Label>
                       <Textarea
                         value={editingNode.systemPrompt}
                         onChange={(e) => {
                           setEditingNode({ ...editingNode, systemPrompt: e.target.value });
                           updateNodeData({ systemPrompt: e.target.value } as any);
                         }}
-                        placeholder="System instructions..."
-                        className="mt-1.5 min-h-[100px] text-xs"
+                        placeholder="Define the AI agent's role and behavior..."
+                        className="min-h-[120px] text-sm"
                       />
+                      <p className="text-xs text-muted-foreground">Instructions for how the AI should behave</p>
                     </div>
 
-                    <div>
-                      <Label className="text-xs">User Prompt</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">User Prompt (Optional)</Label>
                       <Textarea
                         value={editingNode.userPrompt}
                         onChange={(e) => {
                           setEditingNode({ ...editingNode, userPrompt: e.target.value });
                           updateNodeData({ userPrompt: e.target.value } as any);
                         }}
-                        placeholder="User message or use connected input..."
-                        className="mt-1.5 min-h-[100px] text-xs"
+                        placeholder="Leave empty to use input from connected nodes..."
+                        className="min-h-[100px] text-sm"
                       />
+                      <p className="text-xs text-muted-foreground">Custom input or leave blank to use connected node output</p>
                     </div>
                   </>
                 )}
 
                 {selectedNode.data.output && (
-                  <div>
-                    <Label className="text-xs">Output</Label>
-                    <div className="mt-1.5 p-3 bg-muted rounded-md text-xs max-h-[200px] overflow-y-auto font-mono">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Latest Output</Label>
+                    <div className="p-3 bg-muted rounded-md text-sm max-h-[200px] overflow-y-auto font-mono border">
                       {selectedNode.data.output}
                     </div>
                   </div>
                 )}
 
-                <div className="pt-2 space-y-2">
+                <div className="pt-3 space-y-2.5 border-t">
                   <Button 
-                    size="sm" 
+                    size="default" 
                     className="w-full gap-2"
                     onClick={() => handleRunNode(selectedNode.id)}
                     disabled={selectedNode.data.status === 'running'}
                   >
-                    <Play className="h-3.5 w-3.5" />
-                    Test Node
+                    {selectedNode.data.status === 'running' ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4" />
+                        Test This Node
+                      </>
+                    )}
                   </Button>
                   
                   <Button 
                     variant="destructive" 
-                    size="sm" 
-                    className="w-full"
+                    size="default" 
+                    className="w-full gap-2"
                     onClick={() => {
                       setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
                       setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
@@ -561,6 +594,7 @@ const Canvas = () => {
                       toast.success("Node deleted");
                     }}
                   >
+                    <Trash2 className="h-4 w-4" />
                     Delete Node
                   </Button>
                 </div>
