@@ -404,35 +404,146 @@ export type Database = {
         }
         Relationships: []
       }
+      workflow_executions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          input_data: Json | null
+          output_data: Json | null
+          started_at: string | null
+          status: string | null
+          user_id: string
+          workflow_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          started_at?: string | null
+          status?: string | null
+          user_id: string
+          workflow_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          input_data?: Json | null
+          output_data?: Json | null
+          started_at?: string | null
+          status?: string | null
+          user_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_executions_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_shares: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission: string | null
+          shared_by_user_id: string
+          shared_with_user_id: string
+          workflow_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission?: string | null
+          shared_by_user_id: string
+          shared_with_user_id: string
+          workflow_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission?: string | null
+          shared_by_user_id?: string
+          shared_with_user_id?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_shares_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflows: {
         Row: {
+          category: string | null
           created_at: string
           description: string | null
           id: string
+          is_template: boolean | null
           name: string
+          parent_workflow_id: string | null
+          tags: string[] | null
           updated_at: string
           user_id: string
+          version: number | null
+          visibility: string | null
           workflow_data: Json
         }
         Insert: {
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          is_template?: boolean | null
           name: string
+          parent_workflow_id?: string | null
+          tags?: string[] | null
           updated_at?: string
           user_id: string
+          version?: number | null
+          visibility?: string | null
           workflow_data: Json
         }
         Update: {
+          category?: string | null
           created_at?: string
           description?: string | null
           id?: string
+          is_template?: boolean | null
           name?: string
+          parent_workflow_id?: string | null
+          tags?: string[] | null
           updated_at?: string
           user_id?: string
+          version?: number | null
+          visibility?: string | null
           workflow_data?: Json
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "workflows_parent_workflow_id_fkey"
+            columns: ["parent_workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
