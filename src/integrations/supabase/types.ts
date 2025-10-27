@@ -151,6 +151,7 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string | null
+          default_agent_id: string | null
           id: string
           model: string
           title: string
@@ -159,6 +160,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          default_agent_id?: string | null
           id?: string
           model?: string
           title?: string
@@ -167,13 +169,22 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          default_agent_id?: string | null
           id?: string
           model?: string
           title?: string
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "conversations_default_agent_id_fkey"
+            columns: ["default_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       frameworks: {
         Row: {
@@ -216,30 +227,43 @@ export type Database = {
       }
       messages: {
         Row: {
+          agent_id: string | null
           content: string
           conversation_id: string
           created_at: string | null
           id: string
           image_url: string | null
+          metadata: Json | null
           role: string
         }
         Insert: {
+          agent_id?: string | null
           content: string
           conversation_id: string
           created_at?: string | null
           id?: string
           image_url?: string | null
+          metadata?: Json | null
           role: string
         }
         Update: {
+          agent_id?: string | null
           content?: string
           conversation_id?: string
           created_at?: string | null
           id?: string
           image_url?: string | null
+          metadata?: Json | null
           role?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "messages_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "messages_conversation_id_fkey"
             columns: ["conversation_id"]
