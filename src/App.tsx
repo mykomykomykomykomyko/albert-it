@@ -9,6 +9,7 @@ import Agents from "./pages/Agents";
 import AgentMarketplace from "./pages/AgentMarketplace";
 import PromptLibrary from "./pages/PromptLibrary";
 import Framework from "./pages/Framework";
+import AdminReview from "./pages/AdminReview";
 import EnhancedChat from "./components/Chat";
 import Stage from "./pages/Stage";
 import Canvas from "./pages/Canvas";
@@ -31,6 +32,7 @@ const App = () => (
         <Route path="/marketplace" element={<AgentMarketplace />} />
         <Route path="/prompts" element={<PromptLibrary />} />
         <Route path="/framework" element={<Framework />} />
+        <Route path="/admin/review" element={<AdminReview />} />
         <Route path="/chat" element={<EnhancedChat />} />
         <Route path="/chat/:id" element={<EnhancedChat />} />
         <Route path="/stage" element={<Stage />} />

@@ -12,14 +12,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store } from "lucide-react";
 import { toast } from "sonner";
 
 const agentTypes = ['Text', 'Voice', 'Image', 'Audio', 'Multimodal'] as const;
 
 const Agents = () => {
   const navigate = useNavigate();
-  const { agents, loading, createAgent, updateAgent, deleteAgent, refreshAgents } = useAgents();
+  const { agents, loading, createAgent, updateAgent, deleteAgent, refreshAgents, shareAgent, submitForReview } = useAgents();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -29,6 +29,9 @@ const Agents = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [imagePrompt, setImagePrompt] = useState("");
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [shareEmail, setShareEmail] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const agentImportInputRef = useRef<HTMLInputElement>(null);
   
@@ -302,6 +305,26 @@ const Agents = () => {
     }
   };
 
+  const handleShareAgent = async () => {
+    if (!selectedAgent || !shareEmail.trim()) {
+      toast.error("Please enter an email address");
+      return;
+    }
+
+    const success = await shareAgent(selectedAgent.id, shareEmail.trim());
+    if (success) {
+      setShareDialogOpen(false);
+      setShareEmail("");
+      setSelectedAgent(null);
+    }
+  };
+
+  const handleSubmitForReview = async (agent: Agent) => {
+    if (confirm(`Submit "${agent.name}" to the marketplace for admin review?`)) {
+      await submitForReview(agent.id);
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <ChatHeader />
@@ -314,6 +337,13 @@ const Agents = () => {
               <p className="text-muted-foreground">Manage your AI agents</p>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/marketplace')}
+              >
+                <Store className="h-4 w-4 mr-2" />
+                Marketplace
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -583,6 +613,17 @@ const Agents = () => {
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(agent)} title="Edit agent">
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <Button size="icon" variant="ghost" onClick={() => {
+                          setSelectedAgent(agent);
+                          setShareDialogOpen(true);
+                        }} title="Share agent">
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                        {agent.visibility !== 'published' && agent.visibility !== 'pending_review' && (
+                          <Button size="icon" variant="ghost" onClick={() => handleSubmitForReview(agent)} title="Submit to marketplace">
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button size="icon" variant="ghost" onClick={() => handleDownloadAgent(agent)} title="Download agent">
                           <Download className="h-4 w-4" />
                         </Button>
@@ -603,6 +644,15 @@ const Agents = () => {
                         ))}
                       </div>
                     )}
+                    {agent.visibility && agent.visibility !== 'private' && (
+                      <div className="pt-3 border-t mt-3">
+                        <Badge variant="outline" className="text-xs">
+                          {agent.visibility === 'published' ? '✓ Published' : 
+                           agent.visibility === 'pending_review' ? '⏳ Pending Review' : 
+                           '🔗 Shared'}
+                        </Badge>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -610,6 +660,38 @@ const Agents = () => {
           )}
         </div>
       </div>
+
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Agent</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Share "{selectedAgent?.name}" with another user by entering their email address.
+            </p>
+            <Input
+              placeholder="user@example.com"
+              value={shareEmail}
+              onChange={(e) => setShareEmail(e.target.value)}
+              type="email"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => {
+                setShareDialogOpen(false);
+                setShareEmail("");
+                setSelectedAgent(null);
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={handleShareAgent}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, X, HelpCircle } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, X, HelpCircle, BookOpen, Library } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -118,6 +118,24 @@ export function ChatHeader() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => navigate('/prompts')}
+            title="Prompt Library"
+            className="hover:bg-accent"
+          >
+            <Library className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/framework')}
+            title="Framework Library"
+            className="hover:bg-accent"
+          >
+            <BookOpen className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setHelpOpen(true)}
             title="Help"
             className="hover:bg-accent"
@@ -185,6 +203,22 @@ export function ChatHeader() {
               >
                 <Home className="h-4 w-4 mr-2" />
                 Home
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => handleNavClick('/prompts')}
+              >
+                <Library className="h-4 w-4 mr-2" />
+                Prompt Library
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => handleNavClick('/framework')}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Framework Library
               </Button>
               <Button
                 variant="ghost"
