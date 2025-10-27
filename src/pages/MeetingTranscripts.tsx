@@ -268,21 +268,21 @@ export default function MeetingTranscripts() {
                       }`}
                       onClick={() => setSelectedTranscript(transcript)}
                     >
-                      <CardContent className="p-4">
+                       <CardContent className="p-4">
                         <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-sm line-clamp-1">
+                          <h3 className="font-semibold text-sm line-clamp-1 text-white">
                             {transcript.title}
                           </h3>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs border-white text-white">
                             {transcript.file_format}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-white/90">
                           <Calendar className="h-3 w-3" />
                           {new Date(transcript.created_at).toLocaleDateString()}
                         </div>
                         {transcript.participants.length > 0 && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <div className="flex items-center gap-2 text-xs text-white/90 mt-1">
                             <Users className="h-3 w-3" />
                             {transcript.participants.slice(0, 2).join(", ")}
                             {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
