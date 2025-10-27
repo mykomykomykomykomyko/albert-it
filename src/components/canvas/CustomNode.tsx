@@ -67,7 +67,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
   return (
     <div
       className={`
-        min-w-[240px] rounded-lg border-2 shadow-md bg-card
+        min-w-[240px] max-w-[300px] rounded-lg border-2 shadow-md bg-card
         transition-all duration-200
         ${getNodeColor()}
         ${selected ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md hover:border-primary/30'}
@@ -115,7 +115,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       {data.output && (
         <div className="px-4 py-3 border-b bg-muted/10">
           <div className="text-xs font-medium text-muted-foreground mb-1.5">Latest Output</div>
-          <div className="text-xs bg-background rounded-md p-2.5 max-h-24 overflow-y-auto font-mono text-foreground border break-words whitespace-pre-wrap">
+          <div className="text-xs bg-background rounded-md p-2.5 max-h-24 overflow-y-auto overflow-x-hidden font-mono text-foreground border break-all whitespace-normal">
             {data.output.substring(0, 200)}
             {data.output.length > 200 && '...'}
           </div>
