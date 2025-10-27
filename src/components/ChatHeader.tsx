@@ -58,8 +58,10 @@ export function ChatHeader() {
 
   const navItems = [
     { name: 'Agents', path: '/agents', value: 'agents' },
+    { name: 'Agent Marketplace', path: '/marketplace', value: 'marketplace' },
     { name: 'Chat', path: '/chat', value: 'chat' },
     { name: 'Stage', path: '/stage', value: 'stage' },
+    { name: 'Workflow Marketplace', path: '/workflow-marketplace', value: 'workflow-marketplace' },
     { name: 'Image', path: '/image', value: 'image' },
     { name: 'Voice', path: '/voice', value: 'voice' },
   ];
@@ -85,19 +87,56 @@ export function ChatHeader() {
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-4">
           <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary">
-            {navItems.map((item) => (
-              <button
-                key={item.value}
-                onClick={() => navigate(item.path)}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  currentTab === item.value
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-accent'
-                }`}
-              >
-                {item.name}
-              </button>
-            ))}
+            <button
+              onClick={() => navigate('/agents')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'agents'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Agents
+            </button>
+            <button
+              onClick={() => navigate('/chat')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'chat'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Chat
+            </button>
+            <button
+              onClick={() => navigate('/stage')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'stage'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Stage
+            </button>
+            <button
+              onClick={() => navigate('/image')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'image'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Image
+            </button>
+            <button
+              onClick={() => navigate('/voice')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'voice'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
+            >
+              Voice
+            </button>
             <button
               disabled
               className="px-4 py-2 rounded-md text-sm font-medium transition-colors opacity-50 cursor-not-allowed"

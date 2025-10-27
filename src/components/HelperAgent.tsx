@@ -82,6 +82,11 @@ export function HelperAgent({ context, onClose }: HelperAgentProps) {
     setInput('');
     setIsLoading(true);
 
+    // Add placeholder assistant message
+    const assistantId = Date.now().toString();
+    const assistantMessage: Message = { role: 'assistant', content: '' };
+    setMessages(prev => [...prev, assistantMessage]);
+
     try {
       // Build system prompt with framework knowledge
       let systemPrompt = `You are a helpful AI assistant for the Albert platform. You help users understand features and best practices.
@@ -98,30 +103,76 @@ Instructions:
 - Use markdown for formatting
 - Keep responses under 300 words`;
 
-      const { data, error } = await supabase.functions.invoke('gemini-chat', {
-        body: {
-          message: textToSend,
-          systemPrompt,
-          messageHistory: messages.map(m => ({ role: m.role, content: m.content })),
+      // Get session for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      // Stream the response
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            message: textToSend,
+            systemPrompt,
+            messageHistory: messages.map(m => ({ role: m.role, content: m.content })),
+          }),
         }
-      });
+      );
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to get response');
 
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: data.response || 'Sorry, I encountered an error.'
-      };
+      // Process streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
 
-      setMessages(prev => [...prev, assistantMessage]);
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const jsonStr = line.substring(6).trim();
+                if (jsonStr) {
+                  const data = JSON.parse(jsonStr);
+                  if (data.text) {
+                    accumulatedContent += data.text;
+                    setMessages(prev => 
+                      prev.map((msg, idx) => 
+                        idx === prev.length - 1 
+                          ? { ...msg, content: accumulatedContent }
+                          : msg
+                      )
+                    );
+                  }
+                }
+              } catch (e) {
+                // Ignore parse errors
+              }
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to get response');
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.'
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => 
+        prev.map((msg, idx) => 
+          idx === prev.length - 1 
+            ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
     }
