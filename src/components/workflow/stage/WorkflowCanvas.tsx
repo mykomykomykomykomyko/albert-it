@@ -72,7 +72,7 @@ export const WorkflowCanvas = ({
       }, 300),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [workflow.connections, workflow.stages, workflow.stages.flatMap(s => s.nodes).length]);
+  }, [workflow.connections, workflow.stages, workflow.stages?.flatMap(s => s.nodes).length]);
 
   const [connectingFromPort, setConnectingFromPort] = useState<string | undefined>(undefined);
 
@@ -130,9 +130,9 @@ export const WorkflowCanvas = ({
     const scrollLeft = scrollContainer.scrollLeft;
     const scrollTop = scrollContainer.scrollTop;
     
-    return workflow.connections.map((conn) => {
-      const fromNode = workflow.stages.flatMap(s => s.nodes).find(n => n.id === conn.fromNodeId);
-      const toNode = workflow.stages.flatMap(s => s.nodes).find(n => n.id === conn.toNodeId);
+    return workflow.connections?.map((conn) => {
+      const fromNode = workflow.stages?.flatMap(s => s.nodes).find(n => n.id === conn.fromNodeId);
+      const toNode = workflow.stages?.flatMap(s => s.nodes).find(n => n.id === conn.toNodeId);
       if (!fromNode || !toNode) return null;
       
       // Build the correct output port ID
@@ -248,7 +248,7 @@ export const WorkflowCanvas = ({
             )}
             
             <div className="p-2 lg:p-3 space-y-3 w-full max-w-full" style={{ position: 'relative', zIndex: 5 }}>
-              {workflow.stages.length === 0 ? (
+              {!workflow.stages || workflow.stages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center space-y-3 max-w-md">
                     <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center mx-auto">
