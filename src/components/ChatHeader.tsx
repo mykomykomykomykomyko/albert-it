@@ -232,13 +232,6 @@ export function ChatHeader() {
                   {item.name}
                 </Button>
               ))}
-              <Button
-                variant={currentTab === 'canvas' ? "default" : "ghost"}
-                className="justify-start"
-                onClick={() => handleNavClick('/canvas')}
-              >
-                Canvas
-              </Button>
               <div className="border-t border-border my-2" />
               <Button
                 variant="ghost"
