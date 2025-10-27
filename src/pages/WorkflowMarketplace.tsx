@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,11 +11,15 @@ import { toast } from 'sonner';
 
 export default function WorkflowMarketplace() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { cloneWorkflow, loadPublicWorkflows } = useWorkflows();
   const [publicWorkflows, setPublicWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  
+  // Determine which page the user came from
+  const returnPath = location.state?.from || '/stage';
 
   useEffect(() => {
     loadMarketplace();
@@ -40,7 +44,9 @@ export default function WorkflowMarketplace() {
   const handleCloneWorkflow = async (workflow: Workflow) => {
     const result = await cloneWorkflow(workflow.id);
     if (result) {
-      navigate('/stage');
+      // Navigate back with the cloned workflow ID as a URL parameter
+      navigate(`${returnPath}?workflowId=${result.id}`);
+      toast.success('Loading cloned workflow...');
     }
   };
 
@@ -50,11 +56,11 @@ export default function WorkflowMarketplace() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/stage')}
+            onClick={() => navigate(returnPath)}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Stage
+            Back to {returnPath === '/canvas' ? 'Canvas' : 'Stage'}
           </Button>
           <h1 className="text-4xl font-bold mb-2">Workflow Marketplace</h1>
           <p className="text-muted-foreground">Discover and clone workflows created by the community</p>

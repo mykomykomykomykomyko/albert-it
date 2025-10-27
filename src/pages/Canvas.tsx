@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ReactFlow, {
   Node,
@@ -213,6 +213,7 @@ const TEMPLATES = {
 
 const Canvas = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { agents: savedAgents } = useAgents();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -512,6 +513,57 @@ const Canvas = () => {
     }
   };
 
+  // Auto-load workflow from URL parameter (when coming from marketplace)
+  useEffect(() => {
+    const workflowId = searchParams.get('workflowId');
+    if (workflowId) {
+      const loadFromMarketplace = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('workflows')
+            .select('*')
+            .eq('id', workflowId)
+            .single();
+
+          if (error) throw error;
+
+          if (data && data.workflow_data) {
+            const workflowData = data.workflow_data as any;
+            setWorkflowName(data.name);
+            
+            // Restore nodes with callbacks
+            const restoredNodes = (workflowData.nodes || []).map((node: any) => ({
+              ...node,
+              data: {
+                ...node.data,
+                onEdit: () => {
+                  const nodeRef = node;
+                  setSelectedNode(nodeRef);
+                  setIsRightSidebarOpen(true);
+                },
+                onRun: () => handleRunNode(node.id),
+              }
+            }));
+            
+            setNodes(restoredNodes);
+            setEdges(workflowData.edges || []);
+            setGlobalInput(workflowData.globalInput || "");
+            toast.success(`Loaded workflow: ${data.name}`);
+            
+            // Clear the URL parameter after loading
+            setSearchParams({});
+          }
+        } catch (error) {
+          console.error('Error loading workflow from marketplace:', error);
+          toast.error('Failed to load workflow');
+          setSearchParams({});
+        }
+      };
+
+      loadFromMarketplace();
+    }
+  }, [searchParams, setSearchParams]);
+
   const handleClear = () => {
     if (confirm("Clear canvas?")) {
       setNodes([]);
@@ -576,7 +628,7 @@ const Canvas = () => {
             <Save className="h-4 w-4 mr-2" />
             Save
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace', { state: { from: '/canvas' } })}>
             <Store className="h-4 w-4 mr-2" />
             Marketplace
           </Button>

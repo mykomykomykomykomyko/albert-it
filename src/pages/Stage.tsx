@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Toolbar } from "@/components/workflow/stage/Toolbar";
 import { ResponsiveLayout } from "@/components/workflow/stage/ResponsiveLayout";
 import { WorkflowCanvas } from "@/components/workflow/stage/WorkflowCanvas";
@@ -19,6 +19,7 @@ import { Play } from "lucide-react";
 
 const Stage = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { agents: savedAgents } = useAgents();
   
   useEffect(() => {
@@ -267,9 +268,45 @@ const Stage = () => {
       setWorkflowName(data.workflowName || "");
       setCustomAgents(data.customAgents || []);
       setUserInput(data.userInput || "");
+      setCurrentWorkflowId(data.id || null);
       addLog("success", "Workflow loaded");
     }
   };
+
+  // Auto-load workflow from URL parameter (when coming from marketplace)
+  useEffect(() => {
+    const workflowId = searchParams.get('workflowId');
+    if (workflowId) {
+      const loadFromMarketplace = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('workflows')
+            .select('*')
+            .eq('id', workflowId)
+            .single();
+
+          if (error) throw error;
+
+          if (data && data.workflow_data) {
+            const workflowData = data.workflow_data as any;
+            setWorkflow(workflowData.workflow || workflowData);
+            setWorkflowName(data.name);
+            setCurrentWorkflowId(data.id);
+            addLog("success", `Loaded workflow: ${data.name}`);
+            
+            // Clear the URL parameter after loading
+            setSearchParams({});
+          }
+        } catch (error) {
+          console.error('Error loading workflow from marketplace:', error);
+          toast.error('Failed to load workflow');
+          setSearchParams({});
+        }
+      };
+
+      loadFromMarketplace();
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleClear = () => {
     if (confirm("Clear the entire workflow?")) {
@@ -429,7 +466,7 @@ const Stage = () => {
         onSave={handleSave}
         onLoad={() => setLoadDialogOpen(true)}
         onClear={handleClear}
-        onOpenMarketplace={() => navigate('/workflow-marketplace')}
+        onOpenMarketplace={() => navigate('/workflow-marketplace', { state: { from: '/stage' } })}
       />
       
       <SaveWorkflowDialog
