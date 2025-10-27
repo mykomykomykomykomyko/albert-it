@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ChatSidebar from "@/components/chat/ChatSidebar";
@@ -46,6 +46,7 @@ interface FileAttachment {
 
 const Chat = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -68,6 +69,15 @@ const Chat = () => {
   const [showToolsToolbar, setShowToolsToolbar] = useState(false);
   const [showHelperAgent, setShowHelperAgent] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
+
+  // Handle prompt text from location state
+  useEffect(() => {
+    if (location.state?.promptText && currentConversation) {
+      setInput(location.state.promptText);
+      // Clear the state so it doesn't persist
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, currentConversation, navigate, location.pathname]);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference

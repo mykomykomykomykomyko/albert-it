@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Trash2, Edit, Play, Copy, ArrowLeft } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function PromptLibrary() {
   const navigate = useNavigate();
@@ -83,8 +84,29 @@ export default function PromptLibrary() {
   const handleExecute = async (promptId: string) => {
     const result = await executePrompt(promptId);
     if (result) {
-      // Navigate to chat with the prompt
-      navigate('/', { state: { promptText: result } });
+      // Create a new conversation
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Please log in to use prompts');
+        return;
+      }
+
+      const { data: newConversation, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: session.user.id,
+          title: 'New Conversation',
+        })
+        .select()
+        .single();
+
+      if (error || !newConversation) {
+        toast.error('Failed to create conversation');
+        return;
+      }
+
+      // Navigate to the new conversation with the prompt text
+      navigate(`/chat/${newConversation.id}`, { state: { promptText: result } });
     }
   };
 
