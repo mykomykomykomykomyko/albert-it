@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -20,6 +20,10 @@ import { extractTextFromFile } from '@/utils/fileTextExtraction';
 import { AgentSelectorDialog } from './agents/AgentSelectorDialog';
 import { Agent } from '@/hooks/useAgents';
 import { Badge } from './ui/badge';
+import { TransparencyPanel } from './chat/TransparencyPanel';
+import { AgentSwitcher } from './chat/AgentSwitcher';
+import { AudioUploader } from './chat/AudioUploader';
+import { ToolsToolbar } from './chat/ToolsToolbar';
 
 interface ImageAttachment {
   name: string;
@@ -58,6 +62,8 @@ const Chat = () => {
   const [currentAgent, setCurrentAgent] = useState<Agent | null>(null);
   const [lastPayload, setLastPayload] = useState<any>(null);
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
+  const [showAudioUploader, setShowAudioUploader] = useState(false);
+  const [showToolsToolbar, setShowToolsToolbar] = useState(false);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -381,6 +387,11 @@ const Chat = () => {
       setLastPayload({
         timestamp: new Date().toISOString(),
         endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'gemini-chat',
+        model: 'google/gemini-2.5-flash',
+        systemPrompt: requestPayload.systemPrompt,
+        messages: requestPayload.messageHistory,
+        attachments: [...images.map(img => ({ type: 'image', name: img.name })), ...files.map(f => ({ type: 'file', name: f.filename }))],
+        fullRequest: requestPayload,
         payload: requestPayload,
         agent: currentAgent ? {
           name: currentAgent.name,
@@ -674,16 +685,11 @@ const Chat = () => {
                   />
                   
                   {/* Buttons row below on mobile, inline on desktop */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setShowAgentSelector(true)}
-                      disabled={isLoading}
-                      title="Select Agent"
-                    >
-                      <Bot className="h-4 w-4" />
-                    </Button>
+                  <div className="flex gap-2 flex-wrap">
+                    <AgentSwitcher
+                      selectedAgent={currentAgent}
+                      onAgentChange={(agent) => setCurrentAgent(agent)}
+                    />
                     <Button
                       variant="outline"
                       size="icon"
@@ -692,6 +698,15 @@ const Chat = () => {
                       title="View Last LLM Payload"
                     >
                       <Bug className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setShowAudioUploader(!showAudioUploader)}
+                      disabled={isLoading}
+                      title="Audio Input"
+                    >
+                      <Mic className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
@@ -728,8 +743,25 @@ const Chat = () => {
                       Send
                     </Button>
                   </div>
+
+                  {showAudioUploader && (
+                    <div className="mt-3">
+                      <AudioUploader
+                        onTranscriptionComplete={(text) => {
+                          setInput(prev => prev ? `${prev}\n\n${text}` : text);
+                          setShowAudioUploader(false);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
+
+              <ToolsToolbar
+                onToolResult={(result, toolName) => {
+                  setInput(prev => prev ? `${prev}\n\n[${toolName}]\n${result}` : `[${toolName}]\n${result}`);
+                }}
+              />
             </div>
           </>
         )}
@@ -777,75 +809,14 @@ const Chat = () => {
           onSelectAgent={handleSelectAgent}
         />
 
-        {/* Troubleshoot Dialog */}
-        {showTroubleshoot && lastPayload && (
+        {/* Transparency Panel Dialog */}
+        {showTroubleshoot && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-card border border-border rounded-lg w-[90%] h-[90%] flex flex-col">
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-semibold">Last LLM Payload</h3>
-                <Button variant="ghost" size="icon" onClick={() => setShowTroubleshoot(false)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-              <ScrollArea className="flex-1 p-4">
-                <div className="space-y-4 font-mono text-sm">
-                  <div>
-                    <div className="text-muted-foreground mb-1">Timestamp:</div>
-                    <div className="bg-secondary/50 p-3 rounded">{lastPayload.timestamp}</div>
-                  </div>
-                  
-                  <div>
-                    <div className="text-muted-foreground mb-1">Endpoint:</div>
-                    <div className="bg-secondary/50 p-3 rounded">{lastPayload.endpoint}</div>
-                  </div>
-
-                  {lastPayload.agent && (
-                    <div>
-                      <div className="text-muted-foreground mb-1">Active Agent:</div>
-                      <div className="bg-secondary/50 p-3 rounded space-y-2">
-                        <div><strong>Name:</strong> {lastPayload.agent.name}</div>
-                        <div><strong>System Prompt:</strong><br/>{lastPayload.agent.system_prompt}</div>
-                        <div><strong>User Prompt Template:</strong><br/>{lastPayload.agent.user_prompt}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <div className="text-muted-foreground mb-1">Current Message:</div>
-                    <div className="bg-secondary/50 p-3 rounded whitespace-pre-wrap break-words">
-                      {lastPayload.payload.message}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-muted-foreground mb-1">System Prompt:</div>
-                    <div className="bg-secondary/50 p-3 rounded whitespace-pre-wrap">
-                      {lastPayload.payload.systemPrompt || '(none)'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-muted-foreground mb-1">Message History ({lastPayload.payload.messageHistory.length} messages):</div>
-                    <div className="bg-secondary/50 p-3 rounded space-y-3">
-                      {lastPayload.payload.messageHistory.map((msg: any, idx: number) => (
-                        <div key={idx} className="border-b border-border pb-2 last:border-0">
-                          <div className="font-semibold text-primary">{msg.role}:</div>
-                          <div className="whitespace-pre-wrap break-words mt-1">{msg.content}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {lastPayload.payload.images && (
-                    <div>
-                      <div className="text-muted-foreground mb-1">Images:</div>
-                      <div className="bg-secondary/50 p-3 rounded">
-                        {lastPayload.payload.images.length} image(s) attached
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+            <div className="bg-card border border-border rounded-lg w-[90%] h-[90%]">
+              <TransparencyPanel
+                lastPayload={lastPayload}
+                onClose={() => setShowTroubleshoot(false)}
+              />
             </div>
           </div>
         )}
