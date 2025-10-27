@@ -61,6 +61,7 @@ export function ChatHeader() {
     { name: 'Agent Marketplace', path: '/marketplace', value: 'marketplace' },
     { name: 'Chat', path: '/chat', value: 'chat' },
     { name: 'Stage', path: '/stage', value: 'stage' },
+    { name: 'Canvas', path: '/canvas', value: 'canvas' },
     { name: 'Workflow Marketplace', path: '/workflow-marketplace', value: 'workflow-marketplace' },
     { name: 'Image', path: '/image', value: 'image' },
     { name: 'Voice', path: '/voice', value: 'voice' },
@@ -138,8 +139,12 @@ export function ChatHeader() {
               Voice
             </button>
             <button
-              disabled
-              className="px-4 py-2 rounded-md text-sm font-medium transition-colors opacity-50 cursor-not-allowed"
+              onClick={() => navigate('/canvas')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                currentTab === 'canvas'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'hover:bg-accent'
+              }`}
             >
               Canvas
             </button>
@@ -228,9 +233,9 @@ export function ChatHeader() {
                 </Button>
               ))}
               <Button
-                disabled
-                variant="ghost"
-                className="justify-start opacity-50"
+                variant={currentTab === 'canvas' ? "default" : "ghost"}
+                className="justify-start"
+                onClick={() => handleNavClick('/canvas')}
               >
                 Canvas
               </Button>
