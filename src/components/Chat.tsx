@@ -469,7 +469,17 @@ const Chat = () => {
                 const jsonStr = line.substring(6).trim();
                 if (jsonStr && jsonStr !== '{}') {
                   const data = JSON.parse(jsonStr);
-                  if (data.text) {
+
+                  if (data.error) {
+                    const errMsg = `Gemini error: ${data.error}`;
+                    accumulatedContent = errMsg;
+                    toast.error(errMsg);
+                    setMessages(prev => prev.map(msg => 
+                      msg.id === (assistantMessage as any).id 
+                        ? { ...msg, content: accumulatedContent }
+                        : msg
+                    ));
+                  } else if (data.text) {
                     accumulatedContent += data.text;
                     setMessages(prev => prev.map(msg => 
                       msg.id === (assistantMessage as any).id 
