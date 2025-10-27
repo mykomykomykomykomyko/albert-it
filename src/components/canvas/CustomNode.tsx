@@ -1,15 +1,17 @@
 import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Settings, Play, CheckCircle2, XCircle, Loader2, Sparkles, Zap, Database } from 'lucide-react';
+import { Settings, Play, CheckCircle2, XCircle, Loader2, Sparkles, FileInput, FileOutput, GitMerge, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export interface CustomNodeData {
   label: string;
-  nodeType: 'agent' | 'function' | 'trigger';
+  nodeType: 'input' | 'agent' | 'output' | 'join' | 'transform';
   status?: 'idle' | 'running' | 'success' | 'error';
   output?: string;
   description?: string;
+  files?: File[];
+  config?: Record<string, any>;
   onEdit?: () => void;
   onRun?: () => void;
 }
@@ -17,12 +19,16 @@ export interface CustomNodeData {
 export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) => {
   const getIcon = () => {
     switch (data.nodeType) {
+      case 'input':
+        return <FileInput className="h-4 w-4" />;
       case 'agent':
         return <Sparkles className="h-4 w-4" />;
-      case 'function':
-        return <Zap className="h-4 w-4" />;
-      case 'trigger':
-        return <Database className="h-4 w-4" />;
+      case 'output':
+        return <FileOutput className="h-4 w-4" />;
+      case 'join':
+        return <GitMerge className="h-4 w-4" />;
+      case 'transform':
+        return <Repeat className="h-4 w-4" />;
       default:
         return null;
     }
@@ -43,14 +49,18 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
 
   const getNodeColor = () => {
     switch (data.nodeType) {
+      case 'input':
+        return 'border-blue-400/50 bg-blue-50/50 dark:bg-blue-950/20';
       case 'agent':
-        return 'from-primary/20 to-primary/5 border-primary/40';
-      case 'function':
-        return 'from-accent/20 to-accent/5 border-accent/40';
-      case 'trigger':
-        return 'from-secondary/20 to-secondary/5 border-secondary/40';
+        return 'border-primary/50 bg-primary/5';
+      case 'output':
+        return 'border-green-400/50 bg-green-50/50 dark:bg-green-950/20';
+      case 'join':
+        return 'border-purple-400/50 bg-purple-50/50 dark:bg-purple-950/20';
+      case 'transform':
+        return 'border-orange-400/50 bg-orange-50/50 dark:bg-orange-950/20';
       default:
-        return 'from-muted to-background border-border';
+        return 'border-border bg-card';
     }
   };
 
@@ -64,7 +74,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       `}
     >
       {/* Input Handle */}
-      {data.nodeType !== 'trigger' && (
+      {data.nodeType !== 'input' && (
         <Handle
           type="target"
           position={Position.Top}
@@ -135,11 +145,13 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       </div>
 
       {/* Output Handle */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
-      />
+      {data.nodeType !== 'output' && (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+        />
+      )}
     </div>
   );
 });

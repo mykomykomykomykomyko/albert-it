@@ -22,7 +22,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, Zap, Database, X, Loader2 } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -102,7 +102,7 @@ const Canvas = () => {
     [setEdges]
   );
 
-  const addNode = (type: 'agent' | 'function' | 'trigger', template: any) => {
+  const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform', template: any) => {
     const id = `${type}-${Date.now()}`;
     const newNode: Node = {
       id,
@@ -118,7 +118,8 @@ const Canvas = () => {
         description: template.description,
         systemPrompt: template.systemPrompt || '',
         userPrompt: '',
-        config: {},
+        files: [],
+        config: template.config || {},
         onEdit: () => {
           const node = nodes.find(n => n.id === id);
           if (node) setSelectedNode(node);
@@ -135,7 +136,6 @@ const Canvas = () => {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return;
 
-    // Update node status to running
     setNodes(nds => nds.map(n => 
       n.id === nodeId 
         ? { ...n, data: { ...n.data, status: 'running' } }
@@ -144,38 +144,69 @@ const Canvas = () => {
 
     try {
       const nodeData = node.data as any;
+      const incomingEdges = edges.filter(e => e.target === nodeId);
+      let input = globalInput;
       
-      if (nodeData.nodeType === 'agent') {
-        // Get input from connected nodes or global input
-        const incomingEdges = edges.filter(e => e.target === nodeId);
-        let input = globalInput;
-        
-        if (incomingEdges.length > 0) {
-          const sourceNode = nodes.find(n => n.id === incomingEdges[0].source);
-          if (sourceNode && (sourceNode.data as any).output) {
-            input = (sourceNode.data as any).output;
-          }
+      if (incomingEdges.length > 0) {
+        const sourceNode = nodes.find(n => n.id === incomingEdges[0].source);
+        if (sourceNode && (sourceNode.data as any).output) {
+          input = (sourceNode.data as any).output;
         }
-
-        const { data, error } = await supabase.functions.invoke('run-agent', {
-          body: {
-            systemPrompt: nodeData.systemPrompt || '',
-            userPrompt: nodeData.userPrompt || input,
-            tools: []
-          }
-        });
-
-        if (error) throw error;
-        
-        // Update node with output and success status
-        setNodes(nds => nds.map(n => 
-          n.id === nodeId 
-            ? { ...n, data: { ...n.data, status: 'success', output: data.output } }
-            : n
-        ));
-        
-        toast.success(`${nodeData.label} completed`);
       }
+      
+      let output = '';
+      
+      switch (nodeData.nodeType) {
+        case 'input':
+          output = nodeData.userPrompt || globalInput || 'No input provided';
+          break;
+          
+        case 'agent':
+          const { data, error } = await supabase.functions.invoke('run-agent', {
+            body: {
+              systemPrompt: nodeData.systemPrompt || '',
+              userPrompt: nodeData.userPrompt || input,
+              tools: []
+            }
+          });
+          if (error) throw error;
+          output = data.output;
+          break;
+          
+        case 'transform':
+          const operation = nodeData.config?.operation || 'lowercase';
+          if (operation === 'lowercase') {
+            output = input.toLowerCase();
+          } else if (operation === 'uppercase') {
+            output = input.toUpperCase();
+          } else {
+            output = input;
+          }
+          break;
+          
+        case 'join':
+          const joinInputs = incomingEdges.map(edge => {
+            const source = nodes.find(n => n.id === edge.source);
+            return (source?.data as any)?.output || '';
+          }).filter(Boolean);
+          output = joinInputs.join('\n\n---\n\n');
+          break;
+          
+        case 'output':
+          output = input;
+          break;
+          
+        default:
+          output = input;
+      }
+      
+      setNodes(nds => nds.map(n => 
+        n.id === nodeId 
+          ? { ...n, data: { ...n.data, status: 'success', output } }
+          : n
+      ));
+      
+      toast.success(`${nodeData.label} completed`);
     } catch (error) {
       console.error('Node execution error:', error);
       setNodes(nds => nds.map(n => 
@@ -333,12 +364,12 @@ const Canvas = () => {
 
           <ScrollArea className="flex-1">
             <div className="p-4">
-              <Accordion type="single" collapsible defaultValue="triggers" className="w-full">
-                <AccordionItem value="triggers" className="border-none">
+              <Accordion type="single" collapsible defaultValue="input" className="w-full">
+                <AccordionItem value="input" className="border-none">
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
-                      <Database className="h-4 w-4 text-secondary" />
-                      <span className="font-medium">Triggers</span>
+                      <FileInput className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">Input Nodes</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -346,19 +377,19 @@ const Canvas = () => {
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('trigger', { name: 'Manual Trigger', description: 'Start workflow manually' })}
+                      onClick={() => addNode('input', { name: 'Text Input', description: 'Enter text data', config: { inputType: 'text' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Manual Trigger</span>
+                      <span className="text-sm">Text Input</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('trigger', { name: 'Webhook', description: 'Trigger via webhook' })}
+                      onClick={() => addNode('input', { name: 'File Input', description: 'Upload files', config: { inputType: 'file' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Webhook</span>
+                      <span className="text-sm">File Input</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
@@ -394,11 +425,11 @@ const Canvas = () => {
                   </AccordionContent>
                 </AccordionItem>
 
-                <AccordionItem value="functions" className="border-none">
+                <AccordionItem value="processing" className="border-none">
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
-                      <Zap className="h-4 w-4 text-accent" />
-                      <span className="font-medium">Functions</span>
+                      <Repeat className="h-4 w-4 text-orange-500" />
+                      <span className="font-medium">Processing</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -406,28 +437,48 @@ const Canvas = () => {
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('function', { name: 'Transform', description: 'Transform data' })}
+                      onClick={() => addNode('transform', { name: 'Transform', description: 'Transform text data', config: { operation: 'lowercase' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Transform Data</span>
+                      <span className="text-sm">Transform</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('function', { name: 'Filter', description: 'Filter results' })}
+                      onClick={() => addNode('join', { name: 'Join', description: 'Combine multiple inputs' })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Filter</span>
+                      <span className="text-sm">Join</span>
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="output" className="border-none">
+                  <AccordionTrigger className="text-sm py-3 hover:no-underline">
+                    <div className="flex items-center gap-2.5">
+                      <FileOutput className="h-4 w-4 text-green-500" />
+                      <span className="font-medium">Output Nodes</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1.5 pt-2 pb-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-9 hover:bg-muted"
+                      onClick={() => addNode('output', { name: 'Text Output', description: 'Display results', config: { format: 'text' } })}
+                    >
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Text Output</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('function', { name: 'Merge', description: 'Merge data' })}
+                      onClick={() => addNode('output', { name: 'JSON Output', description: 'Display as JSON', config: { format: 'json' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Merge Data</span>
+                      <span className="text-sm">JSON Output</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
@@ -481,12 +532,15 @@ const Canvas = () => {
             <MiniMap 
               className="bg-card border shadow-md rounded-lg"
               nodeColor={(node) => {
-                const data = node.data as CustomNodeData;
-                return data.nodeType === 'agent' 
-                  ? 'hsl(var(--primary))' 
-                  : data.nodeType === 'function'
-                  ? 'hsl(var(--accent))'
-                  : 'hsl(var(--secondary))';
+              const data = node.data as CustomNodeData;
+                switch (data.nodeType) {
+                  case 'input': return '#3b82f6';
+                  case 'agent': return 'hsl(var(--primary))';
+                  case 'output': return '#22c55e';
+                  case 'join': return '#a855f7';
+                  case 'transform': return '#f97316';
+                  default: return 'hsl(var(--muted))';
+                }
               }}
             />
           </ReactFlow>
@@ -522,6 +576,22 @@ const Canvas = () => {
                   />
                 </div>
 
+                {selectedNode.data.nodeType === 'input' && editingNode && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Input Data</Label>
+                    <Textarea
+                      value={editingNode.userPrompt}
+                      onChange={(e) => {
+                        setEditingNode({ ...editingNode, userPrompt: e.target.value });
+                        updateNodeData({ userPrompt: e.target.value } as any);
+                      }}
+                      placeholder="Enter your input data here..."
+                      className="min-h-[150px] text-sm font-mono"
+                    />
+                    <p className="text-xs text-muted-foreground">This data will be passed to connected nodes</p>
+                  </div>
+                )}
+
                 {selectedNode.data.nodeType === 'agent' && editingNode && (
                   <>
                     <div className="space-y-2">
@@ -552,6 +622,52 @@ const Canvas = () => {
                       <p className="text-xs text-muted-foreground">Custom input or leave blank to use connected node output</p>
                     </div>
                   </>
+                )}
+
+                {selectedNode.data.nodeType === 'transform' && editingNode && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Transform Operation</Label>
+                    <select
+                      value={editingNode.config?.operation || 'lowercase'}
+                      onChange={(e) => {
+                        const newConfig = { ...editingNode.config, operation: e.target.value };
+                        setEditingNode({ ...editingNode, config: newConfig });
+                        updateNodeData({ config: newConfig } as any);
+                      }}
+                      className="w-full h-9 rounded-md border bg-background px-3 text-sm"
+                    >
+                      <option value="lowercase">Convert to Lowercase</option>
+                      <option value="uppercase">Convert to Uppercase</option>
+                    </select>
+                    <p className="text-xs text-muted-foreground">Select how to transform the input text</p>
+                  </div>
+                )}
+
+                {selectedNode.data.nodeType === 'output' && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Export Options</Label>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={() => {
+                        if (selectedNode.data.output) {
+                          const blob = new Blob([selectedNode.data.output], { type: 'text/plain' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${selectedNode.data.label}.txt`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast.success('Output exported');
+                        }
+                      }}
+                      disabled={!selectedNode.data.output}
+                    >
+                      <Download className="h-4 w-4" />
+                      Export as Text
+                    </Button>
+                  </div>
                 )}
 
                 {selectedNode.data.output && (
