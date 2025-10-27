@@ -289,6 +289,19 @@ const Stage = () => {
 
           if (data && data.workflow_data) {
             const workflowData = data.workflow_data as any;
+            
+            // Check if this is a Canvas workflow (has nodes/edges) or Stage workflow (has stages/connections)
+            const isCanvasFormat = workflowData.nodes && workflowData.edges;
+            const isStageFormat = workflowData.stages || (workflowData.workflow && workflowData.workflow.stages);
+            
+            if (isCanvasFormat && !isStageFormat) {
+              // This workflow is in Canvas format, redirect to Canvas page
+              toast.info('This workflow is designed for Canvas view');
+              navigate(`/canvas?workflowId=${workflowId}`, { replace: true });
+              return;
+            }
+            
+            // Load Stage format workflow
             setWorkflow(workflowData.workflow || workflowData);
             setWorkflowName(data.name);
             setCurrentWorkflowId(data.id);
@@ -306,7 +319,7 @@ const Stage = () => {
 
       loadFromMarketplace();
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, navigate]);
 
   const handleClear = () => {
     if (confirm("Clear the entire workflow?")) {

@@ -689,6 +689,19 @@ const Canvas = () => {
 
           if (data && data.workflow_data) {
             const workflowData = data.workflow_data as any;
+            
+            // Check if this is a Stage workflow (has stages/connections) or Canvas workflow (has nodes/edges)
+            const isStageFormat = workflowData.stages || (workflowData.workflow && workflowData.workflow.stages);
+            const isCanvasFormat = workflowData.nodes && workflowData.edges;
+            
+            if (isStageFormat && !isCanvasFormat) {
+              // This workflow is in Stage format, redirect to Stage page
+              toast.info('This workflow is designed for Stage view');
+              navigate(`/stage?workflowId=${workflowId}`, { replace: true });
+              return;
+            }
+            
+            // Load Canvas format workflow
             setWorkflowName(data.name);
             
             // Restore nodes with callbacks

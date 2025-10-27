@@ -44,9 +44,23 @@ export default function WorkflowMarketplace() {
   const handleCloneWorkflow = async (workflow: Workflow) => {
     const result = await cloneWorkflow(workflow.id);
     if (result) {
-      // Navigate back with the cloned workflow ID as a URL parameter
-      navigate(`${returnPath}?workflowId=${result.id}`);
-      toast.success('Loading cloned workflow...');
+      // Check workflow format to determine which page to navigate to
+      const workflowData = result.workflow_data as any;
+      const isCanvasFormat = workflowData?.nodes && workflowData?.edges;
+      const isStageFormat = workflowData?.stages || (workflowData?.workflow && workflowData?.workflow?.stages);
+      
+      // Navigate to appropriate page based on format
+      if (isCanvasFormat && !isStageFormat) {
+        navigate(`/canvas?workflowId=${result.id}`);
+        toast.success('Loading cloned workflow in Canvas...');
+      } else if (isStageFormat && !isCanvasFormat) {
+        navigate(`/stage?workflowId=${result.id}`);
+        toast.success('Loading cloned workflow in Stage...');
+      } else {
+        // Default to returnPath if format is unclear
+        navigate(`${returnPath}?workflowId=${result.id}`);
+        toast.success('Loading cloned workflow...');
+      }
     }
   };
 
