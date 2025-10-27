@@ -44,6 +44,7 @@ const TEMPLATES = {
   'simple-chat': {
     name: 'Simple AI Chat',
     description: 'Basic input → agent → output flow',
+    category: 'basics',
     nodes: [
       { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'User Input', nodeType: 'input', inputType: 'text', userPrompt: 'Hello, how are you?', status: 'idle' } },
       { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'AI Assistant', nodeType: 'agent', systemPrompt: 'You are a helpful assistant.', status: 'idle' } },
@@ -57,6 +58,7 @@ const TEMPLATES = {
   'text-processing': {
     name: 'Text Processor',
     description: 'Transform text with operations',
+    category: 'productivity',
     nodes: [
       { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Text Input', nodeType: 'input', inputType: 'text', userPrompt: 'HELLO WORLD', status: 'idle' } },
       { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Lowercase', nodeType: 'transform', config: { operation: 'lowercase' }, status: 'idle' } },
@@ -70,6 +72,7 @@ const TEMPLATES = {
   'multi-agent': {
     name: 'Multi-Agent Pipeline',
     description: 'Chain multiple AI agents',
+    category: 'ai-workflows',
     nodes: [
       { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Question', nodeType: 'input', inputType: 'text', userPrompt: 'What is AI?', status: 'idle' } },
       { id: '2', type: 'custom', position: { x: 350, y: 150 }, data: { label: 'Researcher', nodeType: 'agent', systemPrompt: 'Research and gather facts.', status: 'idle' } },
@@ -88,6 +91,7 @@ const TEMPLATES = {
   'data-analysis': {
     name: 'Data Analysis',
     description: 'Analyze and process data',
+    category: 'analytics',
     nodes: [
       { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Raw Data', nodeType: 'input', inputType: 'text', userPrompt: 'Sales: 100, 200, 150, 300', status: 'idle' } },
       { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Analyzer', nodeType: 'agent', systemPrompt: 'Analyze the data and provide insights.', status: 'idle' } },
@@ -98,6 +102,111 @@ const TEMPLATES = {
       { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
       { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
       { id: 'e2-4', source: '2', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'content-summarizer': {
+    name: 'Content Summarizer',
+    description: 'Summarize long text into key points',
+    category: 'productivity',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Long Content', nodeType: 'input', inputType: 'text', userPrompt: 'Enter long article or document', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Summarizer', nodeType: 'agent', systemPrompt: 'Summarize the following text into key bullet points. Be concise and focus on main ideas.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Summary', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'sentiment-analysis': {
+    name: 'Sentiment Analyzer',
+    description: 'Analyze sentiment and emotions in text',
+    category: 'analytics',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Customer Feedback', nodeType: 'input', inputType: 'text', userPrompt: 'The product is amazing! I love it.', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Sentiment Analyzer', nodeType: 'agent', systemPrompt: 'Analyze the sentiment and emotions in the text. Provide: 1) Overall sentiment (positive/negative/neutral), 2) Emotion detected, 3) Confidence score.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Analysis', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'code-reviewer': {
+    name: 'Code Review Assistant',
+    description: 'Review code for bugs and improvements',
+    category: 'developer-tools',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Code Input', nodeType: 'input', inputType: 'text', userPrompt: 'function add(a,b) { return a+b }', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 150 }, data: { label: 'Bug Checker', nodeType: 'agent', systemPrompt: 'Review code for bugs, errors, and security issues.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 400, y: 250 }, data: { label: 'Improvement Suggester', nodeType: 'agent', systemPrompt: 'Suggest improvements for code quality, performance, and readability.', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Combine Reviews', nodeType: 'join', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 950, y: 200 }, data: { label: 'Final Review', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-4', source: '2', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-4', source: '3', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e4-5', source: '4', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'email-composer': {
+    name: 'Professional Email Writer',
+    description: 'Draft professional emails from bullet points',
+    category: 'productivity',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Key Points', nodeType: 'input', inputType: 'text', userPrompt: '- Meeting tomorrow\n- Need to discuss budget\n- Send report', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Email Composer', nodeType: 'agent', systemPrompt: 'Write a professional email based on the key points provided. Use proper formatting and tone.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Draft Email', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'translation-chain': {
+    name: 'Multi-Language Translator',
+    description: 'Translate text to multiple languages',
+    category: 'productivity',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'English Text', nodeType: 'input', inputType: 'text', userPrompt: 'Hello, how are you?', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 100 }, data: { label: 'To Spanish', nodeType: 'agent', systemPrompt: 'Translate the text to Spanish.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'To French', nodeType: 'agent', systemPrompt: 'Translate the text to French.', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 400, y: 300 }, data: { label: 'To German', nodeType: 'agent', systemPrompt: 'Translate the text to German.', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 700, y: 100 }, data: { label: 'Spanish', nodeType: 'output', status: 'idle' } },
+      { id: '6', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'French', nodeType: 'output', status: 'idle' } },
+      { id: '7', type: 'custom', position: { x: 700, y: 300 }, data: { label: 'German', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-4', source: '1', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-5', source: '2', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-6', source: '3', target: '6', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e4-7', source: '4', target: '7', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'social-media-manager': {
+    name: 'Social Media Post Generator',
+    description: 'Create posts for multiple platforms',
+    category: 'marketing',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Topic/Idea', nodeType: 'input', inputType: 'text', userPrompt: 'New product launch announcement', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 100 }, data: { label: 'Twitter Post', nodeType: 'agent', systemPrompt: 'Create a short, engaging Twitter post (280 chars max) with relevant hashtags.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'LinkedIn Post', nodeType: 'agent', systemPrompt: 'Create a professional LinkedIn post with detailed information and business tone.', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 400, y: 300 }, data: { label: 'Instagram Caption', nodeType: 'agent', systemPrompt: 'Create an Instagram caption with emojis and relevant hashtags.', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 700, y: 100 }, data: { label: 'Twitter', nodeType: 'output', status: 'idle' } },
+      { id: '6', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'LinkedIn', nodeType: 'output', status: 'idle' } },
+      { id: '7', type: 'custom', position: { x: 700, y: 300 }, data: { label: 'Instagram', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-4', source: '1', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-5', source: '2', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-6', source: '3', target: '6', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e4-7', source: '4', target: '7', animated: true, style: { stroke: 'hsl(var(--primary))' } },
     ],
   },
 };
