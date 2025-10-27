@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -111,6 +111,8 @@ const Canvas = () => {
   const [globalInput, setGlobalInput] = useState("");
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -442,13 +444,26 @@ const Canvas = () => {
         </Button>
       </header>
       
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Left Sidebar - Node Library */}
-        <Card className="w-72 m-4 flex flex-col shadow-md">
-          <div className="p-4 border-b bg-muted/20">
-            <h3 className="font-semibold text-base">Add Nodes</h3>
-            <p className="text-xs text-muted-foreground mt-1">Drag or click to add to canvas</p>
-          </div>
+        <div 
+          className={`transition-all duration-300 ${isLeftSidebarOpen ? 'w-72' : 'w-0'} overflow-hidden`}
+        >
+          <Card className="h-full m-4 mr-0 flex flex-col shadow-md">
+            <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-base">Add Nodes</h3>
+                <p className="text-xs text-muted-foreground mt-1">Click to add to canvas</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setIsLeftSidebarOpen(false)}
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+            </div>
 
           <ScrollArea className="flex-1">
             <div className="p-4">
@@ -584,7 +599,20 @@ const Canvas = () => {
               </div>
             </div>
           </ScrollArea>
-        </Card>
+          </Card>
+        </div>
+
+        {/* Left Sidebar Toggle Button */}
+        {!isLeftSidebarOpen && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="absolute left-4 top-4 z-10 shadow-md"
+            onClick={() => setIsLeftSidebarOpen(true)}
+          >
+            <PanelLeftOpen className="h-4 w-4" />
+          </Button>
+        )}
 
         {/* Canvas */}
         <div className="flex-1 relative bg-muted/5">
@@ -634,23 +662,48 @@ const Canvas = () => {
           </ReactFlow>
         </div>
 
+        {/* Right Sidebar Toggle Button */}
+        {!isRightSidebarOpen && selectedNode && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="absolute right-4 top-4 z-10 shadow-md"
+            onClick={() => setIsRightSidebarOpen(true)}
+          >
+            <PanelRightOpen className="h-4 w-4" />
+          </Button>
+        )}
+
         {/* Right Sidebar - Properties Panel */}
-        {selectedNode && (
-          <Card className="w-96 m-4 flex flex-col shadow-md">
-            <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-base">Node Configuration</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Configure selected node</p>
+        <div 
+          className={`transition-all duration-300 ${selectedNode && isRightSidebarOpen ? 'w-96' : 'w-0'} overflow-hidden`}
+        >
+          {selectedNode && (
+            <Card className="h-full m-4 ml-0 flex flex-col shadow-md">
+              <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-base">Node Configuration</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Configure selected node</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setIsRightSidebarOpen(false)}
+                  >
+                    <PanelRightClose className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={() => setSelectedNode(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setSelectedNode(null)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
 
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-5">
@@ -804,8 +857,9 @@ const Canvas = () => {
                 </div>
               </div>
             </ScrollArea>
-          </Card>
-        )}
+            </Card>
+          )}
+        </div>
       </div>
 
       {/* Templates Dialog */}
