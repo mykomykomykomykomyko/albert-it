@@ -18,11 +18,12 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -38,6 +39,69 @@ const nodeTypes: NodeTypes = {
   custom: CustomNode,
 };
 
+// Template definitions
+const TEMPLATES = {
+  'simple-chat': {
+    name: 'Simple AI Chat',
+    description: 'Basic input → agent → output flow',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'User Input', nodeType: 'input', inputType: 'text', userPrompt: 'Hello, how are you?', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'AI Assistant', nodeType: 'agent', systemPrompt: 'You are a helpful assistant.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Response', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'text-processing': {
+    name: 'Text Processor',
+    description: 'Transform text with operations',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Text Input', nodeType: 'input', inputType: 'text', userPrompt: 'HELLO WORLD', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Lowercase', nodeType: 'transform', config: { operation: 'lowercase' }, status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Result', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'multi-agent': {
+    name: 'Multi-Agent Pipeline',
+    description: 'Chain multiple AI agents',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Question', nodeType: 'input', inputType: 'text', userPrompt: 'What is AI?', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 350, y: 150 }, data: { label: 'Researcher', nodeType: 'agent', systemPrompt: 'Research and gather facts.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 350, y: 250 }, data: { label: 'Writer', nodeType: 'agent', systemPrompt: 'Write clearly and concisely.', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 600, y: 200 }, data: { label: 'Combine', nodeType: 'join', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 850, y: 200 }, data: { label: 'Final Output', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-4', source: '2', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-4', source: '3', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e4-5', source: '4', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'data-analysis': {
+    name: 'Data Analysis',
+    description: 'Analyze and process data',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 100, y: 200 }, data: { label: 'Raw Data', nodeType: 'input', inputType: 'text', userPrompt: 'Sales: 100, 200, 150, 300', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Analyzer', nodeType: 'agent', systemPrompt: 'Analyze the data and provide insights.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 150 }, data: { label: 'Summary', nodeType: 'output', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 700, y: 250 }, data: { label: 'Insights', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-4', source: '2', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+};
+
 const Canvas = () => {
   const navigate = useNavigate();
   const { agents: savedAgents } = useAgents();
@@ -46,6 +110,7 @@ const Canvas = () => {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [globalInput, setGlobalInput] = useState("");
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
+  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -308,6 +373,25 @@ const Canvas = () => {
     }
   };
 
+  const loadTemplate = (templateKey: string) => {
+    const template = TEMPLATES[templateKey as keyof typeof TEMPLATES];
+    if (template) {
+      const restoredNodes = template.nodes.map((node: any) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onEdit: () => setSelectedNode(node as Node),
+          onRun: () => handleRunNode(node.id),
+        }
+      }));
+      setNodes(restoredNodes);
+      setEdges(template.edges);
+      setIsTemplatesOpen(false);
+      setWorkflowName(template.name);
+      toast.success(`Template "${template.name}" loaded`);
+    }
+  };
+
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
   }, []);
@@ -326,6 +410,10 @@ const Canvas = () => {
             placeholder="Untitled Workflow"
           />
           <div className="w-px h-7 bg-border mx-1" />
+          <Button variant="outline" size="sm" onClick={() => setIsTemplatesOpen(true)}>
+            <Layout className="h-4 w-4 mr-2" />
+            Templates
+          </Button>
           <Button variant="outline" size="sm" onClick={handleLoad}>
             <Upload className="h-4 w-4 mr-2" />
             Load
@@ -719,6 +807,46 @@ const Canvas = () => {
           </Card>
         )}
       </div>
+
+      {/* Templates Dialog */}
+      <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Workflow Templates</DialogTitle>
+            <p className="text-sm text-muted-foreground">Choose a template to get started quickly</p>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            {Object.entries(TEMPLATES).map(([key, template]) => (
+              <Card 
+                key={key} 
+                className="cursor-pointer hover:border-primary transition-all hover:shadow-md" 
+                onClick={() => loadTemplate(key)}
+              >
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Layout className="h-4 w-4 text-primary" />
+                    {template.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">{template.description}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-blue-500" />
+                      {template.nodes.length} nodes
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <div className="h-2 w-2 rounded-full bg-green-500" />
+                      {template.edges.length} connections
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
