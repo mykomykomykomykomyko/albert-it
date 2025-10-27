@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -24,6 +24,8 @@ import { TransparencyPanel } from './chat/TransparencyPanel';
 import { AgentSwitcher } from './chat/AgentSwitcher';
 import { AudioUploader } from './chat/AudioUploader';
 import { ToolsToolbar } from './chat/ToolsToolbar';
+import { HelperAgent } from './HelperAgent';
+import { GettingStartedWizard } from './GettingStartedWizard';
 
 interface ImageAttachment {
   name: string;
@@ -64,6 +66,8 @@ const Chat = () => {
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showToolsToolbar, setShowToolsToolbar] = useState(false);
+  const [showHelperAgent, setShowHelperAgent] = useState(false);
+  const [showGettingStarted, setShowGettingStarted] = useState(false);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -78,6 +82,12 @@ const Chat = () => {
     }
     
     checkAuth();
+    
+    // Check if first visit
+    const hasSeenGettingStarted = localStorage.getItem('getting-started-completed');
+    if (!hasSeenGettingStarted) {
+      setShowGettingStarted(true);
+    }
     
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -819,6 +829,36 @@ const Chat = () => {
               />
             </div>
           </div>
+        )}
+
+        {/* Helper Agent */}
+        {showHelperAgent && (
+          <HelperAgent
+            context="chat"
+            onClose={() => setShowHelperAgent(false)}
+          />
+        )}
+
+        {/* Getting Started Wizard */}
+        <GettingStartedWizard
+          open={showGettingStarted}
+          onOpenChange={(open) => {
+            setShowGettingStarted(open);
+            if (!open) {
+              localStorage.setItem('getting-started-completed', 'true');
+            }
+          }}
+        />
+
+        {/* Floating Helper Button */}
+        {!showHelperAgent && (
+          <Button
+            onClick={() => setShowHelperAgent(true)}
+            className="fixed bottom-6 right-6 z-40 rounded-full h-14 w-14 shadow-lg"
+            size="icon"
+          >
+            <HelpCircle className="h-6 w-6" />
+          </Button>
         )}
       </div>
     </div>

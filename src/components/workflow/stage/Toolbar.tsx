@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Play, Plus, Save, Upload, Trash2 } from "lucide-react";
+import { Play, Plus, Save, Upload, Trash2, Store } from "lucide-react";
 
 interface ToolbarProps {
   onAddStage: () => void;
@@ -7,6 +7,7 @@ interface ToolbarProps {
   onSave: () => void;
   onLoad: () => void;
   onClear: () => void;
+  onOpenMarketplace?: () => void;
 }
 
 export const Toolbar = ({
@@ -14,7 +15,8 @@ export const Toolbar = ({
   onRun,
   onSave,
   onLoad,
-  onClear
+  onClear,
+  onOpenMarketplace
 }: ToolbarProps) => {
   return (
     <header className="h-16 border-b border-border bg-card items-center justify-between px-6 shadow-sm hidden lg:flex">
@@ -32,6 +34,12 @@ export const Toolbar = ({
           <Save className="h-4 w-4" />
           Save
         </Button>
+        {onOpenMarketplace && (
+          <Button variant="outline" size="sm" className="gap-2" onClick={onOpenMarketplace}>
+            <Store className="h-4 w-4" />
+            Marketplace
+          </Button>
+        )}
         <Button variant="outline" size="sm" className="gap-2" onClick={onClear}>
           <Trash2 className="h-4 w-4" />
           Clear

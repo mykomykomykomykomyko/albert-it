@@ -9,6 +9,7 @@ import { PropertiesPanel } from "@/components/workflow/stage/PropertiesPanel";
 import { OutputLog, LogEntry } from "@/components/workflow/stage/OutputLog";
 import { SaveWorkflowDialog } from "@/components/workflow/SaveWorkflowDialog";
 import { LoadWorkflowDialog } from "@/components/workflow/LoadWorkflowDialog";
+import { ShareWorkflowDialog } from "@/components/workflow/ShareWorkflowDialog";
 import type { Workflow, Stage as StageType, AgentNode, FunctionNode, Connection } from "@/types/workflow";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
@@ -254,6 +255,7 @@ const Stage = () => {
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null);
 
   const handleSave = () => {
     setSaveDialogOpen(true);
@@ -427,6 +429,7 @@ const Stage = () => {
         onSave={handleSave}
         onLoad={() => setLoadDialogOpen(true)}
         onClear={handleClear}
+        onOpenMarketplace={() => navigate('/workflow-marketplace')}
       />
       
       <SaveWorkflowDialog
