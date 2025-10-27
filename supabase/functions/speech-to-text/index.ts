@@ -70,12 +70,10 @@ serve(async (req) => {
   }
 
   try {
-    const formData = await req.formData();
-    const audioFile = formData.get('audio') as File;
-    const model = formData.get('model') || 'base';
+    const { audio, model = 'base' } = await req.json();
 
-    if (!audioFile) {
-      throw new Error('No audio file provided');
+    if (!audio) {
+      throw new Error('No audio data provided');
     }
 
     const elevenlabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
@@ -85,10 +83,14 @@ serve(async (req) => {
 
     console.log(`Processing speech-to-text with model: ${model}`);
 
+    // Convert base64 to binary
+    const binaryAudio = Uint8Array.from(atob(audio), c => c.charCodeAt(0));
+    const audioBlob = new Blob([binaryAudio], { type: 'audio/webm' });
+
     // Create form data for ElevenLabs API
     const elevenlabsFormData = new FormData();
-    elevenlabsFormData.append('file', audioFile);  // ElevenLabs expects 'file', not 'audio'
-    elevenlabsFormData.append('model_id', model as string);
+    elevenlabsFormData.append('file', audioBlob, 'audio.webm');
+    elevenlabsFormData.append('model_id', model);
     elevenlabsFormData.append('response_format', 'json');
     elevenlabsFormData.append('diarize', 'true');  // Enable speaker diarization
 
