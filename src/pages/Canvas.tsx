@@ -398,22 +398,47 @@ const Canvas = () => {
     toast.success("Executing workflow...");
     
     try {
-      // Sort nodes by position (top to bottom)
-      const sortedNodes = [...nodes].sort((a, b) => a.position.y - b.position.y);
-
-      for (const node of sortedNodes) {
-        const nodeData = node.data;
-        if (nodeData && nodeData.nodeType !== 'trigger') {
-          await handleRunNode(node.id);
-          // Wait a bit between nodes
-          await new Promise(resolve => setTimeout(resolve, 500));
+      // Build execution order based on dependencies
+      const executed = new Set<string>();
+      const executing = new Set<string>();
+      
+      const canExecute = (nodeId: string): boolean => {
+        // Find all incoming edges to this node
+        const incomingEdges = edges.filter(e => e.target === nodeId);
+        // Node can execute if all source nodes have been executed
+        return incomingEdges.every(edge => executed.has(edge.source));
+      };
+      
+      const executeNode = async (nodeId: string) => {
+        if (executed.has(nodeId) || executing.has(nodeId)) return;
+        executing.add(nodeId);
+        await handleRunNode(nodeId);
+        executing.delete(nodeId);
+        executed.add(nodeId);
+      };
+      
+      // Keep executing until all nodes are done
+      while (executed.size < nodes.length) {
+        const readyNodes = nodes
+          .filter(n => !executed.has(n.id) && !executing.has(n.id) && canExecute(n.id));
+        
+        if (readyNodes.length === 0) {
+          // No more nodes can execute - check if we're done or stuck
+          if (executed.size < nodes.length) {
+            throw new Error("Workflow has circular dependencies or disconnected nodes");
+          }
+          break;
         }
+        
+        // Execute all ready nodes in parallel
+        await Promise.all(readyNodes.map(node => executeNode(node.id)));
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
       
       toast.success("Workflow complete");
     } catch (error) {
       console.error('Workflow error:', error);
-      toast.error("Workflow failed");
+      toast.error(error instanceof Error ? error.message : "Workflow failed");
     }
   };
 
