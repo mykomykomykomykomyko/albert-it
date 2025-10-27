@@ -19,7 +19,7 @@ export const Toolbar = ({
   onOpenMarketplace
 }: ToolbarProps) => {
   return (
-    <header className="min-h-16 border-b border-border bg-card px-3 sm:px-6 py-2 shadow-sm">
+    <header className="hidden lg:block min-h-16 border-b border-border bg-card px-3 sm:px-6 py-2 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="flex items-center gap-2 flex-wrap flex-1">
           <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs" onClick={onAddStage}>

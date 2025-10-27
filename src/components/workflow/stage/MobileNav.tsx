@@ -39,7 +39,7 @@ export const MobileNav = ({
   };
 
   return (
-    <div>
+    <div className="lg:hidden">
       {/* Top Action Bar */}
       <div className="h-14 border-b border-border bg-card flex items-center gap-2 px-4">
         <Button
@@ -87,7 +87,7 @@ export const MobileNav = ({
       </div>
 
       {/* Tab Navigation - Mobile Only */}
-      <div className="lg:hidden h-14 border-b border-border bg-card flex items-center">
+      <div className="h-14 border-b border-border bg-card flex items-center">
         <button
           onClick={() => onTabChange("library")}
           className={cn(
