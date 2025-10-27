@@ -19,6 +19,7 @@ import ImageAnalysis from "./pages/ImageAnalysis";
 import VoiceAnalysis from "./pages/VoiceAnalysis";
 import MeetingTranscripts from "./pages/MeetingTranscripts";
 import NotFound from "./pages/NotFound";
+import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,9 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        
+        {/* Global Helper Agent - Available on all pages */}
+        <GlobalHelperAgent />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

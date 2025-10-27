@@ -24,7 +24,6 @@ import { TransparencyPanel } from './chat/TransparencyPanel';
 import { AgentSwitcher } from './chat/AgentSwitcher';
 import { AudioUploader } from './chat/AudioUploader';
 import { ToolsToolbar } from './chat/ToolsToolbar';
-import { HelperAgent } from './HelperAgent';
 import { GettingStartedWizard } from './GettingStartedWizard';
 
 interface ImageAttachment {
@@ -67,7 +66,6 @@ const Chat = () => {
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showToolsToolbar, setShowToolsToolbar] = useState(false);
-  const [showHelperAgent, setShowHelperAgent] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
 
   // Handle prompt text from location state
@@ -850,14 +848,6 @@ const Chat = () => {
           </div>
         )}
 
-        {/* Helper Agent */}
-        {showHelperAgent && (
-          <HelperAgent
-            context="chat"
-            onClose={() => setShowHelperAgent(false)}
-          />
-        )}
-
         {/* Getting Started Wizard */}
         <GettingStartedWizard
           open={showGettingStarted}
@@ -868,17 +858,6 @@ const Chat = () => {
             }
           }}
         />
-
-        {/* Floating Helper Button */}
-        {!showHelperAgent && (
-          <Button
-            onClick={() => setShowHelperAgent(true)}
-            className="fixed bottom-6 right-6 z-40 rounded-full h-14 w-14 shadow-lg"
-            size="icon"
-          >
-            <HelpCircle className="h-6 w-6" />
-          </Button>
-        )}
       </div>
     </div>
   );

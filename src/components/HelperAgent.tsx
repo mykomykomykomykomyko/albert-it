@@ -28,31 +28,76 @@ export function HelperAgent({ context, onClose }: HelperAgentProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-  // Common questions based on context
-  const quickQuestions = {
-    agents: [
-      'How do I create an effective agent?',
+  // Common questions based on context - comprehensive guide for all pages
+  const quickQuestions: Record<string, string[]> = {
+    'Home Dashboard': [
+      'What features are available on this platform?',
+      'How do I get started with my first project?',
+      'Where can I find the main tools?',
+    ],
+    'AI Chat': [
+      'How do I switch between different agents?',
+      'Can I upload files during conversations?',
+      'How do I use tools like web search and image generation?',
+    ],
+    'Agent Management': [
+      'How do I create a custom agent?',
       'What are best practices for system prompts?',
-      'How can I share my agents with others?',
+      'How can I test my agent before saving?',
     ],
-    workflows: [
-      'How do I connect multiple agents?',
+    'Agent Marketplace': [
+      'How do I find agents for specific tasks?',
+      'Can I modify agents from the marketplace?',
+      'How do I clone an agent?',
+    ],
+    'Prompt Library': [
+      'What types of prompts are available?',
+      'How do I use a prompt template?',
+      'Can I save my own prompts?',
+    ],
+    'Prompt Frameworks': [
+      'What are prompt frameworks?',
+      'Which framework should I use for my task?',
+      'How do I apply a framework to my prompts?',
+    ],
+    'Stage Workflow Builder': [
+      'What are stages in a workflow?',
+      'How do I connect agents between stages?',
+      'How can I use variables like {input} and {prompt}?',
+    ],
+    'Canvas Workflow Builder': [
       'What are the different node types?',
-      'How can I debug workflow execution?',
+      'How do I create branches in my workflow?',
+      'How do I debug workflow execution?',
     ],
-    prompts: [
-      'What makes a good prompt?',
-      'How do I use variables in prompts?',
-      'What frameworks should I use?',
+    'Workflow Marketplace': [
+      'How do I find workflows for my use case?',
+      'What\'s the difference between Canvas and Stage workflows?',
+      'Can I customize cloned workflows?',
     ],
-    general: [
-      'How do I get started?',
+    'Image Analysis': [
+      'What can I analyze in images?',
+      'How does OCR extraction work?',
+      'Can I process multiple images at once?',
+    ],
+    'Voice Analysis': [
+      'How do I convert speech to text?',
+      'What voice models are available?',
+      'Can I generate custom voices?',
+    ],
+    'Meeting Transcripts': [
+      'How do I upload meeting transcripts?',
+      'Can I extract action items automatically?',
+      'What formats are supported?',
+    ],
+    'Platform Navigation': [
+      'How do I navigate between features?',
       'What can this platform do?',
-      'Where can I find examples?',
+      'Where can I find examples and tutorials?',
     ],
   };
 
-  const contextQuestions = context ? (quickQuestions[context as keyof typeof quickQuestions] || quickQuestions.general) : quickQuestions.general;
+  const contextQuestions = context ? (quickQuestions[context] || quickQuestions['Platform Navigation']) : quickQuestions['Platform Navigation'];
 
   useEffect(() => {
     // Initial greeting
@@ -88,20 +133,49 @@ export function HelperAgent({ context, onClose }: HelperAgentProps) {
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
-      // Build system prompt with framework knowledge
-      const systemPrompt = `You are a helpful AI assistant for the Albert platform. You help users understand features and best practices.
+      // Build comprehensive system prompt with context-specific knowledge
+      const contextInfo: Record<string, string> = {
+        'Home Dashboard': 'Users can access all platform features: AI Chat, Agent Management, Prompt Library, Workflow Builders (Stage & Canvas), Image Analysis, Voice Analysis, and Meeting Transcripts.',
+        'AI Chat': 'Interactive chat with AI agents. Users can switch agents, upload files (PDFs, images, documents), use tools (web search, image generation, API calls), and export conversations.',
+        'Agent Management': 'Create custom AI agents with unique system prompts, personalities, and configurations. Agents can be saved, shared to marketplace, and reused across workflows.',
+        'Agent Marketplace': 'Browse community-created agents. Users can filter by category, clone agents to customize, and find pre-built solutions for common tasks.',
+        'Prompt Library': 'Collection of proven prompts organized by category. Users can search, filter, use templates directly, and save their own successful prompts.',
+        'Prompt Frameworks': 'Structured approaches to prompting: RISE (Role, Input, Steps, Expectation), CREATE (Context, Role, Elaborate, Ask, Tone, Explain), CARE (Context, Action, Result, Example), etc.',
+        'Stage Workflow Builder': 'Sequential multi-stage workflows. Each stage contains agents/functions that execute in order. Supports variables: {prompt} (global input), {input} (previous node output). Connections determine data flow.',
+        'Canvas Workflow Builder': 'Visual workflow builder with drag-and-drop nodes: Input nodes (provide data), Agent nodes (AI processing), Function nodes (logic/transforms), Join nodes (merge outputs), Output nodes (display results). Supports parallel execution and complex branching.',
+        'Workflow Marketplace': 'Pre-built workflows for common use cases. Canvas workflows (visual) and Stage workflows (sequential) serve different needs. Users can clone and customize any workflow.',
+        'Image Analysis': 'Upload images for AI analysis. Features: OCR text extraction, object detection, visual Q&A, batch processing. Supports PDF images and multiple formats.',
+        'Voice Analysis': 'Speech-to-Text: Convert audio to text transcripts. Text-to-Speech: Generate natural-sounding voices. Supports multiple languages and voice models from ElevenLabs.',
+        'Meeting Transcripts': 'Process meeting recordings or transcripts. Extract action items, generate summaries, identify key decisions, and format outputs for documentation.',
+        'Platform Navigation': 'Albert is an AI workflow and agent platform. Main features: conversational AI, custom agents, visual workflows, document processing, voice processing, and collaboration tools.'
+      };
 
-Context: ${context || 'general platform usage'}
+      const systemPrompt = `You are a helpful AI assistant for Albert, an AI workflow and agent platform. You help users understand features, solve problems, and learn best practices.
 
-Available Frameworks:
-${frameworks.map(f => `- ${f.name}: ${f.description || ''}`).join('\n')}
+**Current Context:** ${context || 'Platform Navigation'}
+${contextInfo[context || 'Platform Navigation'] || ''}
 
-Instructions:
-- Be concise and helpful
-- Reference specific frameworks when relevant
-- Provide actionable advice
-- Use markdown for formatting
-- Keep responses under 300 words`;
+**Available Prompt Frameworks:**
+${frameworks.map(f => `- **${f.name}**: ${f.description || ''}`).join('\n')}
+
+**Your Role:**
+- Explain features clearly and concisely
+- Provide step-by-step guidance when needed
+- Reference relevant frameworks and best practices
+- Help troubleshoot issues
+- Suggest alternative approaches
+- Use markdown for better readability
+- Keep responses under 400 words
+- Be encouraging and supportive
+
+**Platform Capabilities:**
+- **Agents**: Custom AI with unique prompts and personalities
+- **Workflows**: Visual (Canvas) and sequential (Stage) multi-agent processes
+- **Tools**: Web search, image generation, API calls, file processing
+- **Analysis**: Image OCR, voice transcription, document processing
+- **Collaboration**: Share agents and workflows with community
+
+Answer the user's question based on the current context.`;
 
       // Get session for auth
       const { data: { session } } = await supabase.auth.getSession();
