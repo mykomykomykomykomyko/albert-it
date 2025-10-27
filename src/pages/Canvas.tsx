@@ -1082,18 +1082,58 @@ const Canvas = () => {
                 </div>
 
                 {selectedNode.data.nodeType === 'input' && editingNode && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Input Data</Label>
-                    <Textarea
-                      value={editingNode.userPrompt}
-                      onChange={(e) => {
-                        setEditingNode({ ...editingNode, userPrompt: e.target.value });
-                        updateNodeData({ userPrompt: e.target.value } as any);
-                      }}
-                      placeholder="Enter your input data here..."
-                      className="min-h-[150px] text-sm font-mono"
-                    />
-                    <p className="text-xs text-muted-foreground">This data will be passed to connected nodes</p>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Input Data</Label>
+                      <Textarea
+                        value={editingNode.userPrompt}
+                        onChange={(e) => {
+                          setEditingNode({ ...editingNode, userPrompt: e.target.value });
+                          updateNodeData({ userPrompt: e.target.value } as any);
+                        }}
+                        placeholder="Enter your input data here..."
+                        className="min-h-[150px] text-sm font-mono"
+                      />
+                      <p className="text-xs text-muted-foreground">This data will be passed to connected nodes</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Or Upload File</Label>
+                      <Input
+                        type="file"
+                        accept=".vtt,.docx,.txt,.json"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+
+                          try {
+                            let content = "";
+                            
+                            if (file.name.endsWith(".vtt")) {
+                              const text = await file.text();
+                              const { parseVTT } = await import("@/utils/parseVTT");
+                              const parsed = parseVTT(text);
+                              content = parsed.fullText;
+                            } else if (file.name.endsWith(".docx")) {
+                              const mammoth = await import("mammoth");
+                              const arrayBuffer = await file.arrayBuffer();
+                              const result = await mammoth.extractRawText({ arrayBuffer });
+                              content = result.value;
+                            } else if (file.name.endsWith(".txt") || file.name.endsWith(".json")) {
+                              content = await file.text();
+                            }
+
+                            setEditingNode({ ...editingNode, userPrompt: content });
+                            updateNodeData({ userPrompt: content } as any);
+                            toast.success(`File "${file.name}" loaded successfully`);
+                          } catch (error) {
+                            toast.error("Failed to read file");
+                          }
+                        }}
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-muted-foreground">Supports VTT, DOCX, TXT, JSON files</p>
+                    </div>
                   </div>
                 )}
 
