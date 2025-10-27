@@ -14,200 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      agents: {
-        Row: {
-          created_at: string
-          description: string | null
-          icon_name: string
-          id: string
-          metadata_tags: string[] | null
-          name: string
-          profile_picture_url: string | null
-          system_prompt: string
-          type: string
-          updated_at: string
-          user_id: string
-          user_prompt: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          icon_name?: string
-          id?: string
-          metadata_tags?: string[] | null
-          name: string
-          profile_picture_url?: string | null
-          system_prompt: string
-          type: string
-          updated_at?: string
-          user_id: string
-          user_prompt: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          icon_name?: string
-          id?: string
-          metadata_tags?: string[] | null
-          name?: string
-          profile_picture_url?: string | null
-          system_prompt?: string
-          type?: string
-          updated_at?: string
-          user_id?: string
-          user_prompt?: string
-        }
-        Relationships: []
-      }
-      chat_history: {
-        Row: {
-          content: string
-          created_at: string | null
-          files: Json | null
-          id: string
-          images: Json | null
-          role: string
-          user_email: string
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          files?: Json | null
-          id?: string
-          images?: Json | null
-          role: string
-          user_email: string
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          files?: Json | null
-          id?: string
-          images?: Json | null
-          role?: string
-          user_email?: string
-        }
-        Relationships: []
-      }
-      conversations: {
-        Row: {
-          created_at: string | null
-          id: string
-          model: string
-          title: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          model?: string
-          title?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          model?: string
-          title?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      messages: {
-        Row: {
-          content: string
-          conversation_id: string
-          created_at: string | null
-          id: string
-          image_url: string | null
-          role: string
-        }
-        Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string | null
-          id?: string
-          image_url?: string | null
-          role: string
-        }
-        Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string | null
-          id?: string
-          image_url?: string | null
-          role?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string | null
-          email: string | null
-          full_name: string | null
-          id: string
-          updated_at: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id: string
-          updated_at?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          id?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      workflows: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          name: string
-          updated_at: string
-          user_id: string
-          workflow_data: Json
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string
-          user_id: string
-          workflow_data: Json
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string
-          user_id?: string
-          workflow_data?: Json
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -216,7 +23,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      agent_type: "Text" | "Voice" | "Image" | "Audio" | "Multimodal"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -343,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      agent_type: ["Text", "Voice", "Image", "Audio", "Multimodal"],
-    },
+    Enums: {},
   },
 } as const
