@@ -68,7 +68,7 @@ serve(async (req) => {
 
     const result = await model.generateContentStream({
       contents,
-      systemInstruction: systemPrompt || 'You are a helpful AI assistant.',
+      systemInstruction: systemPrompt || 'You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.',
       safetySettings: getSafetySettings(),
     });
 
