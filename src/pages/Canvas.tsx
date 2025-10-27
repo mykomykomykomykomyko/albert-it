@@ -1,5 +1,5 @@
 import { ChatHeader } from "@/components/ChatHeader";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ReactFlow, {
@@ -21,45 +21,36 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Plus, Play, Save, Upload, Trash2, Settings, Store } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, Zap, Database, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
+import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-const initialNodes: Node[] = [
-  {
-    id: '1',
-    type: 'input',
-    data: { label: 'Start' },
-    position: { x: 250, y: 50 },
-  },
-];
-
-const initialEdges: Edge[] = [];
-
-interface CustomNodeData {
-  label: string;
-  nodeType: string;
-  agentType?: string;
-  systemPrompt?: string;
-  userPrompt?: string;
-  config?: Record<string, any>;
-}
+const nodeTypes: NodeTypes = {
+  custom: CustomNode,
+};
 
 const Canvas = () => {
   const navigate = useNavigate();
   const { agents: savedAgents } = useAgents();
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [globalInput, setGlobalInput] = useState("");
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
+  const [editingNode, setEditingNode] = useState<{
+    systemPrompt: string;
+    userPrompt: string;
+    config: Record<string, any>;
+  } | null>(null);
 
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -90,129 +81,153 @@ const Canvas = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  useEffect(() => {
+    if (selectedNode) {
+      const node = nodes.find(n => n.id === selectedNode.id);
+      if (node && node.data) {
+        const data = node.data;
+        setEditingNode({
+          systemPrompt: (data as any).systemPrompt || '',
+          userPrompt: (data as any).userPrompt || '',
+          config: (data as any).config || {},
+        });
+      }
+    } else {
+      setEditingNode(null);
+    }
+  }, [selectedNode, nodes]);
+
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: 'hsl(var(--primary))' } }, eds)),
     [setEdges]
   );
 
-  const addAgentNode = (agentType: string) => {
-    const agent = savedAgents.find(a => a.id === agentType);
-    if (!agent) return;
-
-    const newNode: Node<CustomNodeData> = {
-      id: `agent-${nodes.length + 1}`,
-      type: 'default',
-      data: { 
-        label: agent.name,
-        nodeType: 'agent',
-        agentType: agent.id,
-        systemPrompt: agent.system_prompt || '',
+  const addNode = (type: 'agent' | 'function' | 'trigger', template: any) => {
+    const id = `${type}-${Date.now()}`;
+    const newNode: Node = {
+      id,
+      type: 'custom',
+      position: { 
+        x: Math.random() * 300 + 100, 
+        y: Math.random() * 300 + 100 
+      },
+      data: {
+        label: template.name,
+        nodeType: type,
+        status: 'idle',
+        description: template.description,
+        systemPrompt: template.systemPrompt || '',
         userPrompt: '',
-      },
-      position: { 
-        x: Math.random() * 400 + 100, 
-        y: Math.random() * 400 + 100 
-      },
-      style: {
-        background: 'hsl(var(--primary))',
-        color: 'white',
-        border: '2px solid hsl(var(--primary))',
-        borderRadius: '8px',
-        padding: '12px',
-        minWidth: '180px',
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-    toast.success(`${agent.name} added to canvas`);
-  };
-
-  const addFunctionNode = (functionType: string) => {
-    const functionNames: Record<string, string> = {
-      'transform': 'Data Transform',
-      'filter': 'Filter',
-      'merge': 'Merge',
-      'split': 'Split',
-    };
-
-    const newNode: Node<CustomNodeData> = {
-      id: `function-${nodes.length + 1}`,
-      type: 'default',
-      data: { 
-        label: functionNames[functionType] || functionType,
-        nodeType: 'function',
         config: {},
-      },
-      position: { 
-        x: Math.random() * 400 + 100, 
-        y: Math.random() * 400 + 100 
-      },
-      style: {
-        background: 'hsl(var(--accent))',
-        color: 'hsl(var(--accent-foreground))',
-        border: '2px solid hsl(var(--accent))',
-        borderRadius: '8px',
-        padding: '12px',
-        minWidth: '150px',
+        onEdit: () => {
+          const node = nodes.find(n => n.id === id);
+          if (node) setSelectedNode(node);
+        },
+        onRun: () => handleRunNode(id),
       },
     };
+    
     setNodes((nds) => [...nds, newNode]);
-    toast.success(`${functionNames[functionType]} added to canvas`);
+    toast.success(`${template.name} added`);
   };
 
-  const handleRun = async () => {
+  const handleRunNode = async (nodeId: string) => {
+    const node = nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Update node status to running
+    setNodes(nds => nds.map(n => 
+      n.id === nodeId 
+        ? { ...n, data: { ...n.data, status: 'running' } }
+        : n
+    ));
+
+    try {
+      const nodeData = node.data as any;
+      
+      if (nodeData.nodeType === 'agent') {
+        // Get input from connected nodes or global input
+        const incomingEdges = edges.filter(e => e.target === nodeId);
+        let input = globalInput;
+        
+        if (incomingEdges.length > 0) {
+          const sourceNode = nodes.find(n => n.id === incomingEdges[0].source);
+          if (sourceNode && (sourceNode.data as any).output) {
+            input = (sourceNode.data as any).output;
+          }
+        }
+
+        const { data, error } = await supabase.functions.invoke('run-agent', {
+          body: {
+            systemPrompt: nodeData.systemPrompt || '',
+            userPrompt: nodeData.userPrompt || input,
+            tools: []
+          }
+        });
+
+        if (error) throw error;
+        
+        // Update node with output and success status
+        setNodes(nds => nds.map(n => 
+          n.id === nodeId 
+            ? { ...n, data: { ...n.data, status: 'success', output: data.output } }
+            : n
+        ));
+        
+        toast.success(`${nodeData.label} completed`);
+      }
+    } catch (error) {
+      console.error('Node execution error:', error);
+      setNodes(nds => nds.map(n => 
+        n.id === nodeId 
+          ? { ...n, data: { ...n.data, status: 'error' } }
+          : n
+      ));
+      toast.error(`Node execution failed`);
+    }
+  };
+
+  const handleRunWorkflow = async () => {
     toast.success("Executing workflow...");
     
     try {
-      // Sort nodes by their position (simple execution order based on Y position)
-      const sortedNodeIds = [...nodes]
-        .sort((a, b) => a.position.y - b.position.y)
-        .map(n => n.id);
+      // Sort nodes by position (top to bottom)
+      const sortedNodes = [...nodes].sort((a, b) => a.position.y - b.position.y);
 
-      for (const nodeId of sortedNodeIds) {
-        const node = nodes.find(n => n.id === nodeId);
-        if (!node || node.type === 'input') continue;
-
-        const nodeData = node.data as CustomNodeData;
-        
-        if (nodeData.nodeType === 'agent') {
-          // Get input from connected nodes
-          const inputEdges = edges.filter(e => e.target === nodeId);
-          let input = globalInput;
-          
-          if (inputEdges.length > 0) {
-            const sourceNode = nodes.find(n => n.id === inputEdges[0].source);
-            if (sourceNode && (sourceNode.data as any).output) {
-              input = (sourceNode.data as any).output;
-            }
-          }
-
-          // Execute agent
-          const { data, error } = await supabase.functions.invoke('run-agent', {
-            body: {
-              systemPrompt: nodeData.systemPrompt || '',
-              userPrompt: nodeData.userPrompt || input,
-              tools: []
-            }
-          });
-
-          if (error) throw error;
-          
-          // Store output in node data
-          setNodes(nds => nds.map(n => 
-            n.id === nodeId 
-              ? { ...n, data: { ...n.data, output: data.output } }
-              : n
-          ));
-          
-          toast.success(`${nodeData.label} completed`);
+      for (const node of sortedNodes) {
+        const nodeData = node.data;
+        if (nodeData && nodeData.nodeType !== 'trigger') {
+          await handleRunNode(node.id);
+          // Wait a bit between nodes
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
       
-      toast.success("Workflow execution complete");
+      toast.success("Workflow complete");
     } catch (error) {
-      console.error('Workflow execution error:', error);
-      toast.error("Workflow execution failed");
+      console.error('Workflow error:', error);
+      toast.error("Workflow failed");
     }
+  };
+
+  const updateNodeData = (updates: Partial<CustomNodeData>) => {
+    if (!selectedNode) return;
+    
+    setNodes(nds => nds.map(n => {
+      if (n.id === selectedNode.id) {
+        const currentData = n.data;
+        return {
+          ...n,
+          data: {
+            ...currentData,
+            ...updates,
+            onEdit: currentData?.onEdit,
+            onRun: currentData?.onRun,
+          }
+        };
+      }
+      return n;
+    }));
   };
 
   const handleSave = () => {
@@ -223,7 +238,7 @@ const Canvas = () => {
       globalInput 
     };
     localStorage.setItem('canvas-workflow', JSON.stringify(workflow));
-    toast.success("Workflow saved!");
+    toast.success("Workflow saved");
   };
 
   const handleLoad = () => {
@@ -231,23 +246,34 @@ const Canvas = () => {
     if (saved) {
       const workflow = JSON.parse(saved);
       setWorkflowName(workflow.name || "Untitled Workflow");
-      setNodes(workflow.nodes || initialNodes);
-      setEdges(workflow.edges || initialEdges);
+      
+      // Restore nodes with callbacks
+      const restoredNodes = (workflow.nodes || []).map((node: any) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onEdit: () => setSelectedNode(node),
+          onRun: () => handleRunNode(node.id),
+        }
+      }));
+      
+      setNodes(restoredNodes);
+      setEdges(workflow.edges || []);
       setGlobalInput(workflow.globalInput || "");
-      toast.success("Workflow loaded!");
+      toast.success("Workflow loaded");
     } else {
-      toast.error("No saved workflow found");
+      toast.error("No saved workflow");
     }
   };
 
   const handleClear = () => {
-    if (confirm("Clear the entire canvas?")) {
-      setNodes(initialNodes);
-      setEdges(initialEdges);
+    if (confirm("Clear canvas?")) {
+      setNodes([]);
+      setEdges([]);
       setSelectedNode(null);
       setGlobalInput("");
       setWorkflowName("Untitled Workflow");
-      toast.success("Canvas cleared!");
+      toast.success("Canvas cleared");
     }
   };
 
@@ -255,201 +281,293 @@ const Canvas = () => {
     setSelectedNode(node);
   }, []);
 
-  const updateSelectedNodeData = (updates: Partial<CustomNodeData>) => {
-    if (!selectedNode) return;
-    
-    setNodes(nds => nds.map(n => 
-      n.id === selectedNode.id 
-        ? { ...n, data: { ...n.data, ...updates } }
-        : n
-    ));
-    setSelectedNode(prev => prev ? { ...prev, data: { ...prev.data, ...updates } } : null);
-  };
-
   return (
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
       
       {/* Toolbar */}
-      <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6 shadow-sm">
+      <header className="h-14 border-b border-border bg-card flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center gap-2">
           <Input
             value={workflowName}
             onChange={(e) => setWorkflowName(e.target.value)}
-            className="w-48 h-9"
+            className="w-44 h-8 text-sm"
             placeholder="Workflow name"
           />
-          <div className="w-px h-6 bg-border mx-2" />
+          <div className="w-px h-6 bg-border mx-1" />
           <Button variant="outline" size="sm" onClick={handleLoad}>
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload className="h-3.5 w-3.5 mr-1.5" />
             Load
           </Button>
           <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
+            <Save className="h-3.5 w-3.5 mr-1.5" />
             Save
           </Button>
           <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace')}>
-            <Store className="h-4 w-4 mr-2" />
+            <Store className="h-3.5 w-3.5 mr-1.5" />
             Marketplace
           </Button>
           <Button variant="outline" size="sm" onClick={handleClear}>
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
             Clear
           </Button>
         </div>
         <Button
           size="sm"
-          className="gap-2 bg-gradient-to-r from-primary to-primary-hover"
-          onClick={handleRun}
+          className="gap-2 bg-gradient-to-r from-primary to-primary/80"
+          onClick={handleRunWorkflow}
         >
-          <Play className="h-4 w-4" />
+          <Play className="h-3.5 w-3.5" />
           Run Workflow
         </Button>
       </header>
       
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <Card className="w-72 m-4 flex flex-col gap-4 overflow-hidden">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold text-sm text-muted-foreground mb-3">GLOBAL INPUT</h3>
-            <Textarea
-              value={globalInput}
-              onChange={(e) => setGlobalInput(e.target.value)}
-              placeholder="Enter global workflow input..."
-              className="min-h-[100px]"
-            />
+        {/* Left Sidebar - Node Library */}
+        <Card className="w-64 m-3 flex flex-col border-2">
+          <div className="p-3 border-b bg-muted/30">
+            <h3 className="font-semibold text-sm">Node Library</h3>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div>
-              <h3 className="font-semibold mb-3 text-sm text-muted-foreground">ADD AGENTS</h3>
-              <div className="space-y-2">
-                {savedAgents.slice(0, 5).map((agent) => (
-                  <Button
-                    key={agent.id}
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-start gap-2"
-                    onClick={() => addAgentNode(agent.id)}
-                  >
-                    <div className="w-3 h-3 rounded bg-primary" />
-                    {agent.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
+          <ScrollArea className="flex-1">
+            <div className="p-3">
+              <Accordion type="single" collapsible defaultValue="agents" className="w-full">
+                <AccordionItem value="triggers">
+                  <AccordionTrigger className="text-sm py-2">
+                    <div className="flex items-center gap-2">
+                      <Database className="h-4 w-4" />
+                      Triggers
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1 pt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => addNode('trigger', { name: 'Manual Trigger', description: 'Start workflow manually' })}
+                    >
+                      <Plus className="h-3 w-3 mr-2" />
+                      Manual Trigger
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => addNode('trigger', { name: 'Webhook', description: 'Trigger via webhook' })}
+                    >
+                      <Plus className="h-3 w-3 mr-2" />
+                      Webhook
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
 
-            <div>
-              <h3 className="font-semibold mb-3 text-sm text-muted-foreground">ADD FUNCTIONS</h3>
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => addFunctionNode('transform')}
-                >
-                  <div className="w-3 h-3 rounded bg-accent" />
-                  Data Transform
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => addFunctionNode('filter')}
-                >
-                  <div className="w-3 h-3 rounded bg-accent" />
-                  Filter
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start gap-2"
-                  onClick={() => addFunctionNode('merge')}
-                >
-                  <div className="w-3 h-3 rounded bg-accent" />
-                  Merge
-                </Button>
+                <AccordionItem value="agents">
+                  <AccordionTrigger className="text-sm py-2">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      AI Agents
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1 pt-1">
+                    {savedAgents.slice(0, 6).map((agent) => (
+                      <Button
+                        key={agent.id}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-8 text-xs"
+                        onClick={() => addNode('agent', { 
+                          name: agent.name, 
+                          description: agent.description || 'AI Agent',
+                          systemPrompt: agent.system_prompt 
+                        })}
+                      >
+                        <Plus className="h-3 w-3 mr-2" />
+                        {agent.name}
+                      </Button>
+                    ))}
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="functions">
+                  <AccordionTrigger className="text-sm py-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      Functions
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1 pt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => addNode('function', { name: 'Transform', description: 'Transform data' })}
+                    >
+                      <Plus className="h-3 w-3 mr-2" />
+                      Transform Data
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => addNode('function', { name: 'Filter', description: 'Filter results' })}
+                    >
+                      <Plus className="h-3 w-3 mr-2" />
+                      Filter
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-8 text-xs"
+                      onClick={() => addNode('function', { name: 'Merge', description: 'Merge data' })}
+                    >
+                      <Plus className="h-3 w-3 mr-2" />
+                      Merge Data
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              <div className="mt-4 pt-4 border-t">
+                <Label className="text-xs text-muted-foreground mb-2 block">Global Input</Label>
+                <Textarea
+                  value={globalInput}
+                  onChange={(e) => setGlobalInput(e.target.value)}
+                  placeholder="Enter workflow input..."
+                  className="min-h-[80px] text-xs"
+                />
               </div>
             </div>
-          </div>
+          </ScrollArea>
         </Card>
 
         {/* Canvas */}
-        <div className="flex-1 flex gap-4 p-4">
-          <div className="flex-1 relative bg-card rounded-lg border">
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onNodeClick={onNodeClick}
-              fitView
-            >
-              <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-              <Controls />
-              <MiniMap 
-                nodeColor={(node) => {
-                  const data = node.data as CustomNodeData;
-                  return data.nodeType === 'agent' ? 'hsl(var(--primary))' : 'hsl(var(--accent))';
-                }}
-              />
-            </ReactFlow>
-          </div>
-
-          {/* Properties Panel */}
-          {selectedNode && (selectedNode.data as CustomNodeData).nodeType === 'agent' && (
-            <Card className="w-80 p-4 space-y-4 overflow-y-auto">
-              <div>
-                <h3 className="font-semibold mb-2">Node Properties</h3>
-                <p className="text-sm text-muted-foreground">{(selectedNode.data as CustomNodeData).label}</p>
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium mb-2 block">System Prompt</label>
-                <Textarea
-                  value={(selectedNode.data as CustomNodeData).systemPrompt || ''}
-                  onChange={(e) => updateSelectedNodeData({ systemPrompt: e.target.value })}
-                  placeholder="System prompt for this agent..."
-                  className="min-h-[120px]"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">User Prompt</label>
-                <Textarea
-                  value={(selectedNode.data as CustomNodeData).userPrompt || ''}
-                  onChange={(e) => updateSelectedNodeData({ userPrompt: e.target.value })}
-                  placeholder="User prompt (or use connected input)..."
-                  className="min-h-[120px]"
-                />
-              </div>
-
-              {(selectedNode.data as any).output && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Output</label>
-                  <div className="p-3 bg-muted rounded-md text-sm max-h-[200px] overflow-y-auto">
-                    {(selectedNode.data as any).output}
-                  </div>
-                </div>
-              )}
-
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                className="w-full"
-                onClick={() => {
-                  setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
-                  setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
-                  setSelectedNode(null);
-                  toast.success("Node deleted");
-                }}
-              >
-                Delete Node
-              </Button>
-            </Card>
-          )}
+        <div className="flex-1 relative">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onNodeClick={onNodeClick}
+            nodeTypes={nodeTypes}
+            fitView
+            className="bg-muted/20"
+          >
+            <Background 
+              variant={BackgroundVariant.Dots} 
+              gap={20} 
+              size={1}
+              className="bg-background"
+            />
+            <Controls className="bg-card border border-border rounded-lg" />
+            <MiniMap 
+              className="bg-card border border-border rounded-lg"
+              nodeColor={(node) => {
+                const data = node.data as CustomNodeData;
+                return data.nodeType === 'agent' 
+                  ? 'hsl(var(--primary))' 
+                  : data.nodeType === 'function'
+                  ? 'hsl(var(--accent))'
+                  : 'hsl(var(--secondary))';
+              }}
+            />
+          </ReactFlow>
         </div>
+
+        {/* Right Sidebar - Properties Panel */}
+        {selectedNode && (
+          <Card className="w-80 m-3 flex flex-col border-2">
+            <div className="p-3 border-b bg-muted/30 flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Node Settings</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
+                onClick={() => setSelectedNode(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-4">
+                <div>
+                  <Label className="text-xs">Node Name</Label>
+                  <Input
+                    value={selectedNode.data.label}
+                    onChange={(e) => updateNodeData({ label: e.target.value })}
+                    className="mt-1.5 h-8 text-sm"
+                  />
+                </div>
+
+                {selectedNode.data.nodeType === 'agent' && editingNode && (
+                  <>
+                    <div>
+                      <Label className="text-xs">System Prompt</Label>
+                      <Textarea
+                        value={editingNode.systemPrompt}
+                        onChange={(e) => {
+                          setEditingNode({ ...editingNode, systemPrompt: e.target.value });
+                          updateNodeData({ systemPrompt: e.target.value } as any);
+                        }}
+                        placeholder="System instructions..."
+                        className="mt-1.5 min-h-[100px] text-xs"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="text-xs">User Prompt</Label>
+                      <Textarea
+                        value={editingNode.userPrompt}
+                        onChange={(e) => {
+                          setEditingNode({ ...editingNode, userPrompt: e.target.value });
+                          updateNodeData({ userPrompt: e.target.value } as any);
+                        }}
+                        placeholder="User message or use connected input..."
+                        className="mt-1.5 min-h-[100px] text-xs"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {selectedNode.data.output && (
+                  <div>
+                    <Label className="text-xs">Output</Label>
+                    <div className="mt-1.5 p-3 bg-muted rounded-md text-xs max-h-[200px] overflow-y-auto font-mono">
+                      {selectedNode.data.output}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-2 space-y-2">
+                  <Button 
+                    size="sm" 
+                    className="w-full gap-2"
+                    onClick={() => handleRunNode(selectedNode.id)}
+                    disabled={selectedNode.data.status === 'running'}
+                  >
+                    <Play className="h-3.5 w-3.5" />
+                    Test Node
+                  </Button>
+                  
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => {
+                      setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
+                      setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
+                      setSelectedNode(null);
+                      toast.success("Node deleted");
+                    }}
+                  >
+                    Delete Node
+                  </Button>
+                </div>
+              </div>
+            </ScrollArea>
+          </Card>
+        )}
       </div>
     </div>
   );
