@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
@@ -59,6 +59,13 @@ const routeContexts: Record<string, { name: string; description: string }> = {
 export function GlobalHelperAgent() {
   const [showHelper, setShowHelper] = useState(false);
   const location = useLocation();
+  
+  // Listen for custom event from header button
+  useEffect(() => {
+    const handleOpenHelper = () => setShowHelper(true);
+    window.addEventListener('openHelperAgent', handleOpenHelper);
+    return () => window.removeEventListener('openHelperAgent', handleOpenHelper);
+  }, []);
   
   // Get context based on current route
   const getRouteContext = () => {

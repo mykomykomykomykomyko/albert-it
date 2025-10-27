@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, X, HelpCircle, BookOpen, Library } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -11,14 +11,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-import { HelpModal } from '@/components/workflow/stage/HelpModal';
 
 export function ChatHeader() {
   const navigate = useNavigate();
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
 
   const currentTab = location.pathname.startsWith('/agents') ? 'agents' :
                      location.pathname.startsWith('/chat') ? 'chat' :
@@ -71,6 +69,12 @@ export function ChatHeader() {
 
   const handleNavClick = (path: string) => {
     navigate(path);
+    setMobileMenuOpen(false);
+  };
+
+  const openHelperAgent = () => {
+    // Dispatch custom event to open the GlobalHelperAgent
+    window.dispatchEvent(new Event('openHelperAgent'));
     setMobileMenuOpen(false);
   };
 
@@ -192,7 +196,7 @@ export function ChatHeader() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setHelpOpen(true)}
+            onClick={openHelperAgent}
             title="Help"
             className="hover:bg-accent"
           >
@@ -272,10 +276,7 @@ export function ChatHeader() {
               <Button
                 variant="ghost"
                 className="justify-start"
-                onClick={() => {
-                  setHelpOpen(true);
-                  setMobileMenuOpen(false);
-                }}
+                onClick={openHelperAgent}
               >
                 <HelpCircle className="h-4 w-4 mr-2" />
                 Help
@@ -315,11 +316,6 @@ export function ChatHeader() {
           </SheetContent>
         </Sheet>
       </div>
-      
-      {/* Help Modal - Only show on /stage route */}
-      {location.pathname === '/stage' && (
-        <HelpModal open={helpOpen} onOpenChange={setHelpOpen} />
-      )}
     </header>
   );
 }
