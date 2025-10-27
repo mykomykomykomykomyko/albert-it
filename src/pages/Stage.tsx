@@ -74,22 +74,22 @@ const Stage = () => {
   }, [selectedNode]);
 
   const selectedAgent = selectedNode
-    ? workflow.stages.flatMap(s => s.nodes).find(n => n.id === selectedNode && n.nodeType === "agent") as AgentNode | undefined
+    ? workflow.stages?.flatMap(s => s.nodes).find(n => n.id === selectedNode && n.nodeType === "agent") as AgentNode | undefined
     : undefined;
 
   const selectedNodeData = selectedNode
-    ? workflow.stages.flatMap(s => s.nodes).find(n => n.id === selectedNode)
+    ? workflow.stages?.flatMap(s => s.nodes).find(n => n.id === selectedNode)
     : undefined;
 
   const addStage = () => {
     const newStage: StageType = {
       id: `stage-${Date.now()}`,
-      name: `Stage ${workflow.stages.length + 1}`,
+      name: `Stage ${(workflow.stages?.length || 0) + 1}`,
       nodes: [],
     };
     setWorkflow((prev) => ({
       ...prev,
-      stages: [...prev.stages, newStage],
+      stages: [...(prev.stages || []), newStage],
     }));
     addLog("info", `Added ${newStage.name}`);
   };
@@ -147,14 +147,14 @@ const Stage = () => {
   };
 
   const handleDeleteAgent = (nodeId: string) => {
-    const node = workflow.stages.flatMap(s => s.nodes).find(n => n.id === nodeId);
+    const node = workflow.stages?.flatMap(s => s.nodes).find(n => n.id === nodeId);
     setWorkflow((prev) => ({
       ...prev,
-      stages: prev.stages.map((stage) => ({
+      stages: (prev.stages || []).map((stage) => ({
         ...stage,
         nodes: stage.nodes.filter((n) => n.id !== nodeId),
       })),
-      connections: prev.connections.filter(
+      connections: (prev.connections || []).filter(
         (c) => c.fromNodeId !== nodeId && c.toNodeId !== nodeId
       ),
     }));
@@ -165,10 +165,10 @@ const Stage = () => {
   };
 
   const handleDeleteStage = (stageId: string) => {
-    const stage = workflow.stages.find(s => s.id === stageId);
+    const stage = workflow.stages?.find(s => s.id === stageId);
     setWorkflow((prev) => ({
       ...prev,
-      stages: prev.stages.filter((s) => s.id !== stageId),
+      stages: (prev.stages || []).filter((s) => s.id !== stageId),
     }));
     addLog("warning", `Deleted stage: ${stage?.name}`);
   };
@@ -176,7 +176,7 @@ const Stage = () => {
   const handleRenameStage = (stageId: string, name: string) => {
     setWorkflow((prev) => ({
       ...prev,
-      stages: prev.stages.map((s) =>
+      stages: (prev.stages || []).map((s) =>
         s.id === stageId ? { ...s, name } : s
       ),
     }));
@@ -184,7 +184,7 @@ const Stage = () => {
 
   const handleReorderStages = (fromIndex: number, toIndex: number) => {
     setWorkflow((prev) => {
-      const newStages = [...prev.stages];
+      const newStages = [...(prev.stages || [])];
       const [moved] = newStages.splice(fromIndex, 1);
       newStages.splice(toIndex, 0, moved);
       return { ...prev, stages: newStages };
@@ -194,7 +194,7 @@ const Stage = () => {
   const handleToggleMinimize = (nodeId: string) => {
     setWorkflow((prev) => ({
       ...prev,
-      stages: prev.stages.map((stage) => ({
+      stages: (prev.stages || []).map((stage) => ({
         ...stage,
         nodes: stage.nodes.map((node) =>
           node.id === nodeId ? { ...node, minimized: !node.minimized } : node
@@ -216,7 +216,7 @@ const Stage = () => {
     };
     setWorkflow((prev) => ({
       ...prev,
-      connections: [...prev.connections, connection],
+      connections: [...(prev.connections || []), connection],
     }));
     setConnectingFrom(null);
     addLog("success", "Connected nodes");
@@ -225,7 +225,7 @@ const Stage = () => {
   const handleDeleteConnection = (connectionId: string) => {
     setWorkflow((prev) => ({
       ...prev,
-      connections: prev.connections.filter((c) => c.id !== connectionId),
+      connections: (prev.connections || []).filter((c) => c.id !== connectionId),
     }));
     addLog("warning", "Deleted connection");
   };
@@ -233,7 +233,7 @@ const Stage = () => {
   const handleUpdateAgent = (agentId: string, updates: Partial<AgentNode>) => {
     setWorkflow((prev) => ({
       ...prev,
-      stages: prev.stages.map((stage) => ({
+      stages: (prev.stages || []).map((stage) => ({
         ...stage,
         nodes: stage.nodes.map((node) =>
           node.id === agentId ? { ...node, ...updates } : node
@@ -245,7 +245,7 @@ const Stage = () => {
   const handleUpdateNode = (nodeId: string, updates: any) => {
     setWorkflow((prev) => ({
       ...prev,
-      stages: prev.stages.map((stage) => ({
+      stages: (prev.stages || []).map((stage) => ({
         ...stage,
         nodes: stage.nodes.map((node) =>
           node.id === nodeId ? { ...node, ...updates } : node
@@ -336,7 +336,7 @@ const Stage = () => {
   // Helper to get input for a node based on connections
   const getNodeInput = (nodeId: string): string => {
     // Find incoming connections to this node
-    const incomingConnections = workflow.connections.filter(c => c.toNodeId === nodeId);
+    const incomingConnections = (workflow.connections || []).filter(c => c.toNodeId === nodeId);
     
     if (incomingConnections.length === 0) {
       // No incoming connections, use the global user input
@@ -346,7 +346,7 @@ const Stage = () => {
     // Get outputs from connected nodes
     const inputs: string[] = [];
     for (const conn of incomingConnections) {
-      const sourceNode = workflow.stages
+      const sourceNode = (workflow.stages || [])
         .flatMap(s => s.nodes)
         .find(n => n.id === conn.fromNodeId);
       
@@ -380,7 +380,7 @@ const Stage = () => {
     
     try {
       // Execute stages in sequence
-      for (const stage of workflow.stages) {
+      for (const stage of workflow.stages || []) {
         addLog("info", `Executing stage: ${stage.name}`);
         
         // Execute nodes in parallel within each stage
@@ -403,7 +403,7 @@ const Stage = () => {
   };
 
   const handleRunAgent = async (agentId: string, customInput?: string) => {
-    const node = workflow.stages.flatMap(s => s.nodes).find(n => n.id === agentId);
+    const node = workflow.stages?.flatMap(s => s.nodes).find(n => n.id === agentId);
     if (!node || node.nodeType !== 'agent') return;
 
     handleUpdateNode(agentId, { status: 'running' });
@@ -439,7 +439,7 @@ const Stage = () => {
   };
 
   const handleRunFunction = async (functionId: string, customInput?: string) => {
-    const node = workflow.stages.flatMap(s => s.nodes).find(n => n.id === functionId);
+    const node = workflow.stages?.flatMap(s => s.nodes).find(n => n.id === functionId);
     if (!node || node.nodeType !== 'function') return;
 
     handleUpdateNode(functionId, { status: 'running' });
