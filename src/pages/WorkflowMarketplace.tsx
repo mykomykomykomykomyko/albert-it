@@ -74,10 +74,11 @@ export default function WorkflowMarketplace() {
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {returnPath === '/canvas' ? 'Canvas' : 'Stage'}
+            <span className="hidden sm:inline">Back to {returnPath === '/canvas' ? 'Canvas' : 'Stage'}</span>
+            <span className="sm:hidden">Back</span>
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Workflow Marketplace</h1>
-          <p className="text-muted-foreground">Discover and clone workflows created by the community</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Workflow Marketplace</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Discover and clone workflows created by the community</p>
         </div>
 
         <div className="mb-6 flex flex-col md:flex-row gap-4">

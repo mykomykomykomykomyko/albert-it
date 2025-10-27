@@ -331,18 +331,19 @@ const Agents = () => {
       
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Agents</h1>
               <p className="text-muted-foreground">Manage your AI agents</p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant="outline"
                 onClick={() => navigate('/marketplace')}
+                className="flex-1 sm:flex-none"
               >
-                <Store className="h-4 w-4 mr-2" />
-                Marketplace
+                <Store className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Marketplace</span>
               </Button>
               <Button
                 variant="outline"
@@ -376,7 +377,7 @@ const Agents = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="flex-1 sm:flex-none">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Agent
                   </Button>
@@ -598,9 +599,9 @@ const Agents = () => {
               {filteredAgents.map(agent => (
                 <Card key={agent.id} className="relative">
                   <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-center gap-3 flex-1">
-                        <Avatar>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <Avatar className="flex-shrink-0">
                           <AvatarImage src={(agent as any).profile_picture_url} />
                           <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
                         </Avatar>
@@ -609,26 +610,26 @@ const Agents = () => {
                           <Badge variant="secondary" className="mt-1">{agent.type}</Badge>
                         </div>
                       </div>
-                      <div className="flex gap-1">
-                        <Button size="icon" variant="ghost" onClick={() => handleEdit(agent)} title="Edit agent">
-                          <Edit className="h-4 w-4" />
+                      <div className="flex flex-wrap gap-1 items-start flex-shrink-0">
+                        <Button size="icon" variant="ghost" onClick={() => handleEdit(agent)} title="Edit agent" className="h-8 w-8">
+                          <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button size="icon" variant="ghost" onClick={() => {
                           setSelectedAgent(agent);
                           setShareDialogOpen(true);
-                        }} title="Share agent">
-                          <Share2 className="h-4 w-4" />
+                        }} title="Share agent" className="h-8 w-8">
+                          <Share2 className="h-3.5 w-3.5" />
                         </Button>
                         {agent.visibility !== 'published' && agent.visibility !== 'pending_review' && (
-                          <Button size="icon" variant="ghost" onClick={() => handleSubmitForReview(agent)} title="Submit to marketplace">
-                            <Send className="h-4 w-4" />
+                          <Button size="icon" variant="ghost" onClick={() => handleSubmitForReview(agent)} title="Submit to marketplace" className="h-8 w-8">
+                            <Send className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        <Button size="icon" variant="ghost" onClick={() => handleDownloadAgent(agent)} title="Download agent">
-                          <Download className="h-4 w-4" />
+                        <Button size="icon" variant="ghost" onClick={() => handleDownloadAgent(agent)} title="Download agent" className="h-8 w-8">
+                          <Download className="h-3.5 w-3.5" />
                         </Button>
-                        <Button size="icon" variant="ghost" onClick={() => handleDelete(agent.id)} title="Delete agent">
-                          <Trash2 className="h-4 w-4" />
+                        <Button size="icon" variant="ghost" onClick={() => handleDelete(agent.id)} title="Delete agent" className="h-8 w-8">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>

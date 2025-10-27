@@ -780,45 +780,49 @@ const Canvas = () => {
       <ChatHeader />
       
       {/* Toolbar */}
-      <header className="h-16 border-b bg-card flex items-center justify-between px-6 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Input
-            value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
-            className="w-52 h-9 font-medium"
-            placeholder="Untitled Workflow"
-          />
-          <div className="w-px h-7 bg-border mx-1" />
-          <Button variant="outline" size="sm" onClick={() => setIsTemplatesOpen(true)}>
-            <Layout className="h-4 w-4 mr-2" />
-            Templates
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleLoad}>
-            <Upload className="h-4 w-4 mr-2" />
-            Load
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace', { state: { from: '/canvas' } })}>
-            <Store className="h-4 w-4 mr-2" />
-            Marketplace
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleClear}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Clear
+      <header className="min-h-16 border-b bg-card px-3 sm:px-6 py-2 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <Input
+              value={workflowName}
+              onChange={(e) => setWorkflowName(e.target.value)}
+              className="w-full sm:w-52 h-9 font-medium"
+              placeholder="Untitled Workflow"
+            />
+            <div className="hidden sm:block w-px h-7 bg-border" />
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 flex-1">
+              <Button variant="outline" size="sm" onClick={() => setIsTemplatesOpen(true)} className="h-8 text-xs">
+                <Layout className="h-3.5 w-3.5 sm:mr-2" />
+                <span className="hidden sm:inline">Templates</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLoad} className="h-8 text-xs">
+                <Upload className="h-3.5 w-3.5 sm:mr-2" />
+                <span className="hidden sm:inline">Load</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSave} className="h-8 text-xs">
+                <Save className="h-3.5 w-3.5 sm:mr-2" />
+                <span className="hidden sm:inline">Save</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace', { state: { from: '/canvas' } })} className="h-8 text-xs">
+                <Store className="h-3.5 w-3.5 sm:mr-2" />
+                <span className="hidden sm:inline">Marketplace</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleClear} className="h-8 text-xs">
+                <Trash2 className="h-3.5 w-3.5 sm:mr-2" />
+                <span className="hidden sm:inline">Clear</span>
+              </Button>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="gap-2 sm:ml-auto h-8 w-full sm:w-auto"
+            onClick={handleRunWorkflow}
+            disabled={nodes.length === 0}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Run Workflow
           </Button>
         </div>
-        <Button
-          size="default"
-          className="gap-2"
-          onClick={handleRunWorkflow}
-          disabled={nodes.length === 0}
-        >
-          <Play className="h-4 w-4" />
-          Run Workflow
-        </Button>
       </header>
       
       <div className="flex-1 flex overflow-hidden relative">
