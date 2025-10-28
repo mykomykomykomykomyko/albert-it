@@ -31,8 +31,13 @@ const VoiceProcessor = ({ renderSidebar }: VoiceProcessorProps) => {
   const [autoDetectSpeakers, setAutoDetectSpeakers] = useState(true);
   const [manualSpeakerCount, setManualSpeakerCount] = useState(2);
 
-  // Fetch voices and models for Text-to-Speech
+  // Fetch voices and models for Text-to-Speech only when needed
   useEffect(() => {
+    // Only fetch if on text-to-speech tab and not already loaded
+    if (activeTab !== "text-to-speech" || voices.length > 0) {
+      return;
+    }
+
     const fetchVoicesAndModels = async () => {
       setLoadingVoices(true);
       setLoadingModels(true);
@@ -83,7 +88,7 @@ const VoiceProcessor = ({ renderSidebar }: VoiceProcessorProps) => {
     };
 
     fetchVoicesAndModels();
-  }, []);
+  }, [activeTab]);
 
   // Set up Speech-to-Text models
   useEffect(() => {
