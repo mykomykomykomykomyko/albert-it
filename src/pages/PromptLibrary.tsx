@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Edit, Play, Copy, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, Edit, Play, Copy, ArrowLeft, Home, Library, BookOpen, Moon, Sun, LogOut } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,6 +19,7 @@ export default function PromptLibrary() {
   const { prompts, loading, createPrompt, updatePrompt, deletePrompt, executePrompt } = usePrompts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -28,6 +29,27 @@ export default function PromptLibrary() {
     is_public: false,
     is_template: false,
   });
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('light', newTheme === 'light');
+  };
+
+  const handleSignOut = () => {
+    localStorage.clear();
+    window.dispatchEvent(new Event('storage'));
+    toast.success("Signed out successfully");
+    navigate("/");
+  };
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.prompt_text.trim()) {
@@ -127,11 +149,55 @@ export default function PromptLibrary() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Chat
           </Button>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
               <h1 className="text-4xl font-bold mb-2">Prompt Library</h1>
               <p className="text-muted-foreground">Store, test, and share reusable prompts</p>
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/')}
+                title="Go to Home"
+              >
+                <Home className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/transcripts')}
+                title="Meeting Transcripts"
+              >
+                <Library className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/docs')}
+                title="Documentation"
+              >
+                <BookOpen className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                title="Sign Out"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end">
             <Dialog open={isCreateOpen} onOpenChange={(open) => {
               setIsCreateOpen(open);
               if (!open) {

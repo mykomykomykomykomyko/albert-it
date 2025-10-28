@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Calendar, Users, Tag, Sparkles, ChevronRight } from "lucide-react";
+import { Upload, FileText, Search, Calendar, Users, Tag, Sparkles, ChevronRight, Home, Library, BookOpen, Moon, Sun, LogOut } from "lucide-react";
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
 
@@ -31,8 +31,30 @@ export default function MeetingTranscripts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.classList.toggle('light', newTheme === 'light');
+  };
+
+  const handleSignOut = () => {
+    localStorage.clear();
+    window.dispatchEvent(new Event('storage'));
+    toast({ title: "Signed out successfully" });
+    navigate("/");
+  };
 
   useEffect(() => {
     fetchTranscripts();
@@ -202,11 +224,55 @@ export default function MeetingTranscripts() {
       {/* Header */}
       <div className="border-b border-border">
         <div className="container mx-auto p-6 max-w-7xl">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
-            <p className="text-muted-foreground">
-              Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
-            </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
+              <p className="text-muted-foreground">
+                Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/')}
+                title="Go to Home"
+              >
+                <Home className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/prompts')}
+                title="Prompt Library"
+              >
+                <Library className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/docs')}
+                title="Documentation"
+              >
+                <BookOpen className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                title="Sign Out"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
