@@ -142,24 +142,23 @@ export default function MeetingTranscripts() {
 
       if (error) throw error;
 
-      const analysis = data.analysis;
-      
-      // Try to extract action items JSON from response
-      const actionItemsMatch = analysis.match(/\[[\s\S]*?\]/);
-      let actionItems = [];
-      if (actionItemsMatch) {
-        try {
-          actionItems = JSON.parse(actionItemsMatch[0]);
-        } catch {
-          // Keep empty if parsing fails
-        }
+      console.log("Analysis response:", data);
+
+      const summary = data.summary || "";
+      const actionItems = data.action_items || [];
+      const keyDecisions = data.key_decisions || "";
+
+      // Combine summary and key decisions for display
+      let fullSummary = summary;
+      if (keyDecisions) {
+        fullSummary += `\n\n**Key Decisions:**\n${keyDecisions}`;
       }
 
       // Update transcript with analysis
       const { error: updateError } = await supabase
         .from("meeting_transcripts")
         .update({
-          summary: analysis,
+          summary: fullSummary,
           action_items: actionItems,
         })
         .eq("id", transcript.id);
@@ -175,7 +174,11 @@ export default function MeetingTranscripts() {
       if (selectedTranscript?.id === transcript.id) {
         const updated = transcripts.find(t => t.id === transcript.id);
         if (updated) {
-          setSelectedTranscript({ ...updated, summary: analysis, action_items: actionItems });
+          setSelectedTranscript({ 
+            ...updated, 
+            summary: fullSummary, 
+            action_items: actionItems 
+          });
         }
       }
     } catch (error: any) {
