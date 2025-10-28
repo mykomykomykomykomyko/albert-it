@@ -7,9 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Calendar, Users, Tag, Sparkles, ChevronRight, Home, Library, BookOpen, Layers, Moon, Sun, LogOut } from "lucide-react";
+import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag } from "lucide-react";
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MeetingTranscript {
   id: string;
@@ -31,30 +34,8 @@ export default function MeetingTranscripts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-    setTheme(initialTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('light', newTheme === 'light');
-  };
-
-  const handleSignOut = () => {
-    localStorage.clear();
-    window.dispatchEvent(new Event('storage'));
-    toast({ title: "Signed out successfully" });
-    navigate("/");
-  };
 
   useEffect(() => {
     fetchTranscripts();
@@ -220,73 +201,81 @@ export default function MeetingTranscripts() {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border">
-        <div className="container mx-auto p-6 max-w-7xl">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
-              <p className="text-muted-foreground">
-                Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
-              </p>
-            </div>
+    <AppLayout
+      sidebar={
+        <PageSidebar
+          title="Transcripts"
+          description="Your meeting transcripts"
+        >
+          <PageSidebarSection value="search">
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/')}
-                title="Go to Home"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/prompts')}
-                title="Prompt Library"
-              >
-                <Library className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/framework')}
-                title="Framework Library"
-              >
-                <Layers className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/docs')}
-                title="Documentation"
-              >
-                <BookOpen className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSignOut}
-                title="Sign Out"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search transcripts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
+          </PageSidebarSection>
+          
+          <PageSidebarSection title="Transcripts" value="list">
+            <ScrollArea className="h-[600px]">
+              <div className="space-y-2">
+                {filteredTranscripts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>No transcripts yet</p>
+                    <p className="text-sm">Upload your first meeting transcript</p>
+                  </div>
+                ) : (
+                  filteredTranscripts.map((transcript) => (
+                    <Card
+                      key={transcript.id}
+                      className={`cursor-pointer transition-colors hover:bg-accent ${
+                        selectedTranscript?.id === transcript.id ? "bg-accent" : ""
+                      }`}
+                      onClick={() => setSelectedTranscript(transcript)}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-semibold text-sm line-clamp-1">
+                            {transcript.title}
+                          </h3>
+                          <Badge variant="outline" className="text-xs">
+                            {transcript.file_format}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(transcript.created_at).toLocaleDateString()}
+                        </div>
+                        {transcript.participants.length > 0 && (
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                            <Users className="h-3 w-3" />
+                            {transcript.participants.slice(0, 2).join(", ")}
+                            {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </PageSidebarSection>
+        </PageSidebar>
+      }
+    >
+      <div className="h-full overflow-auto">
+        <div className="p-6 space-y-6">
+          {/* Page Header */}
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
+            <p className="text-muted-foreground">
+              Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
+            </p>
           </div>
-        </div>
-      </div>
 
-      <div className="flex-1 overflow-hidden">
-        <div className="container mx-auto p-6 max-w-7xl h-full flex flex-col gap-6">
           {/* Upload Section */}
           <Card>
             <CardHeader>
@@ -319,68 +308,8 @@ export default function MeetingTranscripts() {
             </CardContent>
           </Card>
 
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
-            {/* Transcript List */}
-            <div className="lg:col-span-1 flex flex-col overflow-hidden">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search transcripts..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2 max-h-[600px] overflow-y-auto">
-                {filteredTranscripts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No transcripts yet</p>
-                    <p className="text-sm">Upload your first meeting transcript</p>
-                  </div>
-                ) : (
-                  filteredTranscripts.map((transcript) => (
-                     <Card
-                      key={transcript.id}
-                      className={`cursor-pointer transition-colors hover:bg-accent ${
-                        selectedTranscript?.id === transcript.id ? "bg-accent" : ""
-                      }`}
-                      onClick={() => setSelectedTranscript(transcript)}
-                    >
-                       <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-sm line-clamp-1 text-foreground">
-                            {transcript.title}
-                          </h3>
-                          <Badge variant="outline" className="text-xs">
-                            {transcript.file_format}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(transcript.created_at).toLocaleDateString()}
-                        </div>
-                        {transcript.participants.length > 0 && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                            <Users className="h-3 w-3" />
-                            {transcript.participants.slice(0, 2).join(", ")}
-                            {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-            </div>
-
-            {/* Transcript Detail */}
-            <div className="lg:col-span-2 flex flex-col overflow-hidden">
-            {selectedTranscript ? (
+          {/* Transcript Detail */}
+          {selectedTranscript ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -475,20 +404,18 @@ export default function MeetingTranscripts() {
                     </TabsContent>
                   </Tabs>
                 </CardContent>
-              </Card>
-            ) : (
-              <Card className="h-[600px] flex items-center justify-center">
-                <CardContent className="text-center text-muted-foreground">
-                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">Select a transcript to view details</p>
-                  <p className="text-sm">or upload a new meeting transcript to get started</p>
-                </CardContent>
-              </Card>
-            )}
-            </div>
-          </div>
+            </Card>
+          ) : (
+            <Card className="h-[600px] flex items-center justify-center">
+              <CardContent className="text-center text-muted-foreground">
+                <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">Select a transcript to view details</p>
+                <p className="text-sm">or upload a new meeting transcript to get started</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
