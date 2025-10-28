@@ -11,6 +11,7 @@ import { useState, useRef } from "react";
 import type { WorkflowNode, AgentNode, FunctionNode, ToolInstance } from "@/types/workflow";
 import { getFunctionById } from "@/lib/functionDefinitions";
 import { FunctionExecutor } from "@/lib/functionExecutor";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -187,9 +188,77 @@ export const PropertiesPanel = ({
     try {
       for (const file of Array.from(files)) {
         const extension = file.name.toLowerCase().split('.').pop();
+        const audioFormats = ['mp3', 'wav', 'webm', 'm4a', 'ogg', 'flac'];
 
         if (extension === 'xlsx' || extension === 'xls') {
           excelFiles.push(file);
+        } else if (audioFormats.includes(extension || '')) {
+          // Handle audio files - transcribe using ElevenLabs
+          try {
+            toast({
+              title: "Transcribing audio",
+              description: `Processing ${file.name}...`,
+            });
+
+            // Convert audio file to base64
+            const reader = new FileReader();
+            const base64Audio = await new Promise<string>((resolve, reject) => {
+              reader.onload = () => {
+                const result = reader.result as string;
+                const base64 = result.split(',')[1];
+                resolve(base64);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+
+            // Get session for auth
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Not authenticated');
+
+            // Call speech-to-text edge function
+            const response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/speech-to-text`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  audio: base64Audio,
+                  model: 'scribe_v1',
+                }),
+              }
+            );
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(`Transcription failed: ${errorText}`);
+            }
+
+            const result = await response.json();
+            const transcription = result.text || '';
+
+            // Add transcription to extracted contents
+            extractedContents.push({
+              filename: file.name,
+              content: transcription,
+            });
+
+            toast({
+              title: "Audio transcribed",
+              description: `Transcribed ${file.name}`,
+            });
+          } catch (error) {
+            console.error(`Failed to transcribe ${file.name}:`, error);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            toast({
+              title: "Transcription failed",
+              description: `Failed to transcribe ${file.name}: ${errorMessage}`,
+              variant: "destructive",
+            });
+          }
         } else {
           try {
             const extracted = await extractTextFromFile(file);
@@ -345,7 +414,7 @@ export const PropertiesPanel = ({
               <input
                 ref={contentFileInputRef}
                 type="file"
-                accept=".txt,.md,.json,.xml,.csv,.yaml,.yml,.toml,.js,.jsx,.ts,.tsx,.vue,.html,.css,.scss,.sass,.py,.java,.c,.cpp,.cs,.go,.php,.rb,.sql,.sh,.log,.pdf,.docx,.xlsx,.xls"
+                accept=".txt,.md,.json,.xml,.csv,.yaml,.yml,.toml,.js,.jsx,.ts,.tsx,.vue,.html,.css,.scss,.sass,.py,.java,.c,.cpp,.cs,.go,.php,.rb,.sql,.sh,.log,.pdf,.docx,.xlsx,.xls,.mp3,.wav,.webm,.m4a,.ogg,.flac"
                 multiple
                 className="hidden"
                 onChange={handleContentFileUpload}
@@ -382,7 +451,7 @@ export const PropertiesPanel = ({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Upload files or enter content manually. Supports text files, PDFs, DOCX, and Excel files.
+              Upload files or enter content manually. Supports text files, PDFs, DOCX, Excel files, and audio files (MP3, WAV, WebM, M4A, OGG, FLAC).
             </p>
           </Card>
 
