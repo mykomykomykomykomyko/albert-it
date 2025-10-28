@@ -295,18 +295,26 @@ export default function ImageAnalysis() {
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
       
-      <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
-        {/* Left Panel - Images & Controls */}
-        <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0 max-h-[50vh] lg:max-h-none">
-          {/* Controls Section - Fixed max height */}
-          <div className="max-h-[50vh] overflow-y-auto border-b border-border flex-shrink-0">
-            <div className="p-6 space-y-4">
-              <h2 className="text-2xl font-bold">Image Analysis</h2>
-              
-              {/* File Uploader */}
-              <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
+      <div className="flex-1 overflow-hidden flex min-h-0">
+        {/* Left Sidebar */}
+        <div className="w-80 border-r border-border flex-shrink-0 overflow-y-auto">
+          <div className="p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold">Image Analysis</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Upload images and run AI analysis
+              </p>
+            </div>
 
-              {/* Prompt Manager */}
+            {/* File Uploader */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Upload Images</h3>
+              <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
+            </div>
+
+            {/* Prompt Manager */}
+            <div>
+              <h3 className="text-sm font-medium mb-3">Analysis Prompts</h3>
               <PromptManager
                 prompts={prompts}
                 selectedPromptIds={selectedPromptIds}
@@ -315,31 +323,41 @@ export default function ImageAnalysis() {
                 onOpenAgentSelector={() => setShowAgentSelector(true)}
                 disabled={isAnalyzing}
               />
-
-              {/* Analysis Button */}
-              <Button
-                onClick={startAnalysis}
-                disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
-                className="w-full"
-                size="lg"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Analyze {selectedImageCount} Image{selectedImageCount !== 1 ? 's' : ''} × {selectedPromptIds.length} Prompt{selectedPromptIds.length !== 1 ? 's' : ''}
-                  </>
-                )}
-              </Button>
             </div>
-          </div>
 
-          {/* Image Gallery Section - Takes remaining space */}
-          <div className="flex-1 overflow-y-auto bg-background">
+            {/* Analysis Button */}
+            <Button
+              onClick={startAnalysis}
+              disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
+              className="w-full"
+              size="lg"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Analyze {selectedImageCount} × {selectedPromptIds.length}
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
+          {/* Image Gallery */}
+          <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0">
+            <div className="p-6 border-b border-border flex-shrink-0">
+              <h3 className="text-xl font-semibold">Image Gallery</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+              </p>
+            </div>
+            <div className="flex-1 overflow-y-auto bg-background">
             <div className="p-6">
               <ImageGallery
                 images={images}
@@ -351,12 +369,12 @@ export default function ImageAnalysis() {
                 onImageClick={handleImageClick}
                 onResizeToggle={handleResizeToggle}
               />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Panel - Results */}
-        <div className="w-full lg:w-1/2 flex flex-col min-h-0 overflow-hidden flex-1">
+          {/* Results Panel */}
+          <div className="w-full lg:w-1/2 flex flex-col min-h-0 overflow-hidden flex-1">
           <div className="p-6 border-b border-border flex-shrink-0">
             <h3 className="text-xl font-semibold">Analysis Results</h3>
             <p className="text-sm text-muted-foreground mt-1">
@@ -372,6 +390,7 @@ export default function ImageAnalysis() {
               selectedImageId={selectedImageId || undefined}
               onImageClick={handleImageClick}
             />
+            </div>
           </div>
         </div>
       </div>
