@@ -11,6 +11,7 @@ import { useStreamingAudio } from "@/hooks/useStreamingAudio";
 import { Volume2, Download, Play, Pause, Mic, Waves, Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Voice, Model } from "./VoiceSidebar";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TextToSpeechTabContentProps {
   selectedVoice: string;
@@ -41,6 +42,9 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
   const [text, setText] = useState("");
   const [customMaxChars, setCustomMaxChars] = useState(3000);
   const [showCharLimitInput, setShowCharLimitInput] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
+  const previewAudioRef = React.useRef<HTMLAudioElement>(null);
   
   const {
     isStreaming,
@@ -94,6 +98,75 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
     cleanup();
 
     await streamTextToSpeech(text, selectedVoice, selectedModel, useStreaming);
+  };
+
+  const playVoicePreview = async () => {
+    if (!selectedVoice || !selectedModel) {
+      toast({
+        title: "Configuration Required",
+        description: "Please select a voice and model first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPreviewLoading(true);
+    
+    try {
+      // Clean up previous preview
+      if (previewAudioUrl) {
+        URL.revokeObjectURL(previewAudioUrl);
+        setPreviewAudioUrl(null);
+      }
+
+      const previewText = "Hello! This is a preview of how this voice sounds. You can use this voice to generate speech from any text you provide.";
+      
+      // Use the streaming hook to generate preview
+      const { data: functionData, error: functionError } = await supabase.functions.invoke('text-to-speech', {
+        body: { 
+          text: previewText,
+          voice_id: selectedVoice,
+          model_id: selectedModel,
+        }
+      });
+
+      if (functionError) throw functionError;
+
+      if (functionData?.audioContent) {
+        // Convert base64 to blob
+        const byteCharacters = atob(functionData.audioContent);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+        
+        const url = URL.createObjectURL(blob);
+        setPreviewAudioUrl(url);
+        
+        // Play preview
+        setTimeout(() => {
+          if (previewAudioRef.current) {
+            previewAudioRef.current.play();
+          }
+        }, 100);
+
+        toast({
+          title: "Preview Ready",
+          description: "Playing voice preview...",
+        });
+      }
+    } catch (error) {
+      console.error('Preview error:', error);
+      toast({
+        title: "Preview Failed",
+        description: error instanceof Error ? error.message : "Failed to generate voice preview",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPreviewLoading(false);
+    }
   };
 
   const selectedVoiceData = voices.find(v => v.voice_id === selectedVoice);
@@ -333,20 +406,50 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
           <CardHeader>
             <CardTitle className="text-lg">Voice Preview</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-full bg-gradient-primary">
-                <Mic className="w-6 h-6 text-white" />
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-full bg-gradient-primary">
+                  <Mic className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium">{selectedVoiceData.name}</h3>
+                  {selectedVoiceData.category && (
+                    <Badge variant="secondary" className="mt-1">
+                      {selectedVoiceData.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium">{selectedVoiceData.name}</h3>
-                {selectedVoiceData.category && (
-                  <Badge variant="secondary" className="mt-1">
-                    {selectedVoiceData.category}
-                  </Badge>
+              
+              <Button
+                onClick={playVoicePreview}
+                disabled={isPreviewLoading || !selectedVoice || !selectedModel}
+                variant="outline"
+                size="sm"
+              >
+                {isPreviewLoading ? (
+                  <>
+                    <Waves className="w-4 h-4 mr-2 animate-bounce" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Play Sample
+                  </>
                 )}
-              </div>
+              </Button>
             </div>
+
+            {previewAudioUrl && (
+              <audio
+                ref={previewAudioRef}
+                src={previewAudioUrl}
+                className="w-full"
+                controls
+              />
+            )}
           </CardContent>
         </Card>
       )}
