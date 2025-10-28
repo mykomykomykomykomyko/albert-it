@@ -369,6 +369,27 @@ const TEMPLATES = {
       { id: 'e5-6', source: '5', target: '6', animated: true, style: { stroke: 'hsl(var(--primary))' } },
     ],
   },
+  'audio-transcription-analysis': {
+    name: 'Audio Transcription & Analysis',
+    description: 'Upload audio files, transcribe automatically, and generate insights',
+    category: 'transcripts',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 50, y: 300 }, data: { label: 'Audio Input', nodeType: 'input', inputType: 'file', description: 'Upload audio files (e.g., meeting recordings, podcasts)', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 300, y: 200 }, data: { label: 'Technical Requirements Generator', nodeType: 'agent', systemPrompt: 'Develops a comprehensive set of technical requirements based on meeting discussions and decisions. Analyzes the transcript for feature requests, technical constraints, dependencies, and system requirements.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 300, y: 400 }, data: { label: 'Business Requirements Generator', nodeType: 'agent', systemPrompt: 'Analyzes the transcript and generates formal business requirements. Extracts business objectives, stakeholder needs, success criteria, and functional requirements in a structured format.', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 550, y: 300 }, data: { label: 'Engagement Script Creator', nodeType: 'agent', systemPrompt: 'Crafts an engaging script for stakeholder presentations based on requirements. Creates compelling narratives that communicate technical concepts to non-technical audiences with clear benefits and implementation plans.', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 800, y: 300 }, data: { label: 'Document Consolidator', nodeType: 'agent', systemPrompt: 'Combines all generated requirements, technical specs, and engagement materials into a comprehensive project document. Ensures consistency, removes redundancies, and creates a professional final deliverable.', status: 'idle' } },
+      { id: '6', type: 'custom', position: { x: 1050, y: 300 }, data: { label: 'Consolidated Document', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e1-3', source: '1', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-4', source: '2', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-4', source: '3', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e4-5', source: '4', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e5-6', source: '5', target: '6', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
 };
 
 const Canvas = () => {
