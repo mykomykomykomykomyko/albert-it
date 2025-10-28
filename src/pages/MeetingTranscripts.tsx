@@ -42,7 +42,7 @@ const TranscriptsSidebarContent = ({
   searchQuery: string;
   setSearchQuery: (q: string) => void;
 }) => {
-  const { setOpenMobile } = useSidebar();
+  const { setOpen } = useSidebar();
   
   return (
     <div className="flex flex-col h-full">
@@ -53,7 +53,7 @@ const TranscriptsSidebarContent = ({
             variant="ghost"
             size="icon"
             className="h-7 w-7"
-            onClick={() => setOpenMobile(false)}
+            onClick={() => setOpen(false)}
           >
             <X className="h-4 w-4" />
           </Button>
