@@ -202,6 +202,7 @@ export default function MeetingTranscripts() {
 
   return (
     <AppLayout
+      defaultCollapsed={true}
       sidebar={
         <div className="flex flex-col h-full">
           <div className="p-6 flex-shrink-0">
