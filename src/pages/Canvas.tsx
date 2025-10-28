@@ -1170,15 +1170,61 @@ const Canvas = () => {
                       <Label className="text-sm font-medium">Or Upload File</Label>
                       <Input
                         type="file"
-                        accept=".vtt,.docx,.txt,.json"
+                        accept=".vtt,.docx,.txt,.json,.mp3,.wav,.webm,.m4a,.ogg,.flac"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
 
                           try {
                             let content = "";
+                            const extension = file.name.toLowerCase().split('.').pop();
+                            const audioFormats = ['mp3', 'wav', 'webm', 'm4a', 'ogg', 'flac'];
                             
-                            if (file.name.endsWith(".vtt")) {
+                            if (audioFormats.includes(extension || '')) {
+                              // Handle audio files with transcription
+                              toast.success(`Transcribing ${file.name}...`);
+
+                              // Convert audio file to base64
+                              const reader = new FileReader();
+                              const base64Audio = await new Promise<string>((resolve, reject) => {
+                                reader.onload = () => {
+                                  const result = reader.result as string;
+                                  const base64 = result.split(',')[1];
+                                  resolve(base64);
+                                };
+                                reader.onerror = reject;
+                                reader.readAsDataURL(file);
+                              });
+
+                              // Get session for auth
+                              const { data: { session } } = await supabase.auth.getSession();
+                              if (!session) throw new Error('Not authenticated');
+
+                              // Call speech-to-text edge function
+                              const response = await fetch(
+                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/speech-to-text`,
+                                {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${session.access_token}`,
+                                  },
+                                  body: JSON.stringify({
+                                    audio: base64Audio,
+                                    model: 'scribe_v1',
+                                  }),
+                                }
+                              );
+
+                              if (!response.ok) {
+                                const errorText = await response.text();
+                                throw new Error(`Transcription failed: ${errorText}`);
+                              }
+
+                              const result = await response.json();
+                              content = result.text || '';
+                              toast.success(`Audio transcribed successfully`);
+                            } else if (file.name.endsWith(".vtt")) {
                               const text = await file.text();
                               const { parseVTT } = await import("@/utils/parseVTT");
                               const parsed = parseVTT(text);
@@ -1194,14 +1240,17 @@ const Canvas = () => {
 
                             setEditingNode({ ...editingNode, userPrompt: content });
                             updateNodeData({ userPrompt: content } as any);
-                            toast.success(`File "${file.name}" loaded successfully`);
+                            if (!audioFormats.includes(extension || '')) {
+                              toast.success(`File "${file.name}" loaded successfully`);
+                            }
                           } catch (error) {
-                            toast.error("Failed to read file");
+                            console.error('File processing error:', error);
+                            toast.error(`Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`);
                           }
                         }}
                         className="text-sm"
                       />
-                      <p className="text-xs text-muted-foreground">Supports VTT, DOCX, TXT, JSON files</p>
+                      <p className="text-xs text-muted-foreground">Supports VTT, DOCX, TXT, JSON, and audio files (MP3, WAV, WebM, M4A, OGG, FLAC)</p>
                     </div>
                   </div>
                 )}
