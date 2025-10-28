@@ -4,15 +4,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mic, Volume2 } from "lucide-react";
 import { SpeechToTextTab } from "./SpeechToTextTab";
 import { TextToSpeechTabContent } from "./TextToSpeechTab";
-import { VoiceSidebar, Voice, Model } from "./VoiceSidebar";
+import { Voice, Model } from "./VoiceSidebar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-interface VoiceProcessorProps {
-  renderSidebar?: (content: React.ReactNode) => React.ReactNode;
-}
-
-const VoiceProcessor = ({ renderSidebar }: VoiceProcessorProps) => {
+const VoiceProcessor = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"speech-to-text" | "text-to-speech">("speech-to-text");
   
@@ -103,80 +99,54 @@ const VoiceProcessor = ({ renderSidebar }: VoiceProcessorProps) => {
     }
   }, []);
 
-  const sidebar = (
-    <VoiceSidebar
-      activeTab={activeTab}
-      voices={voices}
-      models={models}
-      selectedVoice={selectedVoice}
-      selectedModel={selectedModel}
-      useStreaming={useStreaming}
-      loadingVoices={loadingVoices}
-      loadingModels={loadingModels}
-      onVoiceChange={setSelectedVoice}
-      onModelChange={setSelectedModel}
-      onStreamingChange={setUseStreaming}
-      sttModels={sttModels}
-      selectedSttModel={selectedSttModel}
-      autoDetectSpeakers={autoDetectSpeakers}
-      manualSpeakerCount={manualSpeakerCount}
-      onSttModelChange={setSelectedSttModel}
-      onAutoDetectSpeakersChange={setAutoDetectSpeakers}
-      onManualSpeakerCountChange={setManualSpeakerCount}
-    />
-  );
-
   return (
-    <>
-      {renderSidebar?.(sidebar)}
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-6 py-6">
-          <Card className="shadow-sm">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "speech-to-text" | "text-to-speech")} className="w-full">
-              <div className="border-b border-border/50">
-                <TabsList className="grid w-full grid-cols-2 bg-transparent h-auto p-0">
-                  <TabsTrigger
-                    value="speech-to-text"
-                    className="flex items-center gap-3 py-4 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-smooth"
-                  >
-                    <Mic className="w-5 h-5" />
-                    <span className="font-medium">Speech-to-Text</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="text-to-speech"
-                    className="flex items-center gap-3 py-4 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-smooth"
-                  >
-                    <Volume2 className="w-5 h-5" />
-                    <span className="font-medium">Text-to-Speech</span>
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-6 py-6">
+        <Card className="shadow-sm">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "speech-to-text" | "text-to-speech")} className="w-full">
+            <div className="border-b border-border/50">
+              <TabsList className="grid w-full grid-cols-2 bg-transparent h-auto p-0">
+                <TabsTrigger
+                  value="speech-to-text"
+                  className="flex items-center gap-3 py-4 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-smooth"
+                >
+                  <Mic className="w-5 h-5" />
+                  <span className="font-medium">Speech-to-Text</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="text-to-speech"
+                  className="flex items-center gap-3 py-4 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-smooth"
+                >
+                  <Volume2 className="w-5 h-5" />
+                  <span className="font-medium">Text-to-Speech</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-              <div className="p-6">
-                <TabsContent value="speech-to-text" className="mt-0">
-                  <SpeechToTextTab />
-                </TabsContent>
-                
-                <TabsContent value="text-to-speech" className="mt-0">
-                  <TextToSpeechTabContent
-                    selectedVoice={selectedVoice}
-                    selectedModel={selectedModel}
-                    useStreaming={useStreaming}
-                    voices={voices}
-                    models={models}
-                    loadingVoices={loadingVoices}
-                    loadingModels={loadingModels}
-                    onVoiceChange={setSelectedVoice}
-                    onModelChange={setSelectedModel}
-                    onStreamingChange={setUseStreaming}
-                  />
-                </TabsContent>
-              </div>
-            </Tabs>
-          </Card>
-        </div>
+            <div className="p-6">
+              <TabsContent value="speech-to-text" className="mt-0">
+                <SpeechToTextTab />
+              </TabsContent>
+              
+              <TabsContent value="text-to-speech" className="mt-0">
+                <TextToSpeechTabContent
+                  selectedVoice={selectedVoice}
+                  selectedModel={selectedModel}
+                  useStreaming={useStreaming}
+                  voices={voices}
+                  models={models}
+                  loadingVoices={loadingVoices}
+                  loadingModels={loadingModels}
+                  onVoiceChange={setSelectedVoice}
+                  onModelChange={setSelectedModel}
+                  onStreamingChange={setUseStreaming}
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </Card>
       </div>
-    </>
+    </div>
   );
 };
 

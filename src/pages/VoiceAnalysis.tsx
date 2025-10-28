@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import VoiceProcessor from "@/components/voice/VoiceProcessor";
-import { StandardAppLayout } from "@/components/layout/StandardAppLayout";
 
 const VoiceAnalysis = () => {
   const navigate = useNavigate();
-  const [sidebar, setSidebar] = useState<React.ReactNode>(null);
   
   useEffect(() => {
     // Initialize theme
@@ -39,16 +37,7 @@ const VoiceAnalysis = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
   
-  return (
-    <StandardAppLayout sidebar={sidebar} showSidebar={!!sidebar}>
-      <VoiceProcessor renderSidebar={(sidebarContent) => {
-        if (sidebarContent !== sidebar) {
-          setSidebar(sidebarContent);
-        }
-        return null;
-      }} />
-    </StandardAppLayout>
-  );
+  return <VoiceProcessor />;
 };
 
 export default VoiceAnalysis;
