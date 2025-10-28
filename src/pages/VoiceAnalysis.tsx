@@ -42,7 +42,7 @@ const VoiceAnalysis = () => {
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <ChatHeader />
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-hidden">
         <VoiceProcessor />
       </div>
     </div>

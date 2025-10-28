@@ -198,52 +198,57 @@ export default function MeetingTranscripts() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Meeting Transcripts</h1>
-          <p className="text-muted-foreground">
-            Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
-          </p>
+    <div className="flex flex-col h-screen bg-background">
+      {/* Header */}
+      <div className="border-b border-border">
+        <div className="container mx-auto p-6 max-w-7xl">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
+            <p className="text-muted-foreground">
+              Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Upload Section */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5" />
-              Upload Transcripts
-            </CardTitle>
-            <CardDescription>
-              Support for VTT, DOCX, and TXT files from Microsoft Teams
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Input
-                type="file"
-                accept=".vtt,.docx,.txt"
-                multiple
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="flex-1"
-              />
-              <Button
-                onClick={() => navigate("/canvas")}
-                variant="outline"
-              >
-                Process in Canvas
-                <ChevronRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex-1 overflow-hidden">
+        <div className="container mx-auto p-6 max-w-7xl h-full flex flex-col gap-6">
+          {/* Upload Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Upload Transcripts
+              </CardTitle>
+              <CardDescription>
+                Support for VTT, DOCX, and TXT files from Microsoft Teams
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <Input
+                  type="file"
+                  accept=".vtt,.docx,.txt"
+                  multiple
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => navigate("/canvas")}
+                  variant="outline"
+                >
+                  Process in Canvas
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Transcript List */}
-          <div className="lg:col-span-1">
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
+            {/* Transcript List */}
+            <div className="lg:col-span-1 flex flex-col overflow-hidden">
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2 mb-2">
@@ -297,10 +302,10 @@ export default function MeetingTranscripts() {
                 )}
               </CardContent>
             </Card>
-          </div>
+            </div>
 
-          {/* Transcript Detail */}
-          <div className="lg:col-span-2">
+            {/* Transcript Detail */}
+            <div className="lg:col-span-2 flex flex-col overflow-hidden">
             {selectedTranscript ? (
               <Card>
                 <CardHeader>
@@ -406,6 +411,7 @@ export default function MeetingTranscripts() {
                 </CardContent>
               </Card>
             )}
+            </div>
           </div>
         </div>
       </div>

@@ -331,44 +331,15 @@ const Agents = () => {
       
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          {/* Page Header with Actions */}
+          <div className="flex flex-col gap-4">
             <div>
               <h1 className="text-3xl font-bold">Agents</h1>
               <p className="text-muted-foreground">Manage your AI agents</p>
             </div>
+            
+            {/* Action Toolbar */}
             <div className="flex flex-wrap gap-2">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/marketplace')}
-                className="flex-1 sm:flex-none"
-              >
-                <Store className="h-4 w-4 sm:mr-2" />
-                <span className="hidden sm:inline">Marketplace</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleDownloadAllAgents}
-                disabled={agents.length === 0}
-                title="Download all agents"
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => agentImportInputRef.current?.click()}
-                title="Upload agents"
-              >
-                <Upload className="h-4 w-4" />
-              </Button>
-              <input
-                ref={agentImportInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleImportAgents}
-                className="hidden"
-              />
               <Dialog open={isCreateOpen} onOpenChange={(open) => {
                 setIsCreateOpen(open);
                 if (!open) {
@@ -377,7 +348,7 @@ const Agents = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button className="flex-1 sm:flex-none">
+                  <Button>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Agent
                   </Button>
