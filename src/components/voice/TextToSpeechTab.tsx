@@ -121,42 +121,56 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
 
       const previewText = "Hello! This is a preview of how this voice sounds. You can use this voice to generate speech from any text you provide.";
       
-      // Use the streaming hook to generate preview
-      const { data: functionData, error: functionError } = await supabase.functions.invoke('text-to-speech', {
-        body: { 
-          text: previewText,
-          voice_id: selectedVoice,
-          model_id: selectedModel,
+      // Get session for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No session');
+
+      // Call the edge function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            text: previewText,
+            voice_id: selectedVoice,
+            model_id: selectedModel,
+            streaming: false,
+          }),
         }
-      });
+      );
 
-      if (functionError) throw functionError;
-
-      if (functionData?.audioContent) {
-        // Convert base64 to blob
-        const byteCharacters = atob(functionData.audioContent);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'audio/mpeg' });
-        
-        const url = URL.createObjectURL(blob);
-        setPreviewAudioUrl(url);
-        
-        // Play preview
-        setTimeout(() => {
-          if (previewAudioRef.current) {
-            previewAudioRef.current.play();
-          }
-        }, 100);
-
-        toast({
-          title: "Preview Ready",
-          description: "Playing voice preview...",
-        });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to generate preview: ${errorText}`);
       }
+
+      // The response is the audio stream directly
+      const audioBlob = await response.blob();
+      const url = URL.createObjectURL(audioBlob);
+      setPreviewAudioUrl(url);
+      
+      // Play preview
+      setTimeout(() => {
+        if (previewAudioRef.current) {
+          previewAudioRef.current.play().catch(err => {
+            console.error('Error playing preview:', err);
+            toast({
+              title: "Playback Error",
+              description: "Failed to play the audio preview. Please try again.",
+              variant: "destructive",
+            });
+          });
+        }
+      }, 100);
+
+      toast({
+        title: "Preview Ready",
+        description: "Playing voice preview...",
+      });
     } catch (error) {
       console.error('Preview error:', error);
       toast({
