@@ -84,10 +84,13 @@ workflow: {valid JSON workflow structure}
 For Canvas workflows, use this structure:
 {
   "nodes": [
-    {"id": "1", "type": "agent", "name": "Agent Name", "systemPrompt": "...", "userPrompt": "...", "position": {"x": 100, "y": 100}}
+    {"id": "1", "type": "input", "name": "Input", "description": "Start here", "userPrompt": "{{input}}", "position": {"x": 100, "y": 100}},
+    {"id": "2", "type": "agent", "name": "Summarizer", "description": "AI Summarizer", "systemPrompt": "You are a summarization expert...", "userPrompt": "Summarize: {{input}}", "position": {"x": 100, "y": 250}},
+    {"id": "3", "type": "output", "name": "Result", "description": "Final output", "position": {"x": 100, "y": 400}}
   ],
   "edges": [
-    {"id": "e1-2", "source": "1", "target": "2"}
+    {"id": "e1-2", "source": "1", "target": "2"},
+    {"id": "e2-3", "source": "2", "target": "3"}
   ]
 }
 

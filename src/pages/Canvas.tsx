@@ -395,8 +395,45 @@ const Canvas = () => {
     if (location.state?.importedWorkflow) {
       const imported = location.state.importedWorkflow;
       if (imported.nodes && imported.edges) {
-        setNodes(imported.nodes);
-        setEdges(imported.edges);
+        // Transform AI-generated nodes to React Flow format
+        const transformedNodes = imported.nodes.map((node: any) => ({
+          id: node.id,
+          type: 'custom',
+          position: node.position || { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
+          data: {
+            label: node.name || node.label || 'Node',
+            nodeType: node.type || node.nodeType || 'agent',
+            status: 'idle',
+            description: node.description || '',
+            systemPrompt: node.systemPrompt || '',
+            userPrompt: node.userPrompt || '',
+            files: [],
+            config: node.config || {},
+            onEdit: () => {
+              setSelectedNode((prev) => {
+                const foundNode = transformedNodes.find((n: any) => n.id === node.id);
+                if (foundNode) {
+                  setIsRightSidebarOpen(true);
+                  return foundNode;
+                }
+                return prev;
+              });
+            },
+            onRun: () => handleRunNode(node.id),
+          },
+        }));
+
+        // Transform edges to React Flow format
+        const transformedEdges = imported.edges.map((edge: any) => ({
+          id: edge.id,
+          source: edge.source,
+          target: edge.target,
+          animated: true,
+          style: { stroke: 'hsl(var(--primary))' }
+        }));
+
+        setNodes(transformedNodes);
+        setEdges(transformedEdges);
         setWorkflowName(imported.name || "AI Generated Workflow");
         toast.success("Workflow loaded from chat suggestion");
         // Clear the state
