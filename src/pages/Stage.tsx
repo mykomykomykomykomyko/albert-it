@@ -10,6 +10,7 @@ import { OutputLog, LogEntry } from "@/components/workflow/stage/OutputLog";
 import { SaveWorkflowDialog } from "@/components/workflow/SaveWorkflowDialog";
 import { LoadWorkflowDialog } from "@/components/workflow/LoadWorkflowDialog";
 import { ShareWorkflowDialog } from "@/components/workflow/ShareWorkflowDialog";
+import { TemplatesDialog } from "@/components/workflow/stage/TemplatesDialog";
 import type { Workflow, Stage as StageType, AgentNode, FunctionNode, Connection } from "@/types/workflow";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
@@ -271,6 +272,7 @@ const Stage = () => {
 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null);
 
   const handleSave = () => {
@@ -286,6 +288,16 @@ const Stage = () => {
       setCurrentWorkflowId(data.id || null);
       addLog("success", "Workflow loaded");
     }
+  };
+
+  const handleLoadTemplate = (template: Workflow) => {
+    setWorkflow(template);
+    setWorkflowName("Untitled Workflow");
+    setCustomAgents([]);
+    setUserInput("");
+    setCurrentWorkflowId(null);
+    addLog("success", "Template loaded");
+    toast.success("Template loaded successfully");
   };
 
   // Auto-load workflow from URL parameter (when coming from marketplace)
@@ -495,6 +507,7 @@ const Stage = () => {
         onLoad={() => setLoadDialogOpen(true)}
         onClear={handleClear}
         onOpenMarketplace={() => navigate('/workflow-marketplace', { state: { from: '/stage' } })}
+        onOpenTemplates={() => setTemplatesDialogOpen(true)}
       />
       
       <SaveWorkflowDialog
@@ -508,6 +521,12 @@ const Stage = () => {
         open={loadDialogOpen}
         onOpenChange={setLoadDialogOpen}
         onLoad={handleLoad}
+      />
+      
+      <TemplatesDialog
+        open={templatesDialogOpen}
+        onOpenChange={setTemplatesDialogOpen}
+        onLoad={handleLoadTemplate}
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
