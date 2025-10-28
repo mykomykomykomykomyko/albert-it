@@ -1,6 +1,12 @@
 import { ReactNode } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface PageSidebarProps {
   title: string;
@@ -21,8 +27,10 @@ export const PageSidebar = ({ title, description, children }: PageSidebarProps) 
       <Separator />
       
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6">
-          {children}
+        <div className="p-4">
+          <Accordion type="multiple" defaultValue={["section-0", "section-1", "section-2"]}>
+            {children}
+          </Accordion>
         </div>
       </ScrollArea>
     </div>
@@ -32,13 +40,22 @@ export const PageSidebar = ({ title, description, children }: PageSidebarProps) 
 interface PageSidebarSectionProps {
   title?: string;
   children: ReactNode;
+  value?: string;
 }
 
-export const PageSidebarSection = ({ title, children }: PageSidebarSectionProps) => {
+export const PageSidebarSection = ({ title, children, value }: PageSidebarSectionProps) => {
+  if (!value) {
+    value = `section-${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
   return (
-    <div className="space-y-3">
-      {title && <h3 className="text-sm font-medium">{title}</h3>}
-      {children}
-    </div>
+    <AccordionItem value={value} className="border rounded-lg px-4 mb-2">
+      <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
+        {title || "Section"}
+      </AccordionTrigger>
+      <AccordionContent className="pb-4 space-y-3">
+        {children}
+      </AccordionContent>
+    </AccordionItem>
   );
 };

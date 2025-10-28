@@ -329,7 +329,7 @@ const Agents = () => {
           title="Agent Management"
           description="Search, filter, and manage your AI agents"
         >
-          <PageSidebarSection title="Search & Filter">
+          <PageSidebarSection title="Search & Filter" value="search">
             <div className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -355,7 +355,7 @@ const Agents = () => {
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Actions">
+          <PageSidebarSection title="Actions" value="actions">
             <div className="space-y-2">
               <Dialog open={isCreateOpen} onOpenChange={(open) => {
                 setIsCreateOpen(open);
@@ -554,7 +554,7 @@ const Agents = () => {
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Statistics">
+          <PageSidebarSection title="Statistics" value="stats">
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{agents.length}</div>
