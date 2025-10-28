@@ -203,67 +203,64 @@ export default function MeetingTranscripts() {
   return (
     <AppLayout
       sidebar={
-        <PageSidebar
-          title="Transcripts"
-          description="Your meeting transcripts"
-        >
-          <PageSidebarSection value="search">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
+        <div className="flex flex-col h-full">
+          <div className="p-6 flex-shrink-0">
+            <h2 className="text-lg font-semibold mb-4">Transcripts</h2>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search transcripts..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
               />
             </div>
-          </PageSidebarSection>
+          </div>
           
-          <PageSidebarSection title="Transcripts" value="list">
-            <ScrollArea className="h-[600px]">
-              <div className="space-y-2">
-                {filteredTranscripts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>No transcripts yet</p>
-                    <p className="text-sm">Upload your first meeting transcript</p>
-                  </div>
-                ) : (
-                  filteredTranscripts.map((transcript) => (
-                    <Card
-                      key={transcript.id}
-                      className={`cursor-pointer transition-colors hover:bg-accent ${
-                        selectedTranscript?.id === transcript.id ? "bg-accent" : ""
-                      }`}
-                      onClick={() => setSelectedTranscript(transcript)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-sm line-clamp-1">
-                            {transcript.title}
-                          </h3>
-                          <Badge variant="outline" className="text-xs">
-                            {transcript.file_format}
-                          </Badge>
+          <ScrollArea className="flex-1 px-4">
+            <div className="space-y-2 pb-4">
+              {filteredTranscripts.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="font-medium">No transcripts yet</p>
+                  <p className="text-sm">Upload your first meeting transcript</p>
+                </div>
+              ) : (
+                filteredTranscripts.map((transcript) => (
+                  <Card
+                    key={transcript.id}
+                    className={`cursor-pointer transition-colors hover:bg-accent/50 ${
+                      selectedTranscript?.id === transcript.id ? "bg-accent border-primary" : ""
+                    }`}
+                    onClick={() => setSelectedTranscript(transcript)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-sm line-clamp-1">
+                          {transcript.title}
+                        </h3>
+                        <Badge variant="outline" className="text-xs ml-2">
+                          {transcript.file_format.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(transcript.created_at).toLocaleDateString()}
+                      </div>
+                      {transcript.participants.length > 0 && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <Users className="h-3 w-3" />
+                          {transcript.participants.slice(0, 2).join(", ")}
+                          {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
                         </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(transcript.created_at).toLocaleDateString()}
-                        </div>
-                        {transcript.participants.length > 0 && (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                            <Users className="h-3 w-3" />
-                            {transcript.participants.slice(0, 2).join(", ")}
-                            {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </PageSidebarSection>
-        </PageSidebar>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       }
     >
       <div className="h-full overflow-auto">
