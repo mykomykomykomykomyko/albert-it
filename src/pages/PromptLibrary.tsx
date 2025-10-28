@@ -9,17 +9,114 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Edit, Play, Copy, ArrowLeft, Home, Library, BookOpen, Layers, Moon, Sun, LogOut } from 'lucide-react';
+import { Plus, Trash2, Edit, Play, Copy, Search, X, FileText } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { useSidebar } from '@/components/ui/sidebar';
+
+const PromptSidebarContent = ({ 
+  prompts, 
+  selectedPrompt, 
+  setSelectedPrompt,
+  searchQuery,
+  setSearchQuery,
+  loading
+}: {
+  prompts: Prompt[];
+  selectedPrompt: string | null;
+  setSelectedPrompt: (id: string) => void;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  loading: boolean;
+}) => {
+  const { setOpen } = useSidebar();
+  
+  const filteredPrompts = prompts.filter(p =>
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-4 flex-shrink-0 border-b border-border">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-semibold">Prompts</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={() => setOpen(false)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-8 h-9 text-sm"
+          />
+        </div>
+      </div>
+      
+      <ScrollArea className="flex-1 px-3">
+        <div className="space-y-1.5 py-3">
+          {loading ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Loading...
+            </div>
+          ) : filteredPrompts.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
+              <p className="text-sm font-medium">No prompts</p>
+            </div>
+          ) : (
+            filteredPrompts.map((prompt) => (
+              <div
+                key={prompt.id}
+                className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-accent/50 ${
+                  selectedPrompt === prompt.id 
+                    ? "bg-accent border-l-2 border-primary" 
+                    : "border-l-2 border-transparent"
+                }`}
+                onClick={() => setSelectedPrompt(prompt.id)}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="font-medium text-sm line-clamp-2 leading-tight flex-1">
+                    {prompt.name}
+                  </h3>
+                  {prompt.category && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                      {prompt.category}
+                    </Badge>
+                  )}
+                </div>
+                {prompt.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                    {prompt.description}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+};
 
 export default function PromptLibrary() {
   const navigate = useNavigate();
   const { prompts, loading, createPrompt, updatePrompt, deletePrompt, executePrompt } = usePrompts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -29,27 +126,6 @@ export default function PromptLibrary() {
     is_public: false,
     is_template: false,
   });
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
-    setTheme(initialTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    document.documentElement.classList.toggle('light', newTheme === 'light');
-  };
-
-  const handleSignOut = () => {
-    localStorage.clear();
-    window.dispatchEvent(new Event('storage'));
-    toast.success("Signed out successfully");
-    navigate("/");
-  };
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.prompt_text.trim()) {
@@ -137,75 +213,30 @@ export default function PromptLibrary() {
     toast.success('Copied to clipboard');
   };
 
+  const selectedPromptData = prompts.find(p => p.id === selectedPrompt);
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Chat
-          </Button>
+    <AppLayout
+      defaultCollapsed={true}
+      sidebar={
+        <PromptSidebarContent
+          prompts={prompts}
+          selectedPrompt={selectedPrompt}
+          setSelectedPrompt={setSelectedPrompt}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          loading={loading}
+        />
+      }
+    >
+      <div className="h-full overflow-auto">
+        <div className="p-6 space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-2">Prompt Library</h1>
+              <h1 className="text-3xl font-bold mb-2">Prompt Library</h1>
               <p className="text-muted-foreground">Store, test, and share reusable prompts</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/')}
-                title="Go to Home"
-              >
-                <Home className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/transcripts')}
-                title="Meeting Transcripts"
-              >
-                <Library className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/framework')}
-                title="Framework Library"
-              >
-                <Layers className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/docs')}
-                title="Documentation"
-              >
-                <BookOpen className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSignOut}
-                title="Sign Out"
-              >
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-          <div className="mt-6 flex justify-end">
+            
             <Dialog open={isCreateOpen} onOpenChange={(open) => {
               setIsCreateOpen(open);
               if (!open) {
@@ -300,70 +331,60 @@ export default function PromptLibrary() {
               </DialogContent>
             </Dialog>
           </div>
-        </div>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading prompts...</p>
-          </div>
-        ) : prompts.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">No prompts yet</p>
-              <Button onClick={() => setIsCreateOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Prompt
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {prompts.map((prompt) => (
-              <Card key={prompt.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <CardTitle className="line-clamp-1">{prompt.name}</CardTitle>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(prompt)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => deletePrompt(prompt.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+          {selectedPromptData ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-start justify-between mb-2">
+                  <CardTitle>{selectedPromptData.name}</CardTitle>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(selectedPromptData)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => deletePrompt(selectedPromptData.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+                {selectedPromptData.description && (
+                  <CardDescription>{selectedPromptData.description}</CardDescription>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium">Prompt Text</Label>
+                    <div className="mt-2 p-4 bg-muted/30 rounded-lg">
+                      <p className="text-sm whitespace-pre-wrap">{selectedPromptData.prompt_text}</p>
                     </div>
                   </div>
-                  {prompt.description && (
-                    <CardDescription className="line-clamp-2">
-                      {prompt.description}
-                    </CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-24 mb-4">
-                    <p className="text-sm text-muted-foreground">{prompt.prompt_text}</p>
-                  </ScrollArea>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {prompt.category && (
-                      <Badge variant="secondary">{prompt.category}</Badge>
+                  
+                  <div className="flex flex-wrap gap-2">
+                    {selectedPromptData.category && (
+                      <Badge variant="secondary">{selectedPromptData.category}</Badge>
                     )}
-                    {prompt.is_public && (
+                    {selectedPromptData.is_public && (
                       <Badge variant="outline">Public</Badge>
                     )}
-                    {prompt.is_template && (
+                    {selectedPromptData.is_template && (
                       <Badge variant="outline">Template</Badge>
                     )}
+                    {selectedPromptData.tags?.map((tag: string) => (
+                      <Badge key={tag} variant="outline">{tag}</Badge>
+                    ))}
                   </div>
-                  <div className="flex gap-2">
+                  
+                  <div className="flex gap-2 pt-4">
                     <Button
-                      onClick={() => handleExecute(prompt.id)}
+                      onClick={() => handleExecute(selectedPromptData.id)}
                       className="flex-1"
                     >
                       <Play className="w-4 h-4 mr-2" />
@@ -371,20 +392,37 @@ export default function PromptLibrary() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => handleCopy(prompt.prompt_text)}
+                      onClick={() => handleCopy(selectedPromptData.prompt_text)}
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
                     </Button>
                   </div>
-                  <div className="mt-2 text-xs text-muted-foreground text-right">
-                    Used {prompt.usage_count} times
+                  
+                  <div className="text-xs text-muted-foreground text-right pt-2">
+                    Used {selectedPromptData.usage_count} times
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="h-[600px] flex items-center justify-center">
+              <CardContent className="text-center text-muted-foreground">
+                <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">Select a prompt to view details</p>
+                <p className="text-sm mt-1">Choose from the sidebar or create a new prompt</p>
+                <Button 
+                  onClick={() => setIsCreateOpen(true)}
+                  className="mt-4"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create New Prompt
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }
