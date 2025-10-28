@@ -51,6 +51,7 @@ import Canvas from "./pages/Canvas";
 import ImageAnalysis from "./pages/ImageAnalysis";
 import VoiceAnalysis from "./pages/VoiceAnalysis";
 import MeetingTranscripts from "./pages/MeetingTranscripts";
+import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 
@@ -106,6 +107,9 @@ const App = () => (
           <Route path="/image" element={<ImageAnalysis />} />
           <Route path="/voice" element={<VoiceAnalysis />} />
           <Route path="/transcripts" element={<MeetingTranscripts />} />
+          
+          {/* Documentation */}
+          <Route path="/docs" element={<Docs />} />
           
           {/* Catch-all route for 404 errors */}
           {/* ⚠️ IMPORTANT: Keep this as the last route */}

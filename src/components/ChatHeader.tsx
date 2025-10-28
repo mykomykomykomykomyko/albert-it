@@ -72,6 +72,11 @@ export function ChatHeader() {
     setMobileMenuOpen(false);
   };
 
+  const openDocs = () => {
+    navigate('/docs');
+    setMobileMenuOpen(false);
+  };
+
   const openHelperAgent = () => {
     // Dispatch custom event to open the GlobalHelperAgent
     window.dispatchEvent(new Event('openHelperAgent'));
@@ -196,11 +201,11 @@ export function ChatHeader() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={openHelperAgent}
-            title="Help"
+            onClick={openDocs}
+            title="Documentation & Training"
             className="hover:bg-accent"
           >
-            <HelpCircle className="h-5 w-5" />
+            <BookOpen className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
@@ -276,10 +281,10 @@ export function ChatHeader() {
               <Button
                 variant="ghost"
                 className="justify-start"
-                onClick={openHelperAgent}
+                onClick={openDocs}
               >
-                <HelpCircle className="h-4 w-4 mr-2" />
-                Help
+                <BookOpen className="h-4 w-4 mr-2" />
+                Documentation
               </Button>
               <Button
                 variant="ghost"
