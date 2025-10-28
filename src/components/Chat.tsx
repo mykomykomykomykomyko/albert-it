@@ -760,7 +760,10 @@ const Chat = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => document.getElementById('file-upload')?.click()}
+                      onClick={() => {
+                        setShowAudioUploader(false);
+                        document.getElementById('file-upload')?.click();
+                      }}
                       disabled={isLoading}
                       title="Attach files"
                     >
