@@ -1,3 +1,30 @@
+/**
+ * Workflow Suggestion Component
+ * 
+ * This component displays AI-suggested workflows within the chat interface.
+ * When the AI detects that a user's request could benefit from a workflow,
+ * it suggests creating one in Canvas, Stage, or visiting the Prompt Library.
+ * 
+ * Features:
+ * - Displays workflow suggestion with description
+ * - Allows users to accept, decline, or edit suggested workflows
+ * - Navigates to Canvas/Stage with pre-loaded workflow data
+ * - Redirects to Prompt Library when suggested
+ * 
+ * Action Types:
+ * - 'canvas': Complex, non-linear workflows
+ * - 'stage': Sequential, pipeline-based workflows
+ * - 'prompt-library': Reusable prompt templates
+ * 
+ * User Flow:
+ * 1. AI suggests workflow in chat
+ * 2. User sees WorkflowSuggestion card
+ * 3. User can:
+ *    - Accept: Navigate to workflow builder with data
+ *    - Edit: Modify JSON before accepting
+ *    - Decline: Dismiss the suggestion
+ */
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -5,11 +32,20 @@ import { Card } from '@/components/ui/card';
 import { Workflow, GitBranch, Library, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Action type for workflow suggestions
+ */
 export type ActionType = 'canvas' | 'stage' | 'prompt-library';
 
+/**
+ * Props for WorkflowSuggestion component
+ */
 interface WorkflowSuggestionProps {
+  /** Type of workflow being suggested */
   actionType: ActionType;
+  /** Workflow definition data (JSON) */
   workflowData?: any;
+  /** Human-readable description of why this workflow is suggested */
   description: string;
 }
 

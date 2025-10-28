@@ -1,39 +1,94 @@
+/**
+ * useAgents Hook - Agent Management and Operations
+ * 
+ * This hook provides comprehensive agent management functionality including
+ * CRUD operations, sharing, marketplace interactions, and template management.
+ * 
+ * Features:
+ * - Create, read, update, delete agents
+ * - Share agents with other users
+ * - Submit agents to marketplace
+ * - Clone marketplace agents
+ * - Manage agent templates
+ * - Track agent usage and ratings
+ * 
+ * Agent System Overview:
+ * 
+ * An "Agent" in Albert is a customizable AI persona with:
+ * - Unique personality and behavior (system prompt)
+ * - Specific capabilities and tools
+ * - Custom profile picture
+ * - Metadata tags for categorization
+ * - Visibility settings (private, shared, published)
+ * 
+ * Agent Lifecycle:
+ * 1. Created by user (private by default)
+ * 2. Can be shared with specific users
+ * 3. Can be submitted for marketplace review (pending_review)
+ * 4. Once approved, becomes published in marketplace
+ * 5. Other users can clone published agents
+ * 
+ * Usage:
+ * ```tsx
+ * const {
+ *   agents,
+ *   loading,
+ *   createAgent,
+ *   updateAgent,
+ *   deleteAgent,
+ *   shareAgent,
+ *   submitToMarketplace
+ * } = useAgents();
+ * ```
+ */
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+/**
+ * Agent entity structure
+ */
 export interface Agent {
   id: string;
-  user_id: string;
-  name: string;
-  type: string;
-  description?: string;
-  system_prompt: string;
-  user_prompt: string;
-  icon_name: string;
+  user_id: string; // Owner of the agent
+  name: string; // Display name
+  type: string; // Agent type/category
+  description?: string; // Human-readable description
+  system_prompt: string; // Instructions for AI behavior
+  user_prompt: string; // Default user-facing prompt
+  icon_name: string; // Lucide icon name
   created_at: string;
   updated_at: string;
-  metadata_tags?: string[];
-  profile_picture_url?: string;
-  visibility?: 'private' | 'shared' | 'pending_review' | 'published';
-  submitted_at?: string;
-  reviewed_at?: string;
-  reviewer_id?: string;
-  is_template?: boolean;
-  usage_count?: number;
-  rating?: number;
-  category?: string;
+  metadata_tags?: string[]; // Categorization tags
+  profile_picture_url?: string; // AI-generated or custom profile image
+  visibility?: 'private' | 'shared' | 'pending_review' | 'published'; // Access control
+  submitted_at?: string; // When submitted to marketplace
+  reviewed_at?: string; // When marketplace review completed
+  reviewer_id?: string; // Who reviewed the submission
+  is_template?: boolean; // Whether this is a system template
+  usage_count?: number; // How many times agent has been used
+  rating?: number; // Average user rating (0-5)
+  category?: string; // Primary category
 }
 
+/**
+ * Agent sharing structure
+ * Allows agents to be shared with specific users
+ */
 export interface AgentShare {
   id: string;
-  agent_id: string;
-  shared_with_user_id: string;
-  shared_by_user_id: string;
-  permission: 'view' | 'edit';
+  agent_id: string; // Agent being shared
+  shared_with_user_id: string; // Recipient user
+  shared_by_user_id: string; // Sharing user
+  permission: 'view' | 'edit'; // Access level
   created_at: string;
 }
 
+/**
+ * Agent template structure
+ * Used for creating pre-configured agent templates
+ */
 export interface AgentTemplate {
   name: string;
   type: string;

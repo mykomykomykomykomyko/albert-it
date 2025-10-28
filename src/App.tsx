@@ -1,3 +1,36 @@
+/**
+ * Main Application Component
+ * 
+ * This is the root component of Albert AI Assistant Platform.
+ * It sets up the application-wide providers and routing structure.
+ * 
+ * Architecture:
+ * - QueryClientProvider: Manages server state and caching with TanStack Query
+ * - TooltipProvider: Provides tooltip context for Radix UI components
+ * - BrowserRouter: Enables client-side routing with React Router
+ * - Routes: Defines all application routes
+ * - GlobalHelperAgent: Provides context-aware help on any page
+ * 
+ * Routes:
+ * - / : Root redirect (checks auth, sends to /chat or /landing)
+ * - /landing : Public landing page
+ * - /auth : Authentication page (login/signup)
+ * - /agents : Agent management interface
+ * - /marketplace : Browse and discover community agents
+ * - /prompts : Prompt library and management
+ * - /framework : Framework management for prompts
+ * - /admin/review : Admin panel for reviewing submissions
+ * - /workflow-marketplace : Browse and share workflows
+ * - /chat : Main chat interface with AI
+ * - /chat/:id : Specific conversation view
+ * - /stage : Stage workflow builder (sequential pipelines)
+ * - /canvas : Canvas workflow builder (complex workflows)
+ * - /image : Image analysis tool
+ * - /voice : Voice processing (STT/TTS)
+ * - /transcripts : Meeting transcript analysis
+ * - * : 404 Not Found page (catch-all)
+ */
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,36 +54,65 @@ import MeetingTranscripts from "./pages/MeetingTranscripts";
 import NotFound from "./pages/NotFound";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 
+/**
+ * React Query Client Configuration
+ * Handles server state management, caching, and automatic refetching
+ */
 const queryClient = new QueryClient();
 
+/**
+ * App Component
+ * Root component that wraps the entire application with necessary providers
+ */
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      {/* Toast notifications for user feedback */}
       <Toaster />
       <Sonner />
+      
       <BrowserRouter>
         <Routes>
+          {/* Root route - handles authentication-based redirects */}
           <Route path="/" element={<Index />} />
+          
+          {/* Public routes */}
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          
+          {/* Agent management routes */}
           <Route path="/agents" element={<Agents />} />
           <Route path="/marketplace" element={<AgentMarketplace />} />
+          
+          {/* Prompt and framework management */}
           <Route path="/prompts" element={<PromptLibrary />} />
           <Route path="/framework" element={<Framework />} />
+          
+          {/* Admin routes */}
           <Route path="/admin/review" element={<AdminReview />} />
+          
+          {/* Workflow routes */}
           <Route path="/workflow-marketplace" element={<WorkflowMarketplace />} />
+          
+          {/* Chat routes */}
           <Route path="/chat" element={<EnhancedChat />} />
           <Route path="/chat/:id" element={<EnhancedChat />} />
+          
+          {/* Workflow builder routes */}
           <Route path="/stage" element={<Stage />} />
           <Route path="/canvas" element={<Canvas />} />
+          
+          {/* Analysis tools */}
           <Route path="/image" element={<ImageAnalysis />} />
           <Route path="/voice" element={<VoiceAnalysis />} />
           <Route path="/transcripts" element={<MeetingTranscripts />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          
+          {/* Catch-all route for 404 errors */}
+          {/* ⚠️ IMPORTANT: Keep this as the last route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
         
-        {/* Global Helper Agent - Available on all pages */}
+        {/* Global Helper Agent - Accessible via ? button on all pages */}
         <GlobalHelperAgent />
       </BrowserRouter>
     </TooltipProvider>

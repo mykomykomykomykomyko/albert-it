@@ -1,7 +1,49 @@
+/**
+ * useChat Hook - Chat State and Message Management
+ * 
+ * This hook manages all chat-related functionality including messages, loading state,
+ * and interaction with the Gemini AI API through Supabase Edge Functions.
+ * 
+ * Features:
+ * - Message state management
+ * - Chat history persistence
+ * - Streaming AI responses
+ * - File attachments (images, documents)
+ * - Audio message support
+ * - Agent-specific conversations
+ * 
+ * Architecture:
+ * - Uses Supabase for message persistence
+ * - Calls gemini-chat-with-images edge function for AI responses
+ * - Handles streaming responses via Server-Sent Events (SSE)
+ * - Manages multimodal inputs (text, images, files)
+ * 
+ * Data Flow:
+ * 1. User sends message → Hook adds to local state
+ * 2. Hook calls Supabase edge function with message + attachments
+ * 3. Edge function streams AI response token by token
+ * 4. Hook updates UI as tokens arrive
+ * 5. Final message saved to Supabase database
+ * 
+ * Usage:
+ * ```tsx
+ * const {
+ *   messages,
+ *   loading,
+ *   isLoadingHistory,
+ *   sendMessage,
+ *   clearChat
+ * } = useChat();
+ * ```
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+/**
+ * Chat message structure
+ */
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -11,21 +53,29 @@ export interface ChatMessage {
   files?: FileAttachment[];
 }
 
+/**
+ * Image attachment structure
+ * Supports images directly uploaded or extracted from PDFs
+ */
 export interface ImageAttachment {
   name: string;
-  dataUrl: string;
-  size: number;
-  source?: string;
-  pageNumber?: number;
+  dataUrl: string; // Base64 encoded image data
+  size: number; // File size in bytes
+  source?: string; // Source type (e.g., 'pdf', 'upload')
+  pageNumber?: number; // For PDF-extracted images
 }
 
+/**
+ * File attachment structure
+ * Supports text documents, PDFs, Excel files
+ */
 export interface FileAttachment {
   filename: string;
-  content: string;
-  pageCount?: number;
-  totalSheets?: number;
-  totalRows?: number;
-  type?: string;
+  content: string; // Extracted text content
+  pageCount?: number; // For PDFs
+  totalSheets?: number; // For Excel files
+  totalRows?: number; // For Excel files
+  type?: string; // MIME type
 }
 
 export function useChat() {
