@@ -1,11 +1,12 @@
-import { ChatHeader } from "@/components/ChatHeader";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import VoiceProcessor from "@/components/voice/VoiceProcessor";
+import { StandardAppLayout } from "@/components/layout/StandardAppLayout";
 
 const VoiceAnalysis = () => {
   const navigate = useNavigate();
+  const [sidebar, setSidebar] = useState<React.ReactNode>(null);
   
   useEffect(() => {
     // Initialize theme
@@ -39,13 +40,14 @@ const VoiceAnalysis = () => {
   }, [navigate]);
   
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <ChatHeader />
-      
-      <div className="flex-1 overflow-hidden">
-        <VoiceProcessor />
-      </div>
-    </div>
+    <StandardAppLayout sidebar={sidebar} showSidebar={!!sidebar}>
+      <VoiceProcessor renderSidebar={(sidebarContent) => {
+        if (sidebarContent !== sidebar) {
+          setSidebar(sidebarContent);
+        }
+        return null;
+      }} />
+    </StandardAppLayout>
   );
 };
 

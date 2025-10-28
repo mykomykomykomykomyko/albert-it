@@ -1,44 +1,39 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useStreamingAudio } from "@/hooks/useStreamingAudio";
-import { supabase } from "@/integrations/supabase/client";
-import { Volume2, Download, Play, Pause, Loader2, Mic, Waves, Edit3 } from "lucide-react";
+import { Volume2, Download, Play, Pause, Mic, Waves, Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Voice, Model } from "./VoiceSidebar";
 
-interface TextToSpeechTabProps {
-  apiKey?: string; // Made optional since we're using Supabase now
+interface TextToSpeechTabContentProps {
+  selectedVoice: string;
+  selectedModel: string;
+  useStreaming: boolean;
+  voices: Voice[];
+  models: Model[];
+  loadingVoices: boolean;
+  loadingModels: boolean;
+  onVoiceChange: (value: string) => void;
+  onModelChange: (value: string) => void;
+  onStreamingChange: (value: boolean) => void;
 }
 
-interface Voice {
-  voice_id: string;
-  name: string;
-  category?: string;
-  description?: string;
-}
-
-interface Model {
-  model_id: string;
-  name: string;
-  can_do_text_to_speech: boolean;
-  description?: string;
-}
-
-export const TextToSpeechTab: React.FC<TextToSpeechTabProps> = ({ apiKey }) => {
+export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
+  selectedVoice,
+  selectedModel,
+  useStreaming,
+  voices,
+  models,
+  loadingVoices,
+  loadingModels,
+}) => {
   const { toast } = useToast();
   const [text, setText] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("");
-  const [voices, setVoices] = useState<Voice[]>([]);
-  const [models, setModels] = useState<Model[]>([]);
-  const [loadingVoices, setLoadingVoices] = useState(false);
-  const [loadingModels, setLoadingModels] = useState(false);
-  const [useStreaming, setUseStreaming] = useState(true); // Default to streaming for better UX
   const [customMaxChars, setCustomMaxChars] = useState(3000);
   const [showCharLimitInput, setShowCharLimitInput] = useState(false);
   
@@ -58,69 +53,6 @@ export const TextToSpeechTab: React.FC<TextToSpeechTabProps> = ({ apiKey }) => {
     handleAudioPause,
   } = useStreamingAudio();
 
-  // Fetch available voices and models from ElevenLabs
-  useEffect(() => {
-    const fetchVoicesAndModels = async () => {
-      setLoadingVoices(true);
-      setLoadingModels(true);
-
-      try {
-        // Fetch voices
-        const { data: voicesData, error: voicesError } = await supabase.functions.invoke('get-elevenlabs-voices');
-        if (voicesError) throw voicesError;
-        
-        if (voicesData?.voices) {
-          setVoices(voicesData.voices);
-          // Set default voice to first available
-          if (voicesData.voices.length > 0 && !selectedVoice) {
-            setSelectedVoice(voicesData.voices[0].voice_id);
-          }
-        }
-
-        // Fetch models
-        const { data: modelsData, error: modelsError } = await supabase.functions.invoke('get-elevenlabs-models');
-        if (modelsError) throw modelsError;
-
-        if (modelsData?.models) {
-          setModels(modelsData.models);
-          // Set default model to first available or prefer eleven_v3
-          if (modelsData.models.length > 0 && !selectedModel) {
-            const v3Model = modelsData.models.find((m: Model) => m.model_id.includes('eleven_v3'));
-            const defaultModel = v3Model || modelsData.models[0];
-            setSelectedModel(defaultModel.model_id);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch voices/models:', error);
-        toast({
-          title: "Failed to load voices/models",
-          description: "Using fallback options. Check your ElevenLabs API configuration.",
-          variant: "destructive",
-        });
-        
-        // Fallback to hardcoded values
-        setVoices([
-          { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', category: 'English' },
-          { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', category: 'English' },
-        ]);
-        setModels([
-          { model_id: 'eleven_multilingual_v2', name: 'Eleven Multilingual v2', can_do_text_to_speech: true },
-        ]);
-        setSelectedVoice('JBFqnCBsd6RMkjVDRZzb');
-        setSelectedModel('eleven_multilingual_v2');
-      } finally {
-        setLoadingVoices(false);
-        setLoadingModels(false);
-      }
-    };
-
-    fetchVoicesAndModels();
-  }, []);
-
-  // Update hook dependency array
-  useEffect(() => {
-    // This ensures we don't lose the selected voice/model when they're updated
-  }, [selectedVoice, selectedModel]);
 
   const charCount = text.length;
   const isTextValid = charCount > 0 && charCount <= customMaxChars;
@@ -239,76 +171,6 @@ export const TextToSpeechTab: React.FC<TextToSpeechTabProps> = ({ apiKey }) => {
             </p>
           </div>
 
-          {/* Voice Selection */}
-          <div className="space-y-2">
-            <Label>Select Voice</Label>
-            <Select value={selectedVoice} onValueChange={setSelectedVoice} disabled={loadingVoices}>
-              <SelectTrigger>
-                <SelectValue placeholder={loadingVoices ? "Loading voices..." : "Choose a voice..."} />
-              </SelectTrigger>
-              <SelectContent className="max-h-64">
-                {voices.map((voice) => (
-                  <SelectItem key={voice.voice_id} value={voice.voice_id}>
-                    <div className="flex items-center gap-2">
-                      <Mic className="w-4 h-4" />
-                      <span>{voice.name}</span>
-                      {voice.category && (
-                        <Badge variant="secondary" className="text-xs">
-                          {voice.category}
-                        </Badge>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Streaming Option */}
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="streaming"
-                checked={useStreaming}
-                onChange={(e) => setUseStreaming(e.target.checked)}
-                className="rounded border-border"
-              />
-              <Label htmlFor="streaming" className="text-sm font-medium">
-                Streaming (Progressive MP3 playback)
-              </Label>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {useStreaming 
-                ? "Audio will start playing as it streams (progressive MP3)"
-                : "Audio will be generated completely before playing (MP3)"
-              }
-            </p>
-          </div>
-
-          {/* Model Selection */}
-          <div className="space-y-2">
-            <Label>Select Model</Label>
-            <Select value={selectedModel} onValueChange={setSelectedModel} disabled={loadingModels}>
-              <SelectTrigger>
-                <SelectValue placeholder={loadingModels ? "Loading models..." : "Choose a model..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {models.map((model) => (
-                  <SelectItem key={model.model_id} value={model.model_id}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{model.name}</span>
-                      {model.model_id.includes('v3') && (
-                        <Badge variant="default" className="text-xs ml-2">
-                          Latest
-                        </Badge>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </CardContent>
       </Card>
 
