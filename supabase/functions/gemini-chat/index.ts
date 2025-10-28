@@ -64,6 +64,12 @@ For Canvas workflows, use this structure:
   ]
 }
 
+**Input Node Types:**
+- For text input: {"type": "input", "name": "Text Input", "description": "Enter text", "userPrompt": "{{input}}", "inputType": "text"}
+- For file upload (including audio): {"type": "input", "name": "Audio Transcription", "description": "Upload audio files for transcription", "userPrompt": "{{input}}", "inputType": "file"}
+
+**IMPORTANT**: When users mention audio files, voice recordings, transcripts, meetings, podcasts, or any audio-related workflows, create an input node with type "input" and inputType "file" and name it something like "Audio Transcription" or "Audio Upload". The file input supports automatic transcription of audio files (MP3, WAV, WebM, M4A, OGG, FLAC) using ElevenLabs.
+
 For Stage workflows, use this structure:
 {
   "stages": [
@@ -77,6 +83,11 @@ For Stage workflows, use this structure:
   ],
   "connections": []
 }
+
+**Stage Input Node Types:**
+- For file input (including audio): {"id": "node-1", "nodeType": "function", "functionType": "content", "name": "Audio Transcription", "config": {}}
+
+Use the content function node for Stage workflows when dealing with audio files or any file uploads, as it supports text files, PDFs, DOCX, Excel, and audio files (MP3, WAV, WebM, M4A, OGG, FLAC) with automatic transcription.
 
 If users might benefit from the prompt library, suggest:
 type: prompt-library

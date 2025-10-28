@@ -20,7 +20,9 @@ serve(async (req) => {
 
     const systemPrompt = {
       role: "system",
-      content: "You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses."
+      content: `You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.
+
+When users discuss complex workflows, automation, or multi-step processes involving audio transcription, meetings, podcasts, or voice recordings, you can suggest creating workflows that start with audio input nodes that automatically transcribe audio files using ElevenLabs.`
     };
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
