@@ -451,7 +451,7 @@ export const PropertiesPanel = ({
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Upload files or enter content manually. Supports text files, PDFs, DOCX, Excel files, and audio files (MP3, WAV, WebM, M4A, OGG, FLAC).
+              Supports VTT, DOCX, TXT, JSON, PDF, Excel, and audio files (MP3, WAV, WebM, M4A, OGG, FLAC).
             </p>
           </Card>
 
