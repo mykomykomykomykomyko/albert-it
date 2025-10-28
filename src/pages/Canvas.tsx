@@ -396,32 +396,31 @@ const Canvas = () => {
       const imported = location.state.importedWorkflow;
       if (imported.nodes && imported.edges) {
         // Transform AI-generated nodes to React Flow format
-        const transformedNodes = imported.nodes.map((node: any) => ({
-          id: node.id,
-          type: 'custom',
-          position: node.position || { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
-          data: {
-            label: node.name || node.label || 'Node',
-            nodeType: node.type || node.nodeType || 'agent',
-            status: 'idle',
-            description: node.description || '',
-            systemPrompt: node.systemPrompt || '',
-            userPrompt: node.userPrompt || '',
-            files: [],
-            config: node.config || {},
-            onEdit: () => {
-              setSelectedNode((prev) => {
-                const foundNode = transformedNodes.find((n: any) => n.id === node.id);
-                if (foundNode) {
-                  setIsRightSidebarOpen(true);
-                  return foundNode;
-                }
-                return prev;
-              });
+        const transformedNodes = imported.nodes.map((node: any) => {
+          const nodeId = node.id;
+          // Create the node object that callbacks will reference
+          const newNode: Node = {
+            id: nodeId,
+            type: 'custom',
+            position: node.position || { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
+            data: {
+              label: node.name || node.label || 'Node',
+              nodeType: node.type || node.nodeType || 'agent',
+              status: 'idle',
+              description: node.description || '',
+              systemPrompt: node.systemPrompt || '',
+              userPrompt: node.userPrompt || '',
+              files: [],
+              config: node.config || {},
+              onEdit: () => {
+                setSelectedNode(newNode);
+                setIsRightSidebarOpen(true);
+              },
+              onRun: () => handleRunNode(nodeId),
             },
-            onRun: () => handleRunNode(node.id),
-          },
-        }));
+          };
+          return newNode;
+        });
 
         // Transform edges to React Flow format
         const transformedEdges = imported.edges.map((edge: any) => ({
@@ -440,7 +439,7 @@ const Canvas = () => {
         navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location.state, navigate, location.pathname, setNodes, setEdges]);
+  }, [location.state, navigate, location.pathname]);
 
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
