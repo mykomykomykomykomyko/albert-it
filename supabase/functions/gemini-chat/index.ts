@@ -1,27 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.sh/@google/generative-ai@0.21.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
-
-// Helper: Create a Gemini client
-const createGeminiClient = () => {
-  const apiKey = Deno.env.get('GEMINI_API_KEY');
-  if (!apiKey) {
-    throw new Error('Missing GEMINI_API_KEY environment variable.');
-  }
-  return new GoogleGenerativeAI(apiKey);
-};
-
-// Helper: Common safety settings
-const getSafetySettings = () => [
-  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-];
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -30,11 +12,10 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userEmail, messageHistory = [], systemPrompt = '' } = await req.json()
+    const { message, messageHistory = [], systemPrompt = '' } = await req.json()
 
     console.log('gemini-chat REQUEST:', { 
       message: message?.substring(0, 100) + '...', 
-      userEmail, 
       historyLength: messageHistory.length,
       systemPrompt: systemPrompt?.substring(0, 100) + '...'
     });
@@ -49,22 +30,11 @@ serve(async (req) => {
       )
     }
 
-    const client = createGeminiClient();
-    const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-    // Prepare conversation history
-    const contents = messageHistory.map((msg: any) => ({
-      role: msg.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: msg.content }],
-    }));
-
-    // Add current message
-    contents.push({
-      role: 'user',
-      parts: [{ text: message }],
-    });
-
-    console.log('Starting Gemini stream with contents length:', contents.length);
+    // Get Lovable API key
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
 
     const enhancedSystemPrompt = systemPrompt || `You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.
 
@@ -114,34 +84,96 @@ description: Check out our prompt library for pre-made prompts
 
 Only suggest workflows when it genuinely makes sense. Continue providing regular text responses otherwise.`;
 
-    const result = await model.generateContentStream({
-      contents,
-      systemInstruction: enhancedSystemPrompt,
-      safetySettings: getSafetySettings(),
+    // Prepare messages for Lovable AI
+    const messages = [
+      { role: "system", content: enhancedSystemPrompt },
+      ...messageHistory.map((msg: any) => ({
+        role: msg.role,
+        content: msg.content
+      })),
+      { role: "user", content: message }
+    ];
+
+    console.log('Calling Lovable AI with messages:', messages.length);
+
+    // Call Lovable AI Gateway
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages,
+        stream: true,
+      }),
     });
 
-    // Set up streaming response
+    if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const errorText = await aiResponse.text();
+      console.error("Lovable AI error:", aiResponse.status, errorText);
+      throw new Error("AI gateway error");
+    }
+
+    // Stream the response
+    const reader = aiResponse.body?.getReader();
     const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
-            if (chunkText) {
-              const data = `data: ${JSON.stringify({ text: chunkText })}\n\n`;
-              controller.enqueue(encoder.encode(data));
+          if (!reader) throw new Error("No reader");
+
+          let buffer = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.trim() || line.startsWith(":")) continue;
+              if (!line.startsWith("data: ")) continue;
+
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content) {
+                  const sseData = `data: ${JSON.stringify({ text: content })}\n\n`;
+                  controller.enqueue(encoder.encode(sseData));
+                }
+              } catch (e) {
+                // Ignore parse errors for partial chunks
+              }
             }
           }
-          
-          // Send completion event
-          controller.enqueue(encoder.encode('event: complete\ndata: {}\n\n'));
+
+          controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
           controller.close();
         } catch (error) {
-          console.error('❌ Streaming error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Streaming failed';
-          const errorData = `data: ${JSON.stringify({ error: errorMessage })}\n\n`;
+          console.error("Streaming error:", error);
+          const errorData = `data: ${JSON.stringify({ error: error instanceof Error ? error.message : "Streaming failed" })}\n\n`;
           controller.enqueue(encoder.encode(errorData));
-          controller.enqueue(encoder.encode('event: complete\ndata: {}\n\n'));
+          controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
           controller.close();
         }
       },
@@ -150,22 +182,22 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
     return new Response(stream, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
       },
     });
 
   } catch (error) {
-    console.error('❌ Gemini Chat Error:', error);
+    console.error("gemini-chat error:", error);
     
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+        const errorMessage = error instanceof Error ? error.message : "Internal server error";
         const errorData = `data: ${JSON.stringify({ error: errorMessage })}\n\n`;
         controller.enqueue(encoder.encode(errorData));
-        controller.enqueue(encoder.encode('event: complete\ndata: {}\n\n'));
+        controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
         controller.close();
       },
     });
@@ -173,11 +205,10 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
     return new Response(stream, {
       headers: {
         ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
       },
     });
   }
 })
-
