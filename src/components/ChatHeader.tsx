@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -196,7 +196,7 @@ export function ChatHeader() {
             title="Framework Library"
             className="hover:bg-accent"
           >
-            <BookOpen className="h-5 w-5" />
+            <Layers className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
@@ -275,7 +275,7 @@ export function ChatHeader() {
                 className="justify-start"
                 onClick={() => handleNavClick('/framework')}
               >
-                <BookOpen className="h-4 w-4 mr-2" />
+                <Layers className="h-4 w-4 mr-2" />
                 Framework Library
               </Button>
               <Button

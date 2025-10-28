@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Edit, Play, Copy, ArrowLeft, Home, Library, BookOpen, Moon, Sun, LogOut } from 'lucide-react';
+import { Plus, Trash2, Edit, Play, Copy, ArrowLeft, Home, Library, BookOpen, Layers, Moon, Sun, LogOut } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -170,6 +170,14 @@ export default function PromptLibrary() {
                 title="Meeting Transcripts"
               >
                 <Library className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/framework')}
+                title="Framework Library"
+              >
+                <Layers className="h-5 w-5" />
               </Button>
               <Button
                 variant="ghost"

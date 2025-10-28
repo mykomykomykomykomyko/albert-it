@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Calendar, Users, Tag, Sparkles, ChevronRight, Home, Library, BookOpen, Moon, Sun, LogOut } from "lucide-react";
+import { Upload, FileText, Search, Calendar, Users, Tag, Sparkles, ChevronRight, Home, Library, BookOpen, Layers, Moon, Sun, LogOut } from "lucide-react";
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
 
@@ -247,6 +247,14 @@ export default function MeetingTranscripts() {
                 title="Prompt Library"
               >
                 <Library className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/framework')}
+                title="Framework Library"
+              >
+                <Layers className="h-5 w-5" />
               </Button>
               <Button
                 variant="ghost"
