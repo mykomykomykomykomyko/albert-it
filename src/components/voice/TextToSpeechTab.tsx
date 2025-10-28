@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useStreamingAudio } from "@/hooks/useStreamingAudio";
 import { Volume2, Download, Play, Pause, Mic, Waves, Edit3 } from "lucide-react";
@@ -31,6 +33,9 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
   models,
   loadingVoices,
   loadingModels,
+  onVoiceChange,
+  onModelChange,
+  onStreamingChange,
 }) => {
   const { toast } = useToast();
   const [text, setText] = useState("");
@@ -96,6 +101,66 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Configuration Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mic className="w-5 h-5" />
+            Configuration
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Voice Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="voice-select">Voice</Label>
+            <Select value={selectedVoice} onValueChange={onVoiceChange} disabled={loadingVoices}>
+              <SelectTrigger id="voice-select">
+                <SelectValue placeholder={loadingVoices ? "Loading voices..." : "Select a voice"} />
+              </SelectTrigger>
+              <SelectContent>
+                {voices.map((voice) => (
+                  <SelectItem key={voice.voice_id} value={voice.voice_id}>
+                    {voice.name} {voice.category && `(${voice.category})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Model Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="model-select">Model</Label>
+            <Select value={selectedModel} onValueChange={onModelChange} disabled={loadingModels}>
+              <SelectTrigger id="model-select">
+                <SelectValue placeholder={loadingModels ? "Loading models..." : "Select a model"} />
+              </SelectTrigger>
+              <SelectContent>
+                {models.filter(m => m.can_do_text_to_speech).map((model) => (
+                  <SelectItem key={model.model_id} value={model.model_id}>
+                    {model.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Streaming Toggle */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="streaming-toggle">Enable Streaming</Label>
+              <p className="text-sm text-muted-foreground">
+                Stream audio as it's generated for faster playback
+              </p>
+            </div>
+            <Switch
+              id="streaming-toggle"
+              checked={useStreaming}
+              onCheckedChange={onStreamingChange}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Input Section */}
       <Card>
         <CardHeader>
