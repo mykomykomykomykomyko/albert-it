@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ReactFlow, {
   Node,
@@ -373,6 +373,7 @@ const TEMPLATES = {
 
 const Canvas = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { agents: savedAgents } = useAgents();
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -388,6 +389,21 @@ const Canvas = () => {
     userPrompt: string;
     config: Record<string, any>;
   } | null>(null);
+
+  // Handle imported workflow from chat
+  useEffect(() => {
+    if (location.state?.importedWorkflow) {
+      const imported = location.state.importedWorkflow;
+      if (imported.nodes && imported.edges) {
+        setNodes(imported.nodes);
+        setEdges(imported.edges);
+        setWorkflowName(imported.name || "AI Generated Workflow");
+        toast.success("Workflow loaded from chat suggestion");
+        // Clear the state
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, navigate, location.pathname, setNodes, setEdges]);
 
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

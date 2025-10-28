@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Toolbar } from "@/components/workflow/stage/Toolbar";
 import { ResponsiveLayout } from "@/components/workflow/stage/ResponsiveLayout";
 import { WorkflowCanvas } from "@/components/workflow/stage/WorkflowCanvas";
@@ -19,6 +19,7 @@ import { Play } from "lucide-react";
 
 const Stage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { agents: savedAgents } = useAgents();
   
@@ -65,6 +66,20 @@ const Stage = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [propertiesPanelOpen, setPropertiesPanelOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Handle imported workflow from chat
+  useEffect(() => {
+    if (location.state?.importedWorkflow) {
+      const imported = location.state.importedWorkflow;
+      if (imported.stages && imported.connections !== undefined) {
+        setWorkflow(imported);
+        setWorkflowName(imported.name || "AI Generated Workflow");
+        toast.success("Workflow loaded from chat suggestion");
+        // Clear the state
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, navigate, location.pathname]);
 
   // Auto-open properties panel when a node is selected
   useEffect(() => {

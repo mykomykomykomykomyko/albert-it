@@ -25,6 +25,8 @@ import { AgentSwitcher } from './chat/AgentSwitcher';
 import { AudioUploader } from './chat/AudioUploader';
 import { ToolsToolbar } from './chat/ToolsToolbar';
 import { GettingStartedWizard } from './GettingStartedWizard';
+import { WorkflowSuggestion, ActionType } from './chat/WorkflowSuggestion';
+import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
 
 interface ImageAttachment {
   name: string;
@@ -594,31 +596,47 @@ const Chat = () => {
                     key={message.id}
                     className={`flex gap-3 ${message.role === "user" ? "justify-end" : ""}`}
                   >
-                    {message.role === "assistant" && (
+                     {message.role === "assistant" && (
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
-                    )}
-                     <div
-                      className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-card border border-border"
-                      }`}
-                    >
-                      {message.content ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {message.content}
-                          </ReactMarkdown>
-                        </div>
-                      ) : (
-                        <div className="text-muted-foreground italic text-sm">
-                          [Empty message]
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                     )}
+                     <div className={`flex flex-col gap-3 max-w-[80%]`}>
+                       <div
+                         className={`rounded-2xl px-4 py-3 ${
+                           message.role === "user"
+                             ? "bg-primary text-primary-foreground"
+                             : "bg-card border border-border"
+                         }`}
+                       >
+                         {message.content ? (
+                           <div className="prose prose-sm dark:prose-invert max-w-none">
+                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                               {(() => {
+                                 const { cleanContent } = parseWorkflowSuggestion(message.content);
+                                 return cleanContent;
+                               })()}
+                             </ReactMarkdown>
+                           </div>
+                         ) : (
+                           <div className="text-muted-foreground italic text-sm">
+                             [Empty message]
+                           </div>
+                         )}
+                       </div>
+                       
+                       {message.role === "assistant" && (() => {
+                         const { suggestion } = parseWorkflowSuggestion(message.content);
+                         return suggestion ? (
+                           <WorkflowSuggestion
+                             actionType={suggestion.type}
+                             workflowData={suggestion.workflow}
+                             description={suggestion.description}
+                           />
+                         ) : null;
+                       })()}
+                     </div>
+                   </div>
                 ))}
                 {isLoading && (
                   <div className="flex gap-3">
