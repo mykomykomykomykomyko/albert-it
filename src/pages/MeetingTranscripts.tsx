@@ -205,58 +205,60 @@ export default function MeetingTranscripts() {
       defaultCollapsed={true}
       sidebar={
         <div className="flex flex-col h-full">
-          <div className="p-6 flex-shrink-0">
-            <h2 className="text-lg font-semibold mb-4">Transcripts</h2>
+          <div className="p-4 flex-shrink-0 border-b border-border">
+            <h2 className="text-base font-semibold mb-3">Transcripts</h2>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search transcripts..."
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-8 h-9 text-sm"
               />
             </div>
           </div>
           
-          <ScrollArea className="flex-1 px-4">
-            <div className="space-y-2 pb-4">
+          <ScrollArea className="flex-1 px-3">
+            <div className="space-y-1.5 py-3">
               {filteredTranscripts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="font-medium">No transcripts yet</p>
-                  <p className="text-sm">Upload your first meeting transcript</p>
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-medium">No transcripts</p>
+                  <p className="text-xs mt-1">Upload to get started</p>
                 </div>
               ) : (
                 filteredTranscripts.map((transcript) => (
-                  <Card
+                  <div
                     key={transcript.id}
-                    className={`cursor-pointer transition-colors hover:bg-accent/50 ${
-                      selectedTranscript?.id === transcript.id ? "bg-accent border-primary" : ""
+                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-accent/50 ${
+                      selectedTranscript?.id === transcript.id 
+                        ? "bg-accent border-l-2 border-primary" 
+                        : "border-l-2 border-transparent"
                     }`}
                     onClick={() => setSelectedTranscript(transcript)}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-sm line-clamp-1">
-                          {transcript.title}
-                        </h3>
-                        <Badge variant="outline" className="text-xs ml-2">
-                          {transcript.file_format.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(transcript.created_at).toLocaleDateString()}
-                      </div>
-                      {transcript.participants.length > 0 && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                          <Users className="h-3 w-3" />
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="font-medium text-sm line-clamp-2 leading-tight flex-1">
+                        {transcript.title}
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                        {transcript.file_format.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{new Date(transcript.created_at).toLocaleDateString()}</span>
+                    </div>
+                    {transcript.participants.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                        <Users className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
                           {transcript.participants.slice(0, 2).join(", ")}
                           {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 ))
               )}
             </div>

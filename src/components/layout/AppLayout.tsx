@@ -49,7 +49,7 @@ const AppLayoutSidebar = ({ children }: { children: ReactNode }) => {
     <Sidebar
       className={cn(
         "transition-all duration-300 border-r border-border",
-        open ? "w-80" : "w-0"
+        open ? "w-72" : "w-0"
       )}
       collapsible="offcanvas"
     >
