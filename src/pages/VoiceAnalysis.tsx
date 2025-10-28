@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { ChatHeader } from "@/components/ChatHeader";
 import VoiceProcessor from "@/components/voice/VoiceProcessor";
 
 const VoiceAnalysis = () => {
@@ -37,7 +38,12 @@ const VoiceAnalysis = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
   
-  return <VoiceProcessor />;
+  return (
+    <>
+      <ChatHeader />
+      <VoiceProcessor />
+    </>
+  );
 };
 
 export default VoiceAnalysis;

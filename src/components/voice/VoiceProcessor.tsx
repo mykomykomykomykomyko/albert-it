@@ -100,7 +100,7 @@ const VoiceProcessor = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="container mx-auto px-6 py-6">
         <Card className="shadow-sm">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "speech-to-text" | "text-to-speech")} className="w-full">
