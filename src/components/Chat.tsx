@@ -557,20 +557,24 @@ const Chat = () => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <ChatSidebar
-        conversations={conversations}
-        currentConversationId={currentConversation?.id}
-        onNewConversation={handleNewConversation}
-        onSelectConversation={(id) => navigate(`/chat/${id}`)}
-        onRenameConversation={handleRenameConversation}
-        onDeleteConversation={handleDeleteConversation}
-        isCollapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+    <div className="flex flex-col h-screen overflow-hidden bg-background">
+      {/* Header spans full width */}
+      <ChatHeader />
       
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-        <ChatHeader />
+      {/* Sidebar and content area below header */}
+      <div className="flex flex-1 overflow-hidden">
+        <ChatSidebar
+          conversations={conversations}
+          currentConversationId={currentConversation?.id}
+          onNewConversation={handleNewConversation}
+          onSelectConversation={(id) => navigate(`/chat/${id}`)}
+          onRenameConversation={handleRenameConversation}
+          onDeleteConversation={handleDeleteConversation}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+        
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {!currentConversation ? (
           <div className="flex-1 flex items-center justify-center p-4">
@@ -876,6 +880,7 @@ const Chat = () => {
             }
           }}
         />
+        </div>
       </div>
     </div>
   );
