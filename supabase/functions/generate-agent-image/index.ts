@@ -21,13 +21,13 @@ serve(async (req) => {
 
     console.log('Prompt received:', prompt);
 
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!geminiApiKey) {
-      console.error('GEMINI_API_KEY not found');
-      throw new Error('GEMINI_API_KEY not configured');
+    if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY not found');
+      throw new Error('LOVABLE_API_KEY not configured');
     }
     
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -37,50 +37,62 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Generating image with Gemini API...');
+    console.log('Generating image with Gemini 2.5 Flash (nano banana)...');
 
-    // Try using Google's Imagen API with the Gemini key
-    const imagePrompt = `Generate a professional, high-quality avatar image for an AI agent with this description: ${prompt}. The image should be suitable as a profile picture, visually appealing, and represent the agent's purpose or personality.`;
-    
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`, {
+    // Use Lovable AI Gateway with Gemini 2.5 Flash image model
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        instances: [
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
           {
-            prompt: imagePrompt
+            role: 'user',
+            content: `Generate a professional, high-quality avatar image for an AI agent with this description: ${prompt}. The image should be suitable as a profile picture, visually appealing, and represent the agent's purpose or personality.`
           }
         ],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: "1:1",
-          safetyFilterLevel: "block_some",
-          personGeneration: "allow_adult"
-        }
+        modalities: ['image', 'text']
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Gemini API error:', aiResponse.status, errorText);
-      throw new Error(`Failed to generate image: ${aiResponse.status} - ${errorText}`);
+      console.error('Lovable AI error:', errorText);
+      
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Not enough credits to generate image. Please add credits to your workspace in Settings.',
+            type: 'payment_required'
+          }),
+          { 
+            status: 402,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            }
+          }
+        );
+      }
+      
+      throw new Error(`Failed to generate image: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('API Response structure:', JSON.stringify(aiData, null, 2));
-    
-    const imageBase64 = aiData.predictions?.[0]?.bytesBase64Encoded || aiData.predictions?.[0]?.image?.bytesBase64Encoded;
+    const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageBase64) {
-      throw new Error('No image data found in response');
+    if (!imageUrl) {
+      throw new Error('No image was generated');
     }
 
     console.log('Image generated, converting to blob...');
 
-    // Convert base64 to blob
-    const binaryData = atob(imageBase64);
+    // Convert base64 to blob (remove data:image/png;base64, prefix if present)
+    const base64Data = imageUrl.includes(',') ? imageUrl.split(',')[1] : imageUrl;
+    const binaryData = atob(base64Data);
     const bytes = new Uint8Array(binaryData.length);
     for (let i = 0; i < binaryData.length; i++) {
       bytes[i] = binaryData.charCodeAt(i);
