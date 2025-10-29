@@ -20,6 +20,22 @@ export const AccessibilityPreferences = () => {
     setHasChanges(false);
   }, [preferences]);
 
+  // Apply temp preferences to DOM for live preview
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute('data-text-size', tempPreferences.text_size);
+    root.setAttribute('data-font-family', tempPreferences.font_family);
+    root.setAttribute('data-line-spacing', tempPreferences.line_spacing);
+    root.setAttribute('data-contrast-theme', tempPreferences.contrast_theme);
+    root.setAttribute('data-enhance-inputs', tempPreferences.enhance_inputs.toString());
+
+    if (tempPreferences.contrast_theme !== 'default') {
+      root.classList.add('custom-contrast');
+    } else {
+      root.classList.remove('custom-contrast');
+    }
+  }, [tempPreferences]);
+
   const handlePreferenceChange = (updates: Partial<typeof preferences>) => {
     setTempPreferences(prev => ({ ...prev, ...updates }));
     setHasChanges(true);
