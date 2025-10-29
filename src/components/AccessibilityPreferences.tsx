@@ -66,7 +66,7 @@ export const AccessibilityPreferences = () => {
         variant="outline"
         size="icon"
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-4 right-4 z-50 h-12 w-12 rounded-full shadow-lg"
+        className="fixed bottom-6 right-24 z-40 h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform"
         title="Accessibility Preferences"
       >
         <Settings className="h-5 w-5" />
@@ -75,7 +75,7 @@ export const AccessibilityPreferences = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-[600px] max-h-[80vh] overflow-y-auto">
+    <div className="fixed bottom-6 right-24 z-50 w-[600px] max-h-[80vh] overflow-y-auto">
       <Card className="p-6 shadow-xl">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">Accessibility Preferences</h2>
