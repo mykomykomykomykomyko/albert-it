@@ -1175,6 +1175,7 @@ export const PropertiesPanel = ({
                           />
                           <label
                             htmlFor={tool.id}
+                            onClick={() => handleToolToggle(tool.id, !hasThisTool)}
                             className="text-sm font-medium leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                           >
                             {tool.name}
