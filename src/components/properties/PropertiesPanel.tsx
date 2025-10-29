@@ -11,6 +11,7 @@ import { useState, useRef } from "react";
 import type { WorkflowNode, AgentNode, FunctionNode, ToolInstance } from "@/types/workflow";
 import { getFunctionById } from "@/lib/functionDefinitions";
 import { FunctionExecutor } from "@/lib/functionExecutor";
+import { toolDefinitions } from "@/lib/toolDefinitions";
 import {
   Dialog,
   DialogContent,
@@ -53,13 +54,8 @@ interface PropertiesPanelProps {
   onRunFunction?: (functionId: string, customInput?: string) => void;
 }
 
-const availableTools = [
-  { id: "google_search", name: "Google Search", requiresApiKey: true },
-  { id: "weather", name: "Weather", requiresApiKey: true },
-  { id: "time", name: "Time", requiresApiKey: false },
-  { id: "api_call", name: "API Call", requiresApiKey: true },
-  { id: "web_scrape", name: "Web Scrape", requiresApiKey: false },
-];
+// Use shared tool definitions
+const availableTools = toolDefinitions;
 
 export const PropertiesPanel = ({
   selectedAgent,

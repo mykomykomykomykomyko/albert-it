@@ -4,7 +4,7 @@ import { PropertiesPanel } from "@/components/properties/PropertiesPanel";
 import { Toolbar } from "@/components/toolbar/Toolbar";
 import { OutputLog } from "@/components/output/OutputLog";
 import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import type { 
   Workflow, 
   WorkflowNode, 
@@ -16,7 +16,7 @@ import type {
   ToolInstance,
   LogEntry 
 } from "@/types/workflow";
-import { FunctionExecutor } from "@/lib/functionExecutor";
+import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 
 // Legacy export for backward compatibility
 export type { ToolInstance, LogEntry } from "@/types/workflow";
@@ -35,10 +35,22 @@ const Stage = () => {
     connections: [],
   });
 
-  const addLog = (type: LogEntry["type"], message: string) => {
+  const addLog = useCallback((type: LogEntry["type"], message: string) => {
     const time = new Date().toLocaleTimeString('en-US', { hour12: false });
     setLogs((prev) => [...prev, { time, type, message }]);
-  };
+  }, []);
+
+  const updateNodeCallback = useCallback((nodeId: string, updates: Partial<WorkflowNode>) => {
+    updateNode(nodeId, updates);
+  }, []);
+
+  // Use shared workflow execution logic
+  const { runSingleAgent, runSingleFunction, runWorkflow, isRunning } = useWorkflowExecution({
+    workflow,
+    userInput,
+    onUpdateNode: updateNodeCallback,
+    onAddLog: addLog,
+  });
 
   const addStage = () => {
     const newStage: StageType = {
@@ -365,334 +377,6 @@ const Stage = () => {
       ...prev,
       connections: prev.connections.filter((conn) => conn.id !== connectionId),
     }));
-  };
-
-  const runSingleAgent = async (nodeId: string, customInput?: string) => {
-    const allNodes = workflow.stages.flatMap((s) => s.nodes);
-    const node = allNodes.find((n) => n.id === nodeId);
-    if (!node || node.nodeType !== "agent") return;
-    
-    const agent = node as AgentNode;
-
-    addLog("info", `Starting agent: ${agent.name}`);
-    updateNode(nodeId, { status: "running" });
-    
-    try {
-      const incomingConnections = workflow.connections.filter(
-        (c) => c.toNodeId === nodeId
-      );
-      
-      let input = userInput || "No input provided";
-      if (incomingConnections.length > 0) {
-        const outputs = incomingConnections
-          .map((c) => {
-            const fromNode = allNodes.find((n) => n.id === c.fromNodeId);
-            if (!fromNode) return "";
-            
-            if (fromNode.nodeType === "function" && (fromNode as FunctionNode).functionType === "content") {
-              const contentNode = fromNode as FunctionNode;
-              return contentNode.output || contentNode.config.content || "";
-            }
-            
-            return fromNode?.output || "";
-          })
-          .filter(Boolean);
-        
-        if (outputs.length > 0) {
-          input = outputs.join("\n\n---\n\n");
-          addLog("info", `Agent ${agent.name} received input from ${incomingConnections.length} connection(s)`);
-        }
-      }
-      
-      if (agent.tools.length > 0) {
-        agent.tools.forEach(tool => {
-          addLog("running", `Executing tool: ${tool.toolId}`);
-        });
-      }
-      
-      const userPrompt = agent.userPrompt
-        .replace(/{input}/g, input)
-        .replace(/{prompt}/g, userInput || "No input provided");
-      
-      const toolsPayload = agent.tools.map(t => ({
-        toolId: t.toolId,
-        config: t.config,
-      }));
-      
-      addLog("running", `Agent ${agent.name} processing with AI...`);
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-agent`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          systemPrompt: agent.systemPrompt,
-          userPrompt,
-          tools: toolsPayload,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Server error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const output = data.output || "No output generated";
-      const toolOutputs = data.toolOutputs || [];
-      
-      if (toolOutputs.length > 0) {
-        toolOutputs.forEach((toolOutput: any) => {
-          console.log(`Tool Output [${toolOutput.toolId}]:`, toolOutput.output);
-          addLog("info", `Tool Output [${toolOutput.toolId}]: ${JSON.stringify(toolOutput.output, null, 2)}`);
-        });
-      }
-      
-      updateNode(nodeId, { status: "complete", output });
-      addLog("success", `Agent ${agent.name} completed successfully`);
-    } catch (error) {
-      console.error("Agent execution failed:", error);
-      updateNode(nodeId, { status: "error", output: `Error: ${error}` });
-      addLog("error", `Agent ${agent.name} failed: ${error}`);
-    }
-  };
-
-  const runSingleFunction = async (nodeId: string, customInput?: string) => {
-    const allNodes = workflow.stages.flatMap((s) => s.nodes);
-    const node = allNodes.find((n) => n.id === nodeId);
-    if (!node || node.nodeType !== "function") return;
-    
-    const functionNode = node as FunctionNode;
-
-    addLog("info", `Executing function: ${functionNode.name}`);
-    updateNode(nodeId, { status: "running" });
-    
-    try {
-      const incomingConnections = workflow.connections.filter(
-        (c) => c.toNodeId === nodeId
-      );
-      
-      let input = userInput || "No input provided";
-      if (incomingConnections.length > 0) {
-        const outputs = incomingConnections
-          .map((c) => {
-            const fromNode = allNodes.find((n) => n.id === c.fromNodeId);
-            if (!fromNode) return "";
-            
-            if (fromNode.nodeType === "function" && (fromNode as FunctionNode).functionType === "content") {
-              const contentNode = fromNode as FunctionNode;
-              return contentNode.output || contentNode.config.content || "";
-            }
-            
-            return fromNode?.output || "";
-          })
-          .filter(Boolean);
-        
-        if (outputs.length > 0) {
-          input = outputs.join("\n\n---\n\n");
-          addLog("info", `Function ${functionNode.name} received input from ${incomingConnections.length} connection(s)`);
-        }
-      }
-      
-      const result = await FunctionExecutor.execute(functionNode, input);
-      
-      if (!result.success) {
-        throw new Error(result.error || "Function execution failed");
-      }
-
-      const outputValue = Object.keys(result.outputs).length > 1 
-        ? result.outputs 
-        : (result.outputs.output || Object.values(result.outputs)[0] || "");
-      updateNode(nodeId, { status: "complete", output: outputValue as any });
-      addLog("success", `✓ Function ${functionNode.name} completed`);
-    } catch (error) {
-      console.error("Function execution failed:", error);
-      updateNode(nodeId, { status: "error", output: `Error: ${error}` });
-      addLog("error", `✗ Function ${functionNode.name} failed: ${error}`);
-    }
-  };
-
-  const runWorkflow = async () => {
-    const allNodes = workflow.stages.flatMap((s) => s.nodes);
-    
-    addLog("info", "🚀 Workflow execution started");
-    setLogs([]);
-    addLog("info", "🚀 Workflow execution started");
-    
-    allNodes.forEach((node) => {
-      updateNode(node.id, { status: "idle", output: undefined });
-    });
-
-    const outputs = new Map<string, string>();
-
-    const executeAgent = async (nodeId: string, input: string): Promise<string> => {
-      const node = allNodes.find((n) => n.id === nodeId);
-      if (!node || node.nodeType !== "agent") return "";
-      
-      const agent = node as AgentNode;
-
-      addLog("info", `Starting agent: ${agent.name} (input length: ${input.length} chars)`);
-      updateNode(nodeId, { status: "running" });
-      
-      try {
-        if (agent.tools.length > 0) {
-          agent.tools.forEach(tool => {
-            const toolName = tool.toolId.replace('_', ' ');
-            addLog("running", `Executing tool: ${toolName}`);
-          });
-        }
-        
-        const userPrompt = agent.userPrompt
-          .replace(/{input}/g, input)
-          .replace(/{prompt}/g, userInput || "No input provided");
-        
-        const toolsPayload = agent.tools.map(t => ({
-          toolId: t.toolId,
-          config: t.config,
-        }));
-        
-        addLog("running", `Agent ${agent.name} processing with AI...`);
-        
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-agent`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            systemPrompt: agent.systemPrompt,
-            userPrompt,
-            tools: toolsPayload,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Server error: ${response.status}`);
-        }
-
-        const data = await response.json();
-        const output = data.output || "No output generated";
-        const toolOutputs = data.toolOutputs || [];
-        
-        if (toolOutputs.length > 0) {
-          toolOutputs.forEach((toolOutput: any) => {
-            console.log(`Tool Output [${toolOutput.toolId}]:`, toolOutput.output);
-            addLog("info", `Tool Output [${toolOutput.toolId}]: ${JSON.stringify(toolOutput.output, null, 2)}`);
-          });
-        }
-        
-        updateNode(nodeId, { status: "complete", output });
-        addLog("success", `✓ Agent ${agent.name} completed (output length: ${output.length} chars)`);
-        return output;
-      } catch (error) {
-        console.error("Agent execution failed:", error);
-        const errorMsg = `Error: ${error}`;
-        updateNode(nodeId, { status: "error", output: errorMsg });
-        addLog("error", `✗ Agent ${agent.name} failed: ${error}`);
-        return errorMsg;
-      }
-    };
-
-    const executeFunction = async (nodeId: string, input: string, fromOutputPort?: string): Promise<{ outputs: Map<string, string>; primaryOutput: string }> => {
-      const node = allNodes.find((n) => n.id === nodeId);
-      if (!node || node.nodeType !== "function") return { outputs: new Map(), primaryOutput: "" };
-      
-      const functionNode = node as FunctionNode;
-
-      addLog("info", `Executing function: ${functionNode.name} (input length: ${input.length} chars)`);
-      updateNode(nodeId, { status: "running" });
-      
-      try {
-        const result = await FunctionExecutor.execute(functionNode, input);
-        
-        if (!result.success) {
-          throw new Error(result.error || "Function execution failed");
-        }
-
-        const functionOutputs = new Map<string, string>();
-        Object.entries(result.outputs).forEach(([port, value]) => {
-          const outputKey = `${nodeId}:${port}`;
-          functionOutputs.set(outputKey, value);
-        });
-
-        let primaryOutput: string;
-        if (Object.keys(result.outputs).length > 1) {
-          primaryOutput = Object.values(result.outputs).filter(v => v).join("\n\n---\n\n");
-        } else {
-          primaryOutput = result.outputs.output || Object.values(result.outputs)[0] || "";
-        }
-
-        const outputValue = Object.keys(result.outputs).length > 1 
-          ? result.outputs 
-          : primaryOutput;
-        updateNode(nodeId, { status: "complete", output: outputValue as any });
-        addLog("success", `✓ Function ${functionNode.name} completed (output length: ${primaryOutput.length} chars)`);
-        
-        return { outputs: functionOutputs, primaryOutput };
-      } catch (error) {
-        console.error("Function execution failed:", error);
-        const errorMsg = `Error: ${error}`;
-        updateNode(nodeId, { status: "error", output: errorMsg });
-        addLog("error", `✗ Function ${functionNode.name} failed: ${error}`);
-        return { outputs: new Map(), primaryOutput: errorMsg };
-      }
-    };
-
-    for (let i = 0; i < workflow.stages.length; i++) {
-      const stage = workflow.stages[i];
-      if (stage.nodes.length === 0) continue;
-
-      const agentCount = stage.nodes.filter(n => n.nodeType === "agent").length;
-      const functionCount = stage.nodes.filter(n => n.nodeType === "function").length;
-      addLog("info", `▸ Stage ${i + 1}: Processing ${agentCount} agent(s) and ${functionCount} function(s)`);
-
-      const nodePromises = stage.nodes.map(async (node) => {
-        const incomingConnections = workflow.connections.filter(
-          (c) => c.toNodeId === node.id
-        );
-
-        let input = userInput || "No input provided";
-        
-        if (incomingConnections.length > 0) {
-          const connectedOutputs = incomingConnections
-            .map((c) => {
-              if (c.fromOutputPort) {
-                const portOutput = outputs.get(`${c.fromNodeId}:${c.fromOutputPort}`);
-                return portOutput;
-              }
-              const nodeOutput = outputs.get(c.fromNodeId);
-              if (typeof nodeOutput === "object") {
-                console.warn(`Warning: Node ${c.fromNodeId} output is an object, concatenating values`);
-                return Object.values(nodeOutput).filter(v => v).join("\n\n---\n\n");
-              }
-              return nodeOutput;
-            })
-            .filter(Boolean);
-          
-          if (connectedOutputs.length > 0) {
-            input = connectedOutputs.join("\n\n---\n\n");
-            addLog("info", `${node.name} received input from ${incomingConnections.length} connection(s) (${input.length} chars)`);
-          }
-        }
-
-        if (node.nodeType === "agent") {
-          const output = await executeAgent(node.id, input);
-          outputs.set(node.id, output);
-        } else if (node.nodeType === "function") {
-          const { outputs: functionOutputs, primaryOutput } = await executeFunction(node.id, input);
-          functionOutputs.forEach((value, key) => {
-            outputs.set(key, value);
-          });
-          outputs.set(node.id, primaryOutput);
-        }
-      });
-
-      await Promise.all(nodePromises);
-      addLog("success", `✓ Stage ${i + 1} completed`);
-    }
-    
-    addLog("success", "🎉 Workflow execution completed");
   };
 
   const selectedNodeData = workflow.stages
