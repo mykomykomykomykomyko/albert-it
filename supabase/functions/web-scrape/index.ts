@@ -6,6 +6,55 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+// URL validation to prevent SSRF attacks
+const isValidUrl = (urlString: string): boolean => {
+  try {
+    const url = new URL(urlString);
+    
+    // Only allow HTTP and HTTPS protocols
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return false;
+    }
+    
+    // Block common private IP ranges and localhost
+    const hostname = url.hostname.toLowerCase();
+    
+    // Block localhost variations
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+      return false;
+    }
+    
+    // Block private IP ranges (RFC 1918)
+    const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const match = hostname.match(ipv4Pattern);
+    if (match) {
+      const octets = match.slice(1, 5).map(Number);
+      // 10.0.0.0/8
+      if (octets[0] === 10) return false;
+      // 172.16.0.0/12
+      if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return false;
+      // 192.168.0.0/16
+      if (octets[0] === 192 && octets[1] === 168) return false;
+      // 169.254.0.0/16 (link-local)
+      if (octets[0] === 169 && octets[1] === 254) return false;
+    }
+    
+    // Block metadata services
+    const blockedHosts = [
+      '169.254.169.254', // AWS, Azure, GCP metadata
+      'metadata.google.internal',
+      '100.100.100.200', // Alibaba Cloud
+    ];
+    if (blockedHosts.includes(hostname)) {
+      return false;
+    }
+    
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 // Rotating User-Agents to avoid detection
 const userAgents = [
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -99,6 +148,15 @@ serve(async (req) => {
     if (!url) {
       return new Response(
         JSON.stringify({ error: "URL is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate URL to prevent SSRF attacks
+    if (!isValidUrl(url)) {
+      console.error(`Blocked potentially unsafe URL: ${url}`);
+      return new Response(
+        JSON.stringify({ error: "Invalid or unsafe URL. Only public HTTP/HTTPS URLs are allowed." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

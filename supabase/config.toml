@@ -1,46 +1,46 @@
 project_id = "irasizphibjnkhrpfoza"
 
 [functions.gemini-chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.gemini-chat-with-images]
-verify_jwt = false
+verify_jwt = true
 
 [functions.run-agent]
-verify_jwt = false
+verify_jwt = true
 
 [functions.google-search]
-verify_jwt = false
+verify_jwt = true
 
 [functions.web-scrape]
-verify_jwt = false
+verify_jwt = true
 
 [functions.weather]
-verify_jwt = false
+verify_jwt = true
 
 [functions.time]
-verify_jwt = false
+verify_jwt = true
 
 [functions.api-call]
-verify_jwt = false
+verify_jwt = true
 
 [functions.speech-to-text]
-verify_jwt = false
+verify_jwt = true
 
 [functions.text-to-speech]
-verify_jwt = false
+verify_jwt = true
 
 [functions.chat]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-agent-image]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-elevenlabs-voices]
-verify_jwt = false
+verify_jwt = true
 
 [functions.get-elevenlabs-models]
-verify_jwt = false
+verify_jwt = true
 
 [functions.analyze-transcript]
-verify_jwt = false
+verify_jwt = true

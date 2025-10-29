@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, Calendar, Calculator, ChevronUp, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { evaluate } from 'mathjs';
 
 interface ToolsToolbarProps {
   onToolResult: (result: string, toolName: string) => void;
@@ -75,15 +76,16 @@ export function ToolsToolbar({ onToolResult }: ToolsToolbarProps) {
     if (!expression) return;
 
     try {
-      // Simple eval - in production, use a proper math parser
-      const result = eval(expression);
+      // Use safe math parser instead of eval() to prevent code injection
+      // Only allows mathematical expressions, not arbitrary code execution
+      const result = evaluate(expression);
       onToolResult(
         `${expression} = ${result}`,
         'Calculator'
       );
       toast.success('Calculation completed');
     } catch (error) {
-      toast.error('Invalid expression');
+      toast.error('Invalid mathematical expression');
     }
   };
 
