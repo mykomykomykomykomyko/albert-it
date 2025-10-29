@@ -11,6 +11,7 @@ export interface WorkflowNode {
   status?: "idle" | "running" | "complete" | "error";
   output?: string;
   minimized?: boolean;
+  config?: Record<string, any>;
 }
 
 export interface AgentNode extends WorkflowNode {
