@@ -1,16 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, corsHeaders } from "../_shared/cors.ts";
+import { checkRateLimit, getClientIdentifier, createRateLimitResponse } from "../_shared/rate-limiter.ts";
 
 serve(async (req) => {
+  // Get request origin for CORS
+  const origin = req.headers.get("origin");
+  const responseHeaders = getCorsHeaders(origin);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: responseHeaders });
   }
 
   try {
+    // Rate limiting
+    const clientId = getClientIdentifier(req);
+    const rateLimit = checkRateLimit(clientId, {
+      maxRequests: 50, // 50 requests
+      windowMs: 60 * 1000, // per minute
+    });
+
+    if (!rateLimit.allowed) {
+      return createRateLimitResponse(rateLimit.resetAt, responseHeaders);
+    }
+
     const { messages } = await req.json();
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
@@ -57,7 +69,7 @@ When users discuss complex workflows, automation, or multi-step processes involv
         JSON.stringify({ error: "Gemini API error" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...responseHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -112,7 +124,11 @@ When users discuss complex workflows, automation, or multi-step processes involv
     });
 
     return new Response(stream, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      headers: { 
+        ...responseHeaders, 
+        "Content-Type": "text/event-stream",
+        "X-RateLimit-Remaining": String(rateLimit.remaining),
+      },
     });
   } catch (error) {
     console.error("Chat error:", error);
@@ -120,7 +136,7 @@ When users discuss complex workflows, automation, or multi-step processes involv
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...responseHeaders, "Content-Type": "application/json" },
       }
     );
   }

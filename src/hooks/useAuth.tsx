@@ -34,11 +34,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { useSessionTimeout } from './useSessionTimeout';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Enable session timeout for security
+  useSessionTimeout({
+    timeoutMs: 30 * 60 * 1000, // 30 minutes
+    warningMs: 2 * 60 * 1000, // 2 minutes warning
+    enabled: true,
+  });
 
   useEffect(() => {
     // Set up auth state listener FIRST
