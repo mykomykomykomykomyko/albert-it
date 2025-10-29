@@ -61,6 +61,23 @@ serve(async (req) => {
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('Lovable AI error:', errorText);
+      
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Not enough credits to generate image. Please add credits to your workspace in Settings.',
+            type: 'payment_required'
+          }),
+          { 
+            status: 402,
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            }
+          }
+        );
+      }
+      
       throw new Error(`Failed to generate image: ${aiResponse.status}`);
     }
 

@@ -158,7 +158,19 @@ const Agents = () => {
         body: { prompt: imagePrompt }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Image generation error:', error);
+        throw error;
+      }
+
+      if (data?.error) {
+        if (data.type === 'payment_required') {
+          toast.error(data.error, { duration: 5000 });
+        } else {
+          toast.error(data.error);
+        }
+        return;
+      }
 
       setFormData({ ...formData, profile_picture_url: data.imageUrl });
       toast.success("Profile image generated!");
