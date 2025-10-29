@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ProcessedImage, AnalysisResult, AnalysisPrompt } from '@/types/imageAnalysis';
-import { Clock, FileText, Eye } from 'lucide-react';
+import { Clock, FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface ResultsDisplayProps {
   results: AnalysisResult[];
@@ -21,6 +21,20 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   selectedImageId,
   onImageClick 
 }) => {
+  const [expandedResults, setExpandedResults] = useState<Set<string>>(new Set());
+
+  const toggleResultExpanded = (resultId: string) => {
+    setExpandedResults(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(resultId)) {
+        newSet.delete(resultId);
+      } else {
+        newSet.add(resultId);
+      }
+      return newSet;
+    });
+  };
+
   if (results.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -85,6 +99,9 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                   <div className="space-y-2">
                     {imageResults.slice(0, selectedImageId === image.id ? imageResults.length : 2).map((result) => {
                       const prompt = prompts.find(p => p.id === result.promptId);
+                      const isExpanded = expandedResults.has(result.id);
+                      const shouldTruncate = result.content.length > 200;
+                      
                       return (
                         <div
                           key={result.id}
@@ -113,9 +130,33 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                               )}
                             </div>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2">
-                            {result.content.substring(0, 120)}...
-                          </p>
+                          <div className="text-xs text-muted-foreground">
+                            {isExpanded || !shouldTruncate ? (
+                              <p className="whitespace-pre-wrap leading-relaxed">{result.content}</p>
+                            ) : (
+                              <p className="line-clamp-3">{result.content}</p>
+                            )}
+                          </div>
+                          {shouldTruncate && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="mt-2 h-7 text-xs px-2"
+                              onClick={() => toggleResultExpanded(result.id)}
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="w-3 h-3 mr-1" />
+                                  Show less
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-3 h-3 mr-1" />
+                                  Show more
+                                </>
+                              )}
+                            </Button>
+                          )}
                         </div>
                       );
                     })}
