@@ -173,12 +173,13 @@ All colors MUST be HSL.
 }
 
 /* Accessibility preferences styling */
-[data-text-size="small"] { --text-scale: 0.875; }
-[data-text-size="medium"] { --text-scale: 1; }
-[data-text-size="large"] { --text-scale: 1.125; }
-[data-text-size="x-large"] { --text-scale: 1.25; }
+[data-text-size="small"] { --text-scale: 0.95; }
+[data-text-size="medium"] { --text-scale: 1.1; }
+[data-text-size="large"] { --text-scale: 1.3; }
+[data-text-size="x-large"] { --text-scale: 1.5; }
 
 [data-text-size="small"] *:not(svg):not(path),
+[data-text-size="medium"] *:not(svg):not(path),
 [data-text-size="large"] *:not(svg):not(path),
 [data-text-size="x-large"] *:not(svg):not(path) {
   font-size: calc(1em * var(--text-scale)) !important;
@@ -187,6 +188,9 @@ All colors MUST be HSL.
 [data-text-size="small"] input,
 [data-text-size="small"] textarea,
 [data-text-size="small"] button,
+[data-text-size="medium"] input,
+[data-text-size="medium"] textarea,
+[data-text-size="medium"] button,
 [data-text-size="large"] input,
 [data-text-size="large"] textarea,
 [data-text-size="large"] button,
