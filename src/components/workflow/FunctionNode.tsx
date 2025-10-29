@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Play, CheckCircle2, AlertCircle, Circle, Trash2, Minimize2, Copy } from "lucide-react";
 import type { FunctionNode as FunctionNodeType } from "@/types/workflow";
 import { useToast } from "@/hooks/use-toast";
-import { getFunctionById } from "@/lib/functionDefinitions";
+import { FunctionRegistry } from "@/lib/functionRegistry";
 
 interface FunctionNodeProps {
   node: FunctionNodeType;
@@ -38,7 +38,7 @@ export const FunctionNode = ({
   onToggleMinimize, 
   onPortClick 
 }: FunctionNodeProps) => {
-  const functionDef = getFunctionById(node.functionType);
+  const functionDef = FunctionRegistry.getById(node.functionType);
   const Icon = functionDef?.icon || Circle;
   const statusInfo = statusConfig[node.status || 'idle'];
   const StatusIcon = statusInfo.icon;

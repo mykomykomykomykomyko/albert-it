@@ -26,7 +26,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { functionDefinitions } from "@/lib/functionDefinitions";
+import { FunctionRegistry } from "@/lib/functionRegistry";
 import { Badge } from "@/components/ui/badge";
 import { LucideIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -365,14 +365,13 @@ export const Sidebar = ({
   };
 
   // Filter functions based on search and category
-  const filteredFunctions = functionDefinitions.filter(func => {
-    const matchesSearch = func.name.toLowerCase().includes(functionSearch.toLowerCase()) || func.description.toLowerCase().includes(functionSearch.toLowerCase());
-    const matchesCategory = functionCategory === "all" || func.category === functionCategory;
-    return matchesSearch && matchesCategory;
-  });
-
+  const filteredFunctions = FunctionRegistry.filter(
+    functionCategory === "all" ? undefined : functionCategory,
+    functionSearch
+  );
+  
   // Get unique categories for filter
-  const categories = ["all", ...new Set(functionDefinitions.map(f => f.category))];
+  const categories = ["all", ...FunctionRegistry.getCategories()];
   return <div className="bg-card flex flex-col h-full">
       {isCollapsed && onToggleCollapse && (
         <div className="p-4 border-b border-border flex items-center justify-center">

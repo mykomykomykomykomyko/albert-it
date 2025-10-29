@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
-import { functionDefinitions } from "@/lib/functionDefinitions";
+import { FunctionRegistry } from "@/lib/functionRegistry";
 import type { FunctionDefinition } from "@/types/functions";
 
 interface FunctionSelectorProps {
@@ -20,15 +20,13 @@ interface FunctionSelectorProps {
   onSelectFunction: (functionDef: FunctionDefinition) => void;
 }
 
+// Generate categories dynamically from registry
 const categories = [
   { id: "all", name: "All Functions" },
-  { id: "string", name: "String" },
-  { id: "logic", name: "Logic" },
-  { id: "conditional", name: "Conditional" },
-  { id: "memory", name: "Memory" },
-  { id: "export", name: "Export" },
-  { id: "url", name: "URL" },
-  { id: "data", name: "Data" },
+  ...FunctionRegistry.getCategories().map(cat => ({
+    id: cat,
+    name: cat.charAt(0).toUpperCase() + cat.slice(1)
+  }))
 ];
 
 export const FunctionSelector = ({
@@ -40,23 +38,7 @@ export const FunctionSelector = ({
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredFunctions = useMemo(() => {
-    let functions = functionDefinitions;
-
-    if (selectedCategory !== "all") {
-      functions = functions.filter((f) => f.category === selectedCategory);
-    }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      functions = functions.filter(
-        (f) =>
-          f.name.toLowerCase().includes(query) ||
-          f.description.toLowerCase().includes(query) ||
-          f.category.toLowerCase().includes(query)
-      );
-    }
-
-    return functions;
+    return FunctionRegistry.filter(selectedCategory, searchQuery);
   }, [selectedCategory, searchQuery]);
 
   const handleSelectFunction = (functionDef: FunctionDefinition) => {

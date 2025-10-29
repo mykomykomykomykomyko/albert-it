@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { functionDefinitions } from "@/lib/functionDefinitions";
+import { FunctionRegistry } from "@/lib/functionRegistry";
 import { Badge } from "@/components/ui/badge";
 import { LucideIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -92,9 +92,12 @@ export const Sidebar = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
-  const categories = ["all", ...new Set(functionDefinitions.map(f => f.category))];
+  const categories = ["all", ...FunctionRegistry.getCategories()];
   
-  const filteredFunctions = functionDefinitions.filter(func => {
+  const filteredFunctions = FunctionRegistry.filter(
+    selectedCategory === "all" ? undefined : selectedCategory,
+    searchQuery
+  ).filter(func => {
     const matchesSearch = func.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       func.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === "all" || func.category === selectedCategory;

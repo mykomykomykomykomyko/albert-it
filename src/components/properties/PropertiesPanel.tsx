@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useState, useRef } from "react";
 import type { WorkflowNode, AgentNode, FunctionNode, ToolInstance } from "@/types/workflow";
-import { getFunctionById } from "@/lib/functionDefinitions";
+import { FunctionRegistry } from "@/lib/functionRegistry";
 import { FunctionExecutor } from "@/lib/functionExecutor";
 import { toolDefinitions } from "@/lib/toolDefinitions";
 import {
@@ -104,7 +104,7 @@ export const PropertiesPanel = ({
 
   // Get function definition if it's a function node
   const functionDef = activeNode.nodeType === "function" 
-    ? getFunctionById((activeNode as FunctionNode).functionType)
+    ? FunctionRegistry.getById((activeNode as FunctionNode).functionType)
     : null;
 
   const handleToolToggle = (toolId: string, checked: boolean) => {
