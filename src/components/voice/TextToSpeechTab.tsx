@@ -231,6 +231,55 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
             </Select>
           </div>
 
+          {/* Voice Preview */}
+          {selectedVoiceData && (
+            <div className="space-y-3 p-4 rounded-lg bg-gradient-surface border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-gradient-primary">
+                    <Mic className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm">{selectedVoiceData.name}</h3>
+                    {selectedVoiceData.category && (
+                      <Badge variant="secondary" className="mt-1 text-xs">
+                        {selectedVoiceData.category}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={playVoicePreview}
+                  disabled={isPreviewLoading || !selectedVoice || !selectedModel}
+                  variant="outline"
+                  size="sm"
+                >
+                  {isPreviewLoading ? (
+                    <>
+                      <Waves className="w-4 h-4 mr-2 animate-bounce" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 mr-2" />
+                      Play Sample
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {previewAudioUrl && (
+                <audio
+                  ref={previewAudioRef}
+                  src={previewAudioUrl}
+                  className="w-full"
+                  controls
+                />
+              )}
+            </div>
+          )}
+
           {/* Streaming Toggle */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
@@ -414,59 +463,6 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
         </CardContent>
       </Card>
 
-      {/* Preview Section */}
-      {selectedVoiceData && (
-        <Card className="bg-gradient-surface border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-lg">Voice Preview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-gradient-primary">
-                  <Mic className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{selectedVoiceData.name}</h3>
-                  {selectedVoiceData.category && (
-                    <Badge variant="secondary" className="mt-1">
-                      {selectedVoiceData.category}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              
-              <Button
-                onClick={playVoicePreview}
-                disabled={isPreviewLoading || !selectedVoice || !selectedModel}
-                variant="outline"
-                size="sm"
-              >
-                {isPreviewLoading ? (
-                  <>
-                    <Waves className="w-4 h-4 mr-2 animate-bounce" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4 mr-2" />
-                    Play Sample
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {previewAudioUrl && (
-              <audio
-                ref={previewAudioRef}
-                src={previewAudioUrl}
-                className="w-full"
-                controls
-              />
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
