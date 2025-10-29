@@ -437,6 +437,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          contrast_theme: string
+          created_at: string
+          enhance_inputs: boolean
+          font_family: string
+          id: string
+          line_spacing: string
+          text_size: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contrast_theme?: string
+          created_at?: string
+          enhance_inputs?: boolean
+          font_family?: string
+          id?: string
+          line_spacing?: string
+          text_size?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contrast_theme?: string
+          created_at?: string
+          enhance_inputs?: boolean
+          font_family?: string
+          id?: string
+          line_spacing?: string
+          text_size?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

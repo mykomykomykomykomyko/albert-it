@@ -54,6 +54,8 @@ import MeetingTranscripts from "./pages/MeetingTranscripts";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
+import { AccessibilityProvider } from "./components/AccessibilityProvider";
+import { AccessibilityPreferences } from "./components/AccessibilityPreferences";
 
 /**
  * React Query Client Configuration
@@ -68,9 +70,10 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      {/* Toast notifications for user feedback */}
-      <Toaster />
-      <Sonner />
+      <AccessibilityProvider>
+        {/* Toast notifications for user feedback */}
+        <Toaster />
+        <Sonner />
       
       <BrowserRouter>
         <Routes>
@@ -118,7 +121,11 @@ const App = () => (
         
         {/* Global Helper Agent - Accessible via ? button on all pages */}
         <GlobalHelperAgent />
+        
+        {/* Accessibility Preferences - Settings button for UI/UX customization */}
+        <AccessibilityPreferences />
       </BrowserRouter>
+      </AccessibilityProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
