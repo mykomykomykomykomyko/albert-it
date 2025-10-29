@@ -190,9 +190,7 @@ const Chat = () => {
     });
 
     setCurrentConversation(convData);
-    // Filter out empty messages
-    const validMessages = (messagesData || []).filter(msg => msg.content && msg.content.trim());
-    setMessages(validMessages as Message[]);
+    setMessages((messagesData || []) as Message[]);
   };
 
   const handleNewConversation = async () => {

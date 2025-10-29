@@ -172,10 +172,15 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
             buffer = lines.pop() || "";
 
             for (const line of lines) {
-              if (!line.trim()) continue;
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              
+              // Remove data: prefix if present
+              const jsonStr = trimmed.startsWith("data: ") ? trimmed.slice(6) : trimmed;
+              if (jsonStr === "[DONE]") continue;
 
               try {
-                const parsed = JSON.parse(line);
+                const parsed = JSON.parse(jsonStr);
                 
                 // Gemini API response format
                 const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -189,9 +194,22 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
                   break;
                 }
               } catch (e) {
-                console.error("Parse error:", e);
-                // Ignore parse errors for partial chunks
+                // Silently skip invalid JSON - likely partial chunk
               }
+            }
+          }
+
+          // Process any remaining buffer
+          if (buffer.trim()) {
+            try {
+              const parsed = JSON.parse(buffer);
+              const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (content) {
+                const sseData = `data: ${JSON.stringify({ text: content })}\n\n`;
+                controller.enqueue(encoder.encode(sseData));
+              }
+            } catch (e) {
+              // Ignore final parse error
             }
           }
 
