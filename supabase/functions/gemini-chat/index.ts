@@ -126,9 +126,9 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
 
     console.log('Calling Gemini API with contents:', contents.length);
 
-    // Call Gemini API directly
+    // Call Gemini API directly (non-stream for reliability) and re-stream to client
     const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -152,77 +152,26 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
       throw new Error(`Gemini API error: ${errorText}`);
     }
 
-    // Stream the response
-    const reader = aiResponse.body?.getReader();
+    const result = await aiResponse.json();
+    const parts = result?.candidates?.[0]?.content?.parts || [];
+    const fullText = parts.map((p: any) => p.text).filter(Boolean).join("");
+
     const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
     const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          if (!reader) throw new Error("No reader");
-
-          let buffer = "";
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() || "";
-
-            for (const line of lines) {
-              const trimmed = line.trim();
-              if (!trimmed) continue;
-              
-              // Remove data: prefix if present
-              const jsonStr = trimmed.startsWith("data: ") ? trimmed.slice(6) : trimmed;
-              if (jsonStr === "[DONE]") continue;
-
-              try {
-                const parsed = JSON.parse(jsonStr);
-                
-                // Gemini API response format
-                const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (content) {
-                  const sseData = `data: ${JSON.stringify({ text: content })}\n\n`;
-                  controller.enqueue(encoder.encode(sseData));
-                }
-                
-                // Check if stream is complete
-                if (parsed.candidates?.[0]?.finishReason) {
-                  break;
-                }
-              } catch (e) {
-                // Silently skip invalid JSON - likely partial chunk
-              }
-            }
-          }
-
-          // Process any remaining buffer
-          if (buffer.trim()) {
-            try {
-              const parsed = JSON.parse(buffer);
-              const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (content) {
-                const sseData = `data: ${JSON.stringify({ text: content })}\n\n`;
-                controller.enqueue(encoder.encode(sseData));
-              }
-            } catch (e) {
-              // Ignore final parse error
-            }
-          }
-
-          controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
-          controller.close();
-        } catch (error) {
-          console.error("Streaming error:", error);
-          const errorData = `data: ${JSON.stringify({ error: error instanceof Error ? error.message : "Streaming failed" })}\n\n`;
+      start(controller) {
+        if (!fullText) {
+          const errorData = `data: ${JSON.stringify({ error: "Empty response from Gemini" })}\n\n`;
           controller.enqueue(encoder.encode(errorData));
           controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
           controller.close();
+          return;
         }
-      },
+        // Send as single SSE chunk to fit the UI's streaming reader
+        const sseData = `data: ${JSON.stringify({ text: fullText })}\n\n`;
+        controller.enqueue(encoder.encode(sseData));
+        controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
+        controller.close();
+      }
     });
 
     return new Response(stream, {
