@@ -37,6 +37,7 @@ export function PromptManager({
       id: generateId(),
       name: newPromptName.trim(),
       content: newPromptContent.trim(),
+      isCustom: true,
       createdAt: new Date()
     };
 

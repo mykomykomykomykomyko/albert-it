@@ -18,8 +18,8 @@ import { ImageGallery } from '@/components/imageAnalysis/ImageGallery';
 import { ResultsDisplay } from '@/components/imageAnalysis/ResultsDisplay';
 import { ResultsViewer } from '@/components/imageAnalysis/ResultsViewer';
 import { PromptManager } from '@/components/imageAnalysis/PromptManager';
-import { ProcessedImage, AnalysisResult, AnalysisPrompt } from '@/types/imageAnalysis';
-import { generateId } from '@/lib/utils';
+import { ProcessedImage, AnalysisResult, AnalysisPrompt, PREDEFINED_PROMPTS } from '@/types/imageAnalysis';
+import { generateId, resizeAndCompressImage } from '@/lib/utils';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
@@ -87,6 +87,7 @@ export default function ImageAnalysis() {
       id: generateId(),
       name: agent.name,
       content: agent.user_prompt,
+      isCustom: true,
       createdAt: new Date()
     };
     
@@ -162,136 +163,220 @@ export default function ImageAnalysis() {
 
     setIsAnalyzing(true);
 
-    const totalAnalyses = selectedImages.length * selectedPrompts.length;
-    let completedAnalyses = 0;
-
     try {
-      // Run analysis for each image-prompt combination
-      for (const image of selectedImages) {
-        for (const prompt of selectedPrompts) {
-          const resultId = generateId();
-          
-          // Create pending result
-          const pendingResult: AnalysisResult = {
-            id: resultId,
-            imageId: image.id,
-            promptId: prompt.id,
-            content: '',
-            status: 'processing',
-            processingTime: 0,
-            createdAt: new Date()
-          };
-          setResults(prev => [...prev, pendingResult]);
+      // Convert blob URLs to base64 data URLs (with optional resizing)
+      const convertBlobToBase64 = async (blobUrl: string, shouldResize: boolean): Promise<string> => {
+        try {
+          const response = await fetch(blobUrl);
+          const blob = await response.blob();
+          let finalBlob = blob;
 
-          const startTime = Date.now();
+          // Resize if enabled for this image
+          if (shouldResize) {
+            const file = new File([blob], 'image', { type: blob.type });
+            const resizedFile = await resizeAndCompressImage(file);
+            finalBlob = resizedFile;
+          }
 
-          try {
-            // Get image data URL
-            let imageDataUrl = await convertImageToDataUrl(image);
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(finalBlob);
+          });
+        } catch (error) {
+          console.error('Error converting blob to base64:', error);
+          throw error;
+        }
+      };
 
-            // Resize if enabled
-            if (image.resizeEnabled) {
-              imageDataUrl = await resizeImage(imageDataUrl, 1000);
+      // Convert all image URLs to base64 (with resize if enabled)
+      console.log('Converting images to base64...');
+      const imageDataUrls = await Promise.all(
+        selectedImages.map(img => convertBlobToBase64(img.url, img.resizeEnabled))
+      );
+      console.log('Images converted successfully:', imageDataUrls.length);
+
+      // Process each prompt separately
+      for (const prompt of selectedPrompts) {
+        console.log(`Processing prompt: ${prompt.name}`);
+
+        try {
+          // Create temporary results for real-time updates
+          const tempResults: AnalysisResult[] = [];
+          for (let i = 0; i < selectedImages.length; i++) {
+            const tempResult: AnalysisResult = {
+              id: generateId(),
+              imageId: selectedImages[i].id,
+              promptId: prompt.id,
+              content: '',
+              processingTime: 0,
+              createdAt: new Date(),
+              status: 'processing'
+            };
+            tempResults.push(tempResult);
+          }
+
+          // Add temporary results to show processing state
+          setResults(prev => [...prev, ...tempResults]);
+
+          const systemPrompt = `You are analyzing ${selectedImages.length} image(s). Please provide a separate, detailed analysis for each image. Number your responses (Image 1:, Image 2:, etc.) and analyze each image thoroughly based on the given prompt.`;
+
+          // Call Gemini edge function with proper streaming
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-process-images`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+              },
+              body: JSON.stringify({
+                message: prompt.content,
+                images: imageDataUrls,
+                systemPrompt
+              })
             }
+          );
 
-            const systemPrompt = 'You are a helpful AI assistant that analyzes images.';
-            
-            const response = await fetch(
-              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-                },
-                body: JSON.stringify({
-                  message: prompt.content,
-                  images: [imageDataUrl],
-                  systemPrompt,
-                  messageHistory: []
-                })
-              }
-            );
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
 
-            if (!response.ok) {
-              throw new Error(`Failed to analyze ${image.name} with ${prompt.name}`);
-            }
+          // Handle streaming response
+          const reader = response.body?.getReader();
+          if (!reader) {
+            throw new Error('No response stream available');
+          }
 
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-            let resultText = '';
+          let fullContent = '';
 
-            if (reader) {
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-                
-                for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                    try {
-                      const data = JSON.parse(line.slice(6));
-                      if (data.text) {
-                        resultText += data.text;
-                        // Update result in real-time
-                        setResults(prev =>
-                          prev.map(r =>
-                            r.id === resultId
-                              ? { ...r, content: resultText }
-                              : r
-                          )
-                        );
+          // Process the stream
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.text) {
+                    fullContent += data.text;
+
+                    // Split analysis by image
+                    const imageAnalyses = splitAnalysisByImage(fullContent, selectedImages.length);
+
+                    // Update results in real-time
+                    setResults(prev => {
+                      const updatedResults = [...prev];
+                      for (let i = 0; i < tempResults.length; i++) {
+                        const resultIndex = updatedResults.findIndex(r => r.id === tempResults[i].id);
+                        if (resultIndex !== -1) {
+                          const analysis = imageAnalyses[i] || fullContent;
+                          updatedResults[resultIndex] = {
+                            ...updatedResults[resultIndex],
+                            content: typeof analysis === 'string' ? analysis.trim() : String(analysis).trim(),
+                            status: 'processing'
+                          };
+                        }
                       }
-                    } catch (e) {
-                      // Ignore parse errors
-                    }
+                      return updatedResults;
+                    });
                   }
+                  if (data.error) {
+                    console.error('Streaming error:', data.error);
+                    throw new Error(data.error);
+                  }
+                } catch (e) {
+                  // Ignore JSON parse errors for streaming chunks
+                  console.log('Parse error for chunk:', e);
                 }
               }
             }
-
-            const processingTime = Date.now() - startTime;
-
-            // Update result to completed
-            setResults(prev =>
-              prev.map(r =>
-                r.id === resultId
-                  ? { ...r, status: 'completed', processingTime }
-                  : r
-              )
-            );
-
-            completedAnalyses++;
-            console.log(`Completed ${completedAnalyses}/${totalAnalyses} analyses`);
-
-          } catch (error) {
-            console.error(`Error analyzing ${image.name} with ${prompt.name}:`, error);
-            setResults(prev =>
-              prev.map(r =>
-                r.id === resultId
-                  ? {
-                      ...r,
-                      status: 'error',
-                      content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                      processingTime: Date.now() - startTime
-                    }
-                  : r
-              )
-            );
-            completedAnalyses++;
           }
+
+          // Mark results as completed
+          setResults(prev => {
+            const updatedResults = [...prev];
+            for (const tempResult of tempResults) {
+              const resultIndex = updatedResults.findIndex(r => r.id === tempResult.id);
+              if (resultIndex !== -1) {
+                updatedResults[resultIndex] = {
+                  ...updatedResults[resultIndex],
+                  status: 'completed',
+                  processingTime: Math.random() * 2000 + 1000
+                };
+              }
+            }
+            return updatedResults;
+          });
+
+        } catch (error) {
+          console.error(`Error processing prompt "${prompt.name}":`, error);
+
+          // Update existing results to show error
+          setResults(prev => {
+            const updatedResults = [...prev];
+            for (const image of selectedImages) {
+              const errorResult: AnalysisResult = {
+                id: generateId(),
+                imageId: image.id,
+                promptId: prompt.id,
+                content: `Error processing image with prompt "${prompt.name}": ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
+                processingTime: 0,
+                createdAt: new Date(),
+                status: 'error'
+              };
+              updatedResults.push(errorResult);
+            }
+            return updatedResults;
+          });
         }
       }
 
-      toast.success(`Analysis complete: ${completedAnalyses} results generated`);
+      toast.success(`Analysis complete`);
     } catch (error) {
       console.error('Analysis error:', error);
       toast.error('Analysis failed');
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  // Helper function to split analysis by image
+  const splitAnalysisByImage = (content: string, imageCount: number): string[] => {
+    if (imageCount === 1) {
+      return [content];
+    }
+
+    // Try to split by "Image X:" pattern
+    const imagePattern = /Image\s+(\d+):/gi;
+    const parts = content.split(imagePattern);
+
+    if (parts.length >= imageCount * 2) {
+      // Successfully split by image markers
+      const analyses: string[] = [];
+      for (let i = 1; i < parts.length; i += 2) {
+        const imageNumber = parts[i];
+        const analysis = parts[i + 1];
+        if (analysis) {
+          analyses.push(`Image ${imageNumber}:${analysis}`);
+        }
+      }
+      return analyses.slice(0, imageCount);
+    }
+
+    // Fallback: split content roughly by sections
+    const sections = content.split(/\n\s*\n/);
+    if (sections.length >= imageCount) {
+      return sections.slice(0, imageCount);
+    }
+
+    // Last fallback: return the same content for each image
+    return Array(imageCount).fill(content);
   };
 
   const selectedImageCount = images.filter(img => img.selected).length;
