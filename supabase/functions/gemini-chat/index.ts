@@ -30,10 +30,10 @@ serve(async (req) => {
       )
     }
 
-    // Get Lovable API key
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    // Get Gemini API key
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     const enhancedSystemPrompt = systemPrompt || `You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.
@@ -95,48 +95,61 @@ description: Check out our prompt library for pre-made prompts
 
 Only suggest workflows when it genuinely makes sense. Continue providing regular text responses otherwise.`;
 
-    // Prepare messages for Lovable AI
-    const messages = [
-      { role: "system", content: enhancedSystemPrompt },
-      ...messageHistory.map((msg: any) => ({
-        role: msg.role,
-        content: msg.content
-      })),
-      { role: "user", content: message }
-    ];
-
-    console.log('Calling Lovable AI with messages:', messages.length);
-
-    // Call Lovable AI Gateway
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages,
-        stream: true,
-      }),
+    // Prepare contents for Gemini API
+    const contents = [];
+    
+    // Add system instruction as first user message
+    if (enhancedSystemPrompt) {
+      contents.push({
+        role: "user",
+        parts: [{ text: enhancedSystemPrompt }]
+      });
+      contents.push({
+        role: "model",
+        parts: [{ text: "Understood. I'll follow these instructions." }]
+      });
+    }
+    
+    // Add message history
+    for (const msg of messageHistory) {
+      contents.push({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      });
+    }
+    
+    // Add current message
+    contents.push({
+      role: "user",
+      parts: [{ text: message }]
     });
 
+    console.log('Calling Gemini API with contents:', contents.length);
+
+    // Call Gemini API directly
+    const aiResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.9,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+          }
+        }),
+      }
+    );
+
     if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       const errorText = await aiResponse.text();
-      console.error("Lovable AI error:", aiResponse.status, errorText);
-      throw new Error("AI gateway error");
+      console.error("Gemini API error:", aiResponse.status, errorText);
+      throw new Error(`Gemini API error: ${errorText}`);
     }
 
     // Stream the response
@@ -159,20 +172,24 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
             buffer = lines.pop() || "";
 
             for (const line of lines) {
-              if (!line.trim() || line.startsWith(":")) continue;
-              if (!line.startsWith("data: ")) continue;
-
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
+              if (!line.trim()) continue;
 
               try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content;
+                const parsed = JSON.parse(line);
+                
+                // Gemini API response format
+                const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (content) {
                   const sseData = `data: ${JSON.stringify({ text: content })}\n\n`;
                   controller.enqueue(encoder.encode(sseData));
                 }
+                
+                // Check if stream is complete
+                if (parsed.candidates?.[0]?.finishReason) {
+                  break;
+                }
               } catch (e) {
+                console.error("Parse error:", e);
                 // Ignore parse errors for partial chunks
               }
             }
