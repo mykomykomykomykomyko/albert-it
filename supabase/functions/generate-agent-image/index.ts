@@ -21,13 +21,13 @@ serve(async (req) => {
 
     console.log('Prompt received:', prompt);
 
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!lovableApiKey) {
-      console.error('LOVABLE_API_KEY not found');
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      console.error('GEMINI_API_KEY not found');
+      throw new Error('GEMINI_API_KEY not configured');
     }
     
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -37,61 +37,55 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Generating image with Gemini 2.5 Flash (nano banana)...');
+    console.log('Generating image with Gemini API...');
 
-    // Use Lovable AI Gateway with Gemini 2.5 Flash image model
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Use Google Gemini API for image generation
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
-        messages: [
-          {
-            role: 'user',
-            content: `Generate a professional, high-quality avatar image for an AI agent with this description: ${prompt}. The image should be suitable as a profile picture, visually appealing, and represent the agent's purpose or personality.`
-          }
-        ],
-        modalities: ['image', 'text']
+        contents: [{
+          parts: [{
+            text: `Generate a professional, high-quality avatar image for an AI agent with this description: ${prompt}. The image should be suitable as a profile picture, visually appealing, and represent the agent's purpose or personality.`
+          }]
+        }],
+        generationConfig: {
+          temperature: 1,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        }
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Lovable AI error:', errorText);
-      
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ 
-            error: 'Not enough credits to generate image. Please add credits to your workspace in Settings.',
-            type: 'payment_required'
-          }),
-          { 
-            status: 402,
-            headers: { 
-              ...corsHeaders, 
-              'Content-Type': 'application/json' 
-            }
-          }
-        );
-      }
-      
-      throw new Error(`Failed to generate image: ${aiResponse.status}`);
+      console.error('Gemini API error:', aiResponse.status, errorText);
+      throw new Error(`Failed to generate image: ${aiResponse.status} - ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    const imageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!imageUrl) {
-      throw new Error('No image was generated');
+    console.log('Gemini response:', JSON.stringify(aiData, null, 2));
+    
+    // Extract image from response
+    const parts = aiData.candidates?.[0]?.content?.parts;
+    if (!parts || parts.length === 0) {
+      throw new Error('No content generated');
     }
+
+    // Find inline data with image
+    const imagePart = parts.find((part: any) => part.inlineData?.mimeType?.startsWith('image/'));
+    if (!imagePart?.inlineData?.data) {
+      throw new Error('No image data found in response');
+    }
+
+    const base64Data = imagePart.inlineData.data;
 
     console.log('Image generated, converting to blob...');
 
-    // Convert base64 to blob (remove data:image/png;base64, prefix if present)
-    const base64Data = imageUrl.includes(',') ? imageUrl.split(',')[1] : imageUrl;
+    // Convert base64 to blob
     const binaryData = atob(base64Data);
     const bytes = new Uint8Array(binaryData.length);
     for (let i = 0; i < binaryData.length; i++) {
