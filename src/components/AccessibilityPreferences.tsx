@@ -20,16 +20,72 @@ export const AccessibilityPreferences = () => {
     setHasChanges(false);
   }, [preferences]);
 
-  // Apply temp preferences to DOM for live preview
+  // When panel closes without saving, revert to saved preferences
   useEffect(() => {
-    const root = document.documentElement;
-    root.setAttribute('data-text-size', tempPreferences.text_size);
-    root.setAttribute('data-font-family', tempPreferences.font_family);
-    root.setAttribute('data-line-spacing', tempPreferences.line_spacing);
-    root.setAttribute('data-contrast-theme', tempPreferences.contrast_theme);
-    root.setAttribute('data-enhance-inputs', tempPreferences.enhance_inputs.toString());
+    if (!isOpen) {
+      setTempPreferences(preferences);
+      setHasChanges(false);
+    }
+  }, [isOpen, preferences]);
 
-    // Inline variable overrides for preview of contrast themes
+  // Apply temp preferences to DOM for live preview ONLY when panel is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const root = document.documentElement;
+
+    // Text size
+    const sizeMap: Record<typeof tempPreferences.text_size, string> = {
+      'small': '90%',
+      'medium': '100%',
+      'large': '115%',
+      'x-large': '135%'
+    };
+    root.style.fontSize = sizeMap[tempPreferences.text_size];
+
+    // Font family
+    const familyMap: Record<typeof tempPreferences.font_family, string> = {
+      'default': '',
+      'sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      'serif': 'Georgia, Cambria, "Times New Roman", Times, serif',
+      'mono': '"Courier New", Courier, monospace',
+      'dyslexic': '"Comic Sans MS", Arial, sans-serif'
+    };
+    document.body.style.fontFamily = familyMap[tempPreferences.font_family] || '';
+
+    // Line spacing
+    const lineMap: Record<typeof tempPreferences.line_spacing, string> = {
+      'compact': '1.3',
+      'normal': '1.6',
+      'relaxed': '1.9',
+      'loose': '2.2'
+    };
+    document.body.style.lineHeight = lineMap[tempPreferences.line_spacing];
+    root.style.lineHeight = lineMap[tempPreferences.line_spacing];
+
+    // Enhance inputs (use different ID for preview)
+    const styleId = 'a11y-enhance-inputs-preview';
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    if (tempPreferences.enhance_inputs) {
+      styleEl.textContent = `
+      a, button, input, select, textarea, [role="button"], [tabindex="0"] {
+        outline: 2px solid hsl(var(--primary) / 0.3) !important;
+        outline-offset: 2px;
+      }
+      a:focus, button:focus, input:focus, select:focus, textarea:focus, [role="button"]:focus, [tabindex="0"]:focus {
+        outline: 3px solid hsl(var(--primary)) !important;
+        outline-offset: 2px;
+      }`;
+    } else {
+      styleEl.textContent = '';
+    }
+
+    // Contrast themes (inline for preview)
     const themeVarsMap: Record<string, Record<string, string>> = {
       'high-contrast': {
         '--background': '0 0% 0%',
@@ -87,6 +143,7 @@ export const AccessibilityPreferences = () => {
         '--border': '0 0% 30%'
       }
     };
+    
     const applyThemeVars = (vars?: Record<string, string>) => {
       const keys = ['--background','--foreground','--card','--card-foreground','--primary','--primary-foreground','--muted','--muted-foreground','--border'];
       if (vars) keys.forEach((k) => vars[k] && root.style.setProperty(k, vars[k]!));
@@ -100,7 +157,15 @@ export const AccessibilityPreferences = () => {
       applyThemeVars(undefined);
       root.classList.remove('custom-contrast');
     }
-  }, [tempPreferences]);
+
+    // Cleanup when panel closes
+    return () => {
+      if (!isOpen) {
+        const previewStyle = document.getElementById('a11y-enhance-inputs-preview');
+        if (previewStyle) previewStyle.remove();
+      }
+    };
+  }, [tempPreferences, isOpen]);
 
   const handlePreferenceChange = (updates: Partial<typeof preferences>) => {
     setTempPreferences(prev => ({ ...prev, ...updates }));

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface AccessibilityProviderProps {
@@ -7,9 +7,24 @@ interface AccessibilityProviderProps {
 
 export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) => {
   const { preferences, isLoading } = useUserPreferences();
+  const [isPreviewActive, setIsPreviewActive] = useState(false);
+
+  // Listen for preview state changes
+  useEffect(() => {
+    const checkPreview = () => {
+      const previewStyle = document.getElementById('a11y-enhance-inputs-preview');
+      setIsPreviewActive(!!previewStyle);
+    };
+    
+    const observer = new MutationObserver(checkPreview);
+    observer.observe(document.head, { childList: true });
+    checkPreview();
+    
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isPreviewActive) return; // Don't apply if preview is active
 
     const root = document.documentElement;
 
@@ -146,7 +161,7 @@ export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) 
     } else {
       styleEl.textContent = '';
     }
-  }, [preferences, isLoading]);
+  }, [preferences, isLoading, isPreviewActive]);
 
   return <>{children}</>;
 };
