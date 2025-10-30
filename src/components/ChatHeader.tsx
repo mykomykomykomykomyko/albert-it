@@ -86,7 +86,7 @@ export function ChatHeader() {
 
   return (
     <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-3">
-      <div className="flex items-center justify-between gap-6 max-w-full min-w-0">
+      <div className="flex items-center justify-between gap-8 max-w-full min-w-0">
         <button
           onClick={() => navigate('/')}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0 min-w-0"
