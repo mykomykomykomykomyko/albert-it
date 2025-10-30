@@ -172,83 +172,64 @@ All colors MUST be HSL.
   }
 }
 
-/* Accessibility preferences styling - Apply to content areas */
+/* Accessibility preferences styling - Apply globally */
 [data-text-size="small"] { --text-scale: 0.9; }
 [data-text-size="medium"] { --text-scale: 1; }
 [data-text-size="large"] { --text-scale: 1.15; }
 [data-text-size="x-large"] { --text-scale: 1.35; }
 
-/* Apply to message content and prose */
-[data-text-size] .prose,
-[data-text-size] .prose *,
-[data-text-size] [class*="message"],
-[data-text-size] [class*="message"] * {
+/* Apply text size globally to all text elements */
+[data-text-size] body,
+[data-text-size] p,
+[data-text-size] span,
+[data-text-size] div,
+[data-text-size] h1,
+[data-text-size] h2,
+[data-text-size] h3,
+[data-text-size] h4,
+[data-text-size] h5,
+[data-text-size] h6,
+[data-text-size] a,
+[data-text-size] li,
+[data-text-size] td,
+[data-text-size] th,
+[data-text-size] label,
+[data-text-size] button {
   font-size: calc(1em * var(--text-scale)) !important;
 }
 
-/* Also apply to main content paragraphs and text */
-[data-text-size] main p,
-[data-text-size] main span,
-[data-text-size] main div:not([role]):not([class*="icon"]):not([class*="button"]) {
-  font-size: calc(1em * var(--text-scale));
-}
-
-/* Font family changes */
-[data-font-family="sans"] .prose,
-[data-font-family="sans"] .prose *,
-[data-font-family="sans"] [class*="message"],
-[data-font-family="sans"] [class*="message"] * { 
+/* Font family changes - Apply globally */
+[data-font-family="sans"] * { 
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important; 
 }
 
-[data-font-family="serif"] .prose,
-[data-font-family="serif"] .prose *,
-[data-font-family="serif"] [class*="message"],
-[data-font-family="serif"] [class*="message"] * { 
+[data-font-family="serif"] * { 
   font-family: Georgia, Cambria, "Times New Roman", Times, serif !important; 
 }
 
-[data-font-family="mono"] .prose,
-[data-font-family="mono"] .prose *,
-[data-font-family="mono"] [class*="message"],
-[data-font-family="mono"] [class*="message"] * { 
+[data-font-family="mono"] * { 
   font-family: "Courier New", Courier, monospace !important; 
 }
 
-[data-font-family="dyslexic"] .prose,
-[data-font-family="dyslexic"] .prose *,
-[data-font-family="dyslexic"] [class*="message"],
-[data-font-family="dyslexic"] [class*="message"] * { 
+[data-font-family="dyslexic"] * { 
   font-family: "Comic Sans MS", "Arial", sans-serif !important; 
   letter-spacing: 0.05em !important; 
 }
 
-/* Line spacing changes */
-[data-line-spacing="compact"] .prose,
-[data-line-spacing="compact"] .prose *,
-[data-line-spacing="compact"] [class*="message"],
-[data-line-spacing="compact"] [class*="message"] * { 
+/* Line spacing changes - Apply globally */
+[data-line-spacing="compact"] * { 
   line-height: 1.3 !important; 
 }
 
-[data-line-spacing="normal"] .prose,
-[data-line-spacing="normal"] .prose *,
-[data-line-spacing="normal"] [class*="message"],
-[data-line-spacing="normal"] [class*="message"] * { 
+[data-line-spacing="normal"] * { 
   line-height: 1.6 !important; 
 }
 
-[data-line-spacing="relaxed"] .prose,
-[data-line-spacing="relaxed"] .prose *,
-[data-line-spacing="relaxed"] [class*="message"],
-[data-line-spacing="relaxed"] [class*="message"] * { 
+[data-line-spacing="relaxed"] * { 
   line-height: 1.9 !important; 
 }
 
-[data-line-spacing="loose"] .prose,
-[data-line-spacing="loose"] .prose *,
-[data-line-spacing="loose"] [class*="message"],
-[data-line-spacing="loose"] [class*="message"] * { 
+[data-line-spacing="loose"] * { 
   line-height: 2.2 !important; 
 }
 
