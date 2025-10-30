@@ -238,7 +238,7 @@ export function ChatHeader() {
         {/* Mobile Hamburger Menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="lg:hidden">
-            <Button variant="ghost" size="icon" className="text-foreground">
+            <Button variant="ghost" size="icon" className="text-foreground flex-shrink-0 ml-2">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
