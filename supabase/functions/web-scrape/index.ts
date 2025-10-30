@@ -1,4 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @deno-types="https://esm.sh/v135/pdfjs-dist@4.0.379/types/src/pdf.d.ts"
+import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.mjs';
+
+// Configure PDF.js worker for Deno
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@4.0.379/legacy/build/pdf.worker.mjs';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,6 +90,7 @@ const getModernHeaders = () => ({
   "Sec-CH-UA-Mobile": "?0",
   "Sec-CH-UA-Platform": '"Windows"',
   "Cache-Control": "max-age=0",
+  "Referer": "https://www.google.com/", // Add referer to appear more legitimate
 });
 
 // Smart fetch with retry logic
@@ -137,6 +143,45 @@ const smartFetch = async (url: string, retryCount = 0): Promise<Response> => {
   }
 };
 
+// Helper function to detect PDF URLs
+const isPdfUrl = (url: string): boolean => {
+  const urlLower = url.toLowerCase();
+  return urlLower.endsWith('.pdf') || urlLower.includes('.pdf?');
+};
+
+// Helper function to extract text from PDF
+const extractPdfText = async (arrayBuffer: ArrayBuffer): Promise<{ content: string; pageCount: number }> => {
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const pdf = await loadingTask.promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent({
+      includeMarkedContent: true
+    });
+
+    if (i > 1) {
+      fullText += `\n\n--- Page ${i} ---\n\n`;
+    }
+
+    const pageText = textContent.items
+      .map((item: any) => item.str || '')
+      .join(' ')
+      .trim();
+
+    if (pageText) {
+      fullText += pageText;
+    }
+  }
+
+  return {
+    content: fullText.trim(),
+    pageCount: pdf.numPages
+  };
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -163,10 +208,183 @@ serve(async (req) => {
 
     console.log(`Scraping URL: ${url}, returnHtml: ${returnHtml}`);
 
-    // Use smart fetch with retry logic
+    // Capture access timestamp
+    const accessedAt = new Date().toISOString();
+
+    // Check if URL is a PDF
+    const isPdf = isPdfUrl(url);
+
+    if (isPdf) {
+      console.log(`Detected PDF URL: ${url}`);
+
+      // Fetch PDF as binary
+      const response = await smartFetch(url);
+
+      if (!response.ok) {
+        const domain = new URL(url).hostname;
+
+        // Handle 403 gracefully
+        if (response.status === 403) {
+          console.log(`403 Forbidden for ${url} - site is blocking automated access`);
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              url,
+              title: `Access Restricted: ${domain}`,
+              content: `This website (${domain}) is blocking automated access. The content could not be retrieved automatically.\n\nTo access this content, please visit the URL directly: ${url}\n\nSome academic publishers and websites have anti-bot protection that prevents automated scraping.`,
+              contentLength: 0,
+              accessedAt,
+              blocked: true,
+              statusCode: 403
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Handle 404 gracefully
+        if (response.status === 404) {
+          console.log(`404 Not Found for ${url} - page does not exist`);
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              url,
+              title: `Page Not Found: ${domain}`,
+              content: `The requested page could not be found at ${url}.\n\nThe URL may be incorrect, the page may have been moved or deleted, or the content may no longer be available.\n\nPlease verify the URL or try searching for the content on ${domain}.`,
+              contentLength: 0,
+              accessedAt,
+              notFound: true,
+              statusCode: 404
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ error: `Failed to fetch PDF: ${response.statusText}` }),
+          { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const pdfBuffer = new Uint8Array(arrayBuffer);
+
+      // Check PDF size - skip processing if too large (> 5MB to avoid CPU limits)
+      const maxPdfSize = 5 * 1024 * 1024; // 5MB
+      if (pdfBuffer.length > maxPdfSize) {
+        const urlParts = url.split('/');
+        const filename = urlParts[urlParts.length - 1].split('?')[0];
+        const title = filename || "PDF Document";
+
+        console.log(`PDF too large (${(pdfBuffer.length / 1024 / 1024).toFixed(2)}MB), skipping extraction`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            url,
+            title,
+            content: `PDF Document: ${filename}\n\nPDF is too large for text extraction (${(pdfBuffer.length / 1024 / 1024).toFixed(2)}MB). Please download directly from: ${url}`,
+            contentLength: 0,
+            isPdf: true,
+            accessedAt,
+            skipped: true
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      try {
+        // Add timeout for PDF extraction to prevent CPU exhaustion
+        const extractionTimeout = 20000; // 20 seconds max for PDF extraction
+        const extractionPromise = extractPdfText(arrayBuffer);
+
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('PDF extraction timeout')), extractionTimeout)
+        );
+
+        const { content: fullText, pageCount } = await Promise.race([extractionPromise, timeoutPromise]) as { content: string; pageCount: number };
+
+        // Limit content to 100k characters to avoid memory issues
+        const content = fullText.substring(0, 100000);
+
+        // Extract filename from URL for title
+        const urlParts = url.split('/');
+        const filename = urlParts[urlParts.length - 1].split('?')[0];
+        const title = filename || "PDF Document";
+
+        console.log(`Successfully extracted text from PDF: ${pageCount} pages, ${content.length} characters`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            url,
+            title,
+            content,
+            contentLength: content.length,
+            pageCount,
+            isPdf: true,
+            accessedAt,
+            truncated: fullText.length > 100000
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } catch (pdfError) {
+        console.error(`Error parsing PDF:`, pdfError);
+        return new Response(
+          JSON.stringify({
+            error: `Failed to parse PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`,
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Use smart fetch with retry logic for non-PDF URLs
     const response = await smartFetch(url);
 
     if (!response.ok) {
+      const domain = new URL(url).hostname;
+
+      // Handle 403 gracefully - return success with warning message so workflow continues
+      if (response.status === 403) {
+        console.log(`403 Forbidden for ${url} - site is blocking automated access`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            url,
+            title: `Access Restricted: ${domain}`,
+            content: `This website (${domain}) is blocking automated access. The content could not be retrieved automatically.\n\nTo access this content, please visit the URL directly: ${url}\n\nSome academic publishers and websites have anti-bot protection that prevents automated scraping.`,
+            contentLength: 0,
+            accessedAt,
+            blocked: true,
+            statusCode: 403
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Handle 404 gracefully - return success with warning message so workflow continues
+      if (response.status === 404) {
+        console.log(`404 Not Found for ${url} - page does not exist`);
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            url,
+            title: `Page Not Found: ${domain}`,
+            content: `The requested page could not be found at ${url}.\n\nThe URL may be incorrect, the page may have been moved or deleted, or the content may no longer be available.\n\nPlease verify the URL or try searching for the content on ${domain}.`,
+            contentLength: 0,
+            accessedAt,
+            notFound: true,
+            statusCode: 404
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // For other errors, return error response
       return new Response(
         JSON.stringify({ error: `Failed to fetch URL: ${response.statusText}` }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -208,6 +426,7 @@ serve(async (req) => {
         title,
         content,
         contentLength: content.length,
+        accessedAt
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
