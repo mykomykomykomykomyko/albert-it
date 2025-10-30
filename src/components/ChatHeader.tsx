@@ -105,7 +105,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'agents'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Agents
@@ -115,7 +115,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'chat'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Chat
@@ -125,7 +125,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'stage'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Stage
@@ -135,7 +135,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'image'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Image
@@ -145,7 +145,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'voice'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Voice
@@ -155,7 +155,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'canvas'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Canvas
@@ -165,7 +165,7 @@ export function ChatHeader() {
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'transcripts'
                   ? 'bg-primary text-primary-foreground' 
-                  : 'text-primary-foreground hover:bg-accent'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               Transcripts
