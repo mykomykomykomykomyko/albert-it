@@ -42,6 +42,16 @@ export const toolDefinitions: ToolDefinition[] = [
     requiresApiKey: true,
   },
   {
+    id: "brave_search",
+    name: "Brave Search",
+    description: "Search the web using Brave",
+    icon: Search,
+    color: "bg-orange-500/10 text-orange-500",
+    configurable: true,
+    requiresConfig: false, // Can work with env vars
+    requiresApiKey: true,
+  },
+  {
     id: "web_scrape",
     name: "Web Scrape",
     description: "Extract content from web pages",

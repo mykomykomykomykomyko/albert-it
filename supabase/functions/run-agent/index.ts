@@ -45,6 +45,20 @@ serve(async (req) => {
           console.log("Tool Output [google_search]:", JSON.stringify(searchData, null, 2));
           toolOutputs.push({ toolId: 'google_search', output: searchData });
           toolResults += `\n\nGoogle Search Results: ${JSON.stringify(searchData)}`;
+        } else if (toolId === 'brave_search') {
+          console.log("Calling brave-search with query:", userPrompt);
+          const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/brave-search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              query: userPrompt, 
+              apiKey: config?.apiKey
+            }),
+          });
+          const searchData = await searchResponse.json();
+          console.log("Tool Output [brave_search]:", JSON.stringify(searchData, null, 2));
+          toolOutputs.push({ toolId: 'brave_search', output: searchData });
+          toolResults += `\n\nBrave Search Results: ${JSON.stringify(searchData)}`;
         } else if (toolId === 'weather') {
           if (config?.apiKey) {
             const weatherResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/weather`, {

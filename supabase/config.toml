@@ -12,6 +12,9 @@ verify_jwt = true
 [functions.google-search]
 verify_jwt = true
 
+[functions.brave-search]
+verify_jwt = true
+
 [functions.web-scrape]
 verify_jwt = true
 
