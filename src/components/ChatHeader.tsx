@@ -86,10 +86,10 @@ export function ChatHeader() {
 
   return (
     <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-3">
-      <div className="flex items-center justify-between max-w-full">
+      <div className="flex items-center justify-between gap-4 max-w-full min-w-0">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <span className="text-xl font-bold text-white">A</span>
@@ -98,11 +98,11 @@ export function ChatHeader() {
         </button>
         
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-4">
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary">
+        <div className="hidden lg:flex items-center gap-4 flex-1 min-w-0 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary flex-shrink-0">
             <button
               onClick={() => navigate('/agents')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'agents'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -112,7 +112,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/chat')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'chat'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -122,7 +122,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/stage')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'stage'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -132,7 +132,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/image')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'image'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -142,7 +142,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/voice')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'voice'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -152,7 +152,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/canvas')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'canvas'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -162,7 +162,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/transcripts')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'transcripts'
                   ? 'bg-primary text-primary-foreground' 
                   : 'hover:bg-accent'
@@ -172,6 +172,7 @@ export function ChatHeader() {
             </button>
           </div>
           
+          <div className="flex items-center gap-2 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
@@ -231,6 +232,7 @@ export function ChatHeader() {
           >
             <LogOut className="h-5 w-5" />
           </Button>
+          </div>
         </div>
 
         {/* Mobile Hamburger Menu */}
