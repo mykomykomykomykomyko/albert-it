@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Zap, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -34,6 +34,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FunctionSelector } from "@/components/workflow/FunctionSelector";
+import { AgentSelectorDialog } from "@/components/agents/AgentSelectorDialog";
+import type { FunctionDefinition } from "@/types/functions";
+import { toolDefinitions, type ToolDefinition } from "@/lib/toolDefinitions";
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -405,6 +409,8 @@ const Canvas = () => {
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
+  const [isFunctionSelectorOpen, setIsFunctionSelectorOpen] = useState(false);
+  const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -512,7 +518,7 @@ const Canvas = () => {
     [setEdges]
   );
 
-  const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform', template: any) => {
+  const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
     const id = `${type}-${Date.now()}`;
     const newNode: Node = {
       id,
@@ -530,6 +536,8 @@ const Canvas = () => {
         userPrompt: '',
         files: [],
         config: template.config || {},
+        functionType: template.functionType,
+        toolType: template.toolType,
         onEdit: () => {
           setSelectedNode(newNode);
           setIsRightSidebarOpen(true);
@@ -540,6 +548,36 @@ const Canvas = () => {
     
     setNodes((nds) => [...nds, newNode]);
     toast.success(`${template.name} added`);
+  };
+
+  const handleSelectFunction = (functionDef: FunctionDefinition) => {
+    addNode('function', {
+      name: functionDef.name,
+      description: functionDef.description,
+      functionType: functionDef.id,
+      config: {},
+    });
+    setIsFunctionSelectorOpen(false);
+  };
+
+  const handleSelectAgent = (agent: any) => {
+    if (agent.type === 'tool') {
+      // It's a tool definition
+      addNode('tool', {
+        name: agent.name,
+        description: agent.description,
+        toolType: agent.id,
+        config: {},
+      });
+    } else {
+      // It's an agent
+      addNode('agent', {
+        name: agent.name,
+        description: agent.description || 'AI Agent',
+        systemPrompt: agent.system_prompt || agent.systemPrompt || '',
+      });
+    }
+    setIsAgentSelectorOpen(false);
   };
 
   const handleRunNode = async (nodeId: string, outputsMap?: Record<string, string>) => {
@@ -1039,6 +1077,66 @@ const Canvas = () => {
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
+
+                <AccordionItem value="functions" className="border-none">
+                  <AccordionTrigger className="text-sm py-3 hover:no-underline">
+                    <div className="flex items-center gap-2.5">
+                      <Zap className="h-4 w-4 text-yellow-500" />
+                      <span className="font-medium">Functions</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1.5 pt-2 pb-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-9 hover:bg-muted"
+                      onClick={() => setIsFunctionSelectorOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Browse All Functions</span>
+                    </Button>
+                    <p className="text-xs text-muted-foreground px-2 mt-1">
+                      Search, Web Scrape, Export, String Operations, and more
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="tools" className="border-none">
+                  <AccordionTrigger className="text-sm py-3 hover:no-underline">
+                    <div className="flex items-center gap-2.5">
+                      <Settings className="h-4 w-4 text-indigo-500" />
+                      <span className="font-medium">Tools</span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-1.5 pt-2 pb-3">
+                    {toolDefinitions.slice(0, 5).map((tool) => (
+                      <Button
+                        key={tool.id}
+                        variant="ghost"
+                        size="sm"
+                        className="w-full justify-start h-9 hover:bg-muted"
+                        onClick={() => addNode('tool', {
+                          name: tool.name,
+                          description: tool.description,
+                          toolType: tool.id,
+                          config: {},
+                        })}
+                      >
+                        <Plus className="h-4 w-4 mr-2.5" />
+                        <span className="text-sm">{tool.name}</span>
+                      </Button>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-9 hover:bg-muted font-medium"
+                      onClick={() => setIsAgentSelectorOpen(true)}
+                    >
+                      <Plus className="h-4 w-4 mr-2.5" />
+                      <span className="text-sm">Browse All Tools...</span>
+                    </Button>
+                  </AccordionContent>
+                </AccordionItem>
               </Accordion>
 
               <div className="mt-5 pt-5 border-t">
@@ -1444,6 +1542,20 @@ const Canvas = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Function Selector Dialog */}
+      <FunctionSelector
+        open={isFunctionSelectorOpen}
+        onOpenChange={setIsFunctionSelectorOpen}
+        onSelectFunction={handleSelectFunction}
+      />
+
+      {/* Agent Selector Dialog */}
+      <AgentSelectorDialog
+        open={isAgentSelectorOpen}
+        onOpenChange={setIsAgentSelectorOpen}
+        onSelectAgent={handleSelectAgent}
+      />
     </div>
   );
 };
