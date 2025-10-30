@@ -80,6 +80,9 @@
   --border: 0 0% 30%;
   --input: 0 0% 10%;
   --ring: 0 0% 100%;
+  --gradient-aurora: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 100%));
+  --gradient-subtle: linear-gradient(180deg, hsl(0 0% 0%), hsl(0 0% 5%));
+  --gradient-card: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 10%));
 }
 
 [data-contrast-theme="yellow-black"] {
@@ -98,6 +101,9 @@
   --border: 0 0% 20%;
   --input: 60 100% 40%;
   --ring: 0 0% 0%;
+  --gradient-aurora: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 0%));
+  --gradient-subtle: linear-gradient(180deg, hsl(60 100% 50%), hsl(60 100% 45%));
+  --gradient-card: linear-gradient(135deg, hsl(60 100% 45%), hsl(60 100% 40%));
 }
 
 [data-contrast-theme="black-yellow"] {
@@ -116,6 +122,9 @@
   --border: 60 100% 30%;
   --input: 0 0% 10%;
   --ring: 60 100% 50%;
+  --gradient-aurora: linear-gradient(135deg, hsl(60 100% 50%), hsl(60 100% 50%));
+  --gradient-subtle: linear-gradient(180deg, hsl(0 0% 0%), hsl(0 0% 5%));
+  --gradient-card: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 10%));
 }
 
 [data-contrast-theme="white-black"] {
@@ -134,6 +143,9 @@
   --border: 0 0% 80%;
   --input: 0 0% 95%;
   --ring: 0 0% 0%;
+  --gradient-aurora: linear-gradient(135deg, hsl(0 0% 0%), hsl(0 0% 0%));
+  --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(0 0% 98%));
+  --gradient-card: linear-gradient(135deg, hsl(0 0% 98%), hsl(0 0% 95%));
 }
 
 [data-contrast-theme="black-white"] {
@@ -152,6 +164,9 @@
   --border: 0 0% 30%;
   --input: 0 0% 10%;
   --ring: 0 0% 100%;
+  --gradient-aurora: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 100%));
+  --gradient-subtle: linear-gradient(180deg, hsl(0 0% 0%), hsl(0 0% 5%));
+  --gradient-card: linear-gradient(135deg, hsl(0 0% 5%), hsl(0 0% 10%));
 }
 
 /* ============================================
