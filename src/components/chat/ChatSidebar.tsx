@@ -78,14 +78,14 @@ const ChatSidebar = ({
 
       {!isCollapsed && (
         <ScrollArea className="flex-1 px-2 py-2">
-          <div className="space-y-1">
+          <div className="space-y-0">
             {conversations.map((conversation) => (
               <div
                 key={conversation.id}
                 role="button"
                 tabIndex={0}
                 aria-label={`Select conversation: ${conversation.title}`}
-                className={`group relative flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
+                className={`group relative flex items-center gap-2 p-3 border-b border-border cursor-pointer transition-colors ${
                   currentConversationId === conversation.id
                     ? "bg-accent text-accent-foreground"
                     : "hover:bg-accent/50 text-foreground"
