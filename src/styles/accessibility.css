@@ -24,7 +24,7 @@
 
 /* Apply scaling at root to affect rem-based sizes (no exponential nesting) */
 :root[data-text-size] {
-  font-size: calc(1rem * var(--text-scale));
+  font-size: calc(100% * var(--text-scale));
 }
 
 /* ============================================
