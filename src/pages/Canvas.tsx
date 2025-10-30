@@ -38,6 +38,8 @@ import { FunctionSelector } from "@/components/workflow/FunctionSelector";
 import { AgentSelectorDialog } from "@/components/agents/AgentSelectorDialog";
 import type { FunctionDefinition } from "@/types/functions";
 import { toolDefinitions, type ToolDefinition } from "@/lib/toolDefinitions";
+import { PropertiesPanel } from "@/components/properties/PropertiesPanel";
+import type { WorkflowNode, AgentNode, FunctionNode, ToolNode, ToolInstance } from "@/types/workflow";
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -626,6 +628,45 @@ const Canvas = () => {
           if (error) throw error;
           output = data.output;
           break;
+        
+        case 'function':
+          // Execute function using FunctionExecutor
+          const { FunctionExecutor } = await import('@/lib/functionExecutor');
+          const functionNodeData: FunctionNode = {
+            id: nodeId,
+            nodeType: 'function',
+            name: nodeData.label,
+            functionType: nodeData.functionType || 'content',
+            config: nodeData.config || {},
+            outputPorts: ['output'],
+            status: 'running'
+          };
+          const functionResult = await FunctionExecutor.execute(functionNodeData, input);
+          if (functionResult.success) {
+            output = functionResult.outputs.output || JSON.stringify(functionResult.outputs);
+          } else {
+            throw new Error(functionResult.error || 'Function execution failed');
+          }
+          break;
+        
+        case 'tool':
+          // Execute tool - tools use the same executor
+          const toolNodeData: FunctionNode = {
+            id: nodeId,
+            nodeType: 'function',
+            name: nodeData.label,
+            functionType: nodeData.toolType || 'web_scrape',
+            config: nodeData.config || {},
+            outputPorts: ['output'],
+            status: 'running'
+          };
+          const toolResult = await FunctionExecutor.execute(toolNodeData, input);
+          if (toolResult.success) {
+            output = toolResult.outputs.output || JSON.stringify(toolResult.outputs);
+          } else {
+            throw new Error(toolResult.error || 'Tool execution failed');
+          }
+          break;
           
         case 'transform':
           const operation = nodeData.config?.operation || 'lowercase';
@@ -672,7 +713,7 @@ const Canvas = () => {
           ? { ...n, data: { ...n.data, status: 'error' } }
           : n
       ));
-      toast.error(`Node execution failed`);
+      toast.error(`Node execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -738,6 +779,79 @@ const Canvas = () => {
             ...updates,
             onEdit: currentData?.onEdit,
             onRun: currentData?.onRun,
+          }
+        };
+      }
+      return n;
+    }));
+  };
+
+  // Convert Canvas Node to WorkflowNode format for PropertiesPanel
+  const convertNodeToWorkflowNode = (node: Node): WorkflowNode | undefined => {
+    const data = node.data as any;
+    
+    if (data.nodeType === 'function') {
+      return {
+        id: node.id,
+        nodeType: 'function',
+        name: data.label,
+        functionType: data.functionType || 'content',
+        config: data.config || {},
+        outputPorts: ['output'],
+        status: data.status || 'idle',
+        output: data.output,
+      } as FunctionNode;
+    } else if (data.nodeType === 'tool') {
+      return {
+        id: node.id,
+        nodeType: 'tool',
+        name: data.label,
+        toolType: data.toolType || 'web_scrape',
+        config: data.config || {},
+        status: data.status || 'idle',
+        output: data.output,
+      } as ToolNode;
+    }
+    
+    return undefined;
+  };
+
+  // Convert Canvas Node to AgentNode format for PropertiesPanel
+  const convertNodeToAgent = (node: Node): AgentNode | undefined => {
+    const data = node.data as any;
+    
+    if (data.nodeType === 'agent') {
+      return {
+        id: node.id,
+        nodeType: 'agent',
+        name: data.label,
+        type: 'custom',
+        systemPrompt: data.systemPrompt || '',
+        userPrompt: data.userPrompt || '',
+        tools: [],
+        status: data.status || 'idle',
+        output: data.output,
+      } as AgentNode;
+    }
+    
+    return undefined;
+  };
+
+  // Handle node updates from PropertiesPanel
+  const handleUpdateNode = (nodeId: string, updates: Partial<WorkflowNode>) => {
+    setNodes(nds => nds.map(n => {
+      if (n.id === nodeId) {
+        const currentData = n.data as any;
+        return {
+          ...n,
+          data: {
+            ...currentData,
+            label: updates.name || currentData.label,
+            systemPrompt: (updates as any).systemPrompt || currentData.systemPrompt,
+            userPrompt: (updates as any).userPrompt || currentData.userPrompt,
+            config: updates.config || currentData.config,
+            output: updates.output || currentData.output,
+            status: updates.status || currentData.status,
           }
         };
       }
@@ -1228,11 +1342,11 @@ const Canvas = () => {
 
         {/* Right Sidebar - Properties Panel */}
         <div 
-          className={`transition-all duration-300 ${selectedNode && isRightSidebarOpen ? 'w-96' : 'w-0'} overflow-hidden`}
+          className={`transition-all duration-300 ${selectedNode && isRightSidebarOpen ? 'w-96' : 'w-0'} overflow-hidden bg-card`}
         >
           {selectedNode && (
-            <Card className="h-full m-4 ml-0 flex flex-col shadow-md">
-              <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
+            <div className="h-full m-4 ml-0 flex flex-col">
+              <div className="p-4 border-b bg-muted/20 flex items-center justify-between rounded-t-lg">
                 <div>
                   <h3 className="font-semibold text-base">Node Configuration</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">Configure selected node</p>
@@ -1257,248 +1371,26 @@ const Canvas = () => {
                 </div>
               </div>
 
-            <ScrollArea className="flex-1">
-              <div className="p-4 space-y-5">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Node Name</Label>
-                  <Input
-                    value={selectedNode.data.label}
-                    onChange={(e) => updateNodeData({ label: e.target.value })}
-                    className="h-9"
-                    placeholder="Enter node name"
-                  />
-                </div>
-
-                {selectedNode.data.nodeType === 'input' && editingNode && (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Input Data</Label>
-                      <Textarea
-                        value={editingNode.userPrompt}
-                        onChange={(e) => {
-                          setEditingNode({ ...editingNode, userPrompt: e.target.value });
-                          updateNodeData({ userPrompt: e.target.value } as any);
-                        }}
-                        placeholder="Enter your input data here..."
-                        className="min-h-[150px] text-sm font-mono"
-                      />
-                      <p className="text-xs text-muted-foreground">This data will be passed to connected nodes</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Or Upload File</Label>
-                      <Input
-                        type="file"
-                        accept=".vtt,.docx,.txt,.json,.mp3,.wav,.webm,.m4a,.ogg,.flac"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-
-                          try {
-                            let content = "";
-                            const extension = file.name.toLowerCase().split('.').pop();
-                            const audioFormats = ['mp3', 'wav', 'webm', 'm4a', 'ogg', 'flac'];
-                            
-                            if (audioFormats.includes(extension || '')) {
-                              // Handle audio files with transcription
-                              toast.success(`Transcribing ${file.name}...`);
-
-                              // Convert audio file to base64
-                              const reader = new FileReader();
-                              const base64Audio = await new Promise<string>((resolve, reject) => {
-                                reader.onload = () => {
-                                  const result = reader.result as string;
-                                  const base64 = result.split(',')[1];
-                                  resolve(base64);
-                                };
-                                reader.onerror = reject;
-                                reader.readAsDataURL(file);
-                              });
-
-                              // Get session for auth
-                              const { data: { session } } = await supabase.auth.getSession();
-                              if (!session) throw new Error('Not authenticated');
-
-                              // Call speech-to-text edge function
-                              const response = await fetch(
-                                `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/speech-to-text`,
-                                {
-                                  method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${session.access_token}`,
-                                  },
-                                  body: JSON.stringify({
-                                    audio: base64Audio,
-                                    model: 'scribe_v1',
-                                  }),
-                                }
-                              );
-
-                              if (!response.ok) {
-                                const errorText = await response.text();
-                                throw new Error(`Transcription failed: ${errorText}`);
-                              }
-
-                              const result = await response.json();
-                              content = result.text || '';
-                              toast.success(`Audio transcribed successfully`);
-                            } else if (file.name.endsWith(".vtt")) {
-                              const text = await file.text();
-                              const { parseVTT } = await import("@/utils/parseVTT");
-                              const parsed = parseVTT(text);
-                              content = parsed.fullText;
-                            } else if (file.name.endsWith(".docx")) {
-                              const mammoth = await import("mammoth");
-                              const arrayBuffer = await file.arrayBuffer();
-                              const result = await mammoth.extractRawText({ arrayBuffer });
-                              content = result.value;
-                            } else if (file.name.endsWith(".txt") || file.name.endsWith(".json")) {
-                              content = await file.text();
-                            }
-
-                            setEditingNode({ ...editingNode, userPrompt: content });
-                            updateNodeData({ userPrompt: content } as any);
-                            if (!audioFormats.includes(extension || '')) {
-                              toast.success(`File "${file.name}" loaded successfully`);
-                            }
-                          } catch (error) {
-                            console.error('File processing error:', error);
-                            toast.error(`Failed to process file: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                          }
-                        }}
-                        className="text-sm"
-                      />
-                      <p className="text-xs text-muted-foreground">Supports VTT, DOCX, TXT, JSON, and audio files (MP3, WAV, WebM, M4A, OGG, FLAC)</p>
-                    </div>
-                  </div>
-                )}
-
-                {selectedNode.data.nodeType === 'agent' && editingNode && (
-                  <>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">System Prompt</Label>
-                      <Textarea
-                        value={editingNode.systemPrompt}
-                        onChange={(e) => {
-                          setEditingNode({ ...editingNode, systemPrompt: e.target.value });
-                          updateNodeData({ systemPrompt: e.target.value } as any);
-                        }}
-                        placeholder="Define the AI agent's role and behavior..."
-                        className="min-h-[120px] text-sm"
-                      />
-                      <p className="text-xs text-muted-foreground">Instructions for how the AI should behave</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">User Prompt (Optional)</Label>
-                      <Textarea
-                        value={editingNode.userPrompt}
-                        onChange={(e) => {
-                          setEditingNode({ ...editingNode, userPrompt: e.target.value });
-                          updateNodeData({ userPrompt: e.target.value } as any);
-                        }}
-                        placeholder="Leave empty to use input from connected nodes..."
-                        className="min-h-[100px] text-sm"
-                      />
-                      <p className="text-xs text-muted-foreground">Custom input or leave blank to use connected node output</p>
-                    </div>
-                  </>
-                )}
-
-                {selectedNode.data.nodeType === 'transform' && editingNode && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Transform Operation</Label>
-                    <select
-                      value={editingNode.config?.operation || 'lowercase'}
-                      onChange={(e) => {
-                        const newConfig = { ...editingNode.config, operation: e.target.value };
-                        setEditingNode({ ...editingNode, config: newConfig });
-                        updateNodeData({ config: newConfig } as any);
-                      }}
-                      className="w-full h-9 rounded-md border bg-background px-3 text-sm"
-                    >
-                      <option value="lowercase">Convert to Lowercase</option>
-                      <option value="uppercase">Convert to Uppercase</option>
-                    </select>
-                    <p className="text-xs text-muted-foreground">Select how to transform the input text</p>
-                  </div>
-                )}
-
-                {selectedNode.data.nodeType === 'output' && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Export Options</Label>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => {
-                        if (selectedNode.data.output) {
-                          const blob = new Blob([selectedNode.data.output], { type: 'text/plain' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `${selectedNode.data.label}.txt`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                          toast.success('Output exported');
-                        }
-                      }}
-                      disabled={!selectedNode.data.output}
-                    >
-                      <Download className="h-4 w-4" />
-                      Export as Text
-                    </Button>
-                  </div>
-                )}
-
-                {selectedNode.data.output && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Latest Output</Label>
-                    <div className="p-3 bg-muted rounded-md text-sm max-h-[200px] overflow-y-auto font-mono border">
-                      {selectedNode.data.output}
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-3 space-y-2.5 border-t">
-                  <Button 
-                    size="default" 
-                    className="w-full gap-2"
-                    onClick={() => handleRunNode(selectedNode.id)}
-                    disabled={selectedNode.data.status === 'running'}
-                  >
-                    {selectedNode.data.status === 'running' ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Running...
-                      </>
-                    ) : (
-                      <>
-                        <Play className="h-4 w-4" />
-                        Test This Node
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button 
-                    variant="destructive" 
-                    size="default" 
-                    className="w-full gap-2"
-                    onClick={() => {
-                      setNodes(nds => nds.filter(n => n.id !== selectedNode.id));
-                      setEdges(eds => eds.filter(e => e.source !== selectedNode.id && e.target !== selectedNode.id));
-                      setSelectedNode(null);
-                      toast.success("Node deleted");
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete Node
-                  </Button>
-                </div>
-              </div>
-            </ScrollArea>
-            </Card>
+              <PropertiesPanel
+                selectedAgent={convertNodeToAgent(selectedNode)}
+                selectedNode={convertNodeToWorkflowNode(selectedNode)}
+                onUpdateAgent={(nodeId, updates) => handleUpdateNode(nodeId, updates)}
+                onUpdateNode={(nodeId, updates) => handleUpdateNode(nodeId, updates)}
+                onAddToolInstance={(nodeId, toolId) => {
+                  // Tools not yet implemented for Canvas agent nodes
+                  toast.success("Tool support coming soon for Canvas");
+                }}
+                onUpdateToolInstance={(nodeId, toolInstanceId, config) => {
+                  // Tools not yet implemented for Canvas agent nodes
+                }}
+                onRemoveToolInstance={(nodeId, toolInstanceId) => {
+                  // Tools not yet implemented for Canvas agent nodes
+                }}
+                onDeselectAgent={() => setSelectedNode(null)}
+                onRunAgent={(nodeId) => handleRunNode(nodeId)}
+                onRunFunction={(nodeId) => handleRunNode(nodeId)}
+              />
+            </div>
           )}
         </div>
       </div>
