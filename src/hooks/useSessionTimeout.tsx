@@ -78,6 +78,16 @@ export const useSessionTimeout = ({
   const showWarning = useCallback(() => {
     if (hasShownWarningRef.current) return;
     
+    // Double-check that enough time has actually passed since last activity
+    const timeSinceLastActivity = Date.now() - lastActivityRef.current;
+    const expectedTimeUntilWarning = timeoutMs - warningMs;
+    
+    // Only show warning if we've been inactive for close to the expected time
+    if (timeSinceLastActivity < expectedTimeUntilWarning - 10000) {
+      console.log('Warning suppressed - not enough time since last activity');
+      return;
+    }
+    
     hasShownWarningRef.current = true;
     const minutesLeft = Math.ceil(warningMs / 60000);
     
@@ -87,7 +97,7 @@ export const useSessionTimeout = ({
         duration: warningMs,
       }
     );
-  }, [warningMs]);
+  }, [warningMs, timeoutMs]);
 
   const resetTimer = useCallback(() => {
     if (!enabled) return;
@@ -96,15 +106,21 @@ export const useSessionTimeout = ({
     hasShownWarningRef.current = false;
     lastActivityRef.current = Date.now();
 
-    // Set warning timer
-    warningRef.current = setTimeout(() => {
-      showWarning();
-    }, timeoutMs - warningMs);
+    // Only set timers if we have enough time until warning
+    // This prevents warnings from showing immediately after login
+    const timeUntilWarning = timeoutMs - warningMs;
+    
+    if (timeUntilWarning > 0) {
+      // Set warning timer
+      warningRef.current = setTimeout(() => {
+        showWarning();
+      }, timeUntilWarning);
 
-    // Set logout timer
-    timeoutRef.current = setTimeout(() => {
-      logout();
-    }, timeoutMs);
+      // Set logout timer
+      timeoutRef.current = setTimeout(() => {
+        logout();
+      }, timeoutMs);
+    }
   }, [enabled, timeoutMs, warningMs, clearTimers, showWarning, logout]);
 
   useEffect(() => {
