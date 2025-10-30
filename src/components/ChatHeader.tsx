@@ -89,12 +89,12 @@ export function ChatHeader() {
       <div className="flex items-center justify-between gap-4 max-w-full min-w-0">
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0 min-w-fit"
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+          <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <span className="text-xl font-bold text-white">A</span>
           </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Albert</h1>
+          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap">Albert</h1>
         </button>
         
         {/* Desktop Navigation */}
