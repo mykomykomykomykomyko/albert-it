@@ -1342,10 +1342,11 @@ const Canvas = () => {
 
         {/* Right Sidebar - Properties Panel */}
         <div 
-          className={`transition-all duration-300 ${selectedNode && isRightSidebarOpen ? 'w-96' : 'w-0'} overflow-hidden bg-card`}
+          className={`transition-all duration-300 ${selectedNode && isRightSidebarOpen ? 'w-96' : 'w-0'} overflow-hidden bg-card pointer-events-auto`}
+          style={{ position: 'relative', zIndex: 10 }}
         >
           {selectedNode && (
-            <div className="h-full m-4 ml-0 flex flex-col">
+            <div className="h-full m-4 ml-0 flex flex-col pointer-events-auto" style={{ position: 'relative', zIndex: 10 }}>
               <div className="p-4 border-b bg-muted/20 flex items-center justify-between rounded-t-lg">
                 <div>
                   <h3 className="font-semibold text-base">Node Configuration</h3>
