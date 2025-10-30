@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { AccessibilityPreferences } from '@/components/AccessibilityPreferences';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -87,15 +88,18 @@ export function ChatHeader() {
   return (
     <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-3">
       <div className="flex items-center justify-between gap-8 max-w-full min-w-0">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0 min-w-0"
-        >
-          <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <span className="text-xl font-bold text-white">A</span>
-          </div>
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Albert</h1>
-        </button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <SidebarTrigger className="hidden lg:flex" />
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0 min-w-0"
+          >
+            <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <span className="text-xl font-bold text-white">A</span>
+            </div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Albert</h1>
+          </button>
+        </div>
         
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">

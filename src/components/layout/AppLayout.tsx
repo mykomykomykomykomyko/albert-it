@@ -19,15 +19,8 @@ export const AppLayout = ({ children, sidebar, defaultCollapsed = false }: AppLa
   return (
     <SidebarProvider defaultOpen={!defaultCollapsed}>
       <div className="flex flex-col h-screen w-full bg-background">
-        {/* Global Header with Sidebar Trigger */}
-        <div className="border-b border-border flex-shrink-0">
-          <div className="flex items-center h-16">
-            <SidebarTrigger className="ml-4" />
-            <div className="flex-1">
-              <ChatHeader />
-            </div>
-          </div>
-        </div>
+        {/* Global Header */}
+        <ChatHeader />
 
         {/* Main Content Area */}
         <div className="flex flex-1 overflow-hidden w-full">
