@@ -40,7 +40,6 @@ export const Toolbar = ({
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Stage</h1>
-            <p className="text-xs text-muted-foreground">From the Alberta AI Academy</p>
           </div>
         </div>
       </div>
