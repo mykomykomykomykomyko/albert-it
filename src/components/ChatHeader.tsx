@@ -178,7 +178,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/')}
             title="Go to Home"
-            className="hover:bg-accent"
+            className="hover:bg-accent text-foreground"
           >
             <Home className="h-5 w-5" />
           </Button>
@@ -187,7 +187,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/prompts')}
             title="Prompt Library"
-            className="hover:bg-accent"
+            className="hover:bg-accent text-foreground"
           >
             <Library className="h-5 w-5" />
           </Button>
@@ -196,7 +196,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/framework')}
             title="Framework Library"
-            className="hover:bg-accent"
+            className="hover:bg-accent text-foreground"
           >
             <Layers className="h-5 w-5" />
           </Button>
@@ -205,7 +205,7 @@ export function ChatHeader() {
             size="icon"
             onClick={openDocs}
             title="Documentation & Training"
-            className="hover:bg-accent"
+            className="hover:bg-accent text-foreground"
           >
             <BookOpen className="h-5 w-5" />
           </Button>
@@ -215,7 +215,7 @@ export function ChatHeader() {
             size="icon"
             onClick={toggleTheme}
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            className="hover:bg-accent"
+            className="hover:bg-accent text-foreground"
           >
             {theme === 'dark' ? (
               <Sun className="h-5 w-5" />
@@ -228,7 +228,7 @@ export function ChatHeader() {
             size="icon"
             onClick={handleSignOut}
             title="Sign Out"
-            className="hover:bg-accent"
+            className="hover:bg-accent text-foreground"
           >
             <LogOut className="h-5 w-5" />
           </Button>
@@ -238,7 +238,7 @@ export function ChatHeader() {
         {/* Mobile Hamburger Menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="lg:hidden">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="text-foreground">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
