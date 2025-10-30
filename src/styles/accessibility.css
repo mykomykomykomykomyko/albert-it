@@ -6,19 +6,19 @@
 /* ============================================
    TEXT SIZE SCALING
    ============================================ */
-[data-text-size="small"] { 
+:root[data-text-size="small"] { 
   --text-scale: 0.9; 
 }
 
-[data-text-size="medium"] { 
+:root[data-text-size="medium"] { 
   --text-scale: 1; 
 }
 
-[data-text-size="large"] { 
+:root[data-text-size="large"] { 
   --text-scale: 1.15; 
 }
 
-[data-text-size="x-large"] { 
+:root[data-text-size="x-large"] { 
   --text-scale: 1.35; 
 }
 
