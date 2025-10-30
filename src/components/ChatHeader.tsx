@@ -12,7 +12,18 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { AccessibilityPreferences } from '@/components/AccessibilityPreferences';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+
+const OptionalSidebarTrigger = () => {
+  try {
+    // Only render if we're inside a SidebarProvider
+    const { state } = useSidebar();
+    return <SidebarTrigger className="hidden lg:flex" />;
+  } catch {
+    // Not in a SidebarProvider context, don't render
+    return null;
+  }
+};
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -89,7 +100,7 @@ export function ChatHeader() {
     <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-3">
       <div className="flex items-center justify-between gap-8 max-w-full min-w-0">
         <div className="flex items-center gap-3 flex-shrink-0">
-          <SidebarTrigger className="hidden lg:flex" />
+          <OptionalSidebarTrigger />
           <button
             onClick={() => navigate('/')}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0 min-w-0"
