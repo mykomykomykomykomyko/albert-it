@@ -95,6 +95,57 @@ export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) 
       applyThemeVars(undefined);
       root.classList.remove('custom-contrast');
     }
+
+    // Text size (inline so it always wins)
+    const sizeMap: Record<typeof preferences.text_size, string> = {
+      'small': '90%',
+      'medium': '100%',
+      'large': '115%',
+      'x-large': '135%'
+    } as const;
+    root.style.fontSize = sizeMap[preferences.text_size];
+
+    // Font family (apply to body for inheritance)
+    const familyMap: Record<typeof preferences.font_family, string> = {
+      'default': '',
+      'sans': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      'serif': 'Georgia, Cambria, "Times New Roman", Times, serif',
+      'mono': '"Courier New", Courier, monospace',
+      'dyslexic': '"Comic Sans MS", Arial, sans-serif'
+    } as const;
+    document.body.style.fontFamily = familyMap[preferences.font_family] || '';
+
+    // Line spacing (set at body/root for broad inheritance)
+    const lineMap: Record<typeof preferences.line_spacing, string> = {
+      'compact': '1.3',
+      'normal': '1.6',
+      'relaxed': '1.9',
+      'loose': '2.2'
+    } as const;
+    document.body.style.lineHeight = lineMap[preferences.line_spacing];
+    root.style.lineHeight = lineMap[preferences.line_spacing];
+
+    // Enhance inputs (inject dynamic style so it applies globally even if CSS order conflicts)
+    const styleId = 'a11y-enhance-inputs';
+    let styleEl = document.getElementById(styleId) as HTMLStyleElement | null;
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+    if (preferences.enhance_inputs) {
+      styleEl.textContent = `
+      a, button, input, select, textarea, [role="button"], [tabindex="0"] {
+        outline: 2px solid hsl(var(--primary) / 0.3) !important;
+        outline-offset: 2px;
+      }
+      a:focus, button:focus, input:focus, select:focus, textarea:focus, [role="button"]:focus, [tabindex="0"]:focus {
+        outline: 3px solid hsl(var(--primary)) !important;
+        outline-offset: 2px;
+      }`;
+    } else {
+      styleEl.textContent = '';
+    }
   }, [preferences, isLoading]);
 
   return <>{children}</>;
