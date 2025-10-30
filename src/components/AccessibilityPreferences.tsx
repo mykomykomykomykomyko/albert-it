@@ -7,9 +7,15 @@ import { Switch } from "@/components/ui/switch";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { Settings, RotateCcw, ChevronUp, ChevronDown, Type, AlignJustify, Palette, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export const AccessibilityPreferences = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const { preferences, updatePreferences, resetPreferences } = useUserPreferences();
   const [tempPreferences, setTempPreferences] = useState(preferences);
   const [hasChanges, setHasChanges] = useState(false);
@@ -20,17 +26,16 @@ export const AccessibilityPreferences = () => {
     setHasChanges(false);
   }, [preferences]);
 
-  // When panel closes without saving, revert to saved preferences
-  useEffect(() => {
-    if (!isOpen) {
+  // When sheet closes without saving, revert to saved preferences
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
       setTempPreferences(preferences);
       setHasChanges(false);
     }
-  }, [isOpen, preferences]);
+  };
 
-  // Apply temp preferences to DOM for live preview ONLY when panel is open
+  // Apply temp preferences to DOM for live preview
   useEffect(() => {
-    if (!isOpen) return;
 
     const root = document.documentElement;
 
@@ -158,14 +163,7 @@ export const AccessibilityPreferences = () => {
       root.classList.remove('custom-contrast');
     }
 
-    // Cleanup when panel closes
-    return () => {
-      if (!isOpen) {
-        const previewStyle = document.getElementById('a11y-enhance-inputs-preview');
-        if (previewStyle) previewStyle.remove();
-      }
-    };
-  }, [tempPreferences, isOpen]);
+  }, [tempPreferences]);
 
   const handlePreferenceChange = (updates: Partial<typeof preferences>) => {
     setTempPreferences(prev => ({ ...prev, ...updates }));
@@ -233,44 +231,32 @@ export const AccessibilityPreferences = () => {
     }
   };
 
-  if (!isOpen) {
-    return (
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-24 z-40 h-12 w-12 rounded-full shadow-lg hover:scale-110 transition-transform"
-        title="Accessibility Preferences"
-      >
-        <Settings className="h-5 w-5" />
-      </Button>
-    );
-  }
-
   return (
-    <div className="fixed bottom-6 right-24 z-50 w-[600px] max-h-[80vh] overflow-y-auto">
-      <Card className="p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold">Accessibility Preferences</h2>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              title="Reset to defaults"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsOpen(false)}
-            >
-              Hide
-            </Button>
-          </div>
-        </div>
+    <Sheet onOpenChange={handleOpenChange}>
+      <SheetTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          title="Accessibility Preferences"
+          className="hover:bg-accent"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="right" className="w-[600px] sm:max-w-[600px] overflow-y-auto">
+        <SheetHeader className="mb-6">
+          <SheetTitle>Accessibility Preferences</SheetTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            title="Reset to defaults"
+            className="absolute right-12 top-4"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+        </SheetHeader>
 
         <div className="grid grid-cols-2 gap-6">
           {/* Text Size */}
@@ -408,7 +394,7 @@ export const AccessibilityPreferences = () => {
             {hasChanges ? 'Save Changes' : 'No Changes to Save'}
           </Button>
         </div>
-      </Card>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 };

@@ -11,6 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { AccessibilityPreferences } from '@/components/AccessibilityPreferences';
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -207,6 +208,7 @@ export function ChatHeader() {
           >
             <BookOpen className="h-5 w-5" />
           </Button>
+          <AccessibilityPreferences />
           <Button
             variant="ghost"
             size="icon"
