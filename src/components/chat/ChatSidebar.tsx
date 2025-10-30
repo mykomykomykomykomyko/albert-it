@@ -82,6 +82,9 @@ const ChatSidebar = ({
             {conversations.map((conversation) => (
               <div
                 key={conversation.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`Select conversation: ${conversation.title}`}
                 className={`group relative flex items-center gap-2 p-2 rounded-lg cursor-pointer transition-colors ${
                   currentConversationId === conversation.id
                     ? "bg-accent text-accent-foreground"
@@ -90,6 +93,13 @@ const ChatSidebar = ({
                 onClick={() => {
                   onSelectConversation(conversation.id);
                   setMobileMenuOpen(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelectConversation(conversation.id);
+                    setMobileMenuOpen(false);
+                  }
                 }}
               >
                 <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
