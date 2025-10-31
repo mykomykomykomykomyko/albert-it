@@ -64,7 +64,7 @@ export function PromptManager({
   return (
     <div className="border rounded-lg bg-card">
       <div className="p-4 border-b">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex flex-col gap-2 mb-2">
           <h4 className="text-sm font-medium">Analysis Prompts</h4>
           <div className="flex gap-2">
             <Button
@@ -72,6 +72,7 @@ export function PromptManager({
               variant="outline"
               size="sm"
               disabled={disabled}
+              className="flex-1"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               Add Agent
@@ -81,6 +82,7 @@ export function PromptManager({
               variant="outline"
               size="sm"
               disabled={disabled}
+              className="flex-1"
             >
               <Plus className="w-4 h-4 mr-2" />
               {isCreating ? 'Cancel' : 'Custom'}
