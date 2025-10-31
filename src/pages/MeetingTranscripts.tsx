@@ -10,10 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag, X } from "lucide-react";
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSidebar } from "@/components/ui/sidebar";
 
 interface MeetingTranscript {
   id: string;
@@ -29,94 +26,6 @@ interface MeetingTranscript {
   created_at: string;
 }
 
-const TranscriptsSidebarContent = ({ 
-  transcripts, 
-  selectedTranscript, 
-  setSelectedTranscript,
-  searchQuery,
-  setSearchQuery 
-}: {
-  transcripts: MeetingTranscript[];
-  selectedTranscript: MeetingTranscript | null;
-  setSelectedTranscript: (t: MeetingTranscript) => void;
-  searchQuery: string;
-  setSearchQuery: (q: string) => void;
-}) => {
-  const { setOpen } = useSidebar();
-  
-  return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 flex-shrink-0 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold">Transcripts</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => setOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 text-sm"
-          />
-        </div>
-      </div>
-      
-      <ScrollArea className="flex-1 px-3">
-        <div className="space-y-1.5 py-3">
-          {transcripts.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-medium">No transcripts</p>
-              <p className="text-xs mt-1">Upload to get started</p>
-            </div>
-          ) : (
-            transcripts.map((transcript) => (
-              <div
-                key={transcript.id}
-                className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-accent/50 ${
-                  selectedTranscript?.id === transcript.id 
-                    ? "bg-accent border-l-2 border-primary" 
-                    : "border-l-2 border-transparent"
-                }`}
-                onClick={() => setSelectedTranscript(transcript)}
-              >
-                <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <h3 className="font-medium text-sm line-clamp-2 leading-tight flex-1">
-                    {transcript.title}
-                  </h3>
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
-                    {transcript.file_format.toUpperCase()}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Calendar className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{new Date(transcript.created_at).toLocaleDateString()}</span>
-                </div>
-                {transcript.participants.length > 0 && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                    <Users className="h-3 w-3 shrink-0" />
-                    <span className="truncate">
-                      {transcript.participants.slice(0, 2).join(", ")}
-                      {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </ScrollArea>
-    </div>
-  );
-};
 
 export default function MeetingTranscripts() {
   const [transcripts, setTranscripts] = useState<MeetingTranscript[]>([]);
@@ -291,62 +200,115 @@ export default function MeetingTranscripts() {
   );
 
   return (
-    <AppLayout
-      defaultCollapsed={true}
-      sidebar={
-        <TranscriptsSidebarContent
-          transcripts={filteredTranscripts}
-          selectedTranscript={selectedTranscript}
-          setSelectedTranscript={setSelectedTranscript}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-        />
-      }
-    >
-      <div className="h-full overflow-auto">
-        <div className="p-6 space-y-6">
-          {/* Page Header */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
-            <p className="text-muted-foreground">
-              Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
-            </p>
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen overflow-hidden">
+        {/* Left side - Transcripts List */}
+        <div className="w-80 border-r border-border flex flex-col bg-card">
+          <div className="p-4 flex-shrink-0 border-b border-border">
+            <h2 className="text-base font-semibold mb-3">Transcripts</h2>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 text-sm"
+              />
+            </div>
           </div>
+          
+          <ScrollArea className="flex-1 px-3">
+            <div className="space-y-1.5 py-3">
+              {filteredTranscripts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-medium">No transcripts</p>
+                  <p className="text-xs mt-1">Upload to get started</p>
+                </div>
+              ) : (
+                filteredTranscripts.map((transcript) => (
+                  <div
+                    key={transcript.id}
+                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-accent/50 ${
+                      selectedTranscript?.id === transcript.id 
+                        ? "bg-accent border-l-2 border-primary" 
+                        : "border-l-2 border-transparent"
+                    }`}
+                    onClick={() => setSelectedTranscript(transcript)}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="font-medium text-sm line-clamp-2 leading-tight flex-1">
+                        {transcript.title}
+                      </h3>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
+                        {transcript.file_format.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{new Date(transcript.created_at).toLocaleDateString()}</span>
+                    </div>
+                    {transcript.participants.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                        <Users className="h-3 w-3 shrink-0" />
+                        <span className="truncate">
+                          {transcript.participants.slice(0, 2).join(", ")}
+                          {transcript.participants.length > 2 && ` +${transcript.participants.length - 2}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </ScrollArea>
+        </div>
 
-          {/* Upload Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Upload Transcripts
-              </CardTitle>
-              <CardDescription>
-                Support for VTT, DOCX, and TXT files from Microsoft Teams
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <Input
-                  type="file"
-                  accept=".vtt,.docx,.txt"
-                  multiple
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                  className="flex-1"
-                />
-                <Button
-                  onClick={() => navigate("/canvas")}
-                  variant="outline"
-                >
-                  Process in Canvas
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Right side - Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-6 space-y-6">
+            {/* Page Header */}
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
+              <p className="text-muted-foreground">
+                Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
+              </p>
+            </div>
 
-          {/* Transcript Detail */}
-          {selectedTranscript ? (
+            {/* Upload Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Upload className="h-5 w-5" />
+                  Upload Transcripts
+                </CardTitle>
+                <CardDescription>
+                  Support for VTT, DOCX, and TXT files from Microsoft Teams
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="file"
+                    accept=".vtt,.docx,.txt"
+                    multiple
+                    onChange={handleFileUpload}
+                    disabled={isUploading}
+                    className="flex-1"
+                  />
+                  <Button
+                    onClick={() => navigate("/canvas")}
+                    variant="outline"
+                  >
+                    Process in Canvas
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Transcript Detail */}
+            {selectedTranscript ? (
               <Card>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -441,18 +403,19 @@ export default function MeetingTranscripts() {
                     </TabsContent>
                   </Tabs>
                 </CardContent>
-            </Card>
-          ) : (
-            <Card className="h-[600px] flex items-center justify-center">
-              <CardContent className="text-center text-muted-foreground">
-                <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Select a transcript to view details</p>
-                <p className="text-sm">or upload a new meeting transcript to get started</p>
-              </CardContent>
-            </Card>
-          )}
+              </Card>
+            ) : (
+              <Card className="h-[600px] flex items-center justify-center">
+                <CardContent className="text-center text-muted-foreground">
+                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Select a transcript to view details</p>
+                  <p className="text-sm">or upload a new meeting transcript to get started</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 }
