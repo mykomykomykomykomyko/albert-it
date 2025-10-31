@@ -23,7 +23,6 @@ import { Badge } from './ui/badge';
 import { TransparencyPanel } from './chat/TransparencyPanel';
 import { AgentSwitcher } from './chat/AgentSwitcher';
 import { AudioUploader } from './chat/AudioUploader';
-import { ToolsToolbar } from './chat/ToolsToolbar';
 import { GettingStartedWizard } from './GettingStartedWizard';
 import { WorkflowSuggestion, ActionType } from './chat/WorkflowSuggestion';
 import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
@@ -67,7 +66,6 @@ const Chat = () => {
   const [lastPayload, setLastPayload] = useState<any>(null);
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [showAudioUploader, setShowAudioUploader] = useState(false);
-  const [showToolsToolbar, setShowToolsToolbar] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
 
   // Handle prompt text from location state
@@ -812,12 +810,6 @@ const Chat = () => {
                   )}
                 </div>
               </div>
-
-              <ToolsToolbar
-                onToolResult={(result, toolName) => {
-                  setInput(prev => prev ? `${prev}\n\n[${toolName}]\n${result}` : `[${toolName}]\n${result}`);
-                }}
-              />
             </div>
           </>
         )}
