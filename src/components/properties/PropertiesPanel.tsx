@@ -951,6 +951,43 @@ export const PropertiesPanel = ({
                                         }
                                       />
                                     </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="override-query">Override Search Query</Label>
+                                      <Input
+                                        id="override-query"
+                                        placeholder="Enter search query to override input"
+                                        value={toolInstance.config?.overrideQuery || ""}
+                                        onChange={(e) =>
+                                          onUpdateToolInstance(activeNode.id, toolInstance.id, {
+                                            ...toolInstance.config,
+                                            overrideQuery: e.target.value,
+                                          })
+                                        }
+                                      />
+                                      <p className="text-xs text-muted-foreground">
+                                        Optional: Override input with this search query
+                                      </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label htmlFor="num-results">Number of Results</Label>
+                                      <Input
+                                        id="num-results"
+                                        type="number"
+                                        min="1"
+                                        max="1000"
+                                        placeholder="20"
+                                        value={toolInstance.config?.numResults || 20}
+                                        onChange={(e) =>
+                                          onUpdateToolInstance(activeNode.id, toolInstance.id, {
+                                            ...toolInstance.config,
+                                            numResults: parseInt(e.target.value) || 20,
+                                          })
+                                        }
+                                      />
+                                      <p className="text-xs text-muted-foreground">
+                                        Number of search results to return (1-1000)
+                                      </p>
+                                    </div>
                                   </>
                                 )}
                                 {toolInstance.toolId === 'weather' && (

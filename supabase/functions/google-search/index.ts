@@ -11,9 +11,12 @@ serve(async (req) => {
   }
 
   try {
-    const { query, numResults = 20, apiKey: userApiKey, searchEngineId: userSearchEngineId } = await req.json();
+    const { query, overrideQuery, numResults = 20, apiKey: userApiKey, searchEngineId: userSearchEngineId } = await req.json();
     
-    if (!query) {
+    // Use overrideQuery if provided, otherwise use query
+    const searchQuery = overrideQuery || query;
+    
+    if (!searchQuery) {
       throw new Error("Query parameter is required");
     }
     
@@ -32,7 +35,7 @@ serve(async (req) => {
       throw new Error("Google Search Engine ID is required (not configured in secrets or provided)");
     }
 
-    console.log(`Performing Google search for: "${query}" (${requestedResults} results)`);
+    console.log(`Performing Google search for: "${searchQuery}" (${requestedResults} results)`);
 
     // Calculate number of pages needed (10 results per page)
     const numPages = Math.ceil(requestedResults / 10);
@@ -45,7 +48,7 @@ serve(async (req) => {
         const startIndex = page * 10 + 1;
         const resultsPerPage = Math.min(10, requestedResults - page * 10);
         
-        const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(query)}&start=${startIndex}&num=${resultsPerPage}`;
+        const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(searchQuery)}&start=${startIndex}&num=${resultsPerPage}`;
         console.log(`Fetching results ${startIndex}-${startIndex + resultsPerPage - 1} (page ${page + 1}/${numPages})`);
         
         try {

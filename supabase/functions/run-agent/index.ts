@@ -37,6 +37,8 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
               query: userPrompt, 
+              overrideQuery: config?.overrideQuery,
+              numResults: config?.numResults,
               apiKey: config?.apiKey, 
               searchEngineId: config?.searchEngineId 
             }),
