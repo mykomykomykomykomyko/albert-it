@@ -3,12 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentSelectorDialog } from '@/components/agents/AgentSelectorDialog';
@@ -389,69 +383,55 @@ export default function ImageAnalysis() {
       <div className="flex-1 overflow-hidden flex min-h-0">
         {/* Left Sidebar */}
         <div className="w-80 border-r border-border flex-shrink-0 overflow-y-auto">
-          <div className="p-6">
-            <div className="mb-6">
+          <div className="p-6 space-y-6">
+            <div>
               <h2 className="text-lg font-semibold">Image Analysis</h2>
               <p className="text-sm text-muted-foreground mt-1">
                 Upload images and run AI analysis
               </p>
             </div>
 
-            <Accordion type="multiple" defaultValue={["upload", "prompts", "analyze"]} className="space-y-2">
-              {/* File Uploader */}
-              <AccordionItem value="upload" className="border rounded-lg px-4">
-                <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
-                  Upload Images
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
-                </AccordionContent>
-              </AccordionItem>
+            {/* File Uploader */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Upload Images</h3>
+              <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
+            </div>
 
-              {/* Prompt Manager */}
-              <AccordionItem value="prompts" className="border rounded-lg px-4">
-                <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
-                  Analysis Prompts
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <PromptManager
-                    prompts={prompts}
-                    selectedPromptIds={selectedPromptIds}
-                    onPromptsChange={setPrompts}
-                    onSelectionChange={setSelectedPromptIds}
-                    onOpenAgentSelector={() => setShowAgentSelector(true)}
-                    disabled={isAnalyzing}
-                  />
-                </AccordionContent>
-              </AccordionItem>
+            {/* Prompt Manager */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Analysis Prompts</h3>
+              <PromptManager
+                prompts={prompts}
+                selectedPromptIds={selectedPromptIds}
+                onPromptsChange={setPrompts}
+                onSelectionChange={setSelectedPromptIds}
+                onOpenAgentSelector={() => setShowAgentSelector(true)}
+                disabled={isAnalyzing}
+              />
+            </div>
 
-              {/* Analysis Button */}
-              <AccordionItem value="analyze" className="border rounded-lg px-4">
-                <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
-                  Run Analysis
-                </AccordionTrigger>
-                <AccordionContent className="pb-4">
-                  <Button
-                    onClick={startAnalysis}
-                    disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Analyze {selectedImageCount} × {selectedPromptIds.length}
-                      </>
-                    )}
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
+            {/* Analysis Button */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Run Analysis</h3>
+              <Button
+                onClick={startAnalysis}
+                disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
+                className="w-full"
+                size="lg"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Analyze {selectedImageCount} × {selectedPromptIds.length}
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
 

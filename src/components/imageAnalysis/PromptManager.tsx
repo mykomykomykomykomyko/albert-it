@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
@@ -63,10 +62,10 @@ export function PromptManager({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Analysis Prompts</CardTitle>
+    <div className="border rounded-lg bg-card">
+      <div className="p-4 border-b">
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-medium">Analysis Prompts</h4>
           <div className="flex gap-2">
             <Button
               onClick={onOpenAgentSelector}
@@ -88,11 +87,11 @@ export function PromptManager({
             </Button>
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {selectedPromptIds.length} prompt{selectedPromptIds.length !== 1 ? 's' : ''} selected
         </p>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-4">
         {isCreating && (
           <div className="mb-4 p-4 border rounded-lg bg-muted/30 space-y-3">
             <Input
@@ -175,7 +174,7 @@ export function PromptManager({
             </div>
           )}
         </ScrollArea>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

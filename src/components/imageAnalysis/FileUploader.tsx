@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Card } from '@/components/ui/card';
 import { Upload, Image, FileText, Loader2 } from 'lucide-react';
 import { ProcessedImage, ImageAttachment } from '@/types/imageAnalysis';
 import { generateId } from '@/lib/utils';
@@ -135,7 +134,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFilesAdded, disabl
 
   return (
     <>
-      <Card className="relative overflow-hidden">
+      <div className="relative overflow-hidden border rounded-lg">
         <div
           {...getRootProps()}
           className={`
@@ -197,7 +196,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFilesAdded, disabl
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* PDF Selector Modal */}
       {pdfData && (
