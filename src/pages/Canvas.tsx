@@ -413,6 +413,7 @@ const Canvas = () => {
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true);
   const [isFunctionSelectorOpen, setIsFunctionSelectorOpen] = useState(false);
   const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
+  const [isToolSelectorOpen, setIsToolSelectorOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -650,21 +651,33 @@ const Canvas = () => {
           break;
         
         case 'tool':
-          // Execute tool - tools use the same executor
-          const toolNodeData: FunctionNode = {
-            id: nodeId,
-            nodeType: 'function',
-            name: nodeData.label,
-            functionType: nodeData.toolType || 'web_scrape',
-            config: nodeData.config || {},
-            outputPorts: ['output'],
-            status: 'running'
-          };
-          const toolResult = await FunctionExecutor.execute(toolNodeData, input);
-          if (toolResult.success) {
-            output = toolResult.outputs.output || JSON.stringify(toolResult.outputs);
+          // Execute tool - some tools are edge functions, others are local functions
+          const toolType = nodeData.toolType || 'web_scrape';
+          
+          // Tools that are edge functions (need supabase.functions.invoke)
+          if (toolType === 'time' || toolType === 'weather') {
+            const { data: toolData, error: toolError } = await supabase.functions.invoke(toolType, {
+              body: toolType === 'weather' ? { location: input || 'New York' } : {}
+            });
+            if (toolError) throw toolError;
+            output = JSON.stringify(toolData);
           } else {
-            throw new Error(toolResult.error || 'Tool execution failed');
+            // Tools that are local functions (use FunctionExecutor)
+            const toolNodeData: FunctionNode = {
+              id: nodeId,
+              nodeType: 'function',
+              name: nodeData.label,
+              functionType: toolType,
+              config: nodeData.config || {},
+              outputPorts: ['output'],
+              status: 'running'
+            };
+            const toolResult = await FunctionExecutor.execute(toolNodeData, input);
+            if (toolResult.success) {
+              output = toolResult.outputs.output || JSON.stringify(toolResult.outputs);
+            } else {
+              throw new Error(toolResult.error || 'Tool execution failed');
+            }
           }
           break;
           
@@ -1256,7 +1269,7 @@ const Canvas = () => {
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted font-medium"
-                      onClick={() => setIsAgentSelectorOpen(true)}
+                      onClick={() => setIsToolSelectorOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
                       <span className="text-sm">Browse All Tools...</span>
@@ -1461,6 +1474,47 @@ const Canvas = () => {
         onOpenChange={setIsAgentSelectorOpen}
         onSelectAgent={handleSelectAgent}
       />
+
+      {/* Tool Selector Dialog */}
+      <Dialog open={isToolSelectorOpen} onOpenChange={setIsToolSelectorOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Browse All Tools</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-1">
+              {toolDefinitions.map((tool) => (
+                <Card
+                  key={tool.id}
+                  className="cursor-pointer hover:border-primary transition-colors"
+                  onClick={() => {
+                    addNode('tool', {
+                      name: tool.name,
+                      description: tool.description,
+                      toolType: tool.id,
+                      config: {},
+                    });
+                    setIsToolSelectorOpen(false);
+                  }}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <tool.icon className="h-4 w-4" />
+                      {tool.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">{tool.description}</p>
+                    {tool.requiresApiKey && (
+                      <p className="text-xs text-amber-600 mt-2">⚠️ Requires API key configuration</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
