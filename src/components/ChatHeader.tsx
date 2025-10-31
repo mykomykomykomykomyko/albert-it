@@ -113,8 +113,8 @@ export function ChatHeader() {
         </div>
         
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-2 flex-1 min-w-0 overflow-x-auto">
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary flex-shrink-0 overflow-x-auto scrollbar-hide">
+        <div className="hidden lg:flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary flex-shrink-0">
             <button
               onClick={() => navigate('/agents')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
