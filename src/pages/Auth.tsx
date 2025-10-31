@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Brain, Eye, EyeOff } from "lucide-react";
+import { Brain, Eye, EyeOff, Info } from "lucide-react";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -223,6 +224,12 @@ const Auth = () => {
                       </Button>
                     </div>
                   </div>
+                  <Alert className="bg-muted/50 border-border">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription className="text-sm text-muted-foreground">
+                      The personal information collected through Albert for the purpose of registering for an account. This collection is authorized by section 4 (c) of the Protection of Privacy Act. For questions about the collection of personal information, contact <a href="mailto:aiacademy@gov.ab.ca" className="text-primary hover:underline">aiacademy@gov.ab.ca</a>.
+                    </AlertDescription>
+                  </Alert>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Create Account"}
                   </Button>
