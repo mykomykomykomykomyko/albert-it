@@ -842,18 +842,30 @@ const Canvas = () => {
     setNodes(nds => nds.map(n => {
       if (n.id === nodeId) {
         const currentData = n.data as any;
-        return {
+        const updatedNode = {
           ...n,
           data: {
             ...currentData,
-            label: updates.name || currentData.label,
-            systemPrompt: (updates as any).systemPrompt || currentData.systemPrompt,
-            userPrompt: (updates as any).userPrompt || currentData.userPrompt,
-            config: updates.config || currentData.config,
-            output: updates.output || currentData.output,
-            status: updates.status || currentData.status,
+            label: updates.name !== undefined ? updates.name : currentData.label,
+            systemPrompt: (updates as any).systemPrompt !== undefined ? (updates as any).systemPrompt : currentData.systemPrompt,
+            userPrompt: (updates as any).userPrompt !== undefined ? (updates as any).userPrompt : currentData.userPrompt,
+            config: updates.config !== undefined ? updates.config : currentData.config,
+            output: updates.output !== undefined ? updates.output : currentData.output,
+            status: updates.status !== undefined ? updates.status : currentData.status,
           }
         };
+        // Keep right panel in sync with live edits
+        if (selectedNode && selectedNode.id === nodeId) {
+          setSelectedNode({
+            ...updatedNode,
+            data: {
+              ...updatedNode.data,
+              onEdit: currentData?.onEdit,
+              onRun: currentData?.onRun,
+            }
+          } as any);
+        }
+        return updatedNode;
       }
       return n;
     }));
