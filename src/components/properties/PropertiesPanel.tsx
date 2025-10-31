@@ -445,6 +445,17 @@ export const PropertiesPanel = ({
                   className="h-8 text-xs pointer-events-auto relative z-50"
                   style={{ pointerEvents: 'auto' }}
                 />
+              ) : key === "inputText" || key === "content" ? (
+                <Textarea
+                  id={key}
+                  placeholder={schema.placeholder}
+                  value={node.config[key] ?? schema.default ?? ""}
+                  onChange={(e) =>
+                    updateNodeConfig({ ...node.config, [key]: e.target.value })
+                  }
+                  className="min-h-[100px] text-xs pointer-events-auto relative z-50 resize-y"
+                  style={{ pointerEvents: 'auto' }}
+                />
               ) : (
                 <Input
                   id={key}

@@ -12,6 +12,9 @@ export class FunctionExecutor {
   ): Promise<FunctionExecutionResult> {
     try {
       switch (functionNode.functionType) {
+        case "text_input":
+          return this.executeTextInput(functionNode, input);
+        
         case "string_contains":
           return this.executeStringContains(functionNode, input);
         
@@ -92,7 +95,17 @@ export class FunctionExecutor {
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
-}
+  }
+
+  // Input Functions
+  private static executeTextInput(node: FunctionNode, input: string): FunctionExecutionResult {
+    // If there's input from a connection, use that; otherwise use configured input
+    const output = input || node.config.inputText || "";
+    return {
+      success: true,
+      outputs: { output },
+    };
+  }
 
   // String Operations
   private static executeStringContains(node: FunctionNode, input: string): FunctionExecutionResult {

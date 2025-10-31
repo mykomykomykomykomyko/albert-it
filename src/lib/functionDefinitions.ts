@@ -18,6 +18,30 @@ import {
 import type { FunctionDefinition } from "@/types/functions";
 
 export const functionDefinitions: FunctionDefinition[] = [
+  // Input Functions
+  {
+    id: "text_input",
+    name: "Text Input",
+    description: "Enter text data directly into the workflow",
+    category: "input",
+    icon: Type,
+    color: "bg-slate-500/10 text-slate-500",
+    inputs: {
+      label: "Optional Input",
+      description: "Optional input from connections (overrides manual input)"
+    },
+    outputs: ["output"],
+    configSchema: {
+      inputText: {
+        type: "string",
+        label: "Input Text",
+        description: "Enter the text you want to pass to the next node",
+        required: false,
+        placeholder: "Enter your text here...",
+      },
+    },
+  },
+  
   // String Operations
   {
     id: "string_contains",
