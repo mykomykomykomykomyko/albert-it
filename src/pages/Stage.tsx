@@ -4,6 +4,7 @@ import { PropertiesPanel } from "@/components/properties/PropertiesPanel";
 import { Toolbar } from "@/components/toolbar/Toolbar";
 import { OutputLog } from "@/components/output/OutputLog";
 import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
+import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useCallback } from "react";
 import type { 
   Workflow, 
@@ -387,6 +388,7 @@ const Stage = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
+      <ChatHeader />
       <Toolbar
         onAddStage={addStage}
         onSave={saveWorkflow}
