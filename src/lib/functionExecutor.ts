@@ -554,8 +554,11 @@ export class FunctionExecutor {
   // Google Search
   private static async executeGoogleSearch(node: FunctionNode, input: string): Promise<FunctionExecutionResult> {
     try {
-      // Check for override query first, otherwise use input from connections
-      const rawQuery = node.config.overrideQuery ? String(node.config.overrideQuery) : input;
+      // Get and clean override query if provided
+      const overrideQuery = node.config.overrideQuery ? String(node.config.overrideQuery).trim() : "";
+      
+      // Use override query if it's not empty, otherwise use input
+      const rawQuery = overrideQuery || input;
       const searchQuery = rawQuery
         .replace(/[\r\n]+/g, ' ')  // Replace newlines with spaces
         .replace(/\s+/g, ' ')       // Collapse multiple spaces
@@ -564,6 +567,8 @@ export class FunctionExecutor {
       if (!searchQuery) {
         throw new Error("Search query is required (provide via connection or override)");
       }
+      
+      console.log(`Google Search - Override: "${overrideQuery}", Final query: "${searchQuery}"`);
       
       // Get numResults config, default to 20, clamp between 1-1000
       const numResults = Math.max(1, Math.min(1000, Number(node.config.numResults) || 20));
@@ -601,8 +606,11 @@ export class FunctionExecutor {
   // Brave Search
   private static async executeBraveSearch(node: FunctionNode, input: string): Promise<FunctionExecutionResult> {
     try {
-      // Check for override query first, otherwise use input from connections
-      const rawQuery = node.config.overrideQuery ? String(node.config.overrideQuery) : input;
+      // Get and clean override query if provided
+      const overrideQuery = node.config.overrideQuery ? String(node.config.overrideQuery).trim() : "";
+      
+      // Use override query if it's not empty, otherwise use input
+      const rawQuery = overrideQuery || input;
       const searchQuery = rawQuery
         .replace(/[\r\n]+/g, ' ')  // Replace newlines with spaces
         .replace(/\s+/g, ' ')       // Collapse multiple spaces
@@ -611,6 +619,8 @@ export class FunctionExecutor {
       if (!searchQuery) {
         throw new Error("Search query is required (provide via connection or override)");
       }
+      
+      console.log(`Brave Search - Override: "${overrideQuery}", Final query: "${searchQuery}"`);
       
       // Get numResults config, default to 20, clamp between 1-100
       const numResults = Math.max(1, Math.min(100, Number(node.config.numResults) || 20));
