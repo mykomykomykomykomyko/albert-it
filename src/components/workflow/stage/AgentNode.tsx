@@ -243,6 +243,17 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
         <p className="text-xs text-muted-foreground line-clamp-2">
           {agent.systemPrompt}
         </p>
+        
+        {agent.output && (
+          <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+            <div className="flex items-center gap-1 mb-1">
+              <span className="font-semibold text-foreground">Output:</span>
+            </div>
+            <p className="text-muted-foreground line-clamp-2 font-mono">
+              {agent.output}
+            </p>
+          </div>
+        )}
       </div>
     </Card>
   );

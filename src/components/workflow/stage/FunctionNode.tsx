@@ -246,6 +246,17 @@ export const FunctionNode = ({
             ))}
           </div>
         )}
+        
+        {node.output && (
+          <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+            <div className="flex items-center gap-1 mb-1">
+              <span className="font-semibold text-foreground">Output:</span>
+            </div>
+            <p className="text-muted-foreground line-clamp-2 font-mono">
+              {typeof node.output === 'object' ? JSON.stringify(node.output, null, 2) : String(node.output)}
+            </p>
+          </div>
+        )}
       </div>
     </Card>
   );

@@ -247,7 +247,18 @@ export const Stage = ({
                     onPortClick={onPortClick}
                   />
                 ) : (
-                  <div className="text-xs text-muted-foreground p-2">Tool nodes coming soon</div>
+                  <FunctionNode
+                    node={node as any}
+                    isSelected={selectedNode === node.id}
+                    isConnecting={connectingFrom !== null}
+                    nodeNumber={`${stageNumber}.${index + 1}`}
+                    stageIndex={stageNumber - 1}
+                    layoutId={layoutId}
+                    onSelect={() => onSelectNode(node.id)}
+                    onDelete={() => onDeleteAgent(node.id)}
+                    onToggleMinimize={() => onToggleMinimize(node.id)}
+                    onPortClick={onPortClick}
+                  />
                 )}
               </div>
             ))}
