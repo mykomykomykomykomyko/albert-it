@@ -403,7 +403,7 @@ export const PropertiesPanel = ({
     return (
       <div className="space-y-4">
         <Label className="text-sm font-medium">Configuration</Label>
-        <Card className="p-3 bg-muted/30 space-y-3 pointer-events-auto relative z-40" style={{ pointerEvents: 'auto' }}>
+        <Card className="p-3 bg-muted/30 space-y-3">
           {Object.entries(functionDef.configSchema).map(([key, schema]) => (
             <div key={key} className="space-y-2">
               <Label htmlFor={key} className="text-xs">
@@ -442,8 +442,7 @@ export const PropertiesPanel = ({
                     }
                     updateNodeConfig({ ...node.config, [key]: value });
                   }}
-                  className="h-8 text-xs pointer-events-auto relative z-50"
-                  style={{ pointerEvents: 'auto' }}
+                  className="h-8 text-xs"
                 />
               ) : key === "inputText" || key === "content" ? (
                 <Textarea
@@ -453,8 +452,7 @@ export const PropertiesPanel = ({
                   onChange={(e) =>
                     updateNodeConfig({ ...node.config, [key]: e.target.value })
                   }
-                  className="min-h-[100px] text-xs pointer-events-auto relative z-50 resize-y"
-                  style={{ pointerEvents: 'auto' }}
+                  className="min-h-[100px] text-xs resize-y"
                 />
               ) : (
                 <Input
@@ -465,8 +463,7 @@ export const PropertiesPanel = ({
                   onChange={(e) =>
                     updateNodeConfig({ ...node.config, [key]: e.target.value })
                   }
-                  className="h-8 text-xs pointer-events-auto relative z-50"
-                  style={{ pointerEvents: 'auto' }}
+                  className="h-8 text-xs"
                 />
               )}
               
