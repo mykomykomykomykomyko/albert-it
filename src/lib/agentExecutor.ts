@@ -34,6 +34,7 @@ export class AgentExecutor {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
           body: JSON.stringify({
             systemPrompt: options.systemPrompt,
@@ -45,7 +46,7 @@ export class AgentExecutor {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
         return {
           success: false,
           error: errorData.error || `Server error: ${response.status}`,

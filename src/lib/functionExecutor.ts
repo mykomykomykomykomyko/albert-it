@@ -577,12 +577,14 @@ export class FunctionExecutor {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ query: searchQuery, numResults }),
       });
 
       if (!response.ok) {
-        throw new Error(`Google Search failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Google Search failed: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -629,12 +631,14 @@ export class FunctionExecutor {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({ query: searchQuery, numResults }),
       });
 
       if (!response.ok) {
-        throw new Error(`Brave Search failed: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `Brave Search failed: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -692,6 +696,7 @@ export class FunctionExecutor {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             },
             body: JSON.stringify({ url, returnHtml }),
           });
