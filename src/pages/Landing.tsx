@@ -154,7 +154,7 @@ const Landing = () => {
           <div className="max-w-3xl mx-auto bg-primary/10 border border-primary/20 rounded-3xl p-12">
             <h2 className="text-4xl font-bold mb-6">Ready to get started?</h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Join thousands of Albertans already using Albert to enhance their productivity.
+              Start using Albert to enhance your productivity.
             </p>
             <Button size="lg" onClick={() => navigate("/auth")} className="glow-effect text-lg h-14 px-8">
               Create Your Free Account
