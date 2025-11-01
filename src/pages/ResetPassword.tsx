@@ -20,34 +20,58 @@ const ResetPassword = () => {
   useEffect(() => {
     // Subscribe to auth state changes (token processed -> PASSWORD_RECOVERY / SIGNED_IN)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      console.debug('[ResetPassword] auth event', event);
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setValidToken(true);
       }
     });
 
-    const processRecoveryFromHash = async () => {
+    const processRecoveryFromUrl = async () => {
+      const href = window.location.href;
       const hash = window.location.hash.startsWith('#')
         ? window.location.hash.substring(1)
         : window.location.hash;
       const hashParams = new URLSearchParams(hash);
+      const searchParams = new URLSearchParams(window.location.search);
 
-      const errorParam = hashParams.get('error');
-      const errorCode = hashParams.get('error_code');
-      const type = hashParams.get('type');
+      console.debug('[ResetPassword] href:', href);
+      console.debug('[ResetPassword] hash params:', Object.fromEntries(hashParams.entries()));
+      console.debug('[ResetPassword] search params:', Object.fromEntries(searchParams.entries()));
+
+      const errorParam = hashParams.get('error') || searchParams.get('error');
+      const errorCode = hashParams.get('error_code') || searchParams.get('error_code');
+      const typeParam = hashParams.get('type') || searchParams.get('type');
       const access_token = hashParams.get('access_token');
       const refresh_token = hashParams.get('refresh_token');
+      const code = searchParams.get('code');
 
-      // If Supabase provided an error in the URL, bail early
+      // If backend provided an error in the URL, bail early
       if (errorParam || errorCode) {
         toast.error("Reset link expired or invalid. Please request a new one.");
         navigate("/auth");
         return;
       }
 
-      // If tokens are present in hash, explicitly set session to ensure recovery flow works
+      // Handle code exchange flow (some providers/flows use ?code=)
+      if (code) {
+        try {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) throw error;
+          setValidToken(true);
+          return;
+        } catch (err: any) {
+          console.error('[ResetPassword] exchangeCodeForSession error', err);
+          toast.error("Invalid or expired reset link");
+          navigate("/auth");
+          return;
+        }
+      }
+
+      // If tokens are present in hash, try to set session
       if (access_token && refresh_token) {
         const { error } = await supabase.auth.setSession({ access_token, refresh_token });
         if (error) {
+          console.error('[ResetPassword] setSession error', error);
           toast.error("Reset link expired or invalid. Please request a new one.");
           navigate("/auth");
           return;
@@ -56,9 +80,15 @@ const ResetPassword = () => {
         return;
       }
 
-      // Fallbacks: existing session or recovery type present
+      // If only access_token is present, rely on auth event or session
+      if (access_token && !refresh_token) {
+        setValidToken(true);
+        return;
+      }
+
+      // Fallbacks: existing session or recovery type present (from hash OR query)
       const { data: { session } } = await supabase.auth.getSession();
-      if (session || type === 'recovery') {
+      if (session || typeParam === 'recovery') {
         setValidToken(true);
       } else {
         toast.error("Invalid or expired reset link");
@@ -66,7 +96,7 @@ const ResetPassword = () => {
       }
     };
 
-    processRecoveryFromHash();
+    processRecoveryFromUrl();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
