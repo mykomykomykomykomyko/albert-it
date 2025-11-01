@@ -76,18 +76,19 @@ export default function AgentMarketplace() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
           <Button
             variant="ghost"
             onClick={() => navigate('/agents')}
             className="mb-4"
+            size="sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to My Agents
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Agent Marketplace</h1>
-          <p className="text-muted-foreground">Discover and clone agents created by the community</p>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">Agent Marketplace</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Discover and clone agents created by the community</p>
         </div>
 
         <div className="mb-6 flex flex-col md:flex-row gap-4">

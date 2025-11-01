@@ -41,7 +41,7 @@ export default function Framework() {
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center h-14 px-4 gap-1 overflow-x-auto">
+        <div className="flex items-center h-12 sm:h-14 px-2 sm:px-4 gap-1 overflow-x-auto scrollbar-hide">
           {navigationLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.path;
@@ -49,25 +49,25 @@ export default function Framework() {
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                {link.label}
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">{link.label}</span>
               </Link>
             );
           })}
         </div>
       </nav>
 
-      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
+      <div className="flex h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] overflow-hidden">
         {/* Left side - Frameworks List */}
-        <div className="w-80 border-r border-border flex flex-col bg-card">
-          <div className="p-4 flex-shrink-0 border-b border-border">
-            <h2 className="text-base font-semibold mb-3">Frameworks</h2>
+        <div className="hidden md:flex w-64 lg:w-80 border-r border-border flex-col bg-card">
+          <div className="p-3 sm:p-4 flex-shrink-0 border-b border-border">
+            <h2 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">Frameworks</h2>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -118,7 +118,7 @@ export default function Framework() {
 
         {/* Right side - Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div>
             <h1 className="text-3xl font-bold mb-2">Framework Library</h1>
             <p className="text-muted-foreground">
