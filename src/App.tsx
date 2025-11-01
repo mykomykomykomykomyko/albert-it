@@ -39,6 +39,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import Agents from "./pages/Agents";
 import AgentMarketplace from "./pages/AgentMarketplace";
 import PromptLibrary from "./pages/PromptLibrary";
@@ -82,6 +83,7 @@ const App = () => (
           {/* Public routes */}
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           {/* Agent management routes */}
           <Route path="/agents" element={<Agents />} />
