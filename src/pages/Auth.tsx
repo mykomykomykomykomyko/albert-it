@@ -106,10 +106,23 @@ const Auth = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate email before sending
+    if (!resetEmail || !resetEmail.trim()) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(resetEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
     setResetLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 

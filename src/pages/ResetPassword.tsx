@@ -18,22 +18,29 @@ const ResetPassword = () => {
   const [validToken, setValidToken] = useState(false);
 
   useEffect(() => {
-    // Check for password recovery token in URL
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type');
-    const accessToken = hashParams.get('access_token');
-    
-    if (type === 'recovery' && accessToken) {
-      setValidToken(true);
-    } else {
-      toast.error("Invalid or expired reset link");
-      navigate("/auth");
-    }
-
-    // Listen for auth state changes
+    // Listen for auth state changes to detect password recovery
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setValidToken(true);
+      }
+    });
+
+    // Check current session for recovery token
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setValidToken(true);
+      } else {
+        // Check URL hash for recovery parameters
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const type = hashParams.get('type');
+        
+        if (type === 'recovery') {
+          // Token will be processed by onAuthStateChange
+          setValidToken(true);
+        } else {
+          toast.error("Invalid or expired reset link");
+          navigate("/auth");
+        }
       }
     });
 
