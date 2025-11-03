@@ -204,26 +204,36 @@ export default function SharedConversation() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Owner Banner */}
       {ownerProfile && (
-        <div className="bg-primary text-primary-foreground px-4 py-3 text-center">
-          <p className="text-sm font-medium">
-            {ownerProfile.full_name || ownerProfile.email?.split('@')[0] || 'Someone'} shared this conversation with you
-          </p>
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-accent text-primary-foreground px-6 py-4 shadow-lg animate-fade-in">
+          <div className="max-w-5xl mx-auto flex items-center justify-center gap-2">
+            <Avatar className="h-6 w-6 border-2 border-primary-foreground/20">
+              <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-xs">
+                {(ownerProfile.full_name || ownerProfile.email)?.[0]?.toUpperCase() || 'S'}
+              </AvatarFallback>
+            </Avatar>
+            <p className="text-sm font-medium">
+              <span className="font-semibold">{ownerProfile.full_name || ownerProfile.email?.split('@')[0] || 'Someone'}</span> shared this conversation with you
+            </p>
+          </div>
         </div>
       )}
       
       {/* Header */}
-      <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between max-w-5xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-xl font-bold text-white">A</span>
+      <header className="flex-shrink-0 bg-card/80 backdrop-blur-sm border-b border-border/50 px-4 sm:px-6 py-6 shadow-sm animate-fade-in">
+        <div className="flex items-center justify-between max-w-5xl mx-auto gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center shadow-lg ring-2 ring-primary/20">
+              <span className="text-2xl font-bold text-white">A</span>
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-foreground">{conversation.title}</h1>
-              <p className="text-sm text-muted-foreground">Shared Conversation</p>
+              <h1 className="text-xl font-bold text-foreground tracking-tight">{conversation.title}</h1>
+              <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                Shared Conversation
+              </p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -232,6 +242,7 @@ export default function SharedConversation() {
                 onClick={handleContinueConversation} 
                 variant="default"
                 disabled={isContinuing}
+                className="shadow-md hover:shadow-lg transition-all"
               >
                 {isContinuing ? (
                   <>
@@ -246,7 +257,7 @@ export default function SharedConversation() {
                 )}
               </Button>
             ) : (
-              <Button onClick={() => navigate('/auth')} variant="default">
+              <Button onClick={() => navigate('/auth')} variant="default" className="shadow-md hover:shadow-lg transition-all">
                 Sign In to Continue
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
@@ -257,49 +268,53 @@ export default function SharedConversation() {
 
       {/* Messages */}
       <ScrollArea className="flex-1">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
           {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No messages in this conversation yet.</p>
+            <div className="text-center py-20 animate-fade-in">
+              <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <span className="text-3xl">💬</span>
+              </div>
+              <p className="text-muted-foreground text-lg">No messages in this conversation yet.</p>
             </div>
           ) : (
-            messages.map((message) => (
+            messages.map((message, index) => (
               <div
                 key={message.id}
-                className={`flex gap-3 ${
+                className={`flex gap-4 animate-fade-in ${
                   message.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 {message.role === 'assistant' && (
-                  <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">
+                  <Avatar className="h-10 w-10 flex-shrink-0 mt-1 ring-2 ring-primary/10 shadow-md">
+                    <AvatarFallback className="bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground text-base font-semibold">
                       A
                     </AvatarFallback>
                   </Avatar>
                 )}
                 <div
-                  className={`rounded-lg px-4 py-3 max-w-[80%] ${
+                  className={`rounded-2xl px-5 py-4 max-w-[75%] shadow-sm transition-all hover:shadow-md ${
                     message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
+                      ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground'
+                      : 'bg-card border border-border/50'
                   }`}
                 >
                   {message.image_url && (
                     <img
                       src={message.image_url}
                       alt="Attached"
-                      className="rounded-md mb-2 max-w-full h-auto"
+                      className="rounded-xl mb-3 max-w-full h-auto shadow-sm border border-border/30"
                     />
                   )}
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'prose-invert' : 'dark:prose-invert'}`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {message.content}
                     </ReactMarkdown>
                   </div>
                 </div>
                 {message.role === 'user' && (
-                  <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
-                    <AvatarFallback className="bg-secondary text-secondary-foreground">
+                  <Avatar className="h-10 w-10 flex-shrink-0 mt-1 ring-2 ring-secondary/10 shadow-md">
+                    <AvatarFallback className="bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground text-base font-semibold">
                       U
                     </AvatarFallback>
                   </Avatar>
@@ -310,40 +325,42 @@ export default function SharedConversation() {
           
           {/* Real-time typing/thinking indicators */}
           {activeUsers.map((activeUser, idx) => (
-            <div key={idx} className="flex gap-3 items-start">
+            <div key={idx} className="flex gap-4 items-start animate-fade-in">
               {activeUser.isThinking ? (
                 <>
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">
+                  <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-primary/10 shadow-md">
+                    <AvatarFallback className="bg-gradient-to-br from-primary via-primary to-accent text-primary-foreground text-base font-semibold">
                       A
                     </AvatarFallback>
                   </Avatar>
-                  <div className="bg-muted rounded-lg px-4 py-3 max-w-[80%]">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="bg-card border border-border/50 rounded-2xl px-5 py-4 max-w-[75%] shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce shadow-sm" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce shadow-sm" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary animate-bounce shadow-sm" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-sm text-muted-foreground">Thinking...</span>
+                      <span className="text-sm font-medium text-muted-foreground">Thinking...</span>
                     </div>
                   </div>
                 </>
               ) : activeUser.isTyping ? (
                 <>
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarFallback className="bg-secondary text-secondary-foreground">
+                  <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-secondary/10 shadow-md">
+                    <AvatarFallback className="bg-gradient-to-br from-secondary to-secondary/80 text-secondary-foreground text-base font-semibold">
                       {activeUser.userName?.charAt(0).toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="bg-muted rounded-lg px-4 py-3 max-w-[80%]">
-                    <div className="flex items-center gap-2">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="bg-card border border-border/50 rounded-2xl px-5 py-4 max-w-[75%] shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-sm text-muted-foreground">{activeUser.userName} is typing...</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        <span className="font-semibold text-foreground">{activeUser.userName}</span> is typing...
+                      </span>
                     </div>
                   </div>
                 </>
@@ -354,26 +371,33 @@ export default function SharedConversation() {
       </ScrollArea>
 
       {/* Footer */}
-      <footer className="flex-shrink-0 bg-card border-t border-border px-4 py-3 text-center">
-        <p className="text-sm text-muted-foreground">
-          This is a read-only view of a shared conversation.{' '}
-          {user ? (
-            <button
-              onClick={handleContinueConversation}
-              className="text-primary hover:underline font-medium"
-              disabled={isContinuing}
-            >
-              {isContinuing ? 'Copying conversation...' : 'Continue this conversation'}
-            </button>
-          ) : (
-            <button
-              onClick={() => navigate('/auth')}
-              className="text-primary hover:underline font-medium"
-            >
-              Sign in to continue
-            </button>
-          )}
-        </p>
+      <footer className="flex-shrink-0 bg-card/80 backdrop-blur-sm border-t border-border/50 px-4 py-5 text-center shadow-sm">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-sm text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              🔒 This is a read-only view of a shared conversation.
+            </span>
+            {' '}
+            {user ? (
+              <button
+                onClick={handleContinueConversation}
+                className="text-primary hover:text-primary/80 font-semibold transition-colors inline-flex items-center gap-1"
+                disabled={isContinuing}
+              >
+                {isContinuing ? 'Copying conversation...' : 'Continue this conversation'}
+                {!isContinuing && <ArrowRight className="h-3.5 w-3.5" />}
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate('/auth')}
+                className="text-primary hover:text-primary/80 font-semibold transition-colors inline-flex items-center gap-1"
+              >
+                Sign in to continue
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </p>
+        </div>
       </footer>
     </div>
   );
