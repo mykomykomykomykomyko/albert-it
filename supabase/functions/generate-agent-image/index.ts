@@ -37,51 +37,50 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Generating image with Gemini API...');
+    console.log('Generating image with Google Imagen API...');
 
-    // Use Google Gemini API for image generation
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
+    // Use Google Imagen API for image generation
+    const imagePrompt = `A professional, high-quality avatar image for an AI agent: ${prompt}. Suitable as a profile picture, visually appealing, representing the agent's purpose.`;
+    
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: `Generate a professional, high-quality avatar image for an AI agent with this description: ${prompt}. The image should be suitable as a profile picture, visually appealing, and represent the agent's purpose or personality.`
-          }]
+        instances: [{
+          prompt: imagePrompt
         }],
-        generationConfig: {
-          temperature: 1,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "1:1",
+          safetyFilterLevel: "block_some",
+          personGeneration: "allow_adult"
         }
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Gemini API error:', aiResponse.status, errorText);
+      console.error('Imagen API error:', aiResponse.status, errorText);
       throw new Error(`Failed to generate image: ${aiResponse.status} - ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('Gemini response:', JSON.stringify(aiData, null, 2));
+    console.log('Imagen response received');
     
-    // Extract image from response
-    const parts = aiData.candidates?.[0]?.content?.parts;
-    if (!parts || parts.length === 0) {
-      throw new Error('No content generated');
+    // Extract image from Imagen response
+    const predictions = aiData.predictions;
+    if (!predictions || predictions.length === 0) {
+      throw new Error('No predictions returned from Imagen');
     }
 
-    // Find inline data with image
-    const imagePart = parts.find((part: any) => part.inlineData?.mimeType?.startsWith('image/'));
-    if (!imagePart?.inlineData?.data) {
-      throw new Error('No image data found in response');
+    const imageData = predictions[0];
+    if (!imageData.bytesBase64Encoded) {
+      throw new Error('No image data in response');
     }
 
-    const base64Data = imagePart.inlineData.data;
+    const base64Data = imageData.bytesBase64Encoded;
 
     console.log('Image generated, converting to blob...');
 
