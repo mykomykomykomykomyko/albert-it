@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, ImagePlus } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -330,10 +330,9 @@ const Chat = () => {
     event.target.value = '';
   };
 
-  const handleGenerateImage = async () => {
-    if (!currentConversation || !input.trim() || isLoading) return;
+  const handleGenerateImage = async (prompt: string) => {
+    if (!currentConversation || isLoading) return;
     
-    const prompt = input.trim();
     setInput("");
     setIsLoading(true);
 
@@ -435,6 +434,45 @@ const Chat = () => {
     if (!currentConversation || (!input.trim() && images.length === 0 && files.length === 0) || isLoading) return;
     
     const userContent = input.trim();
+    
+    // Check if user is requesting image generation
+    const imageGenerationKeywords = [
+      'generate an image',
+      'generate image',
+      'create an image',
+      'create image',
+      'draw an image',
+      'draw image',
+      'make an image',
+      'make image',
+      'generate a picture',
+      'create a picture',
+      'draw a picture',
+      'make a picture'
+    ];
+    
+    const isImageRequest = imageGenerationKeywords.some(keyword => 
+      userContent.toLowerCase().includes(keyword)
+    );
+    
+    if (isImageRequest) {
+      // Extract the actual prompt by removing the trigger phrase
+      let imagePrompt = userContent;
+      for (const keyword of imageGenerationKeywords) {
+        imagePrompt = imagePrompt.replace(new RegExp(keyword, 'gi'), '').trim();
+      }
+      // Remove common prefixes like "of", ":", etc.
+      imagePrompt = imagePrompt.replace(/^(of|:)\s*/i, '').trim();
+      
+      if (!imagePrompt) {
+        toast.error('Please provide a description for the image');
+        return;
+      }
+      
+      await handleGenerateImage(imagePrompt);
+      return;
+    }
+    
     setInput("");
     setIsLoading(true);
 
@@ -902,15 +940,6 @@ const Chat = () => {
                       title="Download chat history"
                     >
                       <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleGenerateImage}
-                      disabled={!input.trim() || isLoading}
-                      title="Generate image with AI"
-                    >
-                      <ImagePlus className="h-4 w-4" />
                     </Button>
                     <input
                       id="file-upload"
