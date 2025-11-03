@@ -792,15 +792,15 @@ const Chat = () => {
                             {(() => {
                               // Extract image URL from markdown if present (including standalone base64)
                               const mdMatch = message.content?.match(/!\[[^\]]*\]\(([^)]+)\)/);
-                              const standaloneBase64Match = message.content?.match(/\(?(data:image\/[^;\s)]+;base64,[A-Za-z0-9+/=]+)\)?/);
+                              const standaloneMatch = message.content?.match(/(data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
                               
-                              const imageUrl = imageMarkdownMatch?.[1] || standaloneBase64Match?.[1];
+                              const imageUrl = message.image_url || mdMatch?.[1] || standaloneMatch?.[1];
                               
                               let textContent = message.content;
-                              if (imageMarkdownMatch) {
-                                textContent = message.content.replace(/!\[.*?\]\(data:image\/[^)]+\)/, '').trim();
-                              } else if (standaloneBase64Match) {
-                                textContent = message.content.replace(/\(?(data:image\/[^;\s)]+;base64,[A-Za-z0-9+/=]+)\)?/, '').trim();
+                              if (mdMatch?.[0]) {
+                                textContent = message.content.replace(mdMatch[0], '').trim();
+                              } else if (standaloneMatch?.[1]) {
+                                textContent = message.content.replace(standaloneMatch[1], '').trim();
                               }
                               
                               return (
