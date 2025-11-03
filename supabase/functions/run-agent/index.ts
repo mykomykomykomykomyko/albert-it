@@ -23,7 +23,7 @@ serve(async (req) => {
 
     // Execute tools if any
     let toolResults = "";
-    const toolOutputs: Array<{ toolId: string; output: any }> = [];
+    const toolOutputs: Array<{ toolId: string; toolName?: string; output: any }> = [];
     
     for (const toolInstance of tools) {
       const { toolId, config } = toolInstance;
@@ -45,7 +45,7 @@ serve(async (req) => {
           });
           const searchData = await searchResponse.json();
           console.log("Tool Output [google_search]:", JSON.stringify(searchData, null, 2));
-          toolOutputs.push({ toolId: 'google_search', output: searchData });
+          toolOutputs.push({ toolId: 'google_search', toolName: 'Google Search', output: searchData });
           toolResults += `\n\nGoogle Search Results: ${JSON.stringify(searchData)}`;
         } else if (toolId === 'brave_search') {
           console.log("Calling brave-search with query:", userPrompt);
@@ -59,7 +59,7 @@ serve(async (req) => {
           });
           const searchData = await searchResponse.json();
           console.log("Tool Output [brave_search]:", JSON.stringify(searchData, null, 2));
-          toolOutputs.push({ toolId: 'brave_search', output: searchData });
+          toolOutputs.push({ toolId: 'brave_search', toolName: 'Brave Search', output: searchData });
           toolResults += `\n\nBrave Search Results: ${JSON.stringify(searchData)}`;
         } else if (toolId === 'weather') {
           if (config?.apiKey) {
@@ -70,7 +70,7 @@ serve(async (req) => {
             });
             const weatherData = await weatherResponse.json();
             console.log("Tool Output [weather]:", JSON.stringify(weatherData, null, 2));
-            toolOutputs.push({ toolId: 'weather', output: weatherData });
+            toolOutputs.push({ toolId: 'weather', toolName: 'Weather', output: weatherData });
             toolResults += `\n\nWeather Data: ${JSON.stringify(weatherData)}`;
           }
         } else if (toolId === 'time') {
@@ -81,7 +81,7 @@ serve(async (req) => {
           });
           const timeData = await timeResponse.json();
           console.log("Tool Output [time]:", JSON.stringify(timeData, null, 2));
-          toolOutputs.push({ toolId: 'time', output: timeData });
+          toolOutputs.push({ toolId: 'time', toolName: 'Current Time', output: timeData });
           toolResults += `\n\nCurrent Time: ${JSON.stringify(timeData)}`;
         } else if (toolId === 'web_scrape') {
           if (config?.url) {
@@ -92,7 +92,7 @@ serve(async (req) => {
             });
             const scrapeData = await scrapeResponse.json();
             console.log("Tool Output [web_scrape]:", JSON.stringify(scrapeData, null, 2));
-            toolOutputs.push({ toolId: 'web_scrape', output: scrapeData });
+            toolOutputs.push({ toolId: 'web_scrape', toolName: 'Web Scraper', output: scrapeData });
             toolResults += `\n\nWeb Scrape Results: ${JSON.stringify(scrapeData)}`;
           }
         } else if (toolId === 'api_call') {
@@ -109,7 +109,7 @@ serve(async (req) => {
             });
             const apiData = await apiResponse.json();
             console.log("Tool Output [api_call]:", JSON.stringify(apiData, null, 2));
-            toolOutputs.push({ toolId: 'api_call', output: apiData });
+            toolOutputs.push({ toolId: 'api_call', toolName: 'API Call', output: apiData });
             toolResults += `\n\nAPI Call Results: ${JSON.stringify(apiData)}`;
           }
         }
@@ -117,7 +117,7 @@ serve(async (req) => {
         console.error(`Error executing tool ${toolId}:`, toolError);
         const errorMsg = toolError instanceof Error ? toolError.message : 'Unknown error';
         console.log("Tool Output [" + toolId + "] ERROR:", errorMsg);
-        toolOutputs.push({ toolId, output: { error: errorMsg } });
+        toolOutputs.push({ toolId, toolName: toolId, output: { error: errorMsg } });
         toolResults += `\n\nTool ${toolId} Error: ${errorMsg}`;
       }
     }
@@ -128,7 +128,7 @@ serve(async (req) => {
     console.log("Using direct Gemini API");
     
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {

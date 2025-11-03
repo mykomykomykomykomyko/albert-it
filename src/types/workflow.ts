@@ -12,6 +12,11 @@ export interface WorkflowNode {
   output?: string;
   minimized?: boolean;
   config?: Record<string, any>;
+  toolOutputs?: Array<{
+    toolId: string;
+    toolName?: string;
+    output: any;
+  }>;
 }
 
 export interface AgentNode extends WorkflowNode {

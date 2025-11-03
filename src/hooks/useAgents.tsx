@@ -189,6 +189,27 @@ export const useAgents = () => {
 
   useEffect(() => {
     loadAgents();
+
+    // Subscribe to realtime agent_shares updates
+    const channel = supabase
+      .channel('agent-shares-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agent_shares'
+        },
+        () => {
+          // Reload agents when shares change to show newly shared agents
+          loadAgents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const shareAgent = async (agentId: string, userEmail: string, permission: 'view' | 'edit' = 'view'): Promise<boolean> => {

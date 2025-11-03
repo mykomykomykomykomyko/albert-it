@@ -6,6 +6,8 @@ import { OutputLog } from "@/components/output/OutputLog";
 import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
 import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useCallback, useEffect } from "react";
+import { useWorkflows } from "@/hooks/useWorkflows";
+import { toast } from "sonner";
 import type { 
   Workflow, 
   WorkflowNode, 
@@ -24,46 +26,44 @@ export type { ToolInstance, LogEntry } from "@/types/workflow";
 export type Agent = AgentNode;
 
 const Stage = () => {
+  const { workflows, createWorkflow, updateWorkflow } = useWorkflows();
+  const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(() => {
+    return localStorage.getItem('canvas_currentWorkflowId');
+  });
+  
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [connectingFromPort, setConnectingFromPort] = useState<string | undefined>(undefined);
-  const [userInput, setUserInput] = useState<string>(() => {
-    const saved = localStorage.getItem('canvas_userInput');
-    return saved || "";
-  });
-  const [workflowName, setWorkflowName] = useState<string>(() => {
-    const saved = localStorage.getItem('canvas_workflowName');
-    return saved || "Untitled Workflow";
-  });
-  const [customAgents, setCustomAgents] = useState<any[]>(() => {
-    const saved = localStorage.getItem('canvas_customAgents');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [userInput, setUserInput] = useState<string>("");
+  const [workflowName, setWorkflowName] = useState<string>("Untitled Workflow");
+  const [customAgents, setCustomAgents] = useState<any[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [workflow, setWorkflow] = useState<Workflow>(() => {
-    const saved = localStorage.getItem('canvas_workflow');
-    return saved ? JSON.parse(saved) : { stages: [], connections: [] };
-  });
+  const [workflow, setWorkflow] = useState<Workflow>({ stages: [], connections: [] });
 
-  // Auto-save workflow to localStorage
+  // Load workflow from database
   useEffect(() => {
-    localStorage.setItem('canvas_workflow', JSON.stringify(workflow));
-  }, [workflow]);
+    if (currentWorkflowId) {
+      const dbWorkflow = workflows.find(w => w.id === currentWorkflowId);
+      if (dbWorkflow) {
+        setWorkflow(dbWorkflow.workflow_data);
+        setWorkflowName(dbWorkflow.name);
+      }
+    }
+  }, [currentWorkflowId, workflows]);
 
-  // Auto-save userInput to localStorage
+  // Auto-save workflow to database with debounce
   useEffect(() => {
-    localStorage.setItem('canvas_userInput', userInput);
-  }, [userInput]);
+    const timeoutId = setTimeout(async () => {
+      if (currentWorkflowId && workflow.stages.length > 0) {
+        await updateWorkflow(currentWorkflowId, {
+          workflow_data: workflow,
+          name: workflowName,
+        });
+      }
+    }, 1000);
 
-  // Auto-save workflowName to localStorage
-  useEffect(() => {
-    localStorage.setItem('canvas_workflowName', workflowName);
-  }, [workflowName]);
-
-  // Auto-save customAgents to localStorage
-  useEffect(() => {
-    localStorage.setItem('canvas_customAgents', JSON.stringify(customAgents));
-  }, [customAgents]);
+    return () => clearTimeout(timeoutId);
+  }, [workflow, workflowName, currentWorkflowId]);
 
   const addLog = useCallback((type: LogEntry["type"], message: string) => {
     const time = new Date().toLocaleTimeString('en-US', { hour12: false });
@@ -317,26 +317,32 @@ const Stage = () => {
     }));
   };
 
-  const saveWorkflow = () => {
-    const saveData = {
-      workflow,
-      userInput,
-      workflowName,
-      customAgents,
-    };
-    const json = JSON.stringify(saveData, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const filename = workflowName !== "Untitled Workflow" 
-      ? `${workflowName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}-${Date.now()}.json`
-      : `workflow-${Date.now()}.json`;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+  const saveWorkflow = async () => {
+    try {
+      if (currentWorkflowId) {
+        // Update existing
+        await updateWorkflow(currentWorkflowId, {
+          workflow_data: workflow,
+          name: workflowName,
+        });
+        toast.success('Workflow saved to database');
+      } else {
+        // Create new
+        const newWorkflow = await createWorkflow({
+          name: workflowName,
+          workflow_data: workflow,
+          description: '',
+        });
+        if (newWorkflow) {
+          setCurrentWorkflowId(newWorkflow.id);
+          localStorage.setItem('canvas_currentWorkflowId', newWorkflow.id);
+          toast.success('Workflow saved to database');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving workflow:', error);
+      toast.error('Failed to save workflow');
+    }
   };
 
   const loadWorkflow = (file: File) => {
@@ -374,6 +380,8 @@ const Stage = () => {
       setCustomAgents([]);
       setSelectedNode(null);
       setConnectingFrom(null);
+      setCurrentWorkflowId(null);
+      localStorage.removeItem('canvas_currentWorkflowId');
     }
   };
 

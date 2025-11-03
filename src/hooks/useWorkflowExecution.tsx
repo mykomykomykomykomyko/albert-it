@@ -94,7 +94,11 @@ export const useWorkflowExecution = ({
           });
         }
 
-        onUpdateNode(nodeId, { status: "complete", output: result.output });
+        onUpdateNode(nodeId, { 
+          status: "complete", 
+          output: result.output,
+          toolOutputs: result.toolOutputs 
+        });
         onAddLog("success", `Agent ${agent.name} completed successfully`);
       } catch (error) {
         console.error("Agent execution failed:", error);

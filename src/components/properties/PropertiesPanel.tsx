@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, Plus, Settings, Play, Database, Download, Eye, Save, Upload } from "lucide-react";
+import { ToolOutputDisplay } from "@/components/chat/ToolOutputDisplay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useState, useRef } from "react";
@@ -883,6 +884,11 @@ export const PropertiesPanel = ({
                   })()}
                 </p>
               </Card>
+              
+              {/* Tool Outputs Display */}
+              {activeNode.toolOutputs && activeNode.toolOutputs.length > 0 && (
+                <ToolOutputDisplay toolOutputs={activeNode.toolOutputs} />
+              )}
             </div>
           )}
 

@@ -225,6 +225,173 @@ export type Database = {
         }
         Relationships: []
       }
+      image_analysis_images: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id: string
+          resize_enabled: boolean | null
+          selected: boolean | null
+          session_id: string
+          storage_path: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size: number
+          file_type: string
+          id?: string
+          resize_enabled?: boolean | null
+          selected?: boolean | null
+          session_id: string
+          storage_path?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          resize_enabled?: boolean | null
+          selected?: boolean | null
+          session_id?: string
+          storage_path?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_analysis_images_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "image_analysis_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_analysis_prompts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_custom: boolean | null
+          name: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_custom?: boolean | null
+          name: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_custom?: boolean | null
+          name?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_analysis_prompts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "image_analysis_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_analysis_results: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          image_id: string
+          processing_time: number | null
+          prompt_id: string
+          session_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          image_id: string
+          processing_time?: number | null
+          prompt_id: string
+          session_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          image_id?: string
+          processing_time?: number | null
+          prompt_id?: string
+          session_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_analysis_results_image_id_fkey"
+            columns: ["image_id"]
+            isOneToOne: false
+            referencedRelation: "image_analysis_images"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_analysis_results_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "image_analysis_prompts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_analysis_results_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "image_analysis_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      image_analysis_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       meeting_transcripts: {
         Row: {
           action_items: Json | null
@@ -490,6 +657,42 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voice_analysis_results: {
+        Row: {
+          analysis: string | null
+          audio_storage_path: string | null
+          created_at: string
+          id: string
+          model_used: string
+          original_filename: string
+          transcription: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis?: string | null
+          audio_storage_path?: string | null
+          created_at?: string
+          id?: string
+          model_used: string
+          original_filename: string
+          transcription?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis?: string | null
+          audio_storage_path?: string | null
+          created_at?: string
+          id?: string
+          model_used?: string
+          original_filename?: string
+          transcription?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

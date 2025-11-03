@@ -15,6 +15,7 @@ export interface AgentExecutionResult {
   output?: string;
   toolOutputs?: Array<{
     toolId: string;
+    toolName?: string;
     output: any;
   }>;
   error?: string;
