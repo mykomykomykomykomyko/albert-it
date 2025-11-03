@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers, User, ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -11,8 +11,18 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AccessibilityPreferences } from '@/components/AccessibilityPreferences';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { useAuth } from '@/hooks/useAuth';
 
 const OptionalSidebarTrigger = () => {
   try {
@@ -30,6 +40,7 @@ export function ChatHeader() {
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   const currentTab = location.pathname.startsWith('/agents') ? 'agents' :
                      location.pathname.startsWith('/chat') ? 'chat' :
@@ -238,15 +249,51 @@ export function ChatHeader() {
               <Moon className="h-5 w-5" />
             )}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSignOut}
-            title="Sign Out"
-            className="hover:bg-accent text-foreground"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          
+          {/* User Profile Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2 hover:bg-accent px-2"
+              >
+                <Avatar className="h-8 w-8 border-2 border-primary">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
+                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="hidden xl:flex flex-col items-start min-w-0 max-w-[150px]">
+                  <span className="text-sm font-medium truncate w-full text-foreground">
+                    {user?.email?.split('@')[0] || 'User'}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate w-full">
+                    {user?.email || 'No email'}
+                  </span>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-popover">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none text-foreground">
+                    {user?.email?.split('@')[0] || 'User'}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground truncate">
+                    {user?.email || 'No email'}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={handleSignOut}
+                className="text-destructive focus:text-destructive cursor-pointer"
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           </div>
         </div>
 
@@ -261,7 +308,25 @@ export function ChatHeader() {
             <SheetHeader>
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
-            <div className="flex flex-col gap-2 mt-6">
+            
+            {/* User Profile Section in Mobile */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary mt-6">
+              <Avatar className="h-10 w-10 border-2 border-primary">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-sm font-medium truncate text-foreground">
+                  {user?.email?.split('@')[0] || 'User'}
+                </span>
+                <span className="text-xs text-muted-foreground truncate">
+                  {user?.email || 'No email'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2 mt-4">
               {navItems.map((item) => (
                 <Button
                   key={item.value}
