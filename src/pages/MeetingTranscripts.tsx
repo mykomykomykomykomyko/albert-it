@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag } from "lucide-react";
+import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag, Trash2 } from "lucide-react";
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -201,6 +201,40 @@ export default function MeetingTranscripts() {
     t.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleDeleteTranscript = async (transcript: MeetingTranscript, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!confirm(`Are you sure you want to delete "${transcript.title}"?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("meeting_transcripts")
+        .delete()
+        .eq("id", transcript.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted",
+        description: "Transcript deleted successfully",
+      });
+
+      if (selectedTranscript?.id === transcript.id) {
+        setSelectedTranscript(null);
+      }
+
+      fetchTranscripts();
+    } catch (error: any) {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       <ChatHeader />
@@ -232,7 +266,7 @@ export default function MeetingTranscripts() {
                 filteredTranscripts.map((transcript) => (
                   <div
                     key={transcript.id}
-                    className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-accent/50 ${
+                    className={`group p-3 rounded-lg cursor-pointer transition-all hover:bg-accent/50 ${
                       selectedTranscript?.id === transcript.id 
                         ? "bg-accent border-l-2 border-primary" 
                         : "border-l-2 border-transparent"
@@ -243,9 +277,19 @@ export default function MeetingTranscripts() {
                       <h3 className="font-medium text-sm line-clamp-2 leading-tight flex-1">
                         {transcript.title}
                       </h3>
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5 shrink-0">
-                        {transcript.file_format.toUpperCase()}
-                      </Badge>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
+                          {transcript.file_format.toUpperCase()}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => handleDeleteTranscript(transcript, e)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <Calendar className="h-3 w-3 shrink-0" />
