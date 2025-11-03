@@ -651,33 +651,85 @@ const Canvas = () => {
           break;
         
         case 'tool':
-          // Execute tool - some tools are edge functions, others are local functions
+          // Execute tool by calling the appropriate edge function
           const toolType = nodeData.toolType || 'web_scrape';
+          const toolConfig = nodeData.config || {};
           
-          // Tools that are edge functions (need supabase.functions.invoke)
-          if (toolType === 'time' || toolType === 'weather') {
-            const { data: toolData, error: toolError } = await supabase.functions.invoke(toolType, {
-              body: toolType === 'weather' ? { location: input || 'New York' } : {}
-            });
-            if (toolError) throw toolError;
-            output = JSON.stringify(toolData);
+          let toolBody: any = {};
+          let toolFunctionName = toolType;
+          
+          // Map tool types to edge function names and prepare request body
+          switch (toolType) {
+            case 'time':
+              toolFunctionName = 'time';
+              toolBody = {};
+              break;
+            case 'weather':
+              toolFunctionName = 'weather';
+              toolBody = {
+                location: toolConfig.location || input || 'New York',
+                apiKey: toolConfig.apiKey
+              };
+              break;
+            case 'google_search':
+              toolFunctionName = 'google-search';
+              toolBody = {
+                query: toolConfig.query || input,
+                numResults: toolConfig.numResults || 10,
+                apiKey: toolConfig.apiKey,
+                searchEngineId: toolConfig.searchEngineId
+              };
+              break;
+            case 'brave_search':
+              toolFunctionName = 'brave-search';
+              toolBody = {
+                query: toolConfig.query || input,
+                numResults: toolConfig.numResults || 20
+              };
+              break;
+            case 'perplexity_search':
+              toolFunctionName = 'perplexity-search';
+              toolBody = {
+                query: toolConfig.query || input,
+                model: toolConfig.model || 'llama-3.1-sonar-small-128k-online'
+              };
+              break;
+            case 'web_scrape':
+              toolFunctionName = 'web-scrape';
+              toolBody = {
+                url: toolConfig.url || input
+              };
+              break;
+            case 'api_call':
+              toolFunctionName = 'api-call';
+              toolBody = {
+                url: toolConfig.url || input,
+                method: toolConfig.method || 'GET',
+                headers: toolConfig.headers ? JSON.parse(toolConfig.headers) : {},
+                body: toolConfig.body ? JSON.parse(toolConfig.body) : undefined
+              };
+              break;
+            default:
+              throw new Error(`Unknown tool type: ${toolType}`);
+          }
+          
+          console.log(`Executing tool: ${toolFunctionName}`, toolBody);
+          const { data: toolData, error: toolError } = await supabase.functions.invoke(toolFunctionName, {
+            body: toolBody
+          });
+          
+          if (toolError) throw toolError;
+          
+          // Format output based on tool type
+          if (toolType === 'perplexity_search') {
+            output = toolData.answer || JSON.stringify(toolData);
+          } else if (toolType === 'brave_search' || toolType === 'google_search') {
+            const results = toolData.results || [];
+            output = results.map((r: any, i: number) => 
+              `${i + 1}. ${r.title}\n${r.url}\n${r.description}\n`
+            ).join('\n');
           } else {
-            // Tools that are local functions (use FunctionExecutor)
-            const toolNodeData: FunctionNode = {
-              id: nodeId,
-              nodeType: 'function',
-              name: nodeData.label,
-              functionType: toolType,
-              config: nodeData.config || {},
-              outputPorts: ['output'],
-              status: 'running'
-            };
-            const toolResult = await FunctionExecutor.execute(toolNodeData, input);
-            if (toolResult.success) {
-              output = toolResult.outputs.output || JSON.stringify(toolResult.outputs);
-            } else {
-              throw new Error(toolResult.error || 'Tool execution failed');
-            }
+            output = typeof toolData === 'string' ? toolData : JSON.stringify(toolData, null, 2);
           }
           break;
           
