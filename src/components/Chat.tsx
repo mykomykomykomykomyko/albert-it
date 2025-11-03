@@ -330,7 +330,7 @@ const Chat = () => {
     event.target.value = '';
   };
 
-  const handleGenerateImage = async (prompt: string) => {
+  const handleGenerateImage = async (prompt: string, sourceImageUrl?: string) => {
     if (!currentConversation || isLoading) return;
     
     setInput("");
@@ -338,12 +338,16 @@ const Chat = () => {
 
     try {
       // Save user message with image generation request
+      const userContent = sourceImageUrl 
+        ? `Edit the image: ${prompt}`
+        : `Generate an image: ${prompt}`;
+        
       const { data: savedUserMessage, error: userError } = await supabase
         .from("messages")
         .insert({
           conversation_id: currentConversation.id,
           role: "user" as const,
-          content: `Generate an image: ${prompt}`,
+          content: userContent,
         })
         .select()
         .single();
@@ -354,7 +358,9 @@ const Chat = () => {
 
       // Update conversation title if first message
       if (messages.length === 0) {
-        const title = `Image: ${prompt.slice(0, 40)}${prompt.length > 40 ? '...' : ''}`;
+        const title = sourceImageUrl 
+          ? `Edit: ${prompt.slice(0, 40)}${prompt.length > 40 ? '...' : ''}`
+          : `Image: ${prompt.slice(0, 40)}${prompt.length > 40 ? '...' : ''}`;
         await supabase
           .from("conversations")
           .update({ title, updated_at: new Date().toISOString() })
@@ -376,7 +382,10 @@ const Chat = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ 
+            prompt,
+            sourceImageUrl 
+          }),
         }
       );
 
@@ -403,7 +412,7 @@ const Chat = () => {
       if (assistantError) throw assistantError;
 
       setMessages(prev => [...prev, assistantMessage as Message]);
-      toast.success("Image generated successfully!");
+      toast.success(sourceImageUrl ? "Image edited successfully!" : "Image generated successfully!");
 
     } catch (error: any) {
       console.error('💥 Image generation error:', error);
@@ -435,11 +444,34 @@ const Chat = () => {
     
     const userContent = input.trim();
     
+    // Check if this is an image editing request (edit/change/modify the last image)
+    const editWords = ['edit', 'change', 'modify', 'update', 'transform', 'turn', 'convert', 'alter'];
+    const lowerContent = userContent.toLowerCase();
+    
+    // Look for the most recent generated image in the conversation
+    let lastGeneratedImageUrl: string | undefined;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      if (msg.role === 'assistant') {
+        const imageMatch = msg.content.match(/!\[.*?\]\((data:image\/[^)]+)\)/);
+        if (imageMatch) {
+          lastGeneratedImageUrl = imageMatch[1];
+          break;
+        }
+      }
+    }
+    
+    // Check if user wants to edit the last image
+    const isEditRequest = editWords.some(word => lowerContent.includes(word));
+    
+    if (isEditRequest && lastGeneratedImageUrl) {
+      await handleGenerateImage(userContent, lastGeneratedImageUrl);
+      return;
+    }
+    
     // Check if user is requesting image generation using flexible pattern matching
     const actionWords = ['generate', 'create', 'make', 'draw', 'produce', 'design', 'build'];
     const imageWords = ['image', 'picture', 'photo', 'illustration', 'graphic', 'pic'];
-    
-    const lowerContent = userContent.toLowerCase();
     
     // Check if message contains an action word followed (somewhere) by an image word
     const isImageRequest = actionWords.some(action => {

@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt } = await req.json()
+    const { prompt, sourceImageUrl } = await req.json()
 
     if (!prompt) {
       return new Response(
@@ -23,11 +23,35 @@ serve(async (req) => {
       )
     }
 
-    console.log('🎨 Generating image with prompt:', prompt);
+    console.log('🎨 Generating/editing image with prompt:', prompt);
+    if (sourceImageUrl) {
+      console.log('📸 Editing existing image');
+    }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
+    }
+
+    // Build message content
+    let messageContent: any;
+    if (sourceImageUrl) {
+      // Image editing mode - include both text and image
+      messageContent = [
+        {
+          type: 'text',
+          text: prompt
+        },
+        {
+          type: 'image_url',
+          image_url: {
+            url: sourceImageUrl
+          }
+        }
+      ];
+    } else {
+      // Image generation mode - text only
+      messageContent = prompt;
     }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -41,7 +65,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'user',
-            content: prompt
+            content: messageContent
           }
         ],
         modalities: ['image', 'text']
