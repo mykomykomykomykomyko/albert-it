@@ -435,33 +435,38 @@ const Chat = () => {
     
     const userContent = input.trim();
     
-    // Check if user is requesting image generation
-    const imageGenerationKeywords = [
-      'generate an image',
-      'generate image',
-      'create an image',
-      'create image',
-      'draw an image',
-      'draw image',
-      'make an image',
-      'make image',
-      'generate a picture',
-      'create a picture',
-      'draw a picture',
-      'make a picture'
-    ];
+    // Check if user is requesting image generation using flexible pattern matching
+    const actionWords = ['generate', 'create', 'make', 'draw', 'produce', 'design', 'build'];
+    const imageWords = ['image', 'picture', 'photo', 'illustration', 'graphic', 'pic'];
     
-    const isImageRequest = imageGenerationKeywords.some(keyword => 
-      userContent.toLowerCase().includes(keyword)
-    );
+    const lowerContent = userContent.toLowerCase();
+    
+    // Check if message contains an action word followed (somewhere) by an image word
+    const isImageRequest = actionWords.some(action => {
+      if (!lowerContent.includes(action)) return false;
+      return imageWords.some(imageWord => {
+        const actionIndex = lowerContent.indexOf(action);
+        const imageIndex = lowerContent.indexOf(imageWord);
+        // Action word should come before image word, within reasonable distance
+        return imageIndex > actionIndex && (imageIndex - actionIndex) < 30;
+      });
+    });
     
     if (isImageRequest) {
-      // Extract the actual prompt by removing the trigger phrase
+      // Extract the actual prompt by removing the trigger phrases
       let imagePrompt = userContent;
-      for (const keyword of imageGenerationKeywords) {
-        imagePrompt = imagePrompt.replace(new RegExp(keyword, 'gi'), '').trim();
+      
+      // Remove common image generation trigger patterns
+      const patterns = [
+        /^(generate|create|make|draw|produce|design|build)\s+(me\s+)?(an?\s+)?(image|picture|photo|illustration|graphic|pic)\s+(of\s+)?/gi,
+        /^(can\s+you\s+)?(please\s+)?(generate|create|make|draw)\s+(me\s+)?(an?\s+)?(image|picture|photo)/gi
+      ];
+      
+      for (const pattern of patterns) {
+        imagePrompt = imagePrompt.replace(pattern, '').trim();
       }
-      // Remove common prefixes like "of", ":", etc.
+      
+      // Remove leading "of" or ":"
       imagePrompt = imagePrompt.replace(/^(of|:)\s*/i, '').trim();
       
       if (!imagePrompt) {
