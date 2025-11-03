@@ -49,8 +49,7 @@ const processImageDataUrl = async (imageUrl: string) => {
       
       const contentType = response.headers.get('content-type') || 'image/jpeg';
       const arrayBuffer = await response.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-      
+      const base64 = base64Encode(arrayBuffer);
       return {
         mimeType: contentType,
         data: base64

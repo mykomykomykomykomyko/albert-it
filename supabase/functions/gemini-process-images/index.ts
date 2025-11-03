@@ -47,14 +47,13 @@ const processImageDataUrl = async (imageUrl: string) => {
         throw new Error(`Failed to fetch image: ${response.statusText}`);
       }
 
-      const contentType = response.headers.get('content-type') || 'image/jpeg';
-      const arrayBuffer = await response.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-      return {
-        mimeType: contentType,
-        data: base64
-      };
+       const contentType = response.headers.get('content-type') || 'image/jpeg';
+       const arrayBuffer = await response.arrayBuffer();
+       const base64 = base64Encode(arrayBuffer);
+       return {
+         mimeType: contentType,
+         data: base64
+       };
     } catch (error) {
       console.error('Error fetching image URL:', error);
       throw new Error('Failed to fetch image from URL');
