@@ -1,31 +1,17 @@
 import { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookOpen, Search, Home, MessageSquare, Layers, Image as ImageIcon, Mic, FileText, FileCode, Store, Users } from 'lucide-react';
+import { BookOpen, Search } from 'lucide-react';
 import { useFrameworks } from '@/hooks/useFrameworks';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Input } from '@/components/ui/input';
 
-const navigationLinks = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/agents", label: "Agents", icon: Users },
-  { path: "/chat", label: "Chat", icon: MessageSquare },
-  { path: "/stage", label: "Stage", icon: Layers },
-  { path: "/canvas", label: "Canvas", icon: Layers },
-  { path: "/image", label: "Image", icon: ImageIcon },
-  { path: "/voice", label: "Voice", icon: Mic },
-  { path: "/transcripts", label: "Transcripts", icon: FileText },
-  { path: "/prompts", label: "Prompts", icon: BookOpen },
-  { path: "/framework", label: "Framework", icon: FileCode },
-  { path: "/marketplace", label: "Marketplace", icon: Store },
-];
-
 export default function Framework() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { frameworks, loading } = useFrameworks();
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,32 +24,9 @@ export default function Framework() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation Bar */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center h-12 sm:h-14 px-2 sm:px-4 gap-1 overflow-x-auto scrollbar-hide">
-          {navigationLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{link.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
-      <div className="flex h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] overflow-hidden">
+    <>
+      <ChatHeader />
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
         {/* Left side - Frameworks List */}
         <div className="hidden md:flex w-64 lg:w-80 border-r border-border flex-col bg-card">
           <div className="p-3 sm:p-4 flex-shrink-0 border-b border-border">
@@ -152,6 +115,6 @@ export default function Framework() {
         </div>
       </div>
       </div>
-    </div>
+    </>
   );
 }

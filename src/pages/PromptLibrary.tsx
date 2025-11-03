@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,28 +10,13 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Edit, Play, Copy, Search, FileText, Home, MessageSquare, Layers, Image as ImageIcon, Mic, BookOpen, FileCode, Store, Users } from 'lucide-react';
+import { Plus, Trash2, Edit, Play, Copy, Search, FileText } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-const navigationLinks = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/agents", label: "Agents", icon: Users },
-  { path: "/chat", label: "Chat", icon: MessageSquare },
-  { path: "/stage", label: "Stage", icon: Layers },
-  { path: "/canvas", label: "Canvas", icon: Layers },
-  { path: "/image", label: "Image", icon: ImageIcon },
-  { path: "/voice", label: "Voice", icon: Mic },
-  { path: "/transcripts", label: "Transcripts", icon: FileText },
-  { path: "/prompts", label: "Prompts", icon: BookOpen },
-  { path: "/framework", label: "Framework", icon: FileCode },
-  { path: "/marketplace", label: "Marketplace", icon: Store },
-];
-
 export default function PromptLibrary() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { prompts, loading, createPrompt, updatePrompt, deletePrompt, executePrompt } = usePrompts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
@@ -141,32 +127,9 @@ export default function PromptLibrary() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation Bar */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center h-12 sm:h-14 px-2 sm:px-4 gap-1 overflow-x-auto scrollbar-hide">
-          {navigationLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">{link.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
-      <div className="flex h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] overflow-hidden">
+    <>
+      <ChatHeader />
+      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
         {/* Left side - Prompts List */}
         <div className="hidden md:flex w-64 lg:w-80 border-r border-border flex-col bg-card">
           <div className="p-4 flex-shrink-0 border-b border-border">
@@ -422,6 +385,6 @@ export default function PromptLibrary() {
         </div>
       </div>
       </div>
-    </div>
+    </>
   );
 }
