@@ -618,19 +618,17 @@ const Agents = () => {
                     </div>
                   )}
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3 flex-1">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={agent.profile_picture_url} />
-                          <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg truncate">{agent.name}</CardTitle>
-                          <Badge variant="secondary" className="mt-1">{agent.type}</Badge>
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12 flex-shrink-0">
+                        <AvatarImage src={agent.profile_picture_url} />
+                        <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">{agent.name}</CardTitle>
+                        <Badge variant="secondary" className="mt-1 text-xs">{agent.type}</Badge>
                       </div>
                     </div>
-                    <CardDescription className="line-clamp-2 mt-2">
+                    <CardDescription className="line-clamp-2 mt-3">
                       {agent.description || 'No description'}
                     </CardDescription>
                   </CardHeader>
