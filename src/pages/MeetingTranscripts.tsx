@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ChatHeader } from "@/components/ChatHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag, Home, MessageSquare, Layers, Image as ImageIcon, Mic, BookOpen, FileCode, Store } from "lucide-react";
+import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag } from "lucide-react";
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,19 +28,6 @@ interface MeetingTranscript {
 }
 
 
-const navigationLinks = [
-  { path: "/", label: "Home", icon: Home },
-  { path: "/agents", label: "Agents", icon: Users },
-  { path: "/chat", label: "Chat", icon: MessageSquare },
-  { path: "/stage", label: "Stage", icon: Layers },
-  { path: "/canvas", label: "Canvas", icon: Layers },
-  { path: "/image", label: "Image", icon: ImageIcon },
-  { path: "/voice", label: "Voice", icon: Mic },
-  { path: "/transcripts", label: "Transcripts", icon: FileText },
-  { path: "/prompts", label: "Prompts", icon: BookOpen },
-  { path: "/framework", label: "Framework", icon: FileCode },
-  { path: "/marketplace", label: "Marketplace", icon: Store },
-];
 
 export default function MeetingTranscripts() {
   const [transcripts, setTranscripts] = useState<MeetingTranscript[]>([]);
@@ -49,7 +37,6 @@ export default function MeetingTranscripts() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     fetchTranscripts();
@@ -215,31 +202,8 @@ export default function MeetingTranscripts() {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Navigation Bar */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="flex items-center h-14 px-4 gap-1 overflow-x-auto">
-          {navigationLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {link.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-
+    <>
+      <ChatHeader />
       <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
         {/* Left side - Transcripts List */}
         <div className="w-80 border-r border-border flex flex-col bg-card">
@@ -455,6 +419,6 @@ export default function MeetingTranscripts() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
