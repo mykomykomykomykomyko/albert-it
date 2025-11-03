@@ -37,11 +37,11 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Generating image with Google Imagen API...');
+    console.log('Generating image with Google Imagen 3 API...');
 
     const imagePrompt = `A professional, high-quality avatar image for an AI agent: ${prompt}. Suitable as a profile picture, visually appealing, representing the agent's purpose.`;
     
-    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`, {
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
