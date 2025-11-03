@@ -1059,7 +1059,7 @@ export const PropertiesPanel = ({
             <div className="space-y-3">
               <Label className="text-sm font-medium">Attached Tools</Label>
               <Card className="p-3 bg-muted/30 space-y-2">
-                {(activeNode as AgentNode).tools.length === 0 ? (
+                {!(activeNode as AgentNode).tools || (activeNode as AgentNode).tools.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-2">
                     No tools attached
                   </p>
@@ -1280,7 +1280,7 @@ export const PropertiesPanel = ({
                   </DialogHeader>
                   <div className="space-y-2">
                     {availableTools.map((tool) => {
-                      const hasThisTool = (activeNode as AgentNode).tools.some(t => t.toolId === tool.id);
+                      const hasThisTool = (activeNode as AgentNode).tools?.some(t => t.toolId === tool.id) ?? false;
                       return (
                         <div key={tool.id} className="flex items-center space-x-2">
                           <Checkbox
