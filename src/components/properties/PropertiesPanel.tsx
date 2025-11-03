@@ -9,7 +9,7 @@ import { ToolOutputDisplay } from "@/components/chat/ToolOutputDisplay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useState, useRef } from "react";
-import type { WorkflowNode, AgentNode, FunctionNode, ToolInstance } from "@/types/workflow";
+import type { WorkflowNode, AgentNode, FunctionNode, ToolInstance, ToolNode } from "@/types/workflow";
 import { FunctionRegistry } from "@/lib/functionRegistry";
 import { FunctionExecutor } from "@/lib/functionExecutor";
 import { toolDefinitions } from "@/lib/toolDefinitions";
@@ -108,6 +108,11 @@ export const PropertiesPanel = ({
     ? FunctionRegistry.getById((activeNode as FunctionNode).functionType)
     : null;
 
+  // Get tool definition if it's a tool node
+  const toolDef = activeNode.nodeType === "tool"
+    ? availableTools.find(t => t.id === (activeNode as ToolNode).toolType)
+    : null;
+
   const handleToolToggle = (toolId: string, checked: boolean) => {
     if (checked && activeNode.nodeType === "agent") {
       onAddToolInstance(activeNode.id, toolId);
@@ -115,8 +120,10 @@ export const PropertiesPanel = ({
   };
 
   const updateNodeConfig = (config: Record<string, any>) => {
-    if (onUpdateNode && activeNode.nodeType === "function") {
-      onUpdateNode(activeNode.id, { config });
+    if (onUpdateNode) {
+      if (activeNode.nodeType === "function" || activeNode.nodeType === "tool") {
+        onUpdateNode(activeNode.id, { config });
+      }
     }
   };
 
@@ -622,6 +629,23 @@ export const PropertiesPanel = ({
             Run Function
           </Button>
         )}
+
+        {activeNode.nodeType === "tool" && (
+          <Button 
+            onClick={() => {
+              toast({
+                title: "Tool Testing",
+                description: "Configure the tool parameters above, then use it in an agent or workflow.",
+              });
+            }}
+            className="w-full mt-3"
+            variant="default"
+            size="sm"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Configure Tool
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="flex-1">
@@ -733,6 +757,128 @@ export const PropertiesPanel = ({
 
               {renderFunctionConfig(activeNode as FunctionNode)}
               {renderMemoryViewer(activeNode as FunctionNode)}
+            </>
+          )}
+
+          {/* Tool-specific fields */}
+          {activeNode.nodeType === "tool" && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tool Type</Label>
+                <Card className="p-3 bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    {toolDef?.icon && <toolDef.icon className="h-4 w-4" />}
+                    <div>
+                      <p className="text-xs text-foreground font-medium">{toolDef?.name || "Unknown"}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {toolDef?.description}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {toolDef?.configSchema && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Configuration</Label>
+                    <span className="text-xs text-muted-foreground">
+                      {toolDef.requiresApiKey ? "Requires API Key" : "Ready to use"}
+                    </span>
+                  </div>
+                  <Card className="p-3 bg-muted/30 space-y-3">
+                    {Object.entries(toolDef.configSchema).map(([key, schema]) => (
+                      <div key={key} className="space-y-2">
+                        <Label htmlFor={`tool-${key}`} className="text-xs">
+                          {schema.label}
+                          {schema.required && <span className="text-destructive ml-1">*</span>}
+                        </Label>
+                        
+                        {schema.type === "boolean" ? (
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id={`tool-${key}`}
+                              checked={(activeNode as ToolNode).config?.[key] ?? schema.default ?? false}
+                              onCheckedChange={(checked) =>
+                                updateNodeConfig({ ...(activeNode as ToolNode).config, [key]: checked })
+                              }
+                            />
+                            {schema.description && (
+                              <span className="text-xs text-muted-foreground">
+                                {schema.description}
+                              </span>
+                            )}
+                          </div>
+                        ) : schema.type === "number" ? (
+                          <Input
+                            id={`tool-${key}`}
+                            type="number"
+                            placeholder={schema.placeholder}
+                            value={(activeNode as ToolNode).config?.[key] ?? schema.default ?? ""}
+                            min={schema.min}
+                            max={schema.max}
+                            onChange={(e) => {
+                              let value = parseFloat(e.target.value) || (schema.default ?? 0);
+                              if (schema.min !== undefined) value = Math.max(schema.min, value);
+                              if (schema.max !== undefined) value = Math.min(schema.max, value);
+                              const baseConfig = (activeNode as ToolNode).config ?? {};
+                              updateNodeConfig({ ...baseConfig, [key]: value });
+                            }}
+                            className="h-8 text-xs"
+                          />
+                        ) : schema.type === "textarea" ? (
+                          <Textarea
+                            id={`tool-${key}`}
+                            placeholder={schema.placeholder}
+                            value={(activeNode as ToolNode).config?.[key] ?? schema.default ?? ""}
+                            onChange={(e) => {
+                              const baseConfig = (activeNode as ToolNode).config ?? {};
+                              updateNodeConfig({ ...baseConfig, [key]: e.target.value });
+                            }}
+                            className="min-h-[80px] text-xs resize-y"
+                          />
+                        ) : (
+                          <Input
+                            id={`tool-${key}`}
+                            type="text"
+                            placeholder={schema.placeholder}
+                            value={(activeNode as ToolNode).config?.[key] ?? schema.default ?? ""}
+                            onChange={(e) => {
+                              const baseConfig = (activeNode as ToolNode).config ?? {};
+                              updateNodeConfig({ ...baseConfig, [key]: e.target.value });
+                            }}
+                            className="h-8 text-xs"
+                          />
+                        )}
+                        
+                        {schema.description && schema.type !== "boolean" && (
+                          <p className="text-xs text-muted-foreground">{schema.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </Card>
+                  
+                  {/* Help text about tools vs functions */}
+                  <Card className="p-3 bg-blue-500/5 border-blue-500/20">
+                    <div className="flex gap-2">
+                      <div className="text-blue-500 mt-0.5">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
+                          Tools vs Functions
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          <strong>Tools</strong> are external capabilities (APIs, searches, data fetching) that agents can use.
+                          <strong className="ml-1">Functions</strong> are data processors (transforms, filters, conditionals) that modify workflow data.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              )}
             </>
           )}
 
