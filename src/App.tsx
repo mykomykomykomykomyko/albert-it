@@ -40,6 +40,7 @@ import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
+import ResetPasswordOTP from "./pages/ResetPasswordOTP";
 import Agents from "./pages/Agents";
 import AgentMarketplace from "./pages/AgentMarketplace";
 import PromptLibrary from "./pages/PromptLibrary";
@@ -84,6 +85,7 @@ const App = () => (
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
           
           {/* Agent management routes */}
           <Route path="/agents" element={<Agents />} />

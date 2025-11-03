@@ -123,16 +123,21 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password-otp`,
       });
 
       if (error) throw error;
       
-      toast.success("Password reset email sent! Please check your inbox.");
+      toast.success("Verification code sent! Check your email and go to the reset page.");
       setResetDialogOpen(false);
       setResetEmail("");
+      
+      // Navigate to OTP page after a short delay
+      setTimeout(() => {
+        navigate("/reset-password-otp");
+      }, 1500);
     } catch (error: any) {
-      toast.error(error.message || "An error occurred while sending reset email");
+      toast.error(error.message || "An error occurred while sending reset code");
     } finally {
       setResetLoading(false);
     }
@@ -215,7 +220,7 @@ const Auth = () => {
                       <DialogHeader>
                         <DialogTitle className="text-foreground">Reset Password</DialogTitle>
                         <DialogDescription className="text-muted-foreground">
-                          Enter your email address and we'll send you a link to reset your password.
+                          Enter your email address and we'll send you a 6-digit verification code.
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleResetPassword} className="space-y-4">
@@ -232,7 +237,7 @@ const Auth = () => {
                           />
                         </div>
                         <Button type="submit" className="w-full" disabled={resetLoading}>
-                          {resetLoading ? "Sending..." : "Send Reset Link"}
+                          {resetLoading ? "Sending..." : "Send Verification Code"}
                         </Button>
                       </form>
                     </DialogContent>
