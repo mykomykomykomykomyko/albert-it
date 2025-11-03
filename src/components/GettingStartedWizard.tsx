@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Check, ArrowRight, Sparkles, Bot, Workflow, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -153,24 +154,37 @@ const steps = [
 
 export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const navigate = useNavigate();
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      onOpenChange(false);
+      handleComplete();
     }
   };
 
+  const handleComplete = () => {
+    if (dontShowAgain) {
+      localStorage.setItem('getting-started-completed', 'true');
+    }
+    onOpenChange(false);
+  };
+
   const handleAction = (path: string) => {
+    if (dontShowAgain) {
+      localStorage.setItem('getting-started-completed', 'true');
+    }
     onOpenChange(false);
     navigate(path);
   };
 
   const handleSkip = () => {
+    if (dontShowAgain) {
+      localStorage.setItem('getting-started-completed', 'true');
+    }
     onOpenChange(false);
-    localStorage.setItem('getting-started-completed', 'true');
   };
 
   const step = steps[currentStep];
@@ -206,11 +220,24 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
             ))}
           </div>
 
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" onClick={handleSkip}>
-              Skip Tour
-            </Button>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="dont-show" 
+                checked={dontShowAgain}
+                onCheckedChange={(checked) => setDontShowAgain(checked as boolean)}
+              />
+              <label 
+                htmlFor="dont-show" 
+                className="text-sm text-muted-foreground cursor-pointer select-none"
+              >
+                Don't show again
+              </label>
+            </div>
             <div className="flex gap-2">
+              <Button variant="ghost" onClick={handleSkip}>
+                Skip Tour
+              </Button>
               {step.action && (
                 <Button
                   variant="outline"
