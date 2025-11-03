@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { HelpCircle } from 'lucide-react';
 import { HelperAgent } from './HelperAgent';
 
 // Define context information for each route
@@ -85,27 +83,9 @@ export function GlobalHelperAgent() {
   };
   
   const contextName = getRouteContext();
-  
-  // Position helper bot on left for chat pages to avoid covering send button
-  const isOnChatPage = location.pathname.startsWith('/chat');
-  const positionClass = isOnChatPage 
-    ? "fixed bottom-6 left-6 z-40" 
-    : "fixed bottom-6 right-6 z-40";
 
   return (
     <>
-      {/* Floating Helper Button */}
-      {!showHelper && (
-        <Button
-          onClick={() => setShowHelper(true)}
-          className={`${positionClass} rounded-full h-14 w-14 shadow-lg hover:scale-110 transition-transform`}
-          size="icon"
-          title="AI Helper - Ask me anything!"
-        >
-          <HelpCircle className="h-6 w-6" />
-        </Button>
-      )}
-
       {/* Helper Agent Modal */}
       {showHelper && (
         <HelperAgent

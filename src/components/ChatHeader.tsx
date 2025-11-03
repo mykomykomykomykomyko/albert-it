@@ -108,6 +108,15 @@ export function ChatHeader() {
             </div>
             <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Albert</h1>
           </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={openHelperAgent}
+            title="AI Helper - Ask me anything!"
+            className="hover:bg-accent text-foreground"
+          >
+            <HelpCircle className="h-5 w-5" />
+          </Button>
         </div>
         
         {/* Desktop Navigation */}
