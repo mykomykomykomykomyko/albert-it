@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useConversationPresence } from '@/hooks/useConversationPresence';
 
 interface Message {
   id: string;
@@ -35,6 +36,10 @@ export default function SharedConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isContinuing, setIsContinuing] = useState(false);
+  
+  // Real-time presence for typing indicators
+  const { getActiveUsers } = useConversationPresence(conversation?.id || null);
+  const activeUsers = getActiveUsers();
 
   useEffect(() => {
     const fetchSharedConversation = async () => {
@@ -276,6 +281,49 @@ export default function SharedConversation() {
               </div>
             ))
           )}
+          
+          {/* Real-time typing/thinking indicators */}
+          {activeUsers.map((activeUser, idx) => (
+            <div key={idx} className="flex gap-3 items-start">
+              {activeUser.isThinking ? (
+                <>
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">
+                      A
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-lg px-4 py-3 max-w-[80%]">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      <span className="text-sm text-muted-foreground">Thinking...</span>
+                    </div>
+                  </div>
+                </>
+              ) : activeUser.isTyping ? (
+                <>
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarFallback className="bg-secondary text-secondary-foreground">
+                      {activeUser.userName?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-lg px-4 py-3 max-w-[80%]">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground/60 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      <span className="text-sm text-muted-foreground">{activeUser.userName} is typing...</span>
+                    </div>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          ))}
         </div>
       </ScrollArea>
 

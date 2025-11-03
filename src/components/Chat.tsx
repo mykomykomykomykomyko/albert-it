@@ -27,6 +27,8 @@ import { GettingStartedWizard } from './GettingStartedWizard';
 import { WorkflowSuggestion, ActionType } from './chat/WorkflowSuggestion';
 import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
 import { ShareConversationDialog } from './chat/ShareConversationDialog';
+import { useConversationPresence } from '@/hooks/useConversationPresence';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ImageAttachment {
   name: string;
@@ -49,6 +51,7 @@ const Chat = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
@@ -68,6 +71,37 @@ const Chat = () => {
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
+  
+  // Presence for real-time typing indicators
+  const { broadcastTyping, broadcastThinking } = useConversationPresence(currentConversation?.id || null);
+
+  // Broadcast typing state when input changes (with debounce)
+  useEffect(() => {
+    if (!currentConversation) return;
+    
+    const userName = user?.email?.split('@')[0] || 'User';
+    
+    // Set typing to true immediately when typing
+    if (input.trim()) {
+      broadcastTyping(true, userName);
+      
+      // Debounce: Clear typing after 2 seconds of inactivity
+      const timeoutId = setTimeout(() => {
+        broadcastTyping(false, userName);
+      }, 2000);
+      
+      return () => clearTimeout(timeoutId);
+    } else {
+      broadcastTyping(false, userName);
+    }
+  }, [input, currentConversation, user, broadcastTyping]);
+
+  // Broadcast thinking state when AI is loading
+  useEffect(() => {
+    if (!currentConversation) return;
+    
+    broadcastThinking(isLoading);
+  }, [isLoading, currentConversation, broadcastThinking]);
 
   // Handle prompt text from location state
   useEffect(() => {
