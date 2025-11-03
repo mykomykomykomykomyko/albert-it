@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, ImagePlus } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -328,6 +328,107 @@ const Chat = () => {
       }
     }
     event.target.value = '';
+  };
+
+  const handleGenerateImage = async () => {
+    if (!currentConversation || !input.trim() || isLoading) return;
+    
+    const prompt = input.trim();
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      // Save user message with image generation request
+      const { data: savedUserMessage, error: userError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: currentConversation.id,
+          role: "user" as const,
+          content: `Generate an image: ${prompt}`,
+        })
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
+      setMessages(prev => [...prev, savedUserMessage as Message]);
+
+      // Update conversation title if first message
+      if (messages.length === 0) {
+        const title = `Image: ${prompt.slice(0, 40)}${prompt.length > 40 ? '...' : ''}`;
+        await supabase
+          .from("conversations")
+          .update({ title, updated_at: new Date().toISOString() })
+          .eq("id", currentConversation.id);
+        setCurrentConversation({ ...currentConversation, title });
+        await loadConversations();
+      }
+
+      // Get session for auth
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
+
+      // Call generate-image function
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to generate image: ${response.status}`);
+      }
+
+      const { imageUrl, description } = await response.json();
+
+      // Save assistant message with generated image
+      const assistantContent = `${description}\n\n![Generated Image](${imageUrl})`;
+      
+      const { data: assistantMessage, error: assistantError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: currentConversation.id,
+          role: "assistant" as const,
+          content: assistantContent,
+        })
+        .select()
+        .single();
+
+      if (assistantError) throw assistantError;
+
+      setMessages(prev => [...prev, assistantMessage as Message]);
+      toast.success("Image generated successfully!");
+
+    } catch (error: any) {
+      console.error('💥 Image generation error:', error);
+      toast.error(error.message || 'Failed to generate image');
+      
+      // Add error message
+      const errorMessage = {
+        conversation_id: currentConversation.id,
+        role: "assistant" as const,
+        content: `Sorry, I couldn't generate that image. ${error.message}`,
+      };
+      
+      const { data } = await supabase
+        .from("messages")
+        .insert(errorMessage)
+        .select()
+        .single();
+        
+      if (data) {
+        setMessages(prev => [...prev, data as Message]);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSend = async () => {
@@ -779,6 +880,15 @@ const Chat = () => {
                       title="Download chat history"
                     >
                       <Download className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={handleGenerateImage}
+                      disabled={!input.trim() || isLoading}
+                      title="Generate image with AI"
+                    >
+                      <ImagePlus className="h-4 w-4" />
                     </Button>
                     <input
                       id="file-upload"

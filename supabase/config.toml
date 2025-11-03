@@ -1,5 +1,8 @@
 project_id = "irasizphibjnkhrpfoza"
 
+[functions.generate-image]
+verify_jwt = true
+
 [functions.gemini-chat]
 verify_jwt = true
 

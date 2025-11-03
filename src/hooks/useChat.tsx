@@ -40,6 +40,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 
 /**
  * Chat message structure
@@ -51,6 +52,7 @@ export interface ChatMessage {
   timestamp: string;
   images?: ImageAttachment[];
   files?: FileAttachment[];
+  generatedImage?: string; // Base64 image data for generated images
 }
 
 /**
@@ -334,11 +336,85 @@ export function useChat() {
     }
   }, [user, messages, loading]);
 
+  const generateImage = useCallback(async (prompt: string) => {
+    if (!user?.email || loading) return;
+
+    console.log('🎨 Starting generateImage with:', { prompt, userEmail: user.email });
+    setLoading(true);
+    
+    // Add user message to UI immediately
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: `Generate an image: ${prompt}`,
+      timestamp: new Date().toISOString(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    await saveMessageToHistory(userMessage);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session. Please sign in again.');
+      }
+
+      console.log('📡 Calling generate-image function...');
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to generate image: ${response.status}`);
+      }
+
+      const { imageUrl, description } = await response.json();
+
+      // Create assistant message with generated image
+      const assistantMessage: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: description,
+        timestamp: new Date().toISOString(),
+        generatedImage: imageUrl,
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+      await saveMessageToHistory(assistantMessage);
+
+    } catch (error: any) {
+      console.error('💥 generateImage error:', error);
+      toast.error(error.message || 'Failed to generate image');
+      
+      // Add error message
+      const errorMessage: ChatMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: `Sorry, I couldn't generate that image. ${error.message}`,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, loading]);
+
   return {
     messages,
     loading,
     isLoadingHistory,
     sendMessage,
     resetChat,
+    generateImage,
   };
 }
