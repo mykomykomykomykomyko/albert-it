@@ -878,7 +878,15 @@ const Canvas = () => {
       } as ToolNode;
     }
     
-    return undefined;
+    // Handle all other node types (input, output, transform, join) as generic WorkflowNodes
+    return {
+      id: node.id,
+      nodeType: data.nodeType || 'tool',
+      name: data.label || node.id,
+      config: data.config || {},
+      status: data.status || 'idle',
+      output: data.output,
+    } as WorkflowNode;
   };
 
   // Convert Canvas Node to AgentNode format for PropertiesPanel
