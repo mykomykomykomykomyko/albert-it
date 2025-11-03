@@ -387,8 +387,8 @@ export const Sidebar = ({
       )}
       
       {!isCollapsed && (
-        <ScrollArea className="flex-1">
-          <div className="p-4 space-y-6">
+        <ScrollArea className="flex-1 h-full">
+          <div className="p-4 space-y-6 pb-20">
           {/* Workflow Name */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
