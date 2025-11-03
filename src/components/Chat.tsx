@@ -453,9 +453,11 @@ const Chat = () => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const msg = messages[i];
       if (msg.role === 'assistant') {
-        const imageMatch = msg.content.match(/!\[.*?\]\((data:image\/[^)]+)\)/);
-        if (imageMatch) {
-          lastGeneratedImageUrl = imageMatch[1];
+        const mdMatch = msg.content.match(/!\[[^\]]*\]\(([^)]+)\)/);
+        const standaloneMatch = msg.content.match(/(data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
+        const foundUrl = mdMatch?.[1] || standaloneMatch?.[1];
+        if (foundUrl) {
+          lastGeneratedImageUrl = foundUrl;
           break;
         }
       }
