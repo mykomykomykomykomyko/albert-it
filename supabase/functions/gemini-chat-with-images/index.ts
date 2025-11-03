@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.sh/@google/generative-ai@0.21.0"
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,42 +25,63 @@ const getSafetySettings = () => [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
+// Safe ArrayBuffer -> base64 (avoids stack overflow)
+const toBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+};
+
 // Helper: Process image (data URL or HTTP URL) to base64
 const processImageDataUrl = async (imageUrl: string) => {
-  // Check if it's a data URL
+  // 1) Data URL
   const base64Regex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
   if (base64Regex.test(imageUrl)) {
     const mimeTypeMatch = imageUrl.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,/);
     const mimeType = mimeTypeMatch ? `image/${mimeTypeMatch[1]}` : 'image/jpeg';
     const base64Content = imageUrl.replace(base64Regex, '');
-    
-    return {
-      mimeType,
-      data: base64Content
-    };
+    return { mimeType, data: base64Content };
   }
-  
-  // Check if it's an HTTP/HTTPS URL
+
+  // 2) Supabase Storage public URL (download via SDK to avoid redirects/cors)
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+  const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  if (SUPABASE_URL && imageUrl.startsWith(`${SUPABASE_URL}/storage/v1/object/public/`)) {
+    try {
+      const publicPrefix = `${SUPABASE_URL}/storage/v1/object/public/`;
+      const rest = imageUrl.slice(publicPrefix.length);
+      const [bucket, ...parts] = rest.split('/');
+      const filePath = parts.join('/');
+      if (!SERVICE_ROLE) throw new Error('Missing service role key for storage download');
+      const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+      const { data: blob, error } = await supabase.storage.from(bucket).download(filePath);
+      if (error || !blob) throw error || new Error('Download failed');
+      const arrayBuffer = await blob.arrayBuffer();
+const base64 = toBase64(arrayBuffer);
+      const contentType = blob.type || 'image/jpeg';
+      return { mimeType: contentType, data: base64 };
+    } catch (err) {
+      console.error('Error downloading from storage:', err);
+      // Fall through to generic fetch below
+    }
+  }
+
+  // 3) Generic HTTP(S) fetch
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
     try {
       const response = await fetch(imageUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.statusText}`);
-      }
-      
+      if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
       const contentType = response.headers.get('content-type') || 'image/jpeg';
       const arrayBuffer = await response.arrayBuffer();
-      const base64 = base64Encode(arrayBuffer);
-      return {
-        mimeType: contentType,
-        data: base64
-      };
+      const base64 = toBase64(arrayBuffer);
+      return { mimeType: contentType, data: base64 };
     } catch (error) {
       console.error('Error fetching image URL:', error);
       throw new Error('Failed to fetch image from URL');
     }
   }
-  
+
   throw new Error('Invalid image format. Must be a data URL (data:image/...) or HTTP(S) URL.');
 };
 

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "https://esm.sh/@google/generative-ai@0.21.0"
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,6 +24,14 @@ const getSafetySettings = () => [
   { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
+
+// Safe ArrayBuffer -> base64 (avoids stack overflow)
+const toBase64 = (buffer: ArrayBuffer): string => {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+};
 
 // Helper: Process image (data URL or HTTP URL) to base64
 const processImageDataUrl = async (imageUrl: string) => {
@@ -49,7 +58,7 @@ const processImageDataUrl = async (imageUrl: string) => {
 
        const contentType = response.headers.get('content-type') || 'image/jpeg';
        const arrayBuffer = await response.arrayBuffer();
-       const base64 = base64Encode(arrayBuffer);
+       const base64 = toBase64(arrayBuffer);
        return {
          mimeType: contentType,
          data: base64
