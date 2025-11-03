@@ -563,13 +563,22 @@ const Chat = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('No active session');
 
-      // Prepare request - maintain full message history
+      // Prepare request - maintain full message history but strip large image data
+      const sanitizedHistory = updatedMessages.map(msg => {
+        let content = msg.content;
+        // Remove image markdown and standalone URLs to reduce token count
+        content = content.replace(/!\[[^\]]*\]\([^)]+\)/g, '[Image]');
+        content = content.replace(/(https?:\/\/[^\s]+\.(?:png|jpg|jpeg|webp|gif))/gi, '[Image]');
+        content = content.replace(/(data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+)/gi, '[Image]');
+        return {
+          role: msg.role,
+          content: content
+        };
+      });
+
       const requestPayload: any = {
         message: fullContent,
-        messageHistory: updatedMessages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
+        messageHistory: sanitizedHistory
       };
 
       // Apply agent persona if selected - only affects system prompt and current message wrapping
@@ -579,17 +588,42 @@ const Chat = () => {
         requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
       }
 
-      if (images.length > 0) {
-        requestPayload.images = images.map(img => img.dataUrl);
+      // Check if user is asking about a recent image
+      const imageQuestionWords = ['what', 'tell me', 'describe', 'explain', 'about this', 'analyze', 'show me'];
+      const isAskingAboutImage = imageQuestionWords.some(word => 
+        fullContent.toLowerCase().includes(word)
+      );
+
+      // Find the most recent generated image if user is asking about it
+      let recentImageForAnalysis: string | undefined;
+      if (isAskingAboutImage && images.length === 0) {
+        for (let i = messages.length - 1; i >= 0; i--) {
+          const msg = messages[i];
+          if (msg.role === 'assistant') {
+            const mdMatch = msg.content.match(/!\[[^\]]*\]\(([^)]+)\)/);
+            const standaloneMatch = msg.content.match(/(https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
+            const foundUrl = mdMatch?.[1] || standaloneMatch?.[1];
+            if (foundUrl && !foundUrl.startsWith('data:')) {
+              recentImageForAnalysis = foundUrl;
+              break;
+            }
+          }
+        }
+      }
+
+      if (images.length > 0 || recentImageForAnalysis) {
+        requestPayload.images = images.length > 0 
+          ? images.map(img => img.dataUrl)
+          : [recentImageForAnalysis];
       }
 
       // Store payload for troubleshooting
       setLastPayload({
         timestamp: new Date().toISOString(),
-        endpoint: images.length > 0 ? 'gemini-chat-with-images' : 'gemini-chat',
+        endpoint: (images.length > 0 || recentImageForAnalysis) ? 'gemini-chat-with-images' : 'gemini-chat',
         model: 'gemini-2.5-flash',
         systemPrompt: requestPayload.systemPrompt,
-        messages: requestPayload.messageHistory,
+        messages: sanitizedHistory,
         attachments: [...images.map(img => ({ type: 'image', name: img.name })), ...files.map(f => ({ type: 'file', name: f.filename }))],
         fullRequest: requestPayload,
         payload: requestPayload,
@@ -601,7 +635,7 @@ const Chat = () => {
       });
 
       // Call appropriate endpoint - both use Gemini API
-      const endpoint = images.length > 0 
+      const endpoint = (images.length > 0 || recentImageForAnalysis)
         ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`
         : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`;
 
