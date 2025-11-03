@@ -193,25 +193,36 @@ export const useAgents = () => {
 
   const shareAgent = async (agentId: string, userEmail: string, permission: 'view' | 'edit' = 'view'): Promise<boolean> => {
     try {
-      const { data: targetUser, error: userError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', userEmail)
-        .single();
+      // Use RPC function to look up user by email (bypasses RLS)
+      const { data: targetUserId, error: userError } = await supabase
+        .rpc('get_user_id_by_email', { _email: userEmail });
 
-      if (userError || !targetUser) {
-        toast.error('User not found');
+      if (userError || !targetUserId) {
+        toast.error('User not found. Make sure the email is registered.');
         return false;
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      // Check if already shared
+      const { data: existingShare } = await supabase
+        .from('agent_shares')
+        .select('id')
+        .eq('agent_id', agentId)
+        .eq('shared_with_user_id', targetUserId)
+        .single();
+
+      if (existingShare) {
+        toast.error('Agent already shared with this user');
+        return false;
+      }
+
       const { error } = await supabase
         .from('agent_shares')
         .insert({
           agent_id: agentId,
-          shared_with_user_id: targetUser.id,
+          shared_with_user_id: targetUserId,
           shared_by_user_id: user.id,
           permission
         });
@@ -220,9 +231,9 @@ export const useAgents = () => {
 
       toast.success('Agent shared successfully');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sharing agent:', error);
-      toast.error('Failed to share agent');
+      toast.error(error.message || 'Failed to share agent');
       return false;
     }
   };
