@@ -810,16 +810,28 @@ const Chat = () => {
                      </div>
                    </div>
                 ))}
-                {isLoading && (
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0">
-                      <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                    </div>
-                    <div className="bg-card border border-border rounded-2xl px-4 py-3">
-                      <div className="text-sm text-muted-foreground">Thinking...</div>
-                    </div>
-                  </div>
-                )}
+                 {isLoading && (
+                   <div className="flex gap-3 items-start">
+                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center shrink-0 animate-pulse">
+                       <Sparkles className="w-4 h-4 text-white animate-spin" style={{ animationDuration: '3s' }} />
+                     </div>
+                     <div className="bg-gradient-to-r from-card/50 to-card border border-primary/20 rounded-2xl px-5 py-4 backdrop-blur-sm shadow-lg shadow-primary/5">
+                       <div className="flex items-center gap-3">
+                         <div className="flex gap-1.5">
+                           <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms', animationDuration: '1s' }} />
+                           <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms', animationDuration: '1s' }} />
+                           <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms', animationDuration: '1s' }} />
+                         </div>
+                         <div className="relative">
+                           <div className="text-sm font-medium bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent animate-pulse">
+                             Thinking
+                           </div>
+                           <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-accent/20 blur-sm -z-10 animate-pulse" />
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
               </div>
             </ScrollArea>
 
