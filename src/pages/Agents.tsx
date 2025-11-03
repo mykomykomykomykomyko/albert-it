@@ -86,17 +86,28 @@ const Agents = () => {
   });
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.system_prompt || !formData.user_prompt) {
-      toast.error("Please fill in all required fields");
+    // Trim and validate all required fields
+    const trimmedName = formData.name?.trim();
+    const trimmedSystemPrompt = formData.system_prompt?.trim();
+    const trimmedUserPrompt = formData.user_prompt?.trim();
+    
+    console.log('Validation check:', {
+      name: trimmedName,
+      system_prompt: trimmedSystemPrompt,
+      user_prompt: trimmedUserPrompt
+    });
+
+    if (!trimmedName || !trimmedSystemPrompt || !trimmedUserPrompt) {
+      toast.error("Please fill in all required fields (Name, System Prompt, User Prompt)");
       return;
     }
 
     const agentData: AgentTemplate = {
-      name: formData.name,
+      name: trimmedName,
       type: formData.type || "Text",
-      description: formData.description || "",
-      system_prompt: formData.system_prompt,
-      user_prompt: formData.user_prompt,
+      description: formData.description?.trim() || "",
+      system_prompt: trimmedSystemPrompt,
+      user_prompt: trimmedUserPrompt,
       icon_name: formData.icon_name || "Bot",
       metadata_tags: formData.metadata_tags_input?.split(',').map(t => t.trim()).filter(Boolean) || [],
       profile_picture_url: formData.profile_picture_url,
