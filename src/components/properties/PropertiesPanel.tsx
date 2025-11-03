@@ -108,16 +108,6 @@ export const PropertiesPanel = ({
     ? FunctionRegistry.getById((activeNode as FunctionNode).functionType)
     : null;
 
-  // Debug logging
-  if (activeNode.nodeType === "function") {
-    console.log("Function node detected:", {
-      functionType: (activeNode as FunctionNode).functionType,
-      functionDef: functionDef,
-      hasConfigSchema: !!functionDef?.configSchema,
-      configSchema: functionDef?.configSchema
-    });
-  }
-
   // Get tool definition if it's a tool node
   const toolDef = activeNode.nodeType === "tool"
     ? availableTools.find(t => t.id === (activeNode as ToolNode).toolType)
@@ -719,6 +709,74 @@ export const PropertiesPanel = ({
                 <p className="text-xs text-muted-foreground">
                   Use {"{input}"} for stage inputs
                 </p>
+              </div>
+            </>
+          )}
+
+          {/* Input node-specific fields */}
+          {(activeNode as any).nodeType === "input" && (
+            <>
+              <div className="space-y-4">
+                <Label className="text-sm font-medium">Input Configuration</Label>
+                <Card className="p-4 bg-muted/30 border-border space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="inputType" className="text-xs font-medium">
+                      Input Type
+                    </Label>
+                    <Input
+                      id="inputType"
+                      type="text"
+                      value={(activeNode as any).inputType || 'text'}
+                      readOnly
+                      className="h-9 text-sm bg-muted border-input"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="userPrompt" className="text-xs font-medium">
+                      Input Text
+                    </Label>
+                    <Textarea
+                      id="userPrompt"
+                      placeholder="Enter your input text here..."
+                      value={(activeNode as any).userPrompt || ''}
+                      onChange={(e) => {
+                        if (onUpdateNode) {
+                          onUpdateNode(activeNode.id, { userPrompt: e.target.value } as any);
+                        }
+                      }}
+                      className="min-h-[120px] text-sm resize-y bg-background border-input focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Enter the text you want to pass to the next node
+                    </p>
+                  </div>
+                  
+                  {(activeNode as any).inputType === 'file' && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">
+                        File Upload
+                      </Label>
+                      <Input
+                        type="file"
+                        onChange={(e) => {
+                          // Handle file upload if needed
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            toast({
+                              title: "File selected",
+                              description: file.name,
+                            });
+                          }
+                        }}
+                        className="h-9 text-sm bg-background border-input"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload a file to use as input
+                      </p>
+                    </div>
+                  )}
+                </Card>
               </div>
             </>
           )}
