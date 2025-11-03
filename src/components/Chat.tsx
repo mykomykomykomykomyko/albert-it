@@ -589,7 +589,7 @@ const Chat = () => {
       }
 
       // Check if user is asking about a recent image
-      const imageQuestionWords = ['what', 'tell me', 'describe', 'explain', 'about this', 'analyze', 'show me'];
+      const imageQuestionWords = ['what', 'tell me', 'describe', 'explain', 'about this', 'analyze', 'show me', 'see'];
       const isAskingAboutImage = imageQuestionWords.some(word => 
         fullContent.toLowerCase().includes(word)
       );
@@ -597,21 +597,27 @@ const Chat = () => {
       // Find the most recent generated image if user is asking about it
       let recentImageForAnalysis: string | undefined;
       if (isAskingAboutImage && images.length === 0) {
+        console.log('🔍 Looking for recent image to analyze...');
         for (let i = messages.length - 1; i >= 0; i--) {
           const msg = messages[i];
           if (msg.role === 'assistant') {
             const mdMatch = msg.content.match(/!\[[^\]]*\]\(([^)]+)\)/);
-            const standaloneMatch = msg.content.match(/(https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
+            const standaloneMatch = msg.content.match(/(data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
             const foundUrl = mdMatch?.[1] || standaloneMatch?.[1];
-            if (foundUrl && !foundUrl.startsWith('data:')) {
+            if (foundUrl) {
+              console.log('✅ Found recent image for analysis:', foundUrl.substring(0, 100) + '...');
               recentImageForAnalysis = foundUrl;
               break;
             }
           }
         }
+        if (!recentImageForAnalysis) {
+          console.log('❌ No recent image found in history');
+        }
       }
 
       if (images.length > 0 || recentImageForAnalysis) {
+        console.log('📸 Including images in request:', images.length > 0 ? `${images.length} uploaded` : '1 from history');
         requestPayload.images = images.length > 0 
           ? images.map(img => img.dataUrl)
           : [recentImageForAnalysis];
