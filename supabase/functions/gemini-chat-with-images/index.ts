@@ -23,21 +23,44 @@ const getSafetySettings = () => [
   { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
 ];
 
-// Helper: Process image data URL to base64
-const processImageDataUrl = (imageDataUrl: string) => {
+// Helper: Process image (data URL or HTTP URL) to base64
+const processImageDataUrl = async (imageUrl: string) => {
+  // Check if it's a data URL
   const base64Regex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
-  if (!base64Regex.test(imageDataUrl)) {
-    throw new Error('Invalid base64 image format. Must be PNG, JPEG, GIF, or WebP.');
+  if (base64Regex.test(imageUrl)) {
+    const mimeTypeMatch = imageUrl.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,/);
+    const mimeType = mimeTypeMatch ? `image/${mimeTypeMatch[1]}` : 'image/jpeg';
+    const base64Content = imageUrl.replace(base64Regex, '');
+    
+    return {
+      mimeType,
+      data: base64Content
+    };
   }
-
-  const mimeTypeMatch = imageDataUrl.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,/);
-  const mimeType = mimeTypeMatch ? `image/${mimeTypeMatch[1]}` : 'image/jpeg';
-  const base64Content = imageDataUrl.replace(base64Regex, '');
   
-  return {
-    mimeType,
-    data: base64Content
-  };
+  // Check if it's an HTTP/HTTPS URL
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      const response = await fetch(imageUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+      const arrayBuffer = await response.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      
+      return {
+        mimeType: contentType,
+        data: base64
+      };
+    } catch (error) {
+      console.error('Error fetching image URL:', error);
+      throw new Error('Failed to fetch image from URL');
+    }
+  }
+  
+  throw new Error('Invalid image format. Must be a data URL (data:image/...) or HTTP(S) URL.');
 };
 
 serve(async (req) => {
@@ -92,16 +115,16 @@ serve(async (req) => {
       parts: [{ text: msg.content }],
     }));
 
-    // Process images
-    const imageParts = images.map((imageDataUrl: string) => {
-      const { mimeType, data } = processImageDataUrl(imageDataUrl);
+    // Process images (supports both data URLs and HTTP URLs)
+    const imageParts = await Promise.all(images.map(async (imageDataUrl: string) => {
+      const { mimeType, data } = await processImageDataUrl(imageDataUrl);
       return {
         inlineData: {
           mimeType,
           data
         }
       };
-    });
+    }));
 
     // Add current message with images
     const currentMessageParts = [];
