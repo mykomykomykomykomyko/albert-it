@@ -112,32 +112,33 @@ export const Sidebar = ({
 
   return (
     <div className="h-full flex flex-col bg-card">
-      <div className="p-4 border-b border-border space-y-4">
-        <div>
-          <Label htmlFor="workflow-name" className="text-sm font-medium">Workflow Name</Label>
-          <Input
-            id="workflow-name"
-            value={workflowName}
-            onChange={(e) => onWorkflowNameChange(e.target.value)}
-            placeholder="My Workflow"
-            className="mt-1.5"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="user-input" className="text-sm font-medium">Initial Input</Label>
-          <Textarea
-            id="user-input"
-            value={userInput}
-            onChange={(e) => onUserInputChange(e.target.value)}
-            placeholder="Enter initial input for the workflow..."
-            className="mt-1.5 min-h-[100px] resize-none"
-          />
-        </div>
-      </div>
-
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-6">
+          {/* Workflow meta (now scrollable) */}
+          <div className="space-y-4 border-b border-border pb-4">
+            <div>
+              <Label htmlFor="workflow-name" className="text-sm font-medium">Workflow Name</Label>
+              <Input
+                id="workflow-name"
+                value={workflowName}
+                onChange={(e) => onWorkflowNameChange(e.target.value)}
+                placeholder="My Workflow"
+                className="mt-1.5"
+              />
+            </div>
+            <div>
+              <Label htmlFor="user-input" className="text-sm font-medium">Initial Input</Label>
+              <Textarea
+                id="user-input"
+                value={userInput}
+                onChange={(e) => onUserInputChange(e.target.value)}
+                placeholder="Enter initial input for the workflow..."
+                className="mt-1.5 min-h-[100px] resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Library content */}
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Bot className="h-4 w-4" />
@@ -170,7 +171,6 @@ export const Sidebar = ({
 
           <div>
             <h3 className="text-sm font-semibold mb-3">Functions</h3>
-            
             <div className="space-y-3 mb-4">
               <Input
                 placeholder="Search functions..."
@@ -178,7 +178,6 @@ export const Sidebar = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9"
               />
-              
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="h-9">
                   <SelectValue />
@@ -192,7 +191,6 @@ export const Sidebar = ({
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               {filteredFunctions.map((func) => {
                 const IconComponent = func.icon;
