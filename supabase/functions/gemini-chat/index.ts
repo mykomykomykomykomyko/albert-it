@@ -153,14 +153,19 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
     }
 
     const result = await aiResponse.json();
+    console.log('Gemini API response:', JSON.stringify(result, null, 2));
     const parts = result?.candidates?.[0]?.content?.parts || [];
     const fullText = parts.map((p: any) => p.text).filter(Boolean).join("");
+    
+    console.log('Extracted text length:', fullText.length);
+    console.log('Full text preview:', fullText.substring(0, 200));
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        if (!fullText) {
-          const errorData = `data: ${JSON.stringify({ error: "Empty response from Gemini" })}\n\n`;
+        if (!fullText || fullText.trim().length === 0) {
+          console.error('Empty response from Gemini API');
+          const errorData = `data: ${JSON.stringify({ text: "I apologize, but I received an empty response. Please try rephrasing your message." })}\n\n`;
           controller.enqueue(encoder.encode(errorData));
           controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
           controller.close();

@@ -445,7 +445,7 @@ const Chat = () => {
     const userContent = input.trim();
     
     // Check if this is an image editing request (edit/change/modify the last image)
-    const editWords = ['edit', 'change', 'modify', 'update', 'transform', 'turn', 'convert', 'alter'];
+    const editWords = ['edit', 'change', 'modify', 'update', 'transform', 'turn', 'convert', 'alter', 'make'];
     const lowerContent = userContent.toLowerCase();
     
     // Look for the most recent generated image in the conversation
