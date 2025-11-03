@@ -51,7 +51,7 @@ export const ResponsiveLayout = ({
         <div className="flex-1 overflow-hidden">
           <div
             className={cn(
-              "h-full overflow-y-auto",
+              "h-full",
               mobileTab !== "library" && "hidden"
             )}
           >
