@@ -612,6 +612,11 @@ const Agents = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredAgents.map((agent) => (
                 <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+                  {agent.is_shared_with_me && (
+                    <div className="bg-blue-500 text-white px-4 py-2 text-sm rounded-t-lg">
+                      Shared by {agent.shared_by_name || agent.shared_by_email || 'Unknown'}
+                    </div>
+                  )}
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3 flex-1">

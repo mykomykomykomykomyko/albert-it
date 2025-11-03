@@ -70,6 +70,9 @@ export interface Agent {
   usage_count?: number; // How many times agent has been used
   rating?: number; // Average user rating (0-5)
   category?: string; // Primary category
+  shared_by_name?: string; // Name of user who shared with me
+  shared_by_email?: string; // Email of user who shared with me
+  is_shared_with_me?: boolean; // Whether this agent was shared with me
 }
 
 /**
@@ -106,13 +109,61 @@ export const useAgents = () => {
 
   const loadAgents = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Get all agents with sharing info
+      const { data: agentsData, error: agentsError } = await supabase
         .from('agents')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setAgents((data || []) as Agent[]);
+      if (agentsError) throw agentsError;
+
+      // Get all agent shares where I'm the recipient
+      const { data: sharesData, error: sharesError } = await supabase
+        .from('agent_shares')
+        .select('agent_id, shared_by_user_id')
+        .eq('shared_with_user_id', user.id);
+
+      if (sharesError) throw sharesError;
+
+      // Get profile info for users who shared with me
+      const sharedByUserIds = sharesData?.map(s => s.shared_by_user_id) || [];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', sharedByUserIds.length > 0 ? sharedByUserIds : ['00000000-0000-0000-0000-000000000000']);
+
+      if (profilesError) throw profilesError;
+
+      // Build a map of agent_id -> profile info
+      const shareMap = new Map();
+      sharesData?.forEach(share => {
+        const profile = profilesData?.find(p => p.id === share.shared_by_user_id);
+        if (profile) {
+          shareMap.set(share.agent_id, {
+            shared_by_name: profile.full_name,
+            shared_by_email: profile.email,
+          });
+        }
+      });
+
+      // Combine the data
+      const agentsWithSharing = (agentsData || []).map((agent: any) => {
+        const shareInfo = shareMap.get(agent.id);
+        return {
+          ...agent,
+          shared_by_name: shareInfo?.shared_by_name,
+          shared_by_email: shareInfo?.shared_by_email,
+          is_shared_with_me: !!shareInfo,
+        } as Agent & { shared_by_name?: string; shared_by_email?: string; is_shared_with_me?: boolean };
+      });
+
+      setAgents(agentsWithSharing);
     } catch (error) {
       console.error('Error loading agents:', error);
       toast.error('Failed to load agents');
