@@ -211,13 +211,23 @@ export const useAgents = () => {
         .select('id')
         .eq('agent_id', agentId)
         .eq('shared_with_user_id', targetUserId)
-        .single();
+        .maybeSingle();
 
       if (existingShare) {
         toast.error('Agent already shared with this user');
         return false;
       }
 
+      // Update agent visibility to 'shared' if it's not already
+      const { error: visibilityError } = await supabase
+        .from('agents')
+        .update({ visibility: 'shared' })
+        .eq('id', agentId)
+        .eq('user_id', user.id);
+
+      if (visibilityError) throw visibilityError;
+
+      // Create the share record
       const { error } = await supabase
         .from('agent_shares')
         .insert({
@@ -228,6 +238,9 @@ export const useAgents = () => {
         });
 
       if (error) throw error;
+
+      // Refresh agents to show updated visibility
+      await loadAgents();
 
       toast.success('Agent shared successfully');
       return true;
