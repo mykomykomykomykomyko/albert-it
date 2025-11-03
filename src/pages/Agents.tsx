@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store, RefreshCw } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store, RefreshCw, LayoutGrid, Table } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
@@ -25,6 +25,7 @@ const Agents = () => {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<Agent | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -375,6 +376,27 @@ const Agents = () => {
                   ))}
                 </SelectContent>
               </Select>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant={viewMode === "cards" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("cards")}
+                  className="flex-1"
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Cards
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                  className="flex-1"
+                >
+                  <Table className="h-4 w-4 mr-2" />
+                  Table
+                </Button>
+              </div>
             </div>
           </PageSidebarSection>
 
@@ -608,8 +630,8 @@ const Agents = () => {
                 <p className="text-sm text-muted-foreground mt-1">Create your first agent to get started</p>
               </CardContent>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          ) : viewMode === "cards" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredAgents.map((agent) => (
                 <Card key={agent.id} className="hover:shadow-lg transition-shadow">
                   {agent.is_shared_with_me && (
@@ -681,6 +703,95 @@ const Agents = () => {
                 </Card>
               ))}
             </div>
+          ) : (
+            <Card>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left p-4 font-medium">Agent</th>
+                        <th className="text-left p-4 font-medium">Type</th>
+                        <th className="text-left p-4 font-medium">Description</th>
+                        <th className="text-left p-4 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAgents.map((agent) => (
+                        <tr key={agent.id} className="border-b hover:bg-muted/50 transition-colors">
+                          <td className="p-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 flex-shrink-0">
+                                <AvatarImage src={agent.profile_picture_url} />
+                                <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <div className="font-medium truncate">{agent.name}</div>
+                                {agent.is_shared_with_me && (
+                                  <div className="text-xs text-blue-500">
+                                    Shared by {agent.shared_by_name || agent.shared_by_email || 'Unknown'}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <Badge variant="secondary" className="text-xs">{agent.type}</Badge>
+                          </td>
+                          <td className="p-4">
+                            <div className="line-clamp-2 text-sm text-muted-foreground max-w-md">
+                              {agent.description || 'No description'}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleEdit(agent)}
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownloadAgent(agent)}
+                              >
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setSelectedAgent(agent);
+                                  setShareDialogOpen(true);
+                                }}
+                              >
+                                <Share2 className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDelete(agent.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={() => handleSubmitForReview(agent)}
+                              >
+                                <Send className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>
