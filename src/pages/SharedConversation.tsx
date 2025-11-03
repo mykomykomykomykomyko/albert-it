@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useConversationPresence } from '@/hooks/useConversationPresence';
+import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
+import { WorkflowSuggestion } from '@/components/chat/WorkflowSuggestion';
 
 interface Message {
   id: string;
@@ -308,9 +310,18 @@ export default function SharedConversation() {
                   )}
                   <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'prose-invert' : 'dark:prose-invert'}`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {message.content}
+                      {parseWorkflowSuggestion(message.content).cleanContent}
                     </ReactMarkdown>
                   </div>
+                  {parseWorkflowSuggestion(message.content).suggestion && (
+                    <div className="mt-3">
+                      <WorkflowSuggestion
+                        actionType={parseWorkflowSuggestion(message.content).suggestion!.type}
+                        workflowData={parseWorkflowSuggestion(message.content).suggestion!.workflow}
+                        description={parseWorkflowSuggestion(message.content).suggestion!.description}
+                      />
+                    </div>
+                  )}
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="h-10 w-10 flex-shrink-0 mt-1 ring-2 ring-secondary/10 shadow-md">
