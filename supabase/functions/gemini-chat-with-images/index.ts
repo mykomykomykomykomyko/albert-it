@@ -98,7 +98,7 @@ serve(async (req) => {
 
     if (images && !Array.isArray(images)) {
       return new Response(
-        JSON.stringify({ error: 'Images must be an array of base64 data URLs' }),
+        JSON.stringify({ error: 'Images must be an array of data URLs or HTTP(S) image URLs' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
