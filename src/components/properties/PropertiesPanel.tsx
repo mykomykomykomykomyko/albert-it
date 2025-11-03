@@ -409,12 +409,14 @@ export const PropertiesPanel = ({
     }
 
     return (
-      <div className="space-y-4">
-        <Label className="text-sm font-medium">Configuration</Label>
-        <Card className="p-3 bg-muted/30 space-y-3">
+      <div className="space-y-4 mt-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">Configuration</Label>
+        </div>
+        <Card className="p-4 bg-muted/30 border-border space-y-4">
           {Object.entries(functionDef.configSchema).map(([key, schema]) => (
             <div key={key} className="space-y-2">
-              <Label htmlFor={key} className="text-xs">
+              <Label htmlFor={key} className="text-xs font-medium">
                 {schema.label}
                 {schema.required && <span className="text-destructive ml-1">*</span>}
               </Label>
@@ -450,7 +452,7 @@ export const PropertiesPanel = ({
                     const baseConfig = node.config ?? {};
                     updateNodeConfig({ ...baseConfig, [key]: value });
                   }}
-                  className="h-8 text-xs"
+                  className="h-9 text-sm bg-background border-input"
                 />
               ) : key === "inputText" || key === "content" ? (
                 <Textarea
@@ -461,7 +463,7 @@ export const PropertiesPanel = ({
                     const baseConfig = node.config ?? {};
                     updateNodeConfig({ ...baseConfig, [key]: e.target.value });
                   }}
-                  className="min-h-[100px] text-xs resize-y"
+                  className="min-h-[120px] text-sm resize-y bg-background border-input focus-visible:ring-1 focus-visible:ring-ring"
                 />
               ) : (
                 <Input
@@ -473,12 +475,12 @@ export const PropertiesPanel = ({
                     const baseConfig = node.config ?? {};
                     updateNodeConfig({ ...baseConfig, [key]: e.target.value });
                   }}
-                  className="h-8 text-xs"
+                  className="h-9 text-sm bg-background border-input"
                 />
               )}
               
               {schema.description && schema.type !== "boolean" && (
-                <p className="text-xs text-muted-foreground">{schema.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{schema.description}</p>
               )}
             </div>
           ))}
