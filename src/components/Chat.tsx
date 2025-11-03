@@ -815,15 +815,32 @@ const Chat = () => {
                                    </div>
                                  ) : null}
                                  
-                                 {imageMatch && (
-                                   <div className="mt-3">
-                                     <img 
-                                       src={imageMatch[1]} 
-                                       alt="Generated image" 
-                                       className="max-w-full h-auto rounded-lg border border-border shadow-lg"
-                                     />
-                                   </div>
-                                 )}
+                                  {imageMatch && (
+                                    <div className="mt-3 relative group">
+                                      <img 
+                                        src={imageMatch[1]} 
+                                        alt="Generated image" 
+                                        className="max-w-full h-auto rounded-lg border border-border shadow-lg"
+                                      />
+                                      <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                        onClick={() => {
+                                          const link = document.createElement('a');
+                                          link.href = imageMatch[1];
+                                          link.download = `generated-image-${Date.now()}.png`;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                          toast.success('Image downloaded!');
+                                        }}
+                                        title="Download image"
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  )}
                                </>
                              );
                            })()}
