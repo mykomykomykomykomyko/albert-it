@@ -7,6 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Message {
   id: string;
@@ -21,15 +23,18 @@ interface Conversation {
   title: string;
   created_at: string;
   user_id: string;
+  model?: string;
 }
 
 export default function SharedConversation() {
   const { shareToken } = useParams<{ shareToken: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isContinuing, setIsContinuing] = useState(false);
 
   useEffect(() => {
     const fetchSharedConversation = async () => {
@@ -83,6 +88,68 @@ export default function SharedConversation() {
     fetchSharedConversation();
   }, [shareToken]);
 
+  const handleContinueConversation = async () => {
+    if (!user) {
+      toast.error('Please sign in to continue this conversation');
+      navigate('/auth');
+      return;
+    }
+
+    if (!conversation || messages.length === 0) {
+      toast.error('No conversation to continue');
+      return;
+    }
+
+    setIsContinuing(true);
+    try {
+      // Create a new conversation in user's workspace
+      const { data: newConversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: user.id,
+          title: `${conversation.title} (continued)`,
+          model: conversation.model || 'google/gemini-2.5-flash'
+        })
+        .select()
+        .single();
+
+      if (convError || !newConversation) {
+        console.error('Error creating conversation:', convError);
+        toast.error('Failed to create new conversation');
+        setIsContinuing(false);
+        return;
+      }
+
+      // Copy all messages to the new conversation
+      const messagesToCopy = messages.map(msg => ({
+        conversation_id: newConversation.id,
+        role: msg.role,
+        content: msg.content,
+        image_url: msg.image_url,
+        created_at: new Date().toISOString()
+      }));
+
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .insert(messagesToCopy);
+
+      if (messagesError) {
+        console.error('Error copying messages:', messagesError);
+        toast.error('Failed to copy messages');
+        setIsContinuing(false);
+        return;
+      }
+
+      toast.success('Conversation copied to your workspace!');
+      navigate(`/chat/${newConversation.id}`);
+    } catch (err) {
+      console.error('Error continuing conversation:', err);
+      toast.error('Failed to continue conversation');
+    } finally {
+      setIsContinuing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -128,10 +195,32 @@ export default function SharedConversation() {
               <p className="text-sm text-muted-foreground">Shared Conversation</p>
             </div>
           </div>
-          <Button onClick={() => navigate('/chat')} variant="default">
-            Open in Albert
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+          <div className="flex gap-2">
+            {user ? (
+              <Button 
+                onClick={handleContinueConversation} 
+                variant="default"
+                disabled={isContinuing}
+              >
+                {isContinuing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Copying...
+                  </>
+                ) : (
+                  <>
+                    Continue Conversation
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button onClick={() => navigate('/auth')} variant="default">
+                Sign In to Continue
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -194,12 +283,22 @@ export default function SharedConversation() {
       <footer className="flex-shrink-0 bg-card border-t border-border px-4 py-3 text-center">
         <p className="text-sm text-muted-foreground">
           This is a read-only view of a shared conversation.{' '}
-          <button
-            onClick={() => navigate('/chat')}
-            className="text-primary hover:underline font-medium"
-          >
-            Create your own conversation
-          </button>
+          {user ? (
+            <button
+              onClick={handleContinueConversation}
+              className="text-primary hover:underline font-medium"
+              disabled={isContinuing}
+            >
+              {isContinuing ? 'Copying conversation...' : 'Continue this conversation'}
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/auth')}
+              className="text-primary hover:underline font-medium"
+            >
+              Sign in to continue
+            </button>
+          )}
         </p>
       </footer>
     </div>
