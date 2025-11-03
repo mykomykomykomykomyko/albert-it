@@ -809,6 +809,22 @@ export const PropertiesPanel = ({
                               </span>
                             )}
                           </div>
+                        ) : schema.type === "select" ? (
+                          <select
+                            id={`tool-${key}`}
+                            value={(activeNode as ToolNode).config?.[key] ?? schema.default ?? ""}
+                            onChange={(e) => {
+                              const baseConfig = (activeNode as ToolNode).config ?? {};
+                              updateNodeConfig({ ...baseConfig, [key]: e.target.value });
+                            }}
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-xs ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            {schema.options?.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
                         ) : schema.type === "number" ? (
                           <Input
                             id={`tool-${key}`}

@@ -2,7 +2,7 @@ import { Clock, Cloud, Code, Search, Globe, Sparkles } from "lucide-react";
 
 export interface ToolConfigSchema {
   [key: string]: {
-    type: 'string' | 'number' | 'boolean' | 'textarea';
+    type: 'string' | 'number' | 'boolean' | 'textarea' | 'select';
     label: string;
     description?: string;
     placeholder?: string;
@@ -10,6 +10,7 @@ export interface ToolConfigSchema {
     default?: any;
     min?: number;
     max?: number;
+    options?: Array<{ value: string; label: string }>;
   };
 }
 
@@ -145,11 +146,15 @@ export const toolDefinitions: ToolDefinition[] = [
         required: true,
       },
       model: {
-        type: 'string',
+        type: 'select',
         label: 'Model',
         description: 'Perplexity model to use',
         default: 'llama-3.1-sonar-small-128k-online',
-        placeholder: 'llama-3.1-sonar-small-128k-online',
+        options: [
+          { value: 'llama-3.1-sonar-small-128k-online', label: 'Sonar Small (Fast & Efficient)' },
+          { value: 'llama-3.1-sonar-large-128k-online', label: 'Sonar Large (More Capable)' },
+          { value: 'llama-3.1-sonar-huge-128k-online', label: 'Sonar Huge (Most Powerful)' },
+        ],
       },
     },
   },
