@@ -22,7 +22,27 @@ serve(async (req) => {
       throw new Error("PERPLEXITY_API_KEY is not configured");
     }
 
-    console.log(`Perplexity search with model: ${model}, query:`, query);
+    // Normalize legacy model names and validate against allowed models
+    const legacyModelMap: Record<string, string> = {
+      'llama-3.1-sonar-small-128k-online': 'sonar',
+      'llama-3.1-sonar-large-128k-online': 'sonar-pro',
+      'llama-3.1-sonar-huge-128k-online': 'sonar-pro',
+    };
+    const allowedModels = new Set([
+      'sonar',
+      'sonar-pro',
+      'sonar-reasoning',
+      'sonar-reasoning-pro',
+      'sonar-deep-research',
+    ]);
+
+    let selectedModel = legacyModelMap[model] ?? model;
+    if (!allowedModels.has(selectedModel)) {
+      console.warn(`Invalid or unsupported model received: ${model}. Falling back to 'sonar'.`);
+      selectedModel = 'sonar';
+    }
+
+    console.log(`Perplexity search with model: ${selectedModel} (requested: ${model}), query:`, query);
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -31,7 +51,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model,
+        model: selectedModel,
         messages: [
           {
             role: 'system',
@@ -52,8 +72,15 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
+      let errMsg = `Perplexity API error: ${response.status}`;
+      try {
+        const parsed = JSON.parse(errorText);
+        if (parsed?.error?.message) errMsg += ` - ${parsed.error.message}`;
+      } catch (_) {
+        // ignore JSON parse errors
+      }
       console.error('Perplexity API error:', response.status, errorText);
-      throw new Error(`Perplexity API error: ${response.status}`);
+      throw new Error(errMsg);
     }
 
     const data = await response.json();
@@ -63,7 +90,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ 
       answer,
-      model,
+      model: selectedModel,
       query
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
