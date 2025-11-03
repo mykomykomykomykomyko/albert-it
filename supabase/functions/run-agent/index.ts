@@ -52,15 +52,23 @@ serve(async (req) => {
           const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/brave-search`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              query: userPrompt, 
-              apiKey: config?.apiKey
-            }),
+            body: JSON.stringify({ query: userPrompt }),
           });
           const searchData = await searchResponse.json();
           console.log("Tool Output [brave_search]:", JSON.stringify(searchData, null, 2));
           toolOutputs.push({ toolId: 'brave_search', toolName: 'Brave Search', output: searchData });
           toolResults += `\n\nBrave Search Results: ${JSON.stringify(searchData)}`;
+        } else if (toolId === 'perplexity_search') {
+          console.log("Calling perplexity-search with query:", userPrompt);
+          const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/perplexity-search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: userPrompt }),
+          });
+          const searchData = await searchResponse.json();
+          console.log("Tool Output [perplexity_search]:", JSON.stringify(searchData, null, 2));
+          toolOutputs.push({ toolId: 'perplexity_search', toolName: 'Perplexity Search', output: searchData });
+          toolResults += `\n\nPerplexity Search Results: ${JSON.stringify(searchData)}`;
         } else if (toolId === 'weather') {
           if (config?.apiKey) {
             const weatherResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/weather`, {

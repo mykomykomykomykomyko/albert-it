@@ -21,7 +21,7 @@ serve(async (req) => {
     const requestedResults = Math.max(1, Math.min(100, Number(numResults) || 20));
     
     // Use provided key or fall back to environment secret
-    const apiKey = userApiKey || Deno.env.get("BRAVE_SEARCH_API");
+    const apiKey = userApiKey || Deno.env.get("BRAVE_SEARCH_API_KEY");
     
     if (!apiKey) {
       throw new Error("Brave Search API key is required (not configured in secrets or provided)");

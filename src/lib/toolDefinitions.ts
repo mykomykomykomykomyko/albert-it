@@ -1,4 +1,4 @@
-import { Clock, Cloud, Code, Search, Globe } from "lucide-react";
+import { Clock, Cloud, Code, Search, Globe, Sparkles } from "lucide-react";
 
 export interface ToolDefinition {
   id: string;
@@ -38,7 +38,7 @@ export const toolDefinitions: ToolDefinition[] = [
     icon: Search,
     color: "bg-green-500/10 text-green-500",
     configurable: true,
-    requiresConfig: false, // Can work with env vars
+    requiresConfig: false,
     requiresApiKey: true,
   },
   {
@@ -47,9 +47,19 @@ export const toolDefinitions: ToolDefinition[] = [
     description: "Search the web using Brave",
     icon: Search,
     color: "bg-orange-500/10 text-orange-500",
-    configurable: true,
-    requiresConfig: false, // Can work with env vars
-    requiresApiKey: true,
+    configurable: false,
+    requiresConfig: false,
+    requiresApiKey: false,
+  },
+  {
+    id: "perplexity_search",
+    name: "Perplexity Search",
+    description: "AI-powered search with real-time web data",
+    icon: Sparkles,
+    color: "bg-purple-500/10 text-purple-500",
+    configurable: false,
+    requiresConfig: false,
+    requiresApiKey: false,
   },
   {
     id: "web_scrape",
