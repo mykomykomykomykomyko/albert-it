@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
@@ -380,6 +380,15 @@ const Agents = () => {
 
           <PageSidebarSection title="Actions" value="actions">
             <div className="space-y-2">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={refreshAgents}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh Shared Agents
+              </Button>
+              
               <Dialog open={isCreateOpen} onOpenChange={(open) => {
                 setIsCreateOpen(open);
                 if (!open) {
