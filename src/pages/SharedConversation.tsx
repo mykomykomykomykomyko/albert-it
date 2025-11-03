@@ -27,6 +27,11 @@ interface Conversation {
   model?: string;
 }
 
+interface Profile {
+  full_name: string | null;
+  email: string | null;
+}
+
 export default function SharedConversation() {
   const { shareToken } = useParams<{ shareToken: string }>();
   const navigate = useNavigate();
@@ -36,6 +41,7 @@ export default function SharedConversation() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isContinuing, setIsContinuing] = useState(false);
+  const [ownerProfile, setOwnerProfile] = useState<Profile | null>(null);
   
   // Real-time presence for typing indicators
   const { getActiveUsers } = useConversationPresence(conversation?.id || null);
@@ -66,6 +72,17 @@ export default function SharedConversation() {
         }
 
         setConversation(conversationData);
+
+        // Fetch owner profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', conversationData.user_id)
+          .maybeSingle();
+
+        if (!profileError && profileData) {
+          setOwnerProfile(profileData);
+        }
 
         // Fetch messages for this conversation
         const { data: messagesData, error: messagesError } = await supabase
@@ -188,6 +205,15 @@ export default function SharedConversation() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
+      {/* Owner Banner */}
+      {ownerProfile && (
+        <div className="bg-primary text-primary-foreground px-4 py-3 text-center">
+          <p className="text-sm font-medium">
+            {ownerProfile.full_name || ownerProfile.email?.split('@')[0] || 'Someone'} shared this conversation with you
+          </p>
+        </div>
+      )}
+      
       {/* Header */}
       <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between max-w-5xl mx-auto">
