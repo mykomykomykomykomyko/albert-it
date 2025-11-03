@@ -153,7 +153,9 @@ export type Database = {
           created_at: string | null
           default_agent_id: string | null
           id: string
+          is_shared: boolean | null
           model: string
+          share_token: string | null
           title: string
           updated_at: string | null
           user_id: string
@@ -162,7 +164,9 @@ export type Database = {
           created_at?: string | null
           default_agent_id?: string | null
           id?: string
+          is_shared?: boolean | null
           model?: string
+          share_token?: string | null
           title?: string
           updated_at?: string | null
           user_id: string
@@ -171,7 +175,9 @@ export type Database = {
           created_at?: string | null
           default_agent_id?: string | null
           id?: string
+          is_shared?: boolean | null
           model?: string
+          share_token?: string | null
           title?: string
           updated_at?: string | null
           user_id?: string

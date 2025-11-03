@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil } from "lucide-react";
+import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil, Share2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import {
   AlertDialog,
@@ -104,6 +104,11 @@ const ChatSidebar = ({
               >
                 <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
                 <span className="flex-1 truncate text-sm">{conversation.title}</span>
+                {conversation.is_shared && (
+                  <span title="Shared conversation">
+                    <Share2 className="w-3 h-3 shrink-0 text-primary" />
+                  </span>
+                )}
                 <div className="flex gap-1">
                   <Button
                     variant="ghost"

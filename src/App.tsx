@@ -55,6 +55,7 @@ import VoiceAnalysis from "./pages/VoiceAnalysis";
 import MeetingTranscripts from "./pages/MeetingTranscripts";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
+import SharedConversation from "./pages/SharedConversation";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 import { AccessibilityProvider } from "./components/AccessibilityProvider";
 
@@ -104,6 +105,7 @@ const App = () => (
           {/* Chat routes */}
           <Route path="/chat" element={<EnhancedChat />} />
           <Route path="/chat/:id" element={<EnhancedChat />} />
+          <Route path="/chat/shared/:shareToken" element={<SharedConversation />} />
           
           {/* Workflow builder routes */}
           <Route path="/stage" element={<Stage />} />

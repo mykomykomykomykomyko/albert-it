@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -26,6 +26,7 @@ import { AudioUploader } from './chat/AudioUploader';
 import { GettingStartedWizard } from './GettingStartedWizard';
 import { WorkflowSuggestion, ActionType } from './chat/WorkflowSuggestion';
 import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
+import { ShareConversationDialog } from './chat/ShareConversationDialog';
 
 interface ImageAttachment {
   name: string;
@@ -1101,6 +1102,18 @@ const Chat = () => {
                     >
                       <Download className="h-4 w-4" />
                     </Button>
+                    {currentConversation && (
+                      <ShareConversationDialog
+                        conversationId={currentConversation.id}
+                        conversationTitle={currentConversation.title}
+                        isShared={currentConversation.is_shared}
+                        shareToken={currentConversation.share_token}
+                        onShareStatusChange={() => {
+                          // Refresh conversation data to update share status
+                          loadConversations();
+                        }}
+                      />
+                    )}
                     <input
                       id="file-upload"
                       type="file"

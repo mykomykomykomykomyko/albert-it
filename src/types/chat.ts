@@ -5,6 +5,8 @@ export interface Conversation {
   model: string;
   created_at: string;
   updated_at: string;
+  is_shared?: boolean;
+  share_token?: string | null;
 }
 
 export interface Message {
