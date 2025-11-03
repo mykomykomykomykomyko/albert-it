@@ -82,9 +82,16 @@ export const useSessionTimeout = ({
     const timeSinceLastActivity = Date.now() - lastActivityRef.current;
     const expectedTimeUntilWarning = timeoutMs - warningMs;
     
-    // Only show warning if we've been inactive for close to the expected time
-    if (timeSinceLastActivity < expectedTimeUntilWarning - 10000) {
-      console.log('Warning suppressed - not enough time since last activity');
+    // Only show warning if we've been inactive for at least 80% of expected time
+    // This prevents premature warnings from timing issues
+    const minimumInactivityTime = expectedTimeUntilWarning * 0.8;
+    
+    if (timeSinceLastActivity < minimumInactivityTime) {
+      console.log('Warning suppressed - not enough time since last activity', {
+        timeSinceLastActivity: Math.floor(timeSinceLastActivity / 1000),
+        expectedTime: Math.floor(expectedTimeUntilWarning / 1000),
+        minimumRequired: Math.floor(minimumInactivityTime / 1000)
+      });
       return;
     }
     
@@ -104,13 +111,14 @@ export const useSessionTimeout = ({
 
     clearTimers();
     hasShownWarningRef.current = false;
-    lastActivityRef.current = Date.now();
+    const now = Date.now();
+    lastActivityRef.current = now;
 
     // Only set timers if we have enough time until warning
     // This prevents warnings from showing immediately after login
     const timeUntilWarning = timeoutMs - warningMs;
     
-    if (timeUntilWarning > 0) {
+    if (timeUntilWarning > 60000) { // Only set if at least 1 minute until warning
       // Set warning timer
       warningRef.current = setTimeout(() => {
         showWarning();
@@ -120,6 +128,12 @@ export const useSessionTimeout = ({
       timeoutRef.current = setTimeout(() => {
         logout();
       }, timeoutMs);
+      
+      console.log('Session timeout timers set', {
+        timeUntilWarningMinutes: Math.floor(timeUntilWarning / 60000),
+        totalTimeoutMinutes: Math.floor(timeoutMs / 60000),
+        timestamp: new Date(now).toISOString()
+      });
     }
   }, [enabled, timeoutMs, warningMs, clearTimers, showWarning, logout]);
 

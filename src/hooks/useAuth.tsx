@@ -41,11 +41,11 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Enable session timeout for security
+  // Enable session timeout for security (only for authenticated users)
   useSessionTimeout({
     timeoutMs: 30 * 60 * 1000, // 30 minutes
     warningMs: 2 * 60 * 1000, // 2 minutes warning
-    enabled: true,
+    enabled: !!user, // Only enable when user is logged in
   });
 
   useEffect(() => {
