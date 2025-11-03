@@ -666,6 +666,7 @@ export const PropertiesPanel = ({
                   onUpdateNode(activeNode.id, { name: e.target.value });
                 }
               }}
+              className="bg-background border-input"
             />
           </div>
 
