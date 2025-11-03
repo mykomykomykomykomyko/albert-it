@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Plus, Settings, Play, Database, Download, Eye, Save, Upload } from "lucide-react";
+import { X, Plus, Settings, Play, Database, Download, Eye, Save, Upload, Loader2, Trash2 } from "lucide-react";
 import { ToolOutputDisplay } from "@/components/chat/ToolOutputDisplay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -159,8 +159,12 @@ export const PropertiesPanel = ({
   };
 
   const handleContentFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (activeNode.nodeType !== "function") return;
-    const functionNode = activeNode as FunctionNode;
+    const isInputNode = (activeNode as any).nodeType === "input";
+    const isFunctionNode = activeNode.nodeType === "function";
+    
+    if (!isInputNode && !isFunctionNode) return;
+    
+    const functionNode = isFunctionNode ? activeNode as FunctionNode : null;
     
     const files = event.target.files;
     if (!files || files.length === 0) return;
@@ -199,9 +203,18 @@ export const PropertiesPanel = ({
 
       if (extractedContents.length > 0) {
         const formattedContent = formatExtractedContent(extractedContents);
-        const currentContent = functionNode.config.content || "";
-        const newContent = currentContent ? `${currentContent}${formattedContent}` : formattedContent.trim();
-        updateNodeConfig({ ...functionNode.config, content: newContent });
+        
+        if (isInputNode) {
+          const currentContent = (activeNode as any).userPrompt || "";
+          const newContent = currentContent ? `${currentContent}\n\n${formattedContent}` : formattedContent.trim();
+          if (onUpdateNode) {
+            onUpdateNode(activeNode.id, { userPrompt: newContent } as any);
+          }
+        } else if (functionNode) {
+          const currentContent = functionNode.config.content || "";
+          const newContent = currentContent ? `${currentContent}${formattedContent}` : formattedContent.trim();
+          updateNodeConfig({ ...functionNode.config, content: newContent });
+        }
       }
 
       if (excelFiles.length > 0) {
@@ -752,30 +765,230 @@ export const PropertiesPanel = ({
                     </p>
                   </div>
                   
-                  {(activeNode as any).inputType === 'file' && (
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">
-                        File Upload
-                      </Label>
-                      <Input
-                        type="file"
-                        onChange={(e) => {
-                          // Handle file upload if needed
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            toast({
-                              title: "File selected",
-                              description: file.name,
-                            });
-                          }
-                        }}
-                        className="h-9 text-sm bg-background border-input"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Upload a file to use as input
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">
+                      File Upload
+                    </Label>
+                    <Input
+                      type="file"
+                      accept=".txt,.pdf,.docx,.doc,.xlsx,.xls,.vtt,.md,.json"
+                      onChange={handleContentFileUpload}
+                      className="h-9 text-sm bg-background border-input cursor-pointer"
+                      disabled={isProcessingFiles}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Upload files (TXT, PDF, DOCX, Excel, VTT) - content will be extracted and added to input text
+                    </p>
+                    {isProcessingFiles && (
+                      <p className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Processing files...
                       </p>
+                    )}
+                  </div>
+
+                  {(activeNode as any).userPrompt && (activeNode as any).userPrompt.length > 100 && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditedContent((activeNode as any).userPrompt || '');
+                          setIsViewContentOpen(true);
+                        }}
+                        className="h-8 text-xs"
+                      >
+                        <Eye className="h-3 w-3 mr-1" />
+                        View Full Content
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (onUpdateNode) {
+                            onUpdateNode(activeNode.id, { userPrompt: '' } as any);
+                          }
+                          toast({
+                            title: "Content cleared",
+                            description: "Input text has been cleared",
+                          });
+                        }}
+                        className="h-8 text-xs"
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Clear
+                      </Button>
                     </div>
                   )}
+                </Card>
+                
+                <Card className="p-3 bg-blue-500/5 border-blue-500/20">
+                  <div className="flex gap-2">
+                    <div className="text-blue-500 mt-0.5">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        You can type text directly or upload files. File content will be automatically extracted and merged with your text input.
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* View/Edit Content Dialog */}
+              <Dialog open={isViewContentOpen} onOpenChange={setIsViewContentOpen}>
+                <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>View / Edit Content</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex-1 min-h-0 py-4">
+                    <Textarea
+                      value={editedContent}
+                      onChange={(e) => setEditedContent(e.target.value)}
+                      className="w-full h-full min-h-[60vh] resize-none"
+                      placeholder="No content..."
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button variant="outline" onClick={() => setIsViewContentOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={() => {
+                      if (onUpdateNode) {
+                        onUpdateNode(activeNode.id, { userPrompt: editedContent } as any);
+                      }
+                      setIsViewContentOpen(false);
+                      toast({
+                        title: "Content updated",
+                        description: "Your changes have been saved",
+                      });
+                    }}>
+                      Save Changes
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Excel Selector Dialog */}
+              {excelData && (
+                <ExcelSelector
+                  excelData={excelData}
+                  onSelect={(result) => {
+                    const formatted = result.selectedData.map(sheet => 
+                      `Sheet: ${sheet.sheetName}\n${sheet.selectedRows.map(row => 
+                        Object.entries(row).map(([key, val]) => `${key}: ${val}`).join(', ')
+                      ).join('\n')}`
+                    ).join('\n\n');
+                    const currentContent = (activeNode as any).userPrompt || "";
+                    const newContent = currentContent ? `${currentContent}\n\n${formatted}` : formatted;
+                    if (onUpdateNode) {
+                      onUpdateNode(activeNode.id, { userPrompt: newContent } as any);
+                    }
+                    setExcelData(null);
+                    toast({
+                      title: "Excel data added",
+                      description: `Added ${result.totalRows} rows from ${result.selectedData.length} sheet(s)`,
+                    });
+                  }}
+                  onClose={() => setExcelData(null)}
+                />
+              )}
+            </>
+          )}
+
+          {/* Output node-specific fields */}
+          {(activeNode as any).nodeType === "output" && (
+            <>
+              <div className="space-y-4">
+                <Label className="text-sm font-medium">Output Configuration</Label>
+                <Card className="p-4 bg-muted/30 border-border space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="outputFormat" className="text-xs font-medium">
+                      Output Format
+                    </Label>
+                    <Input
+                      id="outputFormat"
+                      type="text"
+                      value={(activeNode as any).outputFormat || 'text'}
+                      readOnly
+                      className="h-9 text-sm bg-muted border-input"
+                    />
+                  </div>
+                  
+                  {activeNode.output && (
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">
+                        Current Output
+                      </Label>
+                      <Card className="p-3 bg-muted/30 max-h-[200px] overflow-y-auto">
+                        <p className="text-xs whitespace-pre-wrap break-all">
+                          {typeof activeNode.output === 'string' 
+                            ? activeNode.output 
+                            : JSON.stringify(activeNode.output, null, 2)}
+                        </p>
+                      </Card>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const output = typeof activeNode.output === 'string'
+                              ? activeNode.output
+                              : JSON.stringify(activeNode.output, null, 2);
+                            navigator.clipboard.writeText(output);
+                            toast({
+                              title: "Copied to clipboard",
+                              description: "Output has been copied",
+                            });
+                          }}
+                          className="h-8 text-xs"
+                        >
+                          Copy Output
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const output = typeof activeNode.output === 'string'
+                              ? activeNode.output
+                              : JSON.stringify(activeNode.output, null, 2);
+                            const blob = new Blob([output], { type: 'text/plain' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `output-${activeNode.id}.txt`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            toast({
+                              title: "Downloaded",
+                              description: "Output has been downloaded",
+                            });
+                          }}
+                          className="h-8 text-xs"
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+                
+                <Card className="p-3 bg-blue-500/5 border-blue-500/20">
+                  <div className="flex gap-2">
+                    <div className="text-blue-500 mt-0.5">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Output nodes collect and display the final results from your workflow. Run the workflow to see the output here.
+                      </p>
+                    </div>
+                  </div>
                 </Card>
               </div>
             </>
