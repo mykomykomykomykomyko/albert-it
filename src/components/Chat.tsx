@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -823,7 +823,7 @@ const Chat = () => {
                      )}
                      <div className={`flex flex-col gap-3 max-w-[80%]`}>
                          <div
-                           className={`rounded-2xl px-4 py-3 ${
+                           className={`rounded-2xl px-4 py-3 relative group ${
                              message.role === "user"
                                ? "bg-primary text-primary-foreground"
                                : "bg-card border border-border"
@@ -902,6 +902,42 @@ const Chat = () => {
                                </>
                              );
                            })()}
+                           
+                           {/* Message Actions - Copy and Download */}
+                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
+                               onClick={() => {
+                                 navigator.clipboard.writeText(message.content);
+                                 toast.success('Message copied to clipboard');
+                               }}
+                               title="Copy message"
+                             >
+                               <Copy className="h-3 w-3" />
+                             </Button>
+                             <Button
+                               variant="ghost"
+                               size="icon"
+                               className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
+                               onClick={() => {
+                                 const blob = new Blob([message.content], { type: 'text/markdown' });
+                                 const url = URL.createObjectURL(blob);
+                                 const link = document.createElement('a');
+                                 link.href = url;
+                                 link.download = `message-${message.role}-${Date.now()}.md`;
+                                 document.body.appendChild(link);
+                                 link.click();
+                                 document.body.removeChild(link);
+                                 URL.revokeObjectURL(url);
+                                 toast.success('Message downloaded');
+                               }}
+                               title="Download message"
+                             >
+                               <Download className="h-3 w-3" />
+                             </Button>
+                           </div>
                          </div>
                        
                        {message.role === "assistant" && (() => {
