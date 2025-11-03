@@ -787,38 +787,45 @@ const Chat = () => {
                                : "bg-card border border-border"
                            }`}
                          >
-                           {(() => {
-                             // Extract image URL from markdown if present
-                             const imageMatch = message.content?.match(/!\[.*?\]\((data:image\/[^)]+)\)/);
-                             const textContent = imageMatch 
-                               ? message.content.replace(/!\[.*?\]\(data:image\/[^)]+\)/, '').trim()
-                               : message.content;
-                             
-                             return (
-                               <>
-                                 {textContent ? (
-                                   <div className={`prose prose-sm max-w-none ${
-                                     message.role === "user" 
-                                       ? "prose-invert" 
-                                       : "dark:prose-invert"
-                                   } prose-p:leading-relaxed prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border`}>
-                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                       {(() => {
-                                         const { cleanContent } = parseWorkflowSuggestion(textContent);
-                                         return cleanContent;
-                                       })()}
-                                     </ReactMarkdown>
-                                   </div>
-                                 ) : !imageMatch ? (
-                                   <div className="text-muted-foreground italic text-sm">
-                                     [Empty message]
-                                   </div>
-                                 ) : null}
+                            {(() => {
+                              // Extract image URL from markdown if present (including standalone base64)
+                              const imageMarkdownMatch = message.content?.match(/!\[.*?\]\((data:image\/[^)]+)\)/);
+                              const standaloneBase64Match = message.content?.match(/\(?(data:image\/[^;\s)]+;base64,[A-Za-z0-9+/=]+)\)?/);
+                              
+                              const imageUrl = imageMarkdownMatch?.[1] || standaloneBase64Match?.[1];
+                              
+                              let textContent = message.content;
+                              if (imageMarkdownMatch) {
+                                textContent = message.content.replace(/!\[.*?\]\(data:image\/[^)]+\)/, '').trim();
+                              } else if (standaloneBase64Match) {
+                                textContent = message.content.replace(/\(?(data:image\/[^;\s)]+;base64,[A-Za-z0-9+/=]+)\)?/, '').trim();
+                              }
+                              
+                              return (
+                                <>
+                                  {textContent ? (
+                                    <div className={`prose prose-sm max-w-none ${
+                                      message.role === "user" 
+                                        ? "prose-invert" 
+                                        : "dark:prose-invert"
+                                    } prose-p:leading-relaxed prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border`}>
+                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {(() => {
+                                          const { cleanContent } = parseWorkflowSuggestion(textContent);
+                                          return cleanContent;
+                                        })()}
+                                      </ReactMarkdown>
+                                    </div>
+                                  ) : !imageUrl ? (
+                                    <div className="text-muted-foreground italic text-sm">
+                                      [Empty message]
+                                    </div>
+                                  ) : null}
                                  
-                                  {imageMatch && (
+                                  {imageUrl && (
                                     <div className="mt-3 relative group">
                                       <img 
-                                        src={imageMatch[1]} 
+                                        src={imageUrl} 
                                         alt="Generated image" 
                                         className="max-w-full h-auto rounded-lg border border-border shadow-lg"
                                       />
@@ -828,7 +835,7 @@ const Chat = () => {
                                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                                         onClick={() => {
                                           const link = document.createElement('a');
-                                          link.href = imageMatch[1];
+                                          link.href = imageUrl;
                                           link.download = `generated-image-${Date.now()}.png`;
                                           document.body.appendChild(link);
                                           link.click();
