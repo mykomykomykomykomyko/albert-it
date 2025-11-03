@@ -2,11 +2,11 @@ import { ReactNode } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface PageSidebarProps {
   title: string;
@@ -27,10 +27,8 @@ export const PageSidebar = ({ title, description, children }: PageSidebarProps) 
       <Separator />
       
       <ScrollArea className="flex-1">
-        <div className="p-4">
-          <Accordion type="multiple" defaultValue={["section-0", "section-1", "section-2"]}>
-            {children}
-          </Accordion>
+        <div className="p-4 space-y-2">
+          {children}
         </div>
       </ScrollArea>
     </div>
@@ -40,22 +38,19 @@ export const PageSidebar = ({ title, description, children }: PageSidebarProps) 
 interface PageSidebarSectionProps {
   title?: string;
   children: ReactNode;
-  value?: string;
+  defaultOpen?: boolean;
 }
 
-export const PageSidebarSection = ({ title, children, value }: PageSidebarSectionProps) => {
-  if (!value) {
-    value = `section-${Math.random().toString(36).substr(2, 9)}`;
-  }
-  
+export const PageSidebarSection = ({ title, children, defaultOpen = true }: PageSidebarSectionProps) => {
   return (
-    <AccordionItem value={value} className="border rounded-lg px-4 mb-2">
-      <AccordionTrigger className="text-sm font-medium hover:no-underline py-3">
+    <Collapsible defaultOpen={defaultOpen} className="border rounded-lg px-4">
+      <CollapsibleTrigger className="flex items-center justify-between w-full text-sm font-medium py-3 hover:opacity-80 transition-opacity">
         {title || "Section"}
-      </AccordionTrigger>
-      <AccordionContent className="pb-4 space-y-3">
+        <ChevronDown className="h-4 w-4 transition-transform duration-200 data-[state=open]:rotate-180" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pb-4 space-y-3">
         {children}
-      </AccordionContent>
-    </AccordionItem>
+      </CollapsibleContent>
+    </Collapsible>
   );
 };

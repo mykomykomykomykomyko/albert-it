@@ -352,7 +352,7 @@ const Agents = () => {
           title="Agent Management"
           description="Search, filter, and manage your AI agents"
         >
-          <PageSidebarSection title="Search & Filter" value="search">
+          <PageSidebarSection title="Search & Filter">
             <div className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -378,7 +378,7 @@ const Agents = () => {
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Actions" value="actions">
+          <PageSidebarSection title="Actions">
             <div className="space-y-2">
               <Button 
                 className="w-full" 
@@ -586,7 +586,7 @@ const Agents = () => {
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Statistics" value="stats">
+          <PageSidebarSection title="Statistics">
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{agents.length}</div>

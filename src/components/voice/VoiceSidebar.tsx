@@ -70,7 +70,7 @@ export const VoiceSidebar = ({
     >
       {activeTab === "text-to-speech" ? (
         <>
-          <PageSidebarSection title="Voice Selection" value="voice">
+          <PageSidebarSection title="Voice Selection">
             <div className="space-y-3">
               <Label>Select Voice</Label>
               <Select value={selectedVoice} onValueChange={onVoiceChange} disabled={loadingVoices}>
@@ -102,7 +102,7 @@ export const VoiceSidebar = ({
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Model Settings" value="model">
+          <PageSidebarSection title="Model Settings">
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label>Select Model</Label>
@@ -135,7 +135,7 @@ export const VoiceSidebar = ({
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Playback Options" value="playback">
+          <PageSidebarSection title="Playback Options">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="streaming" className="text-sm">
@@ -158,7 +158,7 @@ export const VoiceSidebar = ({
         </>
       ) : (
         <>
-          <PageSidebarSection title="Transcription Model" value="stt-model">
+          <PageSidebarSection title="Transcription Model">
             <div className="space-y-3">
               <Label>Select Model</Label>
               <Select value={selectedSttModel} onValueChange={onSttModelChange}>
@@ -176,7 +176,7 @@ export const VoiceSidebar = ({
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Speaker Detection" value="speakers">
+          <PageSidebarSection title="Speaker Detection">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label htmlFor="auto-detect" className="text-sm">
