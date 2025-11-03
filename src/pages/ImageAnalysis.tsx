@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentSelectorDialog } from '@/components/agents/AgentSelectorDialog';
 import { Agent } from '@/hooks/useAgents';
@@ -17,18 +17,50 @@ import { generateId, resizeAndCompressImage } from '@/lib/utils';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
-  const [images, setImages] = useState<ProcessedImage[]>([]);
-  const [prompts, setPrompts] = useState<AnalysisPrompt[]>([]);
-  const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>([]);
+  const [images, setImages] = useState<ProcessedImage[]>(() => {
+    const saved = localStorage.getItem('imageAnalysis_images');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [prompts, setPrompts] = useState<AnalysisPrompt[]>(() => {
+    const saved = localStorage.getItem('imageAnalysis_prompts');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('imageAnalysis_selectedPromptIds');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [showAgentSelector, setShowAgentSelector] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<AnalysisResult[]>([]);
+  const [results, setResults] = useState<AnalysisResult[]>(() => {
+    const saved = localStorage.getItem('imageAnalysis_results');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [showResultsViewer, setShowResultsViewer] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Persist images to localStorage
+  useEffect(() => {
+    localStorage.setItem('imageAnalysis_images', JSON.stringify(images));
+  }, [images]);
+
+  // Persist prompts to localStorage
+  useEffect(() => {
+    localStorage.setItem('imageAnalysis_prompts', JSON.stringify(prompts));
+  }, [prompts]);
+
+  // Persist selected prompt IDs to localStorage
+  useEffect(() => {
+    localStorage.setItem('imageAnalysis_selectedPromptIds', JSON.stringify(selectedPromptIds));
+  }, [selectedPromptIds]);
+
+  // Persist results to localStorage
+  useEffect(() => {
+    localStorage.setItem('imageAnalysis_results', JSON.stringify(results));
+  }, [results]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -376,6 +408,21 @@ export default function ImageAnalysis() {
   const selectedImageCount = images.filter(img => img.selected).length;
   const selectedImage = selectedImageId ? images.find(img => img.id === selectedImageId) || null : null;
 
+  const handleClearAll = () => {
+    if (confirm('Are you sure you want to clear all images, prompts, and results? This cannot be undone.')) {
+      setImages([]);
+      setPrompts([]);
+      setSelectedPromptIds([]);
+      setResults([]);
+      setSelectedImageId(null);
+      localStorage.removeItem('imageAnalysis_images');
+      localStorage.removeItem('imageAnalysis_prompts');
+      localStorage.removeItem('imageAnalysis_selectedPromptIds');
+      localStorage.removeItem('imageAnalysis_results');
+      toast.success('All data cleared');
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
@@ -430,6 +477,20 @@ export default function ImageAnalysis() {
                     Analyze {selectedImageCount} × {selectedPromptIds.length}
                   </>
                 )}
+              </Button>
+            </div>
+
+            {/* Clear All Button */}
+            <div className="space-y-2">
+              <Button
+                onClick={handleClearAll}
+                disabled={isAnalyzing || (images.length === 0 && results.length === 0)}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear All
               </Button>
             </div>
           </div>

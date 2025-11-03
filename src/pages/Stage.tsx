@@ -5,7 +5,7 @@ import { Toolbar } from "@/components/toolbar/Toolbar";
 import { OutputLog } from "@/components/output/OutputLog";
 import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
 import { ChatHeader } from "@/components/ChatHeader";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { 
   Workflow, 
   WorkflowNode, 
@@ -27,14 +27,43 @@ const Stage = () => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [connectingFromPort, setConnectingFromPort] = useState<string | undefined>(undefined);
-  const [userInput, setUserInput] = useState<string>("");
-  const [workflowName, setWorkflowName] = useState<string>("Untitled Workflow");
-  const [customAgents, setCustomAgents] = useState<any[]>([]);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [workflow, setWorkflow] = useState<Workflow>({
-    stages: [],
-    connections: [],
+  const [userInput, setUserInput] = useState<string>(() => {
+    const saved = localStorage.getItem('canvas_userInput');
+    return saved || "";
   });
+  const [workflowName, setWorkflowName] = useState<string>(() => {
+    const saved = localStorage.getItem('canvas_workflowName');
+    return saved || "Untitled Workflow";
+  });
+  const [customAgents, setCustomAgents] = useState<any[]>(() => {
+    const saved = localStorage.getItem('canvas_customAgents');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [workflow, setWorkflow] = useState<Workflow>(() => {
+    const saved = localStorage.getItem('canvas_workflow');
+    return saved ? JSON.parse(saved) : { stages: [], connections: [] };
+  });
+
+  // Auto-save workflow to localStorage
+  useEffect(() => {
+    localStorage.setItem('canvas_workflow', JSON.stringify(workflow));
+  }, [workflow]);
+
+  // Auto-save userInput to localStorage
+  useEffect(() => {
+    localStorage.setItem('canvas_userInput', userInput);
+  }, [userInput]);
+
+  // Auto-save workflowName to localStorage
+  useEffect(() => {
+    localStorage.setItem('canvas_workflowName', workflowName);
+  }, [workflowName]);
+
+  // Auto-save customAgents to localStorage
+  useEffect(() => {
+    localStorage.setItem('canvas_customAgents', JSON.stringify(customAgents));
+  }, [customAgents]);
 
   const addLog = useCallback((type: LogEntry["type"], message: string) => {
     const time = new Date().toLocaleTimeString('en-US', { hour12: false });

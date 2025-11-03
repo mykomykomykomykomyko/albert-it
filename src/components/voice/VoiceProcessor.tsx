@@ -10,22 +10,55 @@ import { supabase } from "@/integrations/supabase/client";
 
 const VoiceProcessor = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"speech-to-text" | "text-to-speech">("speech-to-text");
+  const [activeTab, setActiveTab] = useState<"speech-to-text" | "text-to-speech">(() => {
+    const saved = localStorage.getItem('voice_activeTab');
+    return (saved as "speech-to-text" | "text-to-speech") || "speech-to-text";
+  });
   
   // Text-to-Speech state
-  const [selectedVoice, setSelectedVoice] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [selectedVoice, setSelectedVoice] = useState<string>(() => {
+    const saved = localStorage.getItem('voice_selectedVoice');
+    return saved || "";
+  });
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    const saved = localStorage.getItem('voice_selectedModel');
+    return saved || "";
+  });
   const [voices, setVoices] = useState<Voice[]>([]);
   const [models, setModels] = useState<Model[]>([]);
   const [loadingVoices, setLoadingVoices] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
-  const [useStreaming, setUseStreaming] = useState(true);
+  const [useStreaming, setUseStreaming] = useState(() => {
+    const saved = localStorage.getItem('voice_useStreaming');
+    return saved ? JSON.parse(saved) : true;
+  });
 
   // Speech-to-Text state
   const [sttModels, setSttModels] = useState<Model[]>([]);
   const [selectedSttModel, setSelectedSttModel] = useState<string>("");
   const [autoDetectSpeakers, setAutoDetectSpeakers] = useState(true);
   const [manualSpeakerCount, setManualSpeakerCount] = useState(2);
+
+  // Persist settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('voice_activeTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (selectedVoice) {
+      localStorage.setItem('voice_selectedVoice', selectedVoice);
+    }
+  }, [selectedVoice]);
+
+  useEffect(() => {
+    if (selectedModel) {
+      localStorage.setItem('voice_selectedModel', selectedModel);
+    }
+  }, [selectedModel]);
+
+  useEffect(() => {
+    localStorage.setItem('voice_useStreaming', JSON.stringify(useStreaming));
+  }, [useStreaming]);
 
   // Fetch voices and models for Text-to-Speech only when needed
   useEffect(() => {
