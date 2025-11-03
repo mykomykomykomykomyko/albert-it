@@ -108,6 +108,16 @@ export const PropertiesPanel = ({
     ? FunctionRegistry.getById((activeNode as FunctionNode).functionType)
     : null;
 
+  // Debug logging
+  if (activeNode.nodeType === "function") {
+    console.log("Function node detected:", {
+      functionType: (activeNode as FunctionNode).functionType,
+      functionDef: functionDef,
+      hasConfigSchema: !!functionDef?.configSchema,
+      configSchema: functionDef?.configSchema
+    });
+  }
+
   // Get tool definition if it's a tool node
   const toolDef = activeNode.nodeType === "tool"
     ? availableTools.find(t => t.id === (activeNode as ToolNode).toolType)
