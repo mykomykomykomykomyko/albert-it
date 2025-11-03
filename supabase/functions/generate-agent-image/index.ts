@@ -21,13 +21,13 @@ serve(async (req) => {
 
     console.log('Prompt received:', prompt);
 
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
-    if (!lovableApiKey) {
-      console.error('LOVABLE_API_KEY not found');
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      console.error('GEMINI_API_KEY not found');
+      throw new Error('GEMINI_API_KEY not configured');
     }
     
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -37,69 +37,58 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Generating image via Lovable AI Gateway (gemini-2.5-flash-image)...');
+    console.log('Generating image with Google Imagen API...');
 
-    const imagePrompt = `Create a square 1:1 professional avatar suitable as an agent profile picture. Clear focus, simple background, crisp lighting. Theme: ${prompt}`;
-
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const imagePrompt = `A professional, high-quality avatar image for an AI agent: ${prompt}. Suitable as a profile picture, visually appealing, representing the agent's purpose.`;
+    
+    const aiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
-        messages: [
-          { role: 'system', content: 'You generate clean 1:1 avatar images that work well as small profile pictures.' },
-          { role: 'user', content: imagePrompt }
-        ],
-        modalities: ['image', 'text']
+        instances: [{
+          prompt: imagePrompt
+        }],
+        parameters: {
+          sampleCount: 1,
+          aspectRatio: "1:1",
+          safetyFilterLevel: "block_some",
+          personGeneration: "allow_adult"
+        }
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('AI gateway error:', aiResponse.status, errorText);
-      if (aiResponse.status === 429) {
-        return new Response(JSON.stringify({ error: 'Rate limits exceeded, please try again later.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      if (aiResponse.status === 402) {
-        return new Response(JSON.stringify({ error: 'Payment required, please add credits to Lovable AI.', type: 'payment_required' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      throw new Error(`AI gateway error ${aiResponse.status}: ${errorText}`);
+      console.error('Imagen API error:', aiResponse.status, errorText);
+      throw new Error(`Failed to generate image: ${aiResponse.status} - ${errorText}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log('AI gateway response received');
-
-    const imageDataUrl: string | undefined = aiData?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!imageDataUrl) {
-      throw new Error('No image returned by AI gateway');
+    console.log('Imagen response received');
+    
+    const predictions = aiData.predictions;
+    if (!predictions || predictions.length === 0) {
+      throw new Error('No predictions returned from Imagen');
     }
 
-    // Extract base64
-    let base64: string;
-    if (imageDataUrl.startsWith('data:image')) {
-      base64 = imageDataUrl.split(',')[1] || '';
-    } else {
-      // Fallback in case the API returns a temporary URL
-      const imgResp = await fetch(imageDataUrl);
-      const arrBuf = await imgResp.arrayBuffer();
-      base64 = btoa(String.fromCharCode(...new Uint8Array(arrBuf)));
+    const imageData = predictions[0];
+    if (!imageData.bytesBase64Encoded) {
+      throw new Error('No image data in response');
     }
 
-    if (!base64) {
-      throw new Error('Failed to extract image data');
-    }
+    const base64Data = imageData.bytesBase64Encoded;
 
     console.log('Image generated, converting to blob...');
 
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+    const binaryData = atob(base64Data);
+    const bytes = new Uint8Array(binaryData.length);
+    for (let i = 0; i < binaryData.length; i++) {
+      bytes[i] = binaryData.charCodeAt(i);
+    }
     const imageBlob = new Blob([bytes], { type: 'image/png' });
-
-    // Generate unique filename
+    
     const fileName = `agent-${Date.now()}-${Math.random().toString(36).substring(2)}.png`;
     const filePath = fileName;
 
@@ -107,7 +96,10 @@ serve(async (req) => {
 
     const { error: uploadError } = await supabase.storage
       .from('profile-images')
-      .upload(filePath, imageBlob, { contentType: 'image/png', upsert: false });
+      .upload(filePath, imageBlob, {
+        contentType: 'image/png',
+        upsert: false
+      });
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
