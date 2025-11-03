@@ -462,53 +462,54 @@ export const Sidebar = ({
                   placeholder="Search agents..." 
                   value={agentSearch} 
                   onChange={e => setAgentSearch(e.target.value)} 
-                  className="h-8 text-xs" 
-                />
+                  className="h-8 text-xs" />
                 
-                <div className="space-y-2">
-                  {filteredAgents.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      No agents found
-                    </p>
-                  ) : (
-                    filteredAgents.map(agent => {
-                  const IconComponent = iconMap[agent.iconName] || Bot;
-                  const isCustom = customAgents.some(a => a.id === agent.id);
-                  return <Card key={agent.id} className="p-3 cursor-move hover:shadow-md transition-shadow bg-gradient-to-br from-card to-muted/20 group" draggable onDragStart={e => handleDragStart(e, agent)}>
-                        <div className="flex items-start gap-3">
-                          {agent.profile_picture_url ? (
-                            <Avatar className="h-8 w-8 flex-shrink-0">
-                              <AvatarImage src={agent.profile_picture_url} />
-                              <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                              <IconComponent className="h-4 w-4 text-primary" />
+                <ScrollArea className="max-h-[400px]">
+                  <div className="space-y-2 pr-4">
+                    {filteredAgents.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        No agents found
+                      </p>
+                    ) : (
+                      filteredAgents.map(agent => {
+                    const IconComponent = iconMap[agent.iconName] || Bot;
+                    const isCustom = customAgents.some(a => a.id === agent.id);
+                    return <Card key={agent.id} className="p-3 cursor-move hover:shadow-md transition-shadow bg-gradient-to-br from-card to-muted/20 group" draggable onDragStart={e => handleDragStart(e, agent)}>
+                          <div className="flex items-start gap-3">
+                            {agent.profile_picture_url ? (
+                              <Avatar className="h-8 w-8 flex-shrink-0">
+                                <AvatarImage src={agent.profile_picture_url} />
+                                <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                            ) : (
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <IconComponent className="h-4 w-4 text-primary" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-medium text-foreground">{agent.name}</h4>
+                              <p className="text-xs text-muted-foreground mt-0.5">{agent.description}</p>
                             </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-medium text-foreground">{agent.name}</h4>
-                            <p className="text-xs text-muted-foreground mt-0.5">{agent.description}</p>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={e => {
+                            e.stopPropagation();
+                            handleDownloadAgent(agent);
+                          }} title="Download agent">
+                                <Download className="h-3 w-3" />
+                              </Button>
+                              {isCustom && <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteAgent(agent.id);
+                          }} title="Delete agent">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={e => {
-                          e.stopPropagation();
-                          handleDownloadAgent(agent);
-                        }} title="Download agent">
-                              <Download className="h-3 w-3" />
-                            </Button>
-                            {isCustom && <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive hover:text-destructive" onClick={e => {
-                          e.stopPropagation();
-                          handleDeleteAgent(agent.id);
-                        }} title="Delete agent">
-                                <Trash2 className="h-3 w-3" />
-                              </Button>}
-                          </div>
-                        </div>
-                      </Card>;
-                    })
-                  )}
-                </div>
+                        </Card>;
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
               </AccordionContent>
             </AccordionItem>
 
@@ -534,34 +535,36 @@ export const Sidebar = ({
                 </div>
                 
                 {/* Functions List */}
-                <div className="space-y-2">
-                  {filteredFunctions.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">
-                      No functions found
-                    </p> : filteredFunctions.map(func => {
-                  const FuncIcon = func.icon;
-                  return <Card key={func.id} className="p-2.5 cursor-move hover:shadow-md transition-all bg-gradient-to-br from-card to-muted/10" draggable onDragStart={e => handleDragStart(e, func, "function")}>
-                          <div className="flex items-start gap-2.5">
-                            <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${func.color}`}>
-                              <FuncIcon className="h-3.5 w-3.5" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <h4 className="text-xs font-medium text-foreground">{func.name}</h4>
-                                {func.outputs.length > 1 && <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
-                                    {func.outputs.length} outputs
-                                  </Badge>}
+                <ScrollArea className="max-h-[400px]">
+                  <div className="space-y-2 pr-4">
+                    {filteredFunctions.length === 0 ? <p className="text-xs text-muted-foreground text-center py-4">
+                        No functions found
+                      </p> : filteredFunctions.map(func => {
+                    const FuncIcon = func.icon;
+                    return <Card key={func.id} className="p-2.5 cursor-move hover:shadow-md transition-all bg-gradient-to-br from-card to-muted/10" draggable onDragStart={e => handleDragStart(e, func, "function")}>
+                            <div className="flex items-start gap-2.5">
+                              <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${func.color}`}>
+                                <FuncIcon className="h-3.5 w-3.5" />
                               </div>
-                              <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
-                                {func.description}
-                              </p>
-                              <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 mt-1">
-                                {func.category}
-                              </Badge>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <h4 className="text-xs font-medium text-foreground">{func.name}</h4>
+                                  {func.outputs.length > 1 && <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+                                      {func.outputs.length} outputs
+                                    </Badge>}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">
+                                  {func.description}
+                                </p>
+                                <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 mt-1">
+                                  {func.category}
+                                </Badge>
+                              </div>
                             </div>
-                          </div>
-                        </Card>;
-                })}
-                </div>
+                          </Card>;
+                  })}
+                  </div>
+                </ScrollArea>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
