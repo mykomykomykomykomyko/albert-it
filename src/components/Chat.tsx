@@ -705,32 +705,54 @@ const Chat = () => {
                       </div>
                      )}
                      <div className={`flex flex-col gap-3 max-w-[80%]`}>
-                        <div
-                          className={`rounded-2xl px-4 py-3 ${
-                            message.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-card border border-border"
-                          }`}
-                        >
-                          {message.content ? (
-                            <div className={`prose prose-sm max-w-none ${
-                              message.role === "user" 
-                                ? "prose-invert" 
-                                : "dark:prose-invert"
-                            } prose-p:leading-relaxed prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border`}>
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {(() => {
-                                  const { cleanContent } = parseWorkflowSuggestion(message.content);
-                                  return cleanContent;
-                                })()}
-                              </ReactMarkdown>
-                            </div>
-                          ) : (
-                            <div className="text-muted-foreground italic text-sm">
-                              [Empty message]
-                            </div>
-                          )}
-                        </div>
+                         <div
+                           className={`rounded-2xl px-4 py-3 ${
+                             message.role === "user"
+                               ? "bg-primary text-primary-foreground"
+                               : "bg-card border border-border"
+                           }`}
+                         >
+                           {(() => {
+                             // Extract image URL from markdown if present
+                             const imageMatch = message.content?.match(/!\[.*?\]\((data:image\/[^)]+)\)/);
+                             const textContent = imageMatch 
+                               ? message.content.replace(/!\[.*?\]\(data:image\/[^)]+\)/, '').trim()
+                               : message.content;
+                             
+                             return (
+                               <>
+                                 {textContent ? (
+                                   <div className={`prose prose-sm max-w-none ${
+                                     message.role === "user" 
+                                       ? "prose-invert" 
+                                       : "dark:prose-invert"
+                                   } prose-p:leading-relaxed prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border`}>
+                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                       {(() => {
+                                         const { cleanContent } = parseWorkflowSuggestion(textContent);
+                                         return cleanContent;
+                                       })()}
+                                     </ReactMarkdown>
+                                   </div>
+                                 ) : !imageMatch ? (
+                                   <div className="text-muted-foreground italic text-sm">
+                                     [Empty message]
+                                   </div>
+                                 ) : null}
+                                 
+                                 {imageMatch && (
+                                   <div className="mt-3">
+                                     <img 
+                                       src={imageMatch[1]} 
+                                       alt="Generated image" 
+                                       className="max-w-full h-auto rounded-lg border border-border shadow-lg"
+                                     />
+                                   </div>
+                                 )}
+                               </>
+                             );
+                           })()}
+                         </div>
                        
                        {message.role === "assistant" && (() => {
                          const { suggestion } = parseWorkflowSuggestion(message.content);
