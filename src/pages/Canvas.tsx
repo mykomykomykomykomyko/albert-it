@@ -16,6 +16,7 @@ import ReactFlow, {
   Panel,
   NodeTypes,
   ConnectionLineType,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
@@ -527,7 +528,11 @@ const Canvas = () => {
         ...params, 
         animated: true, 
         type: edgeType,
-        style: { stroke: 'hsl(var(--primary))' } 
+        style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: 'hsl(var(--primary))',
+        },
       }, eds));
     },
     [setEdges, connectionOrientation]
@@ -1103,7 +1108,11 @@ const Canvas = () => {
         ...edge,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: 'hsl(var(--primary))' }
+        style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: 'hsl(var(--primary))',
+        },
       })));
       setIsTemplatesOpen(false);
       setWorkflowName(template.name);
@@ -1160,7 +1169,11 @@ const Canvas = () => {
         ...edge,
         type: 'smoothstep',
         animated: true,
-        style: { stroke: 'hsl(var(--primary))' }
+        style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: 'hsl(var(--primary))',
+        },
       }))
     );
   }, [connectionOrientation, setNodes, setEdges]);
@@ -1497,8 +1510,15 @@ const Canvas = () => {
             defaultEdgeOptions={{
               type: 'smoothstep',
               animated: true,
-              style: { stroke: 'hsl(var(--primary))' }
+              style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+              markerEnd: {
+                type: MarkerType.ArrowClosed,
+                color: 'hsl(var(--primary))',
+              },
             }}
+            deleteKeyCode="Delete"
+            edgesUpdatable={false}
+            edgesFocusable={true}
             fitView
             className="bg-background"
           >

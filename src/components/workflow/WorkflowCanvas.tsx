@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Stage } from "./Stage";
 import type { Workflow } from "@/types/workflow";
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 
 interface WorkflowCanvasProps {
   workflow: Workflow;
@@ -164,14 +165,14 @@ export const WorkflowCanvas = ({
       const isConnectingMode = connectingFrom !== null;
       
       return (
-        <g key={conn.id} style={{ pointerEvents: isConnectingMode ? 'none' : 'auto' }}>
+        <g key={conn.id}>
           {/* Invisible wider path for easier clicking */}
           <path
             d={path}
             stroke="transparent"
             strokeWidth="20"
             fill="none"
-            style={{ cursor: 'pointer', pointerEvents: isConnectingMode ? 'none' : 'stroke' }}
+            style={{ cursor: 'pointer', pointerEvents: isConnectingMode ? 'none' : 'auto' }}
             onClick={(e) => {
               if (!isConnectingMode) {
                 e.stopPropagation();
@@ -183,8 +184,8 @@ export const WorkflowCanvas = ({
           <path
             d={path}
             stroke={isSelected ? "hsl(var(--warning))" : "hsl(var(--primary))"}
-            strokeWidth="2"
-            strokeOpacity={isSelected ? "0.6" : "0.3"}
+            strokeWidth={isSelected ? "3" : "2"}
+            strokeOpacity={isSelected ? "0.8" : "0.4"}
             fill="none"
             markerEnd={isSelected ? `url(#arrowhead-selected-${layoutId})` : `url(#arrowhead-${layoutId})`}
             style={{ pointerEvents: 'none' }}
@@ -203,48 +204,71 @@ export const WorkflowCanvas = ({
             }}>
             <svg 
               key={forceUpdate}
-              className="absolute top-0 left-0 pointer-events-none" 
+              className="absolute top-0 left-0" 
               style={{ 
                 width: `${svgDimensions.width}px`, 
                 height: `${svgDimensions.height}px`, 
                 zIndex: 15,
                 minWidth: '100%',
-                minHeight: '100%'
+                minHeight: '100%',
+                pointerEvents: 'none'
               }}
             >
               <defs>
                 <marker id={`arrowhead-${layoutId}`} markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                  <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--primary))" fillOpacity="0.3" />
+                  <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--primary))" fillOpacity="0.4" />
                 </marker>
                 <marker id={`arrowhead-selected-${layoutId}`} markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                  <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--warning))" fillOpacity="0.6" />
+                  <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--warning))" fillOpacity="0.8" />
                 </marker>
               </defs>
               {renderConnections()}
             </svg>
             
-            {/* Mobile connection delete button */}
+            {/* Connection delete UI */}
             {selectedConnection && !connectingFrom && (
-              <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 lg:hidden">
-                <Card className="p-2 bg-card shadow-lg flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground px-2">Connection selected</span>
-                  <button
-                    onClick={() => {
-                      onDeleteConnection(selectedConnection);
-                      setSelectedConnection(null);
-                    }}
-                    className="px-3 py-1.5 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => setSelectedConnection(null)}
-                    className="px-3 py-1.5 bg-muted text-foreground rounded-md text-sm font-medium hover:bg-muted/80"
-                  >
-                    Cancel
-                  </button>
-                </Card>
-              </div>
+              <>
+                {/* Mobile delete button */}
+                <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 lg:hidden">
+                  <Card className="p-2 bg-card shadow-lg flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground px-2">Connection selected</span>
+                    <button
+                      onClick={() => {
+                        onDeleteConnection(selectedConnection);
+                        setSelectedConnection(null);
+                      }}
+                      className="px-3 py-1.5 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={() => setSelectedConnection(null)}
+                      className="px-3 py-1.5 bg-muted text-foreground rounded-md text-sm font-medium hover:bg-muted/80"
+                    >
+                      Cancel
+                    </button>
+                  </Card>
+                </div>
+                
+                {/* Desktop delete hint */}
+                <div className="hidden lg:block fixed bottom-6 right-6 z-50">
+                  <Card className="p-3 bg-card shadow-lg border-warning/50">
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm text-muted-foreground">Connection selected</span>
+                      <div className="flex items-center gap-2">
+                        <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded">Delete</kbd>
+                        <span className="text-xs text-muted-foreground">to remove</span>
+                      </div>
+                      <button
+                        onClick={() => setSelectedConnection(null)}
+                        className="p-1 hover:bg-muted rounded"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </Card>
+                </div>
+              </>
             )}
             
             <div className="p-2 lg:p-3 space-y-3 w-full max-w-full" style={{ position: 'relative', zIndex: 5 }}>
