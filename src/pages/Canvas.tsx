@@ -402,6 +402,81 @@ const TEMPLATES = {
       { id: 'e5-6', source: '5', target: '6', animated: true, style: { stroke: 'hsl(var(--primary))' } },
     ],
   },
+  'iterative-content-refinement': {
+    name: 'Iterative Content Refinement Loop 🔄',
+    description: 'Demonstrates circular flows - content is refined iteratively until quality threshold is met',
+    category: 'loops',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 400, y: 50 }, data: { label: 'Content Topic', nodeType: 'input', inputType: 'text', userPrompt: 'Write about the benefits of renewable energy', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 400, y: 200 }, data: { label: 'Initial Writer', nodeType: 'agent', systemPrompt: 'Write a first draft on the given topic. Make it informative but keep it concise (150-200 words). Focus on getting ideas down first.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 650, y: 350 }, data: { label: 'Quality Evaluator', nodeType: 'agent', systemPrompt: 'Evaluate the content quality on a scale of 1-10. Consider: clarity, engagement, accuracy, structure, and completeness. Start your response with "Quality Score: X/10" then provide specific feedback on what needs improvement.', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 400, y: 500 }, data: { label: 'Content Refiner', nodeType: 'agent', systemPrompt: 'Improve the content based on the feedback. Address all concerns raised. Enhance clarity, add missing information, improve structure, and make it more engaging. Maintain the core message while elevating quality.', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 150, y: 350 }, data: { label: 'Quality Check', nodeType: 'agent', systemPrompt: 'Extract just the quality score from the evaluation. If the score is 8 or higher, output "APPROVED - Quality threshold met". Otherwise output "CONTINUE REFINING - Quality: X/10"', status: 'idle' } },
+      { id: '6', type: 'custom', position: { x: 400, y: 650 }, data: { label: 'Final Content', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-4', source: '3', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-5', source: '3', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      // LOOP EDGE: This creates the circular flow
+      { 
+        id: 'e4-3-loop', 
+        source: '4', 
+        target: '3', 
+        animated: true, 
+        style: { stroke: '#f59e0b', strokeDasharray: '5,5', strokeWidth: 2 },
+        data: {
+          isLoopEdge: true,
+          maxIterations: 5,
+          exitConditions: [
+            { type: 'max_iterations' },
+            { type: 'convergence', threshold: 0.9 },
+            { type: 'custom', value: 'contains "APPROVED"' }
+          ],
+          convergenceThreshold: 0.9,
+          timeoutSeconds: 180
+        }
+      },
+      { id: 'e4-6', source: '4', target: '6', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+    ],
+  },
+  'retry-with-backoff': {
+    name: 'Retry with Exponential Backoff 🔄',
+    description: 'Demonstrates retry logic - attempts operation until success or max retries',
+    category: 'loops',
+    nodes: [
+      { id: '1', type: 'custom', position: { x: 200, y: 200 }, data: { label: 'API Request', nodeType: 'input', inputType: 'text', userPrompt: 'https://api.example.com/data', status: 'idle' } },
+      { id: '2', type: 'custom', position: { x: 450, y: 200 }, data: { label: 'Execute Request', nodeType: 'agent', systemPrompt: 'Simulate making an API request. Randomly return either "SUCCESS: Data retrieved" or "ERROR: Connection timeout". Include the attempt number in your response.', status: 'idle' } },
+      { id: '3', type: 'custom', position: { x: 700, y: 200 }, data: { label: 'Check Status', nodeType: 'agent', systemPrompt: 'Check if the request was successful. If response contains "SUCCESS", output "OPERATION_COMPLETE". If it contains "ERROR", output "RETRY_NEEDED - Error detected". ', status: 'idle' } },
+      { id: '4', type: 'custom', position: { x: 450, y: 350 }, data: { label: 'Retry Handler', nodeType: 'agent', systemPrompt: 'Prepare for retry. Output: "Retrying request (attempt X). Waiting before next attempt..."', status: 'idle' } },
+      { id: '5', type: 'custom', position: { x: 950, y: 200 }, data: { label: 'Result', nodeType: 'output', status: 'idle' } },
+    ],
+    edges: [
+      { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-5', source: '3', target: '5', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      { id: 'e3-4', source: '3', target: '4', animated: true, style: { stroke: 'hsl(var(--primary))' } },
+      // LOOP EDGE: Retry back to execute request
+      { 
+        id: 'e4-2-loop', 
+        source: '4', 
+        target: '2', 
+        animated: true, 
+        style: { stroke: '#f59e0b', strokeDasharray: '5,5', strokeWidth: 2 },
+        data: {
+          isLoopEdge: true,
+          maxIterations: 3,
+          exitConditions: [
+            { type: 'max_iterations' },
+            { type: 'custom', value: 'contains "OPERATION_COMPLETE"' }
+          ],
+          convergenceThreshold: 0.95,
+          timeoutSeconds: 60
+        }
+      },
+    ],
+  },
 };
 
 const Canvas = () => {
