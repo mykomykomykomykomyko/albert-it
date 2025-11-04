@@ -863,51 +863,100 @@ const Chat = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {!currentConversation ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-4">
-            <div className="text-center max-w-2xl w-full">
-              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-10 h-10 text-white" />
+          <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-accent/5">
+            <div className="text-center max-w-3xl w-full animate-fade-in">
+              <div className="relative mb-8">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 blur-3xl rounded-full" />
+                <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-primary via-primary to-accent flex items-center justify-center mx-auto shadow-2xl shadow-primary/20 hover:scale-105 transition-transform duration-300">
+                  <Sparkles className="w-12 h-12 text-white animate-pulse" />
+                </div>
               </div>
-              <h2 className="text-3xl font-bold mb-4">Welcome to Albert</h2>
-              <p className="text-muted-foreground mb-8">
-                Your AI assistant from the Government of Alberta. Type a message to start chatting.
+              
+              <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
+                Welcome to Albert
+              </h2>
+              <p className="text-muted-foreground mb-12 text-lg">
+                Your AI assistant from the Government of Alberta
               </p>
               
-              {/* Welcome screen input */}
-              <div className="bg-card border border-border rounded-2xl p-4 shadow-lg">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      if (input.trim()) {
-                        handleNewConversation().then(() => {
-                          // After conversation is created, send the message
-                          setTimeout(() => handleSend(), 100);
-                        });
-                      }
-                    }
-                  }}
-                  placeholder="Type your message..."
-                  className="min-h-[100px] max-h-[200px] resize-none w-full mb-3"
-                />
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => {
-                      if (input.trim()) {
-                        handleNewConversation().then(() => {
-                          setTimeout(() => handleSend(), 100);
-                        });
-                      }
-                    }}
-                    disabled={!input.trim()}
-                    size="lg"
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Start Chatting
-                  </Button>
+              {/* Modern input card */}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300" />
+                <div className="relative bg-card border border-border/50 rounded-3xl p-6 shadow-xl backdrop-blur-sm">
+                  <div className="flex flex-col gap-4">
+                    <div className="relative">
+                      <Textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (input.trim()) {
+                              handleNewConversation().then(() => {
+                                setTimeout(() => handleSend(), 100);
+                              });
+                            }
+                          }
+                        }}
+                        placeholder="Ask me anything..."
+                        className="min-h-[120px] max-h-[240px] resize-none w-full bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200 rounded-2xl text-base placeholder:text-muted-foreground/60"
+                      />
+                      <div className="absolute bottom-3 right-3 text-xs text-muted-foreground/50">
+                        Press Enter to send
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                          title="Attach files"
+                        >
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                          title="Voice input"
+                        >
+                          <Mic className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <Button
+                        onClick={() => {
+                          if (input.trim()) {
+                            handleNewConversation().then(() => {
+                              setTimeout(() => handleSend(), 100);
+                            });
+                          }
+                        }}
+                        disabled={!input.trim()}
+                        size="lg"
+                        className="bg-gradient-to-r from-primary to-accent hover:shadow-lg hover:shadow-primary/25 transition-all duration-200 rounded-xl px-8"
+                      >
+                        <Send className="h-4 w-4 mr-2" />
+                        Start Chatting
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+              </div>
+              
+              {/* Suggestion chips */}
+              <div className="mt-8 flex flex-wrap gap-2 justify-center">
+                {["Help with policy", "Schedule meeting", "Research topic", "Draft document"].map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setInput(suggestion)}
+                    className="px-4 py-2 rounded-full bg-accent/30 hover:bg-accent/60 text-sm font-medium transition-all duration-200 hover:scale-105 border border-border/30"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
