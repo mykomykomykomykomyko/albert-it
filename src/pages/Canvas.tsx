@@ -1068,26 +1068,38 @@ const Canvas = () => {
   const loadCanvasData = (canvasData: any) => {
     setWorkflowName(canvasData.name || "Untitled Workflow");
     
-    // Restore nodes with callbacks
-    const restoredNodes = (canvasData.nodes || []).map((node: any) => ({
-      ...node,
-      data: {
-        ...node.data,
-        orientation: connectionOrientation,
-        onEdit: () => {
-          setSelectedNode(node);
-          setIsRightSidebarOpen(true);
+    // Restore nodes with callbacks - use nodeId to avoid closure issues
+    const restoredNodes = (canvasData.nodes || []).map((node: any) => {
+      const nodeId = node.id;
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          orientation: connectionOrientation,
+          onEdit: () => {
+            // Find the current node from state to avoid stale closures
+            setNodes((currentNodes) => {
+              const currentNode = currentNodes.find(n => n.id === nodeId);
+              if (currentNode) {
+                setSelectedNode(currentNode);
+                setIsRightSidebarOpen(true);
+              }
+              return currentNodes;
+            });
+          },
+          onRun: () => handleRunNode(nodeId),
         },
-        onRun: () => handleRunNode(node.id),
-      },
-    }));
+      };
+    });
     
     setNodes(restoredNodes);
     setEdges((canvasData.edges || []).map((edge: any) => ({
       ...edge,
       type: edge.type || 'smoothstep',
       animated: true,
-      style: { stroke: 'hsl(var(--primary))' }
+      style: edge.style || { stroke: 'hsl(var(--primary))' },
+      markerEnd: edge.markerEnd || { type: MarkerType.ArrowClosed, color: 'hsl(var(--primary))' },
+      data: edge.data || {}
     })));
     setGlobalInput(canvasData.globalInput || "");
     toast.success("Canvas loaded successfully");
