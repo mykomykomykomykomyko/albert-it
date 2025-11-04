@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { ProcessedImage, AnalysisResult, AnalysisPrompt } from '@/types/imageAnalysis';
-import { Download, X, ChevronLeft, ChevronRight, Clock, FileText, Calendar, Eye } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, Clock, FileText, Calendar, Eye } from 'lucide-react';
 import { formatBytes } from '@/lib/utils';
 import { ObjectDetectionViewer } from './ObjectDetectionViewer';
 
@@ -128,9 +128,6 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({
               <Button variant="outline" size="sm" onClick={handleDownloadResults}>
                 <Download className="w-4 h-4 mr-2" />
                 Download JSON
-              </Button>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-4 h-4" />
               </Button>
             </div>
           </div>
