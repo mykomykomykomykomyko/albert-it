@@ -70,10 +70,28 @@ serve(async (req) => {
   }
 
   try {
-    // Parse FormData from request
-    const formData = await req.formData();
-    const audioFile = formData.get('audio') as File;
-    const model = formData.get('model') as string;
+    // Support both multipart/form-data and JSON base64 payloads
+    const contentType = req.headers.get('content-type') || '';
+
+    let audioFile: File | null = null;
+    let model: string | null = null;
+
+    if (contentType.includes('multipart/form-data')) {
+      // Parse FormData from request
+      const formData = await req.formData();
+      audioFile = formData.get('audio') as File | null;
+      model = (formData.get('model') as string) || null;
+    } else {
+      // Parse JSON with base64 audio
+      const body = await req.json().catch(() => null);
+      if (body && body.audio) {
+        const base64 = body.audio as string;
+        model = (body.model as string) || null;
+        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        const blob = new Blob([bytes], { type: body.mimeType || 'audio/webm' });
+        audioFile = new File([blob], body.filename || 'audio.webm', { type: blob.type });
+      }
+    }
 
     if (!audioFile) {
       throw new Error('No audio file provided');
