@@ -7,6 +7,7 @@ export interface Conversation {
   updated_at: string;
   is_shared?: boolean;
   share_token?: string | null;
+  retention_days?: number | null;
 }
 
 export interface Message {

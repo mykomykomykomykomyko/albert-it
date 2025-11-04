@@ -155,6 +155,7 @@ export type Database = {
           id: string
           is_shared: boolean | null
           model: string
+          retention_days: number | null
           share_token: string | null
           title: string
           updated_at: string | null
@@ -166,6 +167,7 @@ export type Database = {
           id?: string
           is_shared?: boolean | null
           model?: string
+          retention_days?: number | null
           share_token?: string | null
           title?: string
           updated_at?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           id?: string
           is_shared?: boolean | null
           model?: string
+          retention_days?: number | null
           share_token?: string | null
           title?: string
           updated_at?: string | null
@@ -614,6 +617,7 @@ export type Database = {
         Row: {
           contrast_theme: string
           created_at: string
+          default_retention_days: number | null
           enhance_inputs: boolean
           font_family: string
           id: string
@@ -625,6 +629,7 @@ export type Database = {
         Insert: {
           contrast_theme?: string
           created_at?: string
+          default_retention_days?: number | null
           enhance_inputs?: boolean
           font_family?: string
           id?: string
@@ -636,6 +641,7 @@ export type Database = {
         Update: {
           contrast_theme?: string
           created_at?: string
+          default_retention_days?: number | null
           enhance_inputs?: boolean
           font_family?: string
           id?: string

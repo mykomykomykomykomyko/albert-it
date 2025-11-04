@@ -8,6 +8,7 @@ export interface UserPreferences {
   line_spacing: 'compact' | 'normal' | 'relaxed' | 'loose';
   contrast_theme: 'default' | 'high-contrast' | 'yellow-black' | 'black-yellow' | 'white-black' | 'black-white';
   enhance_inputs: boolean;
+  default_retention_days: number | null;
 }
 
 export const useUserPreferences = () => {
@@ -18,6 +19,7 @@ export const useUserPreferences = () => {
     line_spacing: 'normal',
     contrast_theme: 'default',
     enhance_inputs: false,
+    default_retention_days: null,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -48,6 +50,7 @@ export const useUserPreferences = () => {
           line_spacing: data.line_spacing as UserPreferences['line_spacing'],
           contrast_theme: data.contrast_theme as UserPreferences['contrast_theme'],
           enhance_inputs: data.enhance_inputs,
+          default_retention_days: data.default_retention_days,
         });
       }
     } catch (error) {
@@ -87,6 +90,7 @@ export const useUserPreferences = () => {
       line_spacing: 'normal',
       contrast_theme: 'default',
       enhance_inputs: false,
+      default_retention_days: null,
     };
     await updatePreferences(defaultPrefs);
   };

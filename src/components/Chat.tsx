@@ -266,6 +266,24 @@ const Chat = () => {
     toast.success("Conversation renamed");
   };
 
+  const handleUpdateRetention = async (conversationId: string, retentionDays: number | null) => {
+    const { error } = await supabase
+      .from("conversations")
+      .update({ retention_days: retentionDays })
+      .eq("id", conversationId);
+
+    if (error) {
+      toast.error("Failed to update retention policy");
+      return;
+    }
+
+    await loadConversations();
+    if (currentConversation?.id === conversationId) {
+      setCurrentConversation({ ...currentConversation, retention_days: retentionDays });
+    }
+    toast.success("Retention policy updated");
+  };
+
   const handleDeleteConversation = async (conversationId: string) => {
     const { error } = await supabase
       .from("conversations")
@@ -821,6 +839,7 @@ const Chat = () => {
           onSelectConversation={(id) => navigate(`/chat/${id}`)}
           onRenameConversation={handleRenameConversation}
           onDeleteConversation={handleDeleteConversation}
+          onUpdateRetention={handleUpdateRetention}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />

@@ -383,6 +383,36 @@ export const AccessibilityPreferences = () => {
           </div>
         </Card>
 
+        {/* Data Retention */}
+        <Card className="p-4 mt-6">
+          <div>
+            <Label className="text-base font-medium">Auto-Delete Conversations</Label>
+            <p className="text-sm text-muted-foreground mt-1 mb-4">
+              Automatically delete conversations after a specified number of days (ATIA/FOIP compliance)
+            </p>
+            <Select
+              value={tempPreferences.default_retention_days?.toString() || 'never'}
+              onValueChange={(value) => handlePreferenceChange({ 
+                default_retention_days: value === 'never' ? null : parseInt(value) 
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="never">Never Delete</SelectItem>
+                <SelectItem value="7">7 days</SelectItem>
+                <SelectItem value="14">14 days</SelectItem>
+                <SelectItem value="30">30 days</SelectItem>
+                <SelectItem value="60">60 days</SelectItem>
+                <SelectItem value="90">90 days</SelectItem>
+                <SelectItem value="180">180 days</SelectItem>
+                <SelectItem value="365">365 days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </Card>
+
         {/* Save Button */}
         <div className="mt-6 flex justify-end">
           <Button
