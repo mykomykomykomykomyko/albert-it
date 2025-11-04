@@ -24,6 +24,7 @@ export interface Message {
       pageCount?: number;
       totalSheets?: number;
       totalRows?: number;
+      content?: string; // File content stored for later use
     }>;
     images?: Array<{
       name: string;
