@@ -912,6 +912,7 @@ const Chat = () => {
                           variant="ghost"
                           size="icon"
                           className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                          onClick={() => document.getElementById('welcome-file-upload')?.click()}
                           title="Attach files"
                         >
                           <Paperclip className="h-4 w-4" />
@@ -920,6 +921,7 @@ const Chat = () => {
                           variant="ghost"
                           size="icon"
                           className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                          onClick={() => setShowAudioUploader(!showAudioUploader)}
                           title="Voice input"
                         >
                           <Mic className="h-4 w-4" />
@@ -946,18 +948,27 @@ const Chat = () => {
                 </div>
               </div>
               
-              {/* Suggestion chips */}
-              <div className="mt-8 flex flex-wrap gap-2 justify-center">
-                {["Help with policy", "Schedule meeting", "Research topic", "Draft document"].map((suggestion, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setInput(suggestion)}
-                    className="px-4 py-2 rounded-full bg-accent/30 hover:bg-accent/60 text-sm font-medium transition-all duration-200 hover:scale-105 border border-border/30"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
+              {/* Hidden file input for welcome screen */}
+              <input
+                id="welcome-file-upload"
+                type="file"
+                className="hidden"
+                multiple
+                accept="image/*,.pdf,.txt,.docx,.doc,.xlsx,.xls,.csv,.json,.js,.jsx,.ts,.tsx,.html,.css,.xml,.md,.log,.py,.java,.c,.cpp,.h,.hpp,.rb,.go,.rs,.php,.sh,.bat,.yaml,.yml"
+                onChange={handleFileUpload}
+              />
+              
+              {/* Audio uploader */}
+              {showAudioUploader && (
+                <div className="mt-6 animate-fade-in">
+                  <AudioUploader
+                    onTranscriptionComplete={(transcript) => {
+                      setInput(transcript);
+                      setShowAudioUploader(false);
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ) : (
