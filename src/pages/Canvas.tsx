@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SaveCanvasDialog } from "@/components/canvas/SaveCanvasDialog";
 import { LoadCanvasDialog } from "@/components/canvas/LoadCanvasDialog";
+import { LoopConfigDialog } from "@/components/workflow/LoopConfigDialog";
+import { LoopMonitor } from "@/components/workflow/LoopMonitor";
 import ReactFlow, {
   Node,
   Edge,
@@ -43,7 +45,7 @@ import { AgentSelectorDialog } from "@/components/agents/AgentSelectorDialog";
 import type { FunctionDefinition } from "@/types/functions";
 import { toolDefinitions, type ToolDefinition } from "@/lib/toolDefinitions";
 import { PropertiesPanel } from "@/components/properties/PropertiesPanel";
-import type { WorkflowNode, AgentNode, FunctionNode, ToolNode, ToolInstance } from "@/types/workflow";
+import type { WorkflowNode, AgentNode, FunctionNode, ToolNode, ToolInstance, LoopMetadata } from "@/types/workflow";
 
 const nodeTypes: NodeTypes = {
   custom: CustomNode,
@@ -425,6 +427,9 @@ const Canvas = () => {
   const [connectionOrientation, setConnectionOrientation] = useState<'vertical' | 'horizontal'>('vertical');
   const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [isLoopConfigOpen, setIsLoopConfigOpen] = useState(false);
+  const [configuringEdge, setConfiguringEdge] = useState<Edge | null>(null);
+  const [activeLoops, setActiveLoops] = useState<LoopMetadata[]>([]);
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -529,67 +534,10 @@ const Canvas = () => {
     }
   }, [selectedNode, nodes]);
 
-  // Helper function to detect circular dependencies using DFS
-  const wouldCreateCycle = useCallback((newEdge: Connection, currentEdges: Edge[]): boolean => {
-    if (!newEdge.source || !newEdge.target) return false;
-    
-    // Build adjacency list with the new edge included
-    const adjacencyList = new Map<string, Set<string>>();
-    
-    // Add all existing edges
-    currentEdges.forEach(edge => {
-      if (!adjacencyList.has(edge.source)) {
-        adjacencyList.set(edge.source, new Set());
-      }
-      adjacencyList.get(edge.source)!.add(edge.target);
-    });
-    
-    // Add the new edge
-    if (!adjacencyList.has(newEdge.source)) {
-      adjacencyList.set(newEdge.source, new Set());
-    }
-    adjacencyList.get(newEdge.source)!.add(newEdge.target);
-    
-    // DFS to detect cycle starting from the target of new edge
-    const visited = new Set<string>();
-    const recursionStack = new Set<string>();
-    
-    const hasCycle = (node: string): boolean => {
-      visited.add(node);
-      recursionStack.add(node);
-      
-      const neighbors = adjacencyList.get(node);
-      if (neighbors) {
-        for (const neighbor of neighbors) {
-          if (!visited.has(neighbor)) {
-            if (hasCycle(neighbor)) {
-              return true;
-            }
-          } else if (recursionStack.has(neighbor)) {
-            // Found a back edge - cycle detected
-            return true;
-          }
-        }
-      }
-      
-      recursionStack.delete(node);
-      return false;
-    };
-    
-    // Check for cycles starting from the new edge's target
-    return hasCycle(newEdge.target);
-  }, []);
-
   const onConnect = useCallback(
     (params: Connection) => {
-      // Check if this connection would create a cycle
-      if (wouldCreateCycle(params, edges)) {
-        toast.error("Cannot create connection: This would create a circular flow");
-        return;
-      }
-      
       const edgeType = 'smoothstep';
-      setEdges((eds) => addEdge({ 
+      const newEdge = { 
         ...params, 
         animated: true, 
         type: edgeType,
@@ -598,9 +546,12 @@ const Canvas = () => {
           type: MarkerType.ArrowClosed,
           color: 'hsl(var(--primary))',
         },
-      }, eds));
+      };
+      
+      setEdges((eds) => addEdge(newEdge, eds));
+      toast.success("Connection created - circular flows are supported with loop controls");
     },
-    [setEdges, edges, wouldCreateCycle]
+    [setEdges]
   );
 
   const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
@@ -1189,6 +1140,7 @@ const Canvas = () => {
   const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
     setSelectedEdge(edge);
     setSelectedNode(null); // Deselect node when edge is selected
+    setConfiguringEdge(edge);
   }, []);
 
   const handleDeleteSelected = useCallback(() => {
@@ -1639,12 +1591,32 @@ const Canvas = () => {
             />
           </ReactFlow>
           
-          {/* Edge deletion hint */}
+          {/* Loop Monitor */}
+          {activeLoops.length > 0 && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 max-w-md">
+              <LoopMonitor 
+                loops={activeLoops} 
+                onForceStop={(loopId) => {
+                  setActiveLoops(prev => prev.filter(l => l.loopId !== loopId));
+                  toast.success("Loop stopped");
+                }} 
+              />
+            </div>
+          )}
+
+          {/* Edge controls */}
           {selectedEdge && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
               <Card className="p-3 bg-card shadow-lg border-warning/50 pointer-events-auto">
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-muted-foreground">Connection selected</span>
+                  <Button size="sm" variant="outline" onClick={() => {
+                    setConfiguringEdge(selectedEdge);
+                    setIsLoopConfigOpen(true);
+                  }}>
+                    <Repeat className="h-3 w-3 mr-1" />
+                    Loop Config
+                  </Button>
                   <div className="flex items-center gap-2">
                     <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded">Delete</kbd>
                     <span className="text-xs text-muted-foreground">to remove</span>
@@ -1834,6 +1806,29 @@ const Canvas = () => {
         open={isLoadDialogOpen}
         onOpenChange={setIsLoadDialogOpen}
         onLoad={loadCanvasData}
+      />
+
+      {/* Loop Configuration Dialog */}
+      <LoopConfigDialog
+        open={isLoopConfigOpen}
+        onOpenChange={setIsLoopConfigOpen}
+        initialConfig={configuringEdge?.data as any}
+        onSave={(config) => {
+          if (configuringEdge) {
+            setEdges(eds => eds.map(e => 
+              e.id === configuringEdge.id 
+                ? { 
+                    ...e, 
+                    data: config,
+                    style: config.isLoopEdge 
+                      ? { ...e.style, strokeDasharray: '5,5' }
+                      : e.style
+                  }
+                : e
+            ));
+            toast.success("Loop configuration saved");
+          }
+        }}
       />
     </div>
   );

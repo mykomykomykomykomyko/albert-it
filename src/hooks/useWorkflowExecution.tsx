@@ -1,13 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type {
   Workflow,
   WorkflowNode,
   AgentNode,
   FunctionNode,
   LogEntry,
+  LoopMetadata,
 } from "@/types/workflow";
 import { AgentExecutor } from "@/lib/agentExecutor";
 import { FunctionExecutor } from "@/lib/functionExecutor";
+import { LoopDetector } from "@/lib/loopDetection";
+import { BreakConditionEvaluator } from "@/lib/breakConditions";
 
 export interface UseWorkflowExecutionOptions {
   workflow: Workflow;
@@ -23,6 +26,10 @@ export const useWorkflowExecution = ({
   onAddLog,
 }: UseWorkflowExecutionOptions) => {
   const [isRunning, setIsRunning] = useState(false);
+  const [activeLoops, setActiveLoops] = useState<LoopMetadata[]>([]);
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
+  const globalExecutionCountRef = useRef<number>(0);
+  const MAX_GLOBAL_EXECUTIONS = 1000;
 
   const runSingleAgent = useCallback(
     async (nodeId: string) => {
@@ -180,14 +187,54 @@ export const useWorkflowExecution = ({
     [workflow, userInput, onUpdateNode, onAddLog]
   );
 
+  const forceStopLoop = useCallback((loopId: string) => {
+    const controller = abortControllersRef.current.get(loopId);
+    if (controller) {
+      controller.abort();
+      abortControllersRef.current.delete(loopId);
+      setActiveLoops(prev => prev.filter(l => l.loopId !== loopId));
+      onAddLog("warning", `Loop ${loopId.slice(-8)} force stopped by user`);
+    }
+  }, [onAddLog]);
+
   const runWorkflow = useCallback(async () => {
     const allNodes = workflow.stages.flatMap((s) => s.nodes);
 
     onAddLog("info", "🚀 Workflow execution started");
     setIsRunning(true);
+    globalExecutionCountRef.current = 0;
+    setActiveLoops([]);
+
+    // Detect loops in the workflow
+    const detector = new LoopDetector(workflow.connections);
+    const detectedLoops = detector.detectLoops();
+    
+    if (detectedLoops.length > 0) {
+      onAddLog("info", `🔄 Detected ${detectedLoops.length} loop(s) in workflow`);
+      detectedLoops.forEach(loop => {
+        onAddLog("info", `  Loop with ${loop.nodes.size} nodes`);
+      });
+    }
+
+    // Initialize loop metadata
+    const loopMetadataMap = new Map<string, LoopMetadata>();
+    detectedLoops.forEach(scc => {
+      const metadata = LoopDetector.sccToLoopMetadata(scc, workflow.connections);
+      loopMetadataMap.set(metadata.loopId, metadata);
+      
+      // Mark nodes as being in a loop
+      scc.nodes.forEach(nodeId => {
+        onUpdateNode(nodeId, { isInLoop: true, loopId: metadata.loopId });
+      });
+    });
 
     allNodes.forEach((node) => {
-      onUpdateNode(node.id, { status: "idle", output: undefined });
+      onUpdateNode(node.id, { 
+        status: "idle", 
+        output: undefined,
+        executionCount: 0,
+        previousOutputs: [],
+      });
     });
 
     const outputs = new Map<string, string>();
@@ -313,6 +360,7 @@ export const useWorkflowExecution = ({
       }
     };
 
+    // Execute workflow with loop handling
     for (let i = 0; i < workflow.stages.length; i++) {
       const stage = workflow.stages[i];
       if (stage.nodes.length === 0) continue;
@@ -327,6 +375,22 @@ export const useWorkflowExecution = ({
       );
 
       const nodePromises = stage.nodes.map(async (node) => {
+        // Safety check: global execution limit
+        if (globalExecutionCountRef.current >= MAX_GLOBAL_EXECUTIONS) {
+          onAddLog("error", "⚠️ Global execution limit reached - stopping workflow");
+          throw new Error("Global execution limit reached");
+        }
+
+        // Check node-specific execution limit
+        const nodeExecutionCount = (node as any).executionCount || 0;
+        const nodeMaxExecutions = (node as any).maxExecutions || 100;
+        
+        if (nodeExecutionCount >= nodeMaxExecutions) {
+          onAddLog("warning", `Node ${node.name} reached max executions (${nodeMaxExecutions})`);
+          return;
+        }
+
+        globalExecutionCountRef.current++;
         const incomingConnections = workflow.connections.filter(
           (c) => c.toNodeId === node.id
         );
@@ -365,6 +429,42 @@ export const useWorkflowExecution = ({
         if (node.nodeType === "agent") {
           const output = await executeAgent(node.id, input);
           outputs.set(node.id, output);
+          
+          // Update execution tracking
+          onUpdateNode(node.id, {
+            executionCount: nodeExecutionCount + 1,
+            previousOutputs: [...((node as any).previousOutputs || []), output].slice(-10),
+          });
+
+          // Check if node is in a loop and handle loop logic
+          if ((node as any).isInLoop) {
+            const loopId = (node as any).loopId;
+            const loopMetadata = loopMetadataMap.get(loopId);
+            
+            if (loopMetadata) {
+              loopMetadata.currentIteration++;
+              loopMetadata.history.push(output);
+              
+              // Update active loops display
+              setActiveLoops(prev => {
+                const updated = prev.filter(l => l.loopId !== loopId);
+                return [...updated, { ...loopMetadata }];
+              });
+
+              // Check exit conditions
+              const exitCheck = BreakConditionEvaluator.shouldExitLoop(loopMetadata, output);
+              
+              if (exitCheck.shouldExit) {
+                onAddLog("info", `🔄 Loop exit: ${exitCheck.reason}`);
+                // Mark loop as completed
+                loopMetadata.nodes.forEach(nodeId => {
+                  onUpdateNode(nodeId, { isInLoop: false });
+                });
+                loopMetadataMap.delete(loopId);
+                setActiveLoops(prev => prev.filter(l => l.loopId !== loopId));
+              }
+            }
+          }
         } else if (node.nodeType === "function") {
           const { outputs: functionOutputs, primaryOutput } =
             await executeFunction(node.id, input);
@@ -372,6 +472,12 @@ export const useWorkflowExecution = ({
             outputs.set(key, value);
           });
           outputs.set(node.id, primaryOutput);
+          
+          // Update execution tracking
+          onUpdateNode(node.id, {
+            executionCount: nodeExecutionCount + 1,
+            previousOutputs: [...((node as any).previousOutputs || []), primaryOutput].slice(-10),
+          });
         }
       });
 
@@ -379,6 +485,8 @@ export const useWorkflowExecution = ({
       onAddLog("success", `✓ Stage ${i + 1} completed`);
     }
 
+    // Clear any remaining active loops
+    setActiveLoops([]);
     onAddLog("success", "🎉 Workflow execution completed");
     setIsRunning(false);
   }, [workflow, userInput, onUpdateNode, onAddLog]);
@@ -388,5 +496,7 @@ export const useWorkflowExecution = ({
     runSingleFunction,
     runWorkflow,
     isRunning,
+    activeLoops,
+    forceStopLoop,
   };
 };

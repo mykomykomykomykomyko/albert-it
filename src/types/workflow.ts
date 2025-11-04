@@ -4,6 +4,26 @@ export interface ToolInstance {
   config: Record<string, any>;
 }
 
+export interface LoopExitCondition {
+  type: 'max_iterations' | 'convergence' | 'value_equals' | 'custom';
+  value?: any;
+  threshold?: number;
+}
+
+export interface LoopMetadata {
+  loopId: string;
+  nodes: Set<string>;
+  edges: string[];
+  entryNode: string;
+  exitNode: string;
+  currentIteration: number;
+  maxIterations: number;
+  exitConditions: LoopExitCondition[];
+  history: string[];
+  startTime: number;
+  timeoutMs?: number;
+}
+
 export interface WorkflowNode {
   id: string;
   nodeType: "agent" | "function" | "tool";
@@ -17,6 +37,11 @@ export interface WorkflowNode {
     toolName?: string;
     output: any;
   }>;
+  executionCount?: number;
+  maxExecutions?: number;
+  previousOutputs?: string[];
+  isInLoop?: boolean;
+  loopId?: string;
 }
 
 export interface AgentNode extends WorkflowNode {
@@ -52,6 +77,13 @@ export interface Connection {
   fromNodeId: string;
   toNodeId: string;
   fromOutputPort?: string;
+  isLoopEdge?: boolean;
+  loopConfig?: {
+    maxIterations: number;
+    exitConditions: LoopExitCondition[];
+    convergenceThreshold?: number;
+    timeoutSeconds?: number;
+  };
 }
 
 export interface Workflow {
