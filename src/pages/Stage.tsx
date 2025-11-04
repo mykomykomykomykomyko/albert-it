@@ -317,32 +317,25 @@ const Stage = () => {
     }));
   };
 
-  const saveWorkflow = async () => {
-    try {
-      if (currentWorkflowId) {
-        // Update existing
-        await updateWorkflow(currentWorkflowId, {
-          workflow_data: workflow,
-          name: workflowName,
-        });
-        toast.success('Workflow saved to database');
-      } else {
-        // Create new
-        const newWorkflow = await createWorkflow({
-          name: workflowName,
-          workflow_data: workflow,
-          description: '',
-        });
-        if (newWorkflow) {
-          setCurrentWorkflowId(newWorkflow.id);
-          localStorage.setItem('canvas_currentWorkflowId', newWorkflow.id);
-          toast.success('Workflow saved to database');
-        }
-      }
-    } catch (error) {
-      console.error('Error saving workflow:', error);
-      toast.error('Failed to save workflow');
-    }
+  const saveWorkflow = () => {
+    const workflowData = {
+      workflow,
+      workflowName,
+      userInput,
+      customAgents,
+    };
+    
+    const workflowJson = JSON.stringify(workflowData, null, 2);
+    const blob = new Blob([workflowJson], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${workflowName || 'workflow'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Workflow exported as JSON');
   };
 
   const loadWorkflow = (file: File) => {
