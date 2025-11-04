@@ -9,10 +9,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy, History, FolderInput } from "lucide-react";
+import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useVoiceAnalysis } from "@/hooks/useVoiceAnalysis";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SpeechToTextTabProps {
   // API key no longer needed - handled by edge function
@@ -36,10 +34,8 @@ interface Model {
 
 export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   const { toast } = useToast();
-  const { results, loading: historyLoading, saveResult, deleteResult } = useVoiceAnalysis();
   const [files, setFiles] = useState<AudioFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [autoDetectSpeakers, setAutoDetectSpeakers] = useState(true);
@@ -181,20 +177,10 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
       // Auto-select this file to show results
       setSelectedFile(fileId);
-      setSelectedHistoryId(null);
-
-      // Save to database
-      const transcriptionText = data.text || JSON.stringify(data);
-      await saveResult(
-        file.name,
-        transcriptionText,
-        '', // analysis field - empty for now
-        selectedModel
-      );
 
       toast({
         title: "Success",
-        description: `Transcription completed and saved for ${file.name}`,
+        description: `Transcription completed for ${file.name}`,
       });
 
     } catch (error) {
@@ -471,93 +457,24 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   };
 
   const selectedFileData = files.find(f => f.id === selectedFile);
-  const selectedHistoryData = results.find(r => r.id === selectedHistoryId);
   
-  // Determine what to display - prioritize current file over history
-  const displayData = selectedFileData || (selectedHistoryId && selectedHistoryData ? {
-    id: selectedHistoryData.id,
-    name: selectedHistoryData.original_filename,
-    transcription: { text: selectedHistoryData.transcription },
-    status: 'completed' as const
-  } : null);
-
-  const handleDeleteHistory = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (confirm('Delete this transcription?')) {
-      await deleteResult(id);
-      if (selectedHistoryId === id) {
-        setSelectedHistoryId(null);
-      }
-    }
-  };
-
-  const saveToTranscripts = async () => {
-    if (!displayData?.transcription) return;
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      // Format the transcription text
-      let transcriptionText = '';
-      let speakers: string[] = [];
-
-      if (displayData.transcription.diarized_sections) {
-        transcriptionText = displayData.transcription.diarized_sections
-          .map((section: any) => `${getSpeakerDisplayName(section.original_speaker_id)}: ${section.text}`)
-          .join('\n\n');
-        speakers = getUniqueSpeakersFromDiarizedSections(displayData.transcription.diarized_sections)
-          .map(id => getSpeakerDisplayName(id));
-      } else if (displayData.transcription.words) {
-        const groups = groupWordsBySpeaker(displayData.transcription.words);
-        transcriptionText = groups
-          .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
-          .join('\n\n');
-        speakers = getUniqueSpeakers(displayData.transcription).map(id => getSpeakerDisplayName(id));
-      } else {
-        transcriptionText = displayData.transcription.text || '';
-      }
-
-      // Insert into meeting_transcripts table
-      const { error } = await supabase
-        .from('meeting_transcripts')
-        .insert({
-          user_id: user.id,
-          title: displayData.name.replace(/\.(webm|wav|mp3|flac|m4a|ogg)$/i, ''),
-          original_filename: displayData.name,
-          file_format: 'voice',
-          content: transcriptionText,
-          structured_data: displayData.transcription,
-          participants: speakers,
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Saved to Transcripts",
-        description: "Transcription has been saved to the Transcripts page",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Save Failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
+  // Debug log to see what's happening
+  console.log('Selected file:', selectedFile);
+  console.log('Selected file data:', selectedFileData);
+  console.log('Transcription data:', selectedFileData?.transcription);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-8rem)]">
-      {/* Left & Center Column - File Upload & Results */}
-      <div className="space-y-6 lg:col-span-8 flex flex-col overflow-hidden">
-        <Card className="flex-shrink-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left Column - File Upload */}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5" />
               Audio Files
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             {/* Drag & Drop Zone */}
             <div
               onDragOver={handleDragOver}
@@ -612,27 +529,24 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
             {/* File List */}
             {files.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-sm">Uploaded Files ({files.length})</h4>
+              <div className="mt-6 space-y-3">
+                <h4 className="font-medium">Uploaded Files</h4>
                 {files.map((file) => (
                   <div
                     key={file.id}
-                    onClick={() => {
-                      setSelectedFile(file.id);
-                      setSelectedHistoryId(null);
-                    }}
+                    onClick={() => setSelectedFile(file.id)}
                     className={cn(
-                      "p-3 rounded-lg border cursor-pointer transition-smooth group",
+                      "p-4 rounded-lg border cursor-pointer transition-smooth",
                       selectedFile === file.id
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <FileAudio className="w-4 h-4 shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-sm truncate">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileAudio className="w-5 h-5" />
+                        <div>
+                          <p className="font-medium text-sm truncate max-w-[200px]">
                             {file.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -640,33 +554,29 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge 
-                          variant={
-                            file.status === "completed" ? "default" :
-                            file.status === "processing" ? "secondary" :
-                            file.status === "error" ? "destructive" : "outline"
-                          }
-                          className="text-xs"
-                        >
+                      <div className="flex items-center gap-2">
+                        <Badge variant={
+                          file.status === "completed" ? "default" :
+                          file.status === "processing" ? "secondary" :
+                          file.status === "error" ? "destructive" : "outline"
+                        }>
                           {file.status}
                         </Badge>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation();
                             removeFile(file.id);
                           }}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
                     
                     {file.status === "processing" && (
-                      <Progress value={file.progress} className="mt-2" />
+                      <Progress value={file.progress} className="mt-3" />
                     )}
                     
                     {file.status === "pending" && (
@@ -676,7 +586,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                           e.stopPropagation();
                           processFile(file.id);
                         }}
-                        className="mt-2 w-full"
+                        className="mt-3 w-full"
                       >
                         <Play className="w-4 h-4 mr-2" />
                         Process
@@ -688,11 +598,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      {/* Right Column - Configuration & Results */}
+      <div className="space-y-6">
         {/* Configuration */}
-        <Card className="flex-shrink-0">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Configuration</CardTitle>
+        <Card>
+          <CardHeader>
+            <CardTitle>Configuration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Model Selection */}
@@ -741,22 +654,22 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         </Card>
 
         {/* Speaker Names */}
-        {displayData?.transcription && (
-          (displayData.transcription.diarized_sections && displayData.transcription.diarized_sections.length > 1) ||
-          (displayData.transcription.words && getUniqueSpeakers(displayData.transcription).length > 0)
+        {selectedFileData?.transcription && (
+          (selectedFileData.transcription.diarized_sections && selectedFileData.transcription.diarized_sections.length > 1) ||
+          (selectedFileData.transcription.words && getUniqueSpeakers(selectedFileData.transcription).length > 0)
         ) && (
-          <Card className="flex-shrink-0">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Speaker Names ({displayData.transcription.total_speakers || getUniqueSpeakers(displayData.transcription).length} speakers)
+                Speaker Names ({selectedFileData.transcription.total_speakers || getUniqueSpeakers(selectedFileData.transcription).length} speakers)
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {displayData.transcription.diarized_sections ? 
+                {selectedFileData.transcription.diarized_sections ? 
                   // Use unique speakers from diarized_sections
-                  getUniqueSpeakersFromDiarizedSections(displayData.transcription.diarized_sections).map((speakerId) => (
+                  getUniqueSpeakersFromDiarizedSections(selectedFileData.transcription.diarized_sections).map((speakerId) => (
                     <div key={speakerId} className="flex items-center gap-3">
                       <Label className="min-w-[80px]">{speakerId}:</Label>
                       <Input
@@ -768,7 +681,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                     </div>
                   )) :
                   // Fallback to old method
-                  getUniqueSpeakers(displayData.transcription).map((speakerId) => (
+                  getUniqueSpeakers(selectedFileData.transcription).map((speakerId) => (
                     <div key={speakerId} className="flex items-center gap-3">
                       <Label className="min-w-[80px]">{speakerId}:</Label>
                       <Input
@@ -786,165 +699,86 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         )}
 
         {/* Results */}
-        {displayData?.transcription && (
-          <Card className="flex-1 flex flex-col overflow-hidden">
-            <CardHeader className="pb-3 flex-shrink-0">
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="flex items-center gap-2 text-lg">
+        {selectedFileData?.transcription && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
                   Transcription Results
                 </CardTitle>
                 <div className="flex gap-2">
-                  {selectedFileData && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={saveToTranscripts}
-                      >
-                        <FolderInput className="w-4 h-4 mr-2" />
-                        Save to Transcripts
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => copyTranscriptionToClipboard(selectedFileData)}
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copy
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadTranscription(selectedFileData, "txt")}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        TXT
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => downloadTranscription(selectedFileData, "json")}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        JSON
-                      </Button>
-                    </>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyTranscriptionToClipboard(selectedFileData)}
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => downloadTranscription(selectedFileData, "txt")}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    TXT
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => downloadTranscription(selectedFileData, "json")}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    JSON
+                  </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden flex flex-col">
-              <ScrollArea className="flex-1">
-                <div className="space-y-4 pr-4">
-                {displayData.transcription.diarized_sections && displayData.transcription.diarized_sections.length > 0 ? (
+            <CardContent>
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {selectedFileData.transcription.diarized_sections && selectedFileData.transcription.diarized_sections.length > 0 ? (
                   // Use diarized_sections from backend if available
-                  <div className="space-y-2">
-                    {displayData.transcription.diarized_sections.map((section: any, index: number) => (
-                      <div key={index} className="p-3 bg-muted/30 rounded-lg border border-border/50">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <Users className="w-3.5 h-3.5" />
-                          <Badge variant="outline" className="text-xs py-0 h-5">{getSpeakerDisplayName(section.original_speaker_id)}</Badge>
+                  <div className="space-y-3">
+                    {selectedFileData.transcription.diarized_sections.map((section: any, index: number) => (
+                      <div key={index} className="p-4 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="w-4 h-4" />
+                          <Badge variant="outline">{getSpeakerDisplayName(section.original_speaker_id)}</Badge>
                           <span className="text-xs text-muted-foreground">
                             {section.word_count} words • {section.start_time?.toFixed(1)}s - {section.end_time?.toFixed(1)}s
                           </span>
                         </div>
-                        <p className="text-sm leading-relaxed">{section.text}</p>
+                        <p className="text-sm">{section.text}</p>
                       </div>
                     ))}
                   </div>
-                ) : displayData.transcription.words && displayData.transcription.words.some((w: any) => w.speaker_id) ? (
+                ) : selectedFileData.transcription.words && selectedFileData.transcription.words.some((w: any) => w.speaker_id) ? (
                   // Fallback to old method for backwards compatibility
-                  <div className="space-y-2">
-                    {groupWordsBySpeaker(displayData.transcription.words).map((group, index) => (
-                      <div key={index} className="p-3 bg-muted/30 rounded-lg border border-border/50">
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <Users className="w-3.5 h-3.5" />
-                          <Badge variant="outline" className="text-xs py-0 h-5">{getSpeakerDisplayName(group.speaker_id)}</Badge>
+                  <div className="space-y-3">
+                    {groupWordsBySpeaker(selectedFileData.transcription.words).map((group, index) => (
+                      <div key={index} className="p-4 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="w-4 h-4" />
+                          <Badge variant="outline">{getSpeakerDisplayName(group.speaker_id)}</Badge>
                         </div>
-                        <p className="text-sm leading-relaxed">{group.text}</p>
+                        <p className="text-sm">{group.text}</p>
                       </div>
                     ))}
                   </div>
-                ) : displayData.transcription.text ? (
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
-                    <p className="text-sm leading-relaxed">{displayData.transcription.text}</p>
+                ) : selectedFileData.transcription.text ? (
+                  <div className="p-4 bg-muted/50 rounded-lg">
+                    <p className="text-sm">{selectedFileData.transcription.text}</p>
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground py-8">
                     No transcription data available
                   </div>
                 )}
-                </div>
-              </ScrollArea>
+              </div>
             </CardContent>
           </Card>
         )}
-      </div>
-
-      {/* Right Column - History */}
-      <div className="lg:col-span-4 flex flex-col overflow-hidden">
-        <Card className="flex-1 flex flex-col overflow-hidden">
-          <CardHeader className="pb-3 flex-shrink-0">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <History className="w-5 h-5" />
-              Past Transcriptions
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
-              {historyLoading ? (
-                <div className="text-center text-muted-foreground py-8">
-                  Loading history...
-                </div>
-              ) : results.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  No past transcriptions
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {results.map((result) => (
-                    <div
-                      key={result.id}
-                      onClick={() => {
-                        setSelectedHistoryId(result.id);
-                        setSelectedFile(null);
-                      }}
-                      className={cn(
-                        "p-3 rounded-lg border cursor-pointer transition-smooth group",
-                        selectedHistoryId === result.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">
-                            {result.original_filename}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(result.created_at).toLocaleDateString()} {new Date(result.created_at).toLocaleTimeString()}
-                          </p>
-                          <Badge variant="outline" className="mt-1 text-xs">
-                            {result.model_used}
-                          </Badge>
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={(e) => handleDeleteHistory(result.id, e)}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

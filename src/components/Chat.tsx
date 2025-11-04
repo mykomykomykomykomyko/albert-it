@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,7 +29,6 @@ import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
 import { ShareConversationDialog } from './chat/ShareConversationDialog';
 import { useConversationPresence } from '@/hooks/useConversationPresence';
 import { useAuth } from '@/hooks/useAuth';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 interface ImageAttachment {
   name: string;
@@ -73,9 +72,6 @@ const Chat = () => {
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
   
-  // Ref for auto-expanding textarea
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  
   // Presence for real-time typing indicators
   const { broadcastTyping, broadcastThinking } = useConversationPresence(currentConversation?.id || null);
 
@@ -106,19 +102,6 @@ const Chat = () => {
     
     broadcastThinking(isLoading);
   }, [isLoading, currentConversation, broadcastThinking]);
-
-  // Auto-resize textarea based on content
-  useEffect(() => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    
-    // Reset height to auto to get the correct scrollHeight
-    textarea.style.height = 'auto';
-    
-    // Set new height based on scrollHeight, respecting min and max
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 200);
-    textarea.style.height = `${newHeight}px`;
-  }, [input]);
 
   // Handle prompt text from location state
   useEffect(() => {
@@ -595,32 +578,28 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      // Save user message with file metadata (store file content in metadata for later)
-      const messageMetadata: any = {};
+      // Prepare file content
+      let fullContent = userContent;
       if (files.length > 0) {
-        messageMetadata.attachments = files.map(f => ({
-          filename: f.filename,
-          type: f.type || 'file',
-          pageCount: f.pageCount,
-          totalSheets: f.totalSheets,
-          totalRows: f.totalRows,
-          content: f.content // Store content in metadata for later use
-        }));
-      }
-      if (images.length > 0) {
-        messageMetadata.images = images.map(img => ({
-          name: img.name,
-          size: img.size
-        }));
+        const fileContent = files.map(file => {
+          let content = `\n\n=== ${file.filename} ===\n\n${file.content}`;
+          if (file.pageCount) {
+            content = `\n\n=== ${file.filename} (${file.pageCount} pages) ===\n\n${file.content}`;
+          } else if (file.totalSheets) {
+            content = `\n\n=== ${file.filename} (${file.totalSheets} sheets, ${file.totalRows} rows) ===\n\n${file.content}`;
+          }
+          return content;
+        }).join('\n\n');
+        fullContent = userContent + fileContent;
       }
 
+      // Save user message
       const { data: savedUserMessage, error: userError } = await supabase
         .from("messages")
         .insert({
           conversation_id: currentConversation.id,
           role: "user" as const,
-          content: userContent, // Just the user's text, not file content
-          metadata: Object.keys(messageMetadata).length > 0 ? messageMetadata : null
+          content: fullContent,
         })
         .select()
         .single();
@@ -658,31 +637,6 @@ const Chat = () => {
           content: content
         };
       });
-
-      // Prepare message content for AI
-      let fullContent = userContent;
-      
-      // Check if there are recent file attachments in previous messages that should be included
-      if (userContent && messages.length > 0) {
-        // Look for the most recent user message with attachments
-        for (let i = messages.length - 1; i >= 0; i--) {
-          const msg = messages[i];
-          if (msg.role === 'user' && msg.metadata?.attachments) {
-            // Include file content from the most recent message with attachments
-            const fileContent = msg.metadata.attachments.map((file: any) => {
-              let content = `\n\n=== ${file.filename} ===\n\n${file.content}`;
-              if (file.pageCount) {
-                content = `\n\n=== ${file.filename} (${file.pageCount} pages) ===\n\n${file.content}`;
-              } else if (file.totalSheets) {
-                content = `\n\n=== ${file.filename} (${file.totalSheets} sheets, ${file.totalRows} rows) ===\n\n${file.content}`;
-              }
-              return content;
-            }).join('\n\n');
-            fullContent = userContent + fileContent;
-            break;
-          }
-        }
-      }
 
       const requestPayload: any = {
         message: fullContent,
@@ -946,50 +900,14 @@ const Chat = () => {
                               const imageUrl = message.image_url || mdMatch?.[1] || standaloneMatch?.[1];
                               
                               let textContent = message.content;
-                              // Remove file sections from display
-                              textContent = textContent.replace(/\n\n=== .+ ===\n\n[\s\S]*?(?=\n\n===|$)/g, '').trim();
-                              
                               if (mdMatch?.[0]) {
-                                textContent = textContent.replace(mdMatch[0], '').trim();
+                                textContent = message.content.replace(mdMatch[0], '').trim();
                               } else if (standaloneMatch?.[1]) {
-                                textContent = textContent.replace(standaloneMatch[1], '').trim();
+                                textContent = message.content.replace(standaloneMatch[1], '').trim();
                               }
                               
                               return (
                                 <>
-                                  {/* File attachments indicator */}
-                                  {message.metadata?.attachments && message.metadata.attachments.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                      {message.metadata.attachments.map((file, idx) => (
-                                        <Dialog key={idx}>
-                                          <DialogTrigger asChild>
-                                            <button className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-lg border text-xs hover:bg-background cursor-pointer transition-colors">
-                                              {file.type === 'excel' ? <FileSpreadsheet className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                                              <span className="font-medium">{file.filename}</span>
-                                              {file.type === 'pdf' && <span className="text-muted-foreground">PDF</span>}
-                                              {file.pageCount && (
-                                                <span className="text-muted-foreground">({file.pageCount} pages)</span>
-                                              )}
-                                              {file.totalSheets && file.totalRows && (
-                                                <span className="text-muted-foreground">({file.totalSheets} sheets, {file.totalRows} rows)</span>
-                                              )}
-                                            </button>
-                                          </DialogTrigger>
-                                          <DialogContent className="max-w-4xl max-h-[80vh]">
-                                            <DialogHeader>
-                                              <DialogTitle>{file.filename}</DialogTitle>
-                                            </DialogHeader>
-                                            <ScrollArea className="h-[calc(80vh-8rem)] w-full rounded-md border p-4">
-                                              <pre className="whitespace-pre-wrap text-sm font-mono">
-                                                {file.content || "No content available"}
-                                              </pre>
-                                            </ScrollArea>
-                                          </DialogContent>
-                                        </Dialog>
-                                      ))}
-                                    </div>
-                                  )}
-
                                   {textContent ? (
                                     <div className={`prose prose-sm max-w-none ${
                                       message.role === "user" 
@@ -1188,7 +1106,6 @@ const Chat = () => {
                 <div className="flex flex-col gap-2">
                   {/* Textarea on its own row */}
                   <Textarea
-                    ref={textareaRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1198,7 +1115,7 @@ const Chat = () => {
                       }
                     }}
                     placeholder="Type your message..."
-                    className="min-h-[60px] max-h-[200px] resize-none w-full overflow-y-auto"
+                    className="min-h-[60px] max-h-[200px] resize-none w-full"
                     disabled={isLoading}
                   />
                   
