@@ -47,8 +47,8 @@ export default function AgentMarketplace() {
         return;
       }
 
-      const clonedAgent = await createAgent({
-        name: `${agent.name} (Copy)`,
+      const newAgent = await createAgent({
+        name: agent.is_template ? agent.name : `${agent.name} (Copy)`,
         type: agent.type,
         description: agent.description || '',
         system_prompt: agent.system_prompt,
@@ -58,14 +58,15 @@ export default function AgentMarketplace() {
         profile_picture_url: agent.profile_picture_url,
       });
 
-      if (clonedAgent) {
+      if (newAgent) {
         // Increment usage count
         await supabase
           .from('agents')
           .update({ usage_count: (agent.usage_count || 0) + 1 })
           .eq('id', agent.id);
 
-        toast.success('Agent cloned successfully');
+        const actionText = agent.is_template ? 'added' : 'cloned';
+        toast.success(`Agent ${actionText} successfully`);
         navigate('/agents');
       }
     } catch (error) {
@@ -133,16 +134,21 @@ export default function AgentMarketplace() {
             {filteredAgents.map((agent) => (
               <Card key={agent.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="flex items-start justify-between mb-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={agent.profile_picture_url} />
-                      <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex items-center gap-1 text-sm">
-                      <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">{agent.usage_count || 0}</span>
+                    <div className="flex items-start justify-between mb-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={agent.profile_picture_url} />
+                        <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex items-center gap-2">
+                        {agent.is_template && (
+                          <Badge variant="secondary" className="text-xs">Template</Badge>
+                        )}
+                        <div className="flex items-center gap-1 text-sm">
+                          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">{agent.usage_count || 0}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
                   <CardTitle className="line-clamp-1">{agent.name}</CardTitle>
                   <CardDescription className="line-clamp-2">
                     {agent.description || 'No description available'}
@@ -168,7 +174,7 @@ export default function AgentMarketplace() {
                     className="w-full"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    Clone Agent
+                    {agent.is_template ? 'Add Agent' : 'Clone Agent'}
                   </Button>
                 </CardContent>
               </Card>

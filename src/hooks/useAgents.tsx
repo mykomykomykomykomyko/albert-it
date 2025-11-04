@@ -115,10 +115,12 @@ export const useAgents = () => {
         return;
       }
 
-      // Get all agents with sharing info
+      // Only get agents created by user or shared with user (exclude templates)
       const { data: agentsData, error: agentsError } = await supabase
         .from('agents')
         .select('*')
+        .eq('user_id', user.id)
+        .eq('is_template', false)
         .order('created_at', { ascending: false });
 
       if (agentsError) throw agentsError;
@@ -347,14 +349,23 @@ export const useAgents = () => {
 
   const loadMarketplaceAgents = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get published agents OR template agents
       const { data, error } = await supabase
         .from('agents')
         .select('*')
-        .eq('visibility', 'published')
+        .or('visibility.eq.published,is_template.eq.true')
         .order('usage_count', { ascending: false });
 
       if (error) throw error;
-      return (data || []) as Agent[];
+      
+      // Filter out user's own agents
+      const filteredData = user 
+        ? (data || []).filter(agent => agent.user_id !== user.id)
+        : (data || []);
+      
+      return filteredData as Agent[];
     } catch (error) {
       console.error('Error loading marketplace agents:', error);
       return [];
