@@ -374,16 +374,18 @@ export default function MeetingTranscripts() {
                   <p className="text-xs text-muted-foreground">
                     Supports VTT, DOCX, and TXT files
                   </p>
-                  <div className="mt-6 flex gap-3 justify-center">
-                    <Button
-                      onClick={() => navigate("/canvas")}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Process in Canvas
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
+                  {selectedTranscript && (
+                    <div className="mt-6 flex gap-3 justify-center">
+                      <Button
+                        onClick={() => navigate("/canvas", { state: { transcript: selectedTranscript } })}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Process in Canvas
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

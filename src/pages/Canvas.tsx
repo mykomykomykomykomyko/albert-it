@@ -562,7 +562,56 @@ const Canvas = () => {
         navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location.state, navigate, location.pathname]);
+    
+    // Handle transcript from Meeting Transcripts page
+    if (location.state?.transcript) {
+      const transcript = location.state.transcript;
+      const template = TEMPLATES['transcript-summary-email'];
+      
+      if (template) {
+        // Load template nodes and edges
+        const templateNodes = template.nodes.map((node: any) => {
+          const nodeId = node.id;
+          
+          // Populate the input node with transcript content
+          let nodeData = { ...node.data };
+          if (node.data.nodeType === 'input') {
+            nodeData.userPrompt = transcript.content || 'No transcript content available';
+            nodeData.label = `Transcript: ${transcript.title}`;
+          }
+          
+          const newNode: Node = {
+            ...node,
+            data: {
+              ...nodeData,
+              orientation: connectionOrientation,
+              onEdit: () => {
+                setSelectedNode(newNode);
+                setIsRightSidebarOpen(true);
+              },
+              onRun: () => handleRunNode(nodeId),
+            },
+          };
+          return newNode;
+        });
+
+        const templateEdges = template.edges.map((edge: any) => ({
+          ...edge,
+          type: 'smoothstep',
+          animated: true,
+          style: { stroke: 'hsl(var(--primary))' },
+        }));
+
+        setNodes(templateNodes);
+        setEdges(templateEdges);
+        setWorkflowName(`${transcript.title} - Analysis`);
+        toast.success("Transcript loaded into Canvas workflow");
+        
+        // Clear the state
+        navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state, navigate, location.pathname, connectionOrientation]);
 
   useEffect(() => {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
