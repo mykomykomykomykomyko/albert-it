@@ -19,6 +19,66 @@ export default function AgentMarketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
+  // Fallback default templates when marketplace is empty
+  const defaultTemplates = [
+    {
+      name: 'Researcher',
+      type: 'Text',
+      description: 'Gather and analyze information from various sources',
+      system_prompt: 'You are a research assistant specializing in gathering and analyzing information from various sources.',
+      user_prompt: 'Research the following topic and provide detailed findings: {input}',
+      icon_name: 'Search',
+    },
+    {
+      name: 'Summarizer',
+      type: 'Text',
+      description: 'Condense long content into concise summaries',
+      system_prompt: 'You are a summarization expert who creates concise, accurate summaries of long content.',
+      user_prompt: 'Summarize the following content: {input}',
+      icon_name: 'FileText',
+    },
+    {
+      name: 'Analyst',
+      type: 'Text',
+      description: 'Deep data analysis and pattern identification',
+      system_prompt: 'You are a data analyst who provides insightful analysis and identifies patterns in data.',
+      user_prompt: 'Analyze the following data and provide insights: {input}',
+      icon_name: 'Bot',
+    },
+    {
+      name: 'Writer',
+      type: 'Text',
+      description: 'Create engaging written content',
+      system_prompt: 'You are a professional writer who creates compelling, well-structured content.',
+      user_prompt: 'Write content based on the following: {input}',
+      icon_name: 'FileText',
+    },
+  ];
+
+  const mapTemplatesToPlaceholders = (): Agent[] =>
+    defaultTemplates.map((t, idx) => ({
+      id: `template-${idx}`,
+      user_id: 'template',
+      name: t.name,
+      type: t.type,
+      description: t.description,
+      system_prompt: t.system_prompt,
+      user_prompt: t.user_prompt,
+      icon_name: t.icon_name,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      metadata_tags: [],
+      profile_picture_url: undefined,
+      visibility: 'published',
+      submitted_at: null,
+      reviewed_at: null,
+      reviewer_id: null,
+      is_template: true,
+      usage_count: 0,
+      rating: null,
+      category: undefined,
+    })) as unknown as Agent[];
+
   useEffect(() => {
     loadMarketplace();
   }, []);
@@ -26,7 +86,11 @@ export default function AgentMarketplace() {
   const loadMarketplace = async () => {
     setLoading(true);
     const agents = await loadMarketplaceAgents();
-    setMarketplaceAgents(agents as Agent[]);
+    if (!agents || agents.length === 0) {
+      setMarketplaceAgents(mapTemplatesToPlaceholders());
+    } else {
+      setMarketplaceAgents(agents as Agent[]);
+    }
     setLoading(false);
   };
 
