@@ -29,6 +29,7 @@ import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
 import { ShareConversationDialog } from './chat/ShareConversationDialog';
 import { useConversationPresence } from '@/hooks/useConversationPresence';
 import { useAuth } from '@/hooks/useAuth';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 interface ImageAttachment {
   name: string;
@@ -940,39 +941,36 @@ const Chat = () => {
                               
                               return (
                                 <>
-                                  {/* File attachments indicator with suggested action */}
+                                  {/* File attachments indicator */}
                                   {message.metadata?.attachments && message.metadata.attachments.length > 0 && (
-                                    <div className="space-y-2 mb-3">
-                                      <div className="flex flex-wrap gap-2">
-                                        {message.metadata.attachments.map((file, idx) => (
-                                          <div key={idx} className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-lg border text-xs">
-                                            {file.type === 'excel' ? <FileSpreadsheet className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
-                                            <span className="font-medium">{file.filename}</span>
-                                            {file.type === 'pdf' && <span className="text-muted-foreground">PDF</span>}
-                                            {file.pageCount && (
-                                              <span className="text-muted-foreground">({file.pageCount} pages)</span>
-                                            )}
-                                            {file.totalSheets && file.totalRows && (
-                                              <span className="text-muted-foreground">({file.totalSheets} sheets, {file.totalRows} rows)</span>
-                                            )}
-                                          </div>
-                                        ))}
-                                      </div>
-                                      {!textContent && (
-                                        <button
-                                          onClick={() => {
-                                            const suggestedText = `summarize this doc`;
-                                            const inputEl = document.querySelector('textarea') as HTMLTextAreaElement;
-                                            if (inputEl) {
-                                              inputEl.value = suggestedText;
-                                              inputEl.focus();
-                                            }
-                                          }}
-                                          className="text-xs text-primary hover:underline"
-                                        >
-                                          summarize this doc
-                                        </button>
-                                      )}
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                      {message.metadata.attachments.map((file, idx) => (
+                                        <Dialog key={idx}>
+                                          <DialogTrigger asChild>
+                                            <button className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-lg border text-xs hover:bg-background cursor-pointer transition-colors">
+                                              {file.type === 'excel' ? <FileSpreadsheet className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                                              <span className="font-medium">{file.filename}</span>
+                                              {file.type === 'pdf' && <span className="text-muted-foreground">PDF</span>}
+                                              {file.pageCount && (
+                                                <span className="text-muted-foreground">({file.pageCount} pages)</span>
+                                              )}
+                                              {file.totalSheets && file.totalRows && (
+                                                <span className="text-muted-foreground">({file.totalSheets} sheets, {file.totalRows} rows)</span>
+                                              )}
+                                            </button>
+                                          </DialogTrigger>
+                                          <DialogContent className="max-w-4xl max-h-[80vh]">
+                                            <DialogHeader>
+                                              <DialogTitle>{file.filename}</DialogTitle>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-[calc(80vh-8rem)] w-full rounded-md border p-4">
+                                              <pre className="whitespace-pre-wrap text-sm font-mono">
+                                                {file.content || "No content available"}
+                                              </pre>
+                                            </ScrollArea>
+                                          </DialogContent>
+                                        </Dialog>
+                                      ))}
                                     </div>
                                   )}
 
