@@ -117,7 +117,7 @@ const ChatSidebar = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 opacity-0 lg:group-hover:opacity-100 lg:transition-opacity opacity-100 lg:opacity-0"
+                    className="h-6 w-6 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation();
                       setRenamingConversation(conversation);
@@ -133,7 +133,7 @@ const ChatSidebar = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-0 lg:group-hover:opacity-100 lg:transition-opacity opacity-100 lg:opacity-0"
+                        className="h-6 w-6 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:transition-opacity"
                         onClick={(e) => {
                           e.stopPropagation();
                           setDeletingId(conversation.id);
