@@ -56,6 +56,7 @@ import MeetingTranscripts from "./pages/MeetingTranscripts";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
 import SharedConversation from "./pages/SharedConversation";
+import SavedWork from "./pages/SavedWork";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 import { AccessibilityProvider } from "./components/AccessibilityProvider";
 
@@ -110,6 +111,7 @@ const App = () => (
           {/* Workflow builder routes */}
           <Route path="/stage" element={<Stage />} />
           <Route path="/canvas" element={<Canvas />} />
+          <Route path="/saved-work" element={<SavedWork />} />
           
           {/* Analysis tools */}
           <Route path="/image" element={<ImageAnalysis />} />

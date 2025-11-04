@@ -2,6 +2,8 @@ import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { SaveCanvasDialog } from "@/components/canvas/SaveCanvasDialog";
+import { LoadCanvasDialog } from "@/components/canvas/LoadCanvasDialog";
 import ReactFlow, {
   Node,
   Edge,
@@ -25,7 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Zap, Settings, ArrowLeftRight, ArrowUpDown } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Zap, Settings, ArrowLeftRight, ArrowUpDown, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -421,6 +423,8 @@ const Canvas = () => {
   const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
   const [isToolSelectorOpen, setIsToolSelectorOpen] = useState(false);
   const [connectionOrientation, setConnectionOrientation] = useState<'vertical' | 'horizontal'>('vertical');
+  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -971,48 +975,39 @@ const Canvas = () => {
   };
 
   const handleSave = () => {
-    const workflow = { 
-      name: workflowName,
-      nodes, 
-      edges,
-      globalInput 
-    };
-    localStorage.setItem('canvas-workflow', JSON.stringify(workflow));
-    toast.success("Workflow saved");
+    setIsSaveDialogOpen(true);
   };
 
   const handleLoad = () => {
-    const saved = localStorage.getItem('canvas-workflow');
-    if (saved) {
-      const workflow = JSON.parse(saved);
-      setWorkflowName(workflow.name || "Untitled Workflow");
-      
-      // Restore nodes with callbacks
-      const restoredNodes = (workflow.nodes || []).map((node: any) => ({
-        ...node,
-        data: {
-          ...node.data,
-          orientation: connectionOrientation,
-          onEdit: () => {
-            setSelectedNode(node);
-            setIsRightSidebarOpen(true);
-          },
-          onRun: () => handleRunNode(node.id),
-        }
-      }));
-      
-      setNodes(restoredNodes);
-      setEdges((workflow.edges || []).map((edge: any) => ({
-        ...edge,
-        type: edge.type || 'smoothstep',
-        animated: true,
-        style: { stroke: 'hsl(var(--primary))' }
-      })));
-      setGlobalInput(workflow.globalInput || "");
-      toast.success("Workflow loaded");
-    } else {
-      toast.error("No saved workflow");
-    }
+    setIsLoadDialogOpen(true);
+  };
+
+  const loadCanvasData = (canvasData: any) => {
+    setWorkflowName(canvasData.name || "Untitled Workflow");
+    
+    // Restore nodes with callbacks
+    const restoredNodes = (canvasData.nodes || []).map((node: any) => ({
+      ...node,
+      data: {
+        ...node.data,
+        orientation: connectionOrientation,
+        onEdit: () => {
+          setSelectedNode(node);
+          setIsRightSidebarOpen(true);
+        },
+        onRun: () => handleRunNode(node.id),
+      },
+    }));
+    
+    setNodes(restoredNodes);
+    setEdges((canvasData.edges || []).map((edge: any) => ({
+      ...edge,
+      type: edge.type || 'smoothstep',
+      animated: true,
+      style: { stroke: 'hsl(var(--primary))' }
+    })));
+    setGlobalInput(canvasData.globalInput || "");
+    toast.success("Canvas loaded successfully");
   };
 
   // Auto-load workflow from URL parameter (when coming from marketplace)
@@ -1223,6 +1218,10 @@ const Canvas = () => {
               <Button variant="outline" size="sm" onClick={handleSave} className="h-8 text-xs">
                 <Save className="h-3.5 w-3.5 sm:mr-2" />
                 <span className="hidden sm:inline">Save</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate('/saved-work')} className="h-8 text-xs">
+                <FileText className="h-3.5 w-3.5 sm:mr-2" />
+                <span className="hidden sm:inline">My Work</span>
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace', { state: { from: '/canvas' } })} className="h-8 text-xs">
                 <Store className="h-3.5 w-3.5 sm:mr-2" />
@@ -1760,6 +1759,25 @@ const Canvas = () => {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      {/* Save Canvas Dialog */}
+      <SaveCanvasDialog
+        open={isSaveDialogOpen}
+        onOpenChange={setIsSaveDialogOpen}
+        workflowData={{
+          name: workflowName,
+          nodes,
+          edges,
+          globalInput,
+        }}
+      />
+
+      {/* Load Canvas Dialog */}
+      <LoadCanvasDialog
+        open={isLoadDialogOpen}
+        onOpenChange={setIsLoadDialogOpen}
+        onLoad={loadCanvasData}
+      />
     </div>
   );
 };
