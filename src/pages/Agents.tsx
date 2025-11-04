@@ -689,16 +689,15 @@ const Agents = () => {
                       >
                         <Trash2 className="h-3 w-3" />
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => navigate('/chat', { state: { agent } })}
+                        title="Chat with this agent"
+                      >
+                        <Send className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="default"
-                      className="w-full mt-2"
-                      onClick={() => handleSubmitForReview(agent)}
-                    >
-                      <Send className="h-3 w-3 mr-2" />
-                      Submit to Marketplace
-                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -769,20 +768,21 @@ const Agents = () => {
                               >
                                 <Share2 className="h-3 w-3" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleDelete(agent.id)}
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => handleSubmitForReview(agent)}
-                              >
-                                <Send className="h-3 w-3" />
-                              </Button>
+                               <Button
+                                 size="sm"
+                                 variant="outline"
+                                 onClick={() => handleDelete(agent.id)}
+                               >
+                                 <Trash2 className="h-3 w-3" />
+                               </Button>
+                               <Button
+                                 size="sm"
+                                 variant="default"
+                                 onClick={() => navigate('/chat', { state: { agent } })}
+                                 title="Chat with this agent"
+                               >
+                                 <Send className="h-3 w-3" />
+                               </Button>
                             </div>
                           </td>
                         </tr>

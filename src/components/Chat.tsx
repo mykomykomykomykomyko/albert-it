@@ -112,6 +112,15 @@ const Chat = () => {
     }
   }, [location.state, currentConversation, navigate, location.pathname]);
 
+  // Handle agent from location state
+  useEffect(() => {
+    if (location.state?.agent) {
+      setCurrentAgent(location.state.agent);
+      // Clear the state so it doesn't persist
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
+
   useEffect(() => {
     // Initialize theme from localStorage or system preference
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
