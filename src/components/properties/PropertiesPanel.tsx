@@ -1183,160 +1183,160 @@ export const PropertiesPanel = ({
           )}
 
           {/* Common: Output */}
-          {activeNode.output && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label className="text-sm font-medium">Output</Label>
-                <Dialog open={isEditingOutput} onOpenChange={setIsEditingOutput}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 flex-shrink-0"
-                      onClick={() => {
-                        const output = activeNode.output;
-                        let outputText = '';
-                        if (typeof output === 'object') {
-                          const obj = output as any;
-                          if ('true' in obj || 'false' in obj) {
-                            outputText = obj.true || obj.false || '';
-                          } else {
-                            outputText = JSON.stringify(output, null, 2);
-                          }
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-medium">Output</Label>
+              <Dialog open={isEditingOutput} onOpenChange={setIsEditingOutput}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 flex-shrink-0"
+                    onClick={() => {
+                      const output = activeNode.output;
+                      let outputText = '';
+                      if (typeof output === 'object') {
+                        const obj = output as any;
+                        if ('true' in obj || 'false' in obj) {
+                          outputText = obj.true || obj.false || '';
                         } else {
-                          outputText = String(output);
+                          outputText = JSON.stringify(output, null, 2);
                         }
-                        setEditedOutput(outputText);
-                      }}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      Edit
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-[90vw] max-w-[90vw] h-[90vh] max-h-[90vh] flex flex-col p-6">
-                    <DialogHeader className="pb-4">
-                      <DialogTitle>Edit Output</DialogTitle>
-                      <DialogDescription>
-                        Manually edit the output from this {activeNode.nodeType}
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Tabs value={outputTab} onValueChange={setOutputTab} className="flex-1 flex flex-col overflow-hidden">
-                      <TabsList className="w-full justify-start mb-4">
-                        <TabsTrigger value="edit">Edit</TabsTrigger>
-                        <TabsTrigger value="view">View</TabsTrigger>
-                      </TabsList>
-                      
-                      <TabsContent value="edit" className="flex-1 overflow-hidden mt-0">
-                        <ScrollArea className="h-full">
-                          <Textarea
-                            value={editedOutput}
-                            onChange={(e) => setEditedOutput(e.target.value)}
-                            className="min-h-[calc(90vh-270px)] font-mono text-xs resize-none w-full"
-                            placeholder="Edit output..."
-                          />
-                        </ScrollArea>
-                      </TabsContent>
-                      
-                      <TabsContent value="view" className="flex-1 overflow-hidden mt-0">
-                        <ScrollArea className="h-full">
-                          <div className="prose prose-sm dark:prose-invert max-w-none p-4">
-                            <ReactMarkdown
-                              remarkPlugins={[remarkGfm]}
-                              components={{
-                                table: ({ children }) => (
-                                  <Table className="my-4">
+                      } else if (output !== undefined && output !== null) {
+                        outputText = String(output);
+                      } else {
+                        outputText = '';
+                      }
+                      setEditedOutput(outputText);
+                    }}
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    Edit
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="w-[90vw] max-w-[90vw] h-[90vh] max-h-[90vh] flex flex-col p-6">
+                  <DialogHeader className="pb-4">
+                    <DialogTitle>Edit Output</DialogTitle>
+                    <DialogDescription>
+                      Manually edit the output from this {activeNode.nodeType}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Tabs value={outputTab} onValueChange={setOutputTab} className="flex-1 flex flex-col overflow-hidden">
+                    <TabsList className="w-full justify-start mb-4">
+                      <TabsTrigger value="edit">Edit</TabsTrigger>
+                      <TabsTrigger value="view">View</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="edit" className="flex-1 overflow-hidden mt-0">
+                      <ScrollArea className="h-full">
+                        <Textarea
+                          value={editedOutput}
+                          onChange={(e) => setEditedOutput(e.target.value)}
+                          className="min-h-[calc(90vh-270px)] font-mono text-xs resize-none w-full"
+                          placeholder="Edit output..."
+                        />
+                      </ScrollArea>
+                    </TabsContent>
+                    
+                    <TabsContent value="view" className="flex-1 overflow-hidden mt-0">
+                      <ScrollArea className="h-full">
+                        <div className="prose prose-sm dark:prose-invert max-w-none p-4">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              table: ({ children }) => (
+                                <Table className="my-4">
+                                  {children}
+                                </Table>
+                              ),
+                              thead: ({ children }) => <TableHeader>{children}</TableHeader>,
+                              tbody: ({ children }) => <TableBody>{children}</TableBody>,
+                              tr: ({ children }) => <TableRow>{children}</TableRow>,
+                              th: ({ children }) => (
+                                <TableHead className="font-bold">{children}</TableHead>
+                              ),
+                              td: ({ children }) => <TableCell>{children}</TableCell>,
+                              code: ({ inline, children, ...props }: any) => {
+                                return inline ? (
+                                  <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono" {...props}>
                                     {children}
-                                  </Table>
-                                ),
-                                thead: ({ children }) => <TableHeader>{children}</TableHeader>,
-                                tbody: ({ children }) => <TableBody>{children}</TableBody>,
-                                tr: ({ children }) => <TableRow>{children}</TableRow>,
-                                th: ({ children }) => (
-                                  <TableHead className="font-bold">{children}</TableHead>
-                                ),
-                                td: ({ children }) => <TableCell>{children}</TableCell>,
-                                code: ({ inline, children, ...props }: any) => {
-                                  return inline ? (
-                                    <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono" {...props}>
+                                  </code>
+                                ) : (
+                                  <pre className="bg-muted p-3 rounded-md overflow-x-auto my-2">
+                                    <code className="text-xs font-mono" {...props}>
                                       {children}
                                     </code>
-                                  ) : (
-                                    <pre className="bg-muted p-3 rounded-md overflow-x-auto my-2">
-                                      <code className="text-xs font-mono" {...props}>
-                                        {children}
-                                      </code>
-                                    </pre>
-                                  );
-                                },
-                              }}
-                            >
-                              {editedOutput}
-                            </ReactMarkdown>
-                          </div>
-                        </ScrollArea>
-                      </TabsContent>
-                    </Tabs>
-                    
-                    <div className="flex gap-2 justify-end pt-4 border-t">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setIsEditingOutput(false);
-                          setOutputTab("edit");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => {
-                          if (activeNode.nodeType === "agent") {
-                            onUpdateAgent(activeNode.id, { output: editedOutput });
-                          } else if (onUpdateNode) {
-                            onUpdateNode(activeNode.id, { output: editedOutput });
-                          }
-                          setIsEditingOutput(false);
-                          setOutputTab("edit");
-                        }}
-                      >
-                        <Save className="h-3 w-3 mr-1" />
-                        Save Changes
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              
-              <Card className="p-3 bg-muted/30 max-h-[200px] overflow-y-auto">
-                <p className="text-xs whitespace-pre-wrap break-all overflow-wrap-anywhere">
-                  {(() => {
-                    const output = activeNode.output;
-                    if (!output) return 'No output';
-                    // Handle conditional outputs (objects with true/false keys)
-                    if (typeof output === 'object') {
-                      const obj = output as any;
-                      if ('true' in obj || 'false' in obj) {
-                        const trueContent = obj.true || '';
-                        const falseContent = obj.false || '';
-                        if (trueContent) return trueContent;
-                        if (falseContent) return falseContent;
-                        return 'No output';
-                      }
-                    }
-                    // Handle regular string output
-                    return typeof output === 'string' ? output : JSON.stringify(output, null, 2);
-                  })()}
-                </p>
-              </Card>
-              
-              {/* Tool Outputs Display */}
-              {activeNode.toolOutputs && activeNode.toolOutputs.length > 0 && (
-                <ToolOutputDisplay toolOutputs={activeNode.toolOutputs} />
-              )}
+                                  </pre>
+                                );
+                              },
+                            }}
+                          >
+                            {editedOutput}
+                          </ReactMarkdown>
+                        </div>
+                      </ScrollArea>
+                    </TabsContent>
+                  </Tabs>
+                  
+                  <div className="flex gap-2 justify-end pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setIsEditingOutput(false);
+                        setOutputTab("edit");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        if (activeNode.nodeType === "agent") {
+                          onUpdateAgent(activeNode.id, { output: editedOutput });
+                        } else if (onUpdateNode) {
+                          onUpdateNode(activeNode.id, { output: editedOutput });
+                        }
+                        setIsEditingOutput(false);
+                        setOutputTab("edit");
+                      }}
+                    >
+                      <Save className="h-3 w-3 mr-1" />
+                      Save Changes
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
-          )}
+            
+            <Card className="p-3 bg-muted/30 max-h-[200px] overflow-y-auto">
+              <p className="text-xs whitespace-pre-wrap break-all overflow-wrap-anywhere">
+                {(() => {
+                  const output = activeNode.output;
+                  if (!output) return 'No output';
+                  // Handle conditional outputs (objects with true/false keys)
+                  if (typeof output === 'object') {
+                    const obj = output as any;
+                    if ('true' in obj || 'false' in obj) {
+                      const trueContent = obj.true || '';
+                      const falseContent = obj.false || '';
+                      if (trueContent) return trueContent;
+                      if (falseContent) return falseContent;
+                      return 'No output';
+                    }
+                  }
+                  // Handle regular string output
+                  return typeof output === 'string' ? output : JSON.stringify(output, null, 2);
+                })()}
+              </p>
+            </Card>
+            
+            {/* Tool Outputs Display */}
+            {activeNode.toolOutputs && activeNode.toolOutputs.length > 0 && (
+              <ToolOutputDisplay toolOutputs={activeNode.toolOutputs} />
+            )}
+          </div>
 
           {/* Agent Tools (only for agents) */}
           {activeNode.nodeType === "agent" && (

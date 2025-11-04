@@ -1500,7 +1500,7 @@ const Canvas = () => {
         )}
 
         {/* Canvas */}
-        <div className="flex-1 relative bg-muted/5">
+        <div className="flex-1 relative bg-muted/5 z-0">
           {nodes.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <div className="text-center space-y-3 p-8 bg-card/80 backdrop-blur-sm rounded-lg border shadow-sm max-w-md">
