@@ -110,30 +110,51 @@ export function AudioUploader({ onTranscriptionComplete }: AudioUploaderProps) {
     setProgress(0);
 
     try {
-      // Convert blob to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
+      // Create FormData with the audio file
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+      formData.append('model', 'scribe_v1');
       
-      await new Promise((resolve) => {
-        reader.onloadend = resolve;
-      });
+      setProgress(30);
 
-      const base64Audio = (reader.result as string).split(',')[1];
+      // Get the Supabase URL and key
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase configuration missing');
+      }
+
       setProgress(50);
 
-      const { data, error } = await supabase.functions.invoke('speech-to-text', {
-        body: { audio: base64Audio }
+      // Call the edge function directly with FormData
+      const response = await fetch(`${supabaseUrl}/functions/v1/speech-to-text`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: formData,
       });
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Transcription failed');
+      }
 
+      const data = await response.json();
+      
       setProgress(100);
+      
+      if (!data.text) {
+        throw new Error('No transcription text received');
+      }
+
       onTranscriptionComplete(data.text, audioUrl || undefined);
       clearAudio();
       toast.success('Audio transcribed successfully');
     } catch (error) {
       console.error('Error transcribing audio:', error);
-      toast.error('Failed to transcribe audio');
+      toast.error(error instanceof Error ? error.message : 'Failed to transcribe audio');
     } finally {
       setIsTranscribing(false);
       setProgress(0);
