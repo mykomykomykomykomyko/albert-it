@@ -63,7 +63,7 @@ export const ResponsiveLayout = ({
           </div>
           <div
             className={cn(
-              "h-full overflow-y-auto",
+              "h-full",
               mobileTab !== "properties" && "hidden"
             )}
           >
@@ -82,7 +82,7 @@ export const ResponsiveLayout = ({
           {desktopCanvas}
         </div>
         
-        <div className="w-80 xl:w-96 border-l border-border overflow-y-auto">
+        <div className="w-80 xl:w-96 border-l border-border h-full">
           {properties}
         </div>
       </div>
