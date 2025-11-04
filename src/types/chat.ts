@@ -17,6 +17,19 @@ export interface Message {
   content: string;
   image_url?: string;
   created_at: string;
+  metadata?: {
+    attachments?: Array<{
+      filename: string;
+      type?: string;
+      pageCount?: number;
+      totalSheets?: number;
+      totalRows?: number;
+    }>;
+    images?: Array<{
+      name: string;
+      size: number;
+    }>;
+  };
 }
 
 export interface ChatMessage {

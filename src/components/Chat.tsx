@@ -593,13 +593,31 @@ const Chat = () => {
         fullContent = userContent + fileContent;
       }
 
-      // Save user message
+      // Save user message with file metadata
+      const messageMetadata: any = {};
+      if (files.length > 0) {
+        messageMetadata.attachments = files.map(f => ({
+          filename: f.filename,
+          type: f.type || 'file',
+          pageCount: f.pageCount,
+          totalSheets: f.totalSheets,
+          totalRows: f.totalRows
+        }));
+      }
+      if (images.length > 0) {
+        messageMetadata.images = images.map(img => ({
+          name: img.name,
+          size: img.size
+        }));
+      }
+
       const { data: savedUserMessage, error: userError } = await supabase
         .from("messages")
         .insert({
           conversation_id: currentConversation.id,
           role: "user" as const,
           content: fullContent,
+          metadata: Object.keys(messageMetadata).length > 0 ? messageMetadata : null
         })
         .select()
         .single();
@@ -900,14 +918,35 @@ const Chat = () => {
                               const imageUrl = message.image_url || mdMatch?.[1] || standaloneMatch?.[1];
                               
                               let textContent = message.content;
+                              // Remove file sections from display
+                              textContent = textContent.replace(/\n\n=== .+ ===\n\n[\s\S]*?(?=\n\n===|$)/g, '').trim();
+                              
                               if (mdMatch?.[0]) {
-                                textContent = message.content.replace(mdMatch[0], '').trim();
+                                textContent = textContent.replace(mdMatch[0], '').trim();
                               } else if (standaloneMatch?.[1]) {
-                                textContent = message.content.replace(standaloneMatch[1], '').trim();
+                                textContent = textContent.replace(standaloneMatch[1], '').trim();
                               }
                               
                               return (
                                 <>
+                                  {/* File attachments indicator */}
+                                  {message.metadata?.attachments && message.metadata.attachments.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                      {message.metadata.attachments.map((file, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 bg-background/80 px-3 py-1.5 rounded-lg border text-xs">
+                                          {file.type === 'excel' ? <FileSpreadsheet className="h-3 w-3" /> : <FileText className="h-3 w-3" />}
+                                          <span className="font-medium">{file.filename}</span>
+                                          {file.pageCount && (
+                                            <span className="text-muted-foreground">({file.pageCount} pages)</span>
+                                          )}
+                                          {file.totalSheets && file.totalRows && (
+                                            <span className="text-muted-foreground">({file.totalSheets} sheets, {file.totalRows} rows)</span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+
                                   {textContent ? (
                                     <div className={`prose prose-sm max-w-none ${
                                       message.role === "user" 
