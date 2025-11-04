@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -60,13 +61,10 @@ export default function MeetingTranscripts() {
     setTranscripts(data || []);
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
+  const processFiles = async (files: File[]) => {
     setIsUploading(true);
 
-    for (const file of Array.from(files)) {
+    for (const file of files) {
       try {
         let content = "";
         let structuredData = null;
@@ -133,8 +131,31 @@ export default function MeetingTranscripts() {
 
     setIsUploading(false);
     fetchTranscripts();
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    await processFiles(Array.from(files));
     event.target.value = "";
   };
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    processFiles(acceptedFiles);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/vtt': ['.vtt'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'text/plain': ['.txt']
+    },
+    multiple: true,
+    noClick: false,
+    disabled: isUploading
+  });
 
   const analyzeTranscript = async (transcript: MeetingTranscript) => {
     setIsAnalyzing(true);
@@ -334,22 +355,35 @@ export default function MeetingTranscripts() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="file"
-                    accept=".vtt,.docx,.txt"
-                    multiple
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() => navigate("/canvas")}
-                    variant="outline"
-                  >
-                    Process in Canvas
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
+                <div 
+                  {...getRootProps()} 
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+                    isDragActive 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50 hover:bg-accent/50'
+                  } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragActive ? 'text-primary animate-bounce' : 'text-muted-foreground'}`} />
+                  <h3 className="text-lg font-medium mb-2">
+                    {isDragActive ? 'Drop files here' : 'Drag & drop transcripts'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    or click to browse files
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supports VTT, DOCX, and TXT files
+                  </p>
+                  <div className="mt-6 flex gap-3 justify-center">
+                    <Button
+                      onClick={() => navigate("/canvas")}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Process in Canvas
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
