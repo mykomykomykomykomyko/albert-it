@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Zap, Settings } from "lucide-react";
+import { Plus, Play, Save, Upload, Trash2, Store, Sparkles, X, Loader2, FileInput, FileOutput, GitMerge, Repeat, Download, Layout, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Zap, Settings, ArrowLeftRight, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useAgents } from "@/hooks/useAgents";
 import { CustomNode, CustomNodeData } from "@/components/canvas/CustomNode";
@@ -1173,8 +1173,12 @@ const Canvas = () => {
                 className="h-8 text-xs"
                 title={`Switch to ${connectionOrientation === 'vertical' ? 'horizontal' : 'vertical'} connections`}
               >
-                {connectionOrientation === 'vertical' ? '↕' : '↔'}
-                <span className="hidden sm:inline ml-1.5">
+                {connectionOrientation === 'vertical' ? (
+                  <ArrowUpDown className="h-3.5 w-3.5 sm:mr-2" />
+                ) : (
+                  <ArrowLeftRight className="h-3.5 w-3.5 sm:mr-2" />
+                )}
+                <span className="hidden sm:inline">
                   {connectionOrientation === 'vertical' ? 'Vertical' : 'Horizontal'}
                 </span>
               </Button>
