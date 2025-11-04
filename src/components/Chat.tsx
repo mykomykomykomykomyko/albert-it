@@ -863,18 +863,52 @@ const Chat = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {!currentConversation ? (
-          <div className="flex-1 flex items-center justify-center p-4">
-            <div className="text-center max-w-md">
+          <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="text-center max-w-2xl w-full">
               <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6">
                 <Sparkles className="w-10 h-10 text-white" />
               </div>
               <h2 className="text-3xl font-bold mb-4">Welcome to Albert</h2>
-              <p className="text-muted-foreground mb-6">
-                Your AI assistant from the Government of Alberta. Start a new conversation to begin.
+              <p className="text-muted-foreground mb-8">
+                Your AI assistant from the Government of Alberta. Type a message to start chatting.
               </p>
-              <Button onClick={handleNewConversation} size="lg">
-                Start New Conversation
-              </Button>
+              
+              {/* Welcome screen input */}
+              <div className="bg-card border border-border rounded-2xl p-4 shadow-lg">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (input.trim()) {
+                        handleNewConversation().then(() => {
+                          // After conversation is created, send the message
+                          setTimeout(() => handleSend(), 100);
+                        });
+                      }
+                    }
+                  }}
+                  placeholder="Type your message..."
+                  className="min-h-[100px] max-h-[200px] resize-none w-full mb-3"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => {
+                      if (input.trim()) {
+                        handleNewConversation().then(() => {
+                          setTimeout(() => handleSend(), 100);
+                        });
+                      }
+                    }}
+                    disabled={!input.trim()}
+                    size="lg"
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Start Chatting
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
