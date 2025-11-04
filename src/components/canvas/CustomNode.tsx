@@ -74,22 +74,23 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         ${selected ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md hover:border-primary/30'}
       `}
     >
-      {/* Input Handle */}
-      {data.nodeType !== 'input' && (
-        <Handle
-          type="target"
-          position={data.orientation === 'horizontal' ? Position.Left : Position.Top}
-          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
-        />
-      )}
-      
-      {/* Additional right-side input handle for horizontal mode on input nodes */}
-      {data.nodeType === 'input' && data.orientation === 'horizontal' && (
+      {/* Input Handles */}
+      {data.orientation === 'horizontal' ? (
+        // Horizontal mode: left side is input
         <Handle
           type="target"
           position={Position.Left}
           className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
+      ) : (
+        // Vertical mode: top is input (except for input nodes)
+        data.nodeType !== 'input' && (
+          <Handle
+            type="target"
+            position={Position.Top}
+            className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+          />
+        )
       )}
 
       {/* Node Header */}
@@ -154,22 +155,23 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         )}
       </div>
 
-      {/* Output Handle */}
-      {data.nodeType !== 'output' && (
-        <Handle
-          type="source"
-          position={data.orientation === 'horizontal' ? Position.Right : Position.Bottom}
-          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
-        />
-      )}
-      
-      {/* Additional left-side output handle for horizontal mode on output nodes */}
-      {data.nodeType === 'output' && data.orientation === 'horizontal' && (
+      {/* Output Handles */}
+      {data.orientation === 'horizontal' ? (
+        // Horizontal mode: right side is output
         <Handle
           type="source"
           position={Position.Right}
           className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
+      ) : (
+        // Vertical mode: bottom is output (except for output nodes)
+        data.nodeType !== 'output' && (
+          <Handle
+            type="source"
+            position={Position.Bottom}
+            className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+          />
+        )
       )}
     </div>
   );
