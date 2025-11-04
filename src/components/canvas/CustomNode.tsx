@@ -80,7 +80,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         <Handle
           type="target"
           position={Position.Left}
-          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+          className="!bg-primary !border-2 !border-background !w-4 !h-4 hover:!w-5 hover:!h-5 hover:!border-primary transition-all !cursor-pointer"
         />
       ) : (
         // Vertical mode: top is input (except for input nodes)
@@ -88,7 +88,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
           <Handle
             type="target"
             position={Position.Top}
-            className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+            className="!bg-primary !border-2 !border-background !w-4 !h-4 hover:!w-5 hover:!h-5 hover:!border-primary transition-all !cursor-pointer"
           />
         )
       )}
@@ -161,7 +161,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         <Handle
           type="source"
           position={Position.Right}
-          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+          className="!bg-primary !border-2 !border-background !w-4 !h-4 hover:!w-5 hover:!h-5 hover:!border-primary transition-all !cursor-pointer"
         />
       ) : (
         // Vertical mode: bottom is output (except for output nodes)
@@ -169,7 +169,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
           <Handle
             type="source"
             position={Position.Bottom}
-            className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+            className="!bg-primary !border-2 !border-background !w-4 !h-4 hover:!w-5 hover:!h-5 hover:!border-primary transition-all !cursor-pointer"
           />
         )
       )}
