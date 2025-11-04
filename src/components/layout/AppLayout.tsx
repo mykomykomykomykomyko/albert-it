@@ -17,28 +17,33 @@ interface AppLayoutProps {
 
 export const AppLayout = ({ children, sidebar, defaultCollapsed = false }: AppLayoutProps) => {
   return (
-    <SidebarProvider defaultOpen={!defaultCollapsed}>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppLayoutSidebar>{sidebar}</AppLayoutSidebar>
-        
-        <div className="flex flex-col flex-1 min-w-0">
-          {/* Global Header with Sidebar Trigger */}
-          <div className="sticky top-0 z-10 bg-background border-b border-border">
-            <div className="flex items-center h-14 px-4 gap-2">
-              <SidebarTrigger />
-              <div className="flex-1">
-                <ChatHeader />
+    <div className="flex flex-col min-h-screen w-full bg-background">
+      {/* Top Navigation - Full Width */}
+      <div className="sticky top-0 z-20 bg-background border-b border-border">
+        <ChatHeader />
+      </div>
+
+      {/* Sidebar + Content Area Below Header */}
+      <div className="flex flex-1 overflow-hidden">
+        <SidebarProvider defaultOpen={!defaultCollapsed}>
+          <div className="flex w-full">
+            <AppLayoutSidebar>{sidebar}</AppLayoutSidebar>
+            
+            <div className="flex flex-col flex-1 min-w-0">
+              {/* Sidebar Trigger in Content Area */}
+              <div className="sticky top-0 z-10 bg-background border-b border-border h-12 flex items-center px-4">
+                <SidebarTrigger />
               </div>
+
+              {/* Main Content Area */}
+              <main className="flex-1 overflow-auto">
+                {children}
+              </main>
             </div>
           </div>
-
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
-        </div>
+        </SidebarProvider>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 
