@@ -529,8 +529,65 @@ const Canvas = () => {
     }
   }, [selectedNode, nodes]);
 
+  // Helper function to detect circular dependencies using DFS
+  const wouldCreateCycle = useCallback((newEdge: Connection, currentEdges: Edge[]): boolean => {
+    if (!newEdge.source || !newEdge.target) return false;
+    
+    // Build adjacency list with the new edge included
+    const adjacencyList = new Map<string, Set<string>>();
+    
+    // Add all existing edges
+    currentEdges.forEach(edge => {
+      if (!adjacencyList.has(edge.source)) {
+        adjacencyList.set(edge.source, new Set());
+      }
+      adjacencyList.get(edge.source)!.add(edge.target);
+    });
+    
+    // Add the new edge
+    if (!adjacencyList.has(newEdge.source)) {
+      adjacencyList.set(newEdge.source, new Set());
+    }
+    adjacencyList.get(newEdge.source)!.add(newEdge.target);
+    
+    // DFS to detect cycle starting from the target of new edge
+    const visited = new Set<string>();
+    const recursionStack = new Set<string>();
+    
+    const hasCycle = (node: string): boolean => {
+      visited.add(node);
+      recursionStack.add(node);
+      
+      const neighbors = adjacencyList.get(node);
+      if (neighbors) {
+        for (const neighbor of neighbors) {
+          if (!visited.has(neighbor)) {
+            if (hasCycle(neighbor)) {
+              return true;
+            }
+          } else if (recursionStack.has(neighbor)) {
+            // Found a back edge - cycle detected
+            return true;
+          }
+        }
+      }
+      
+      recursionStack.delete(node);
+      return false;
+    };
+    
+    // Check for cycles starting from the new edge's target
+    return hasCycle(newEdge.target);
+  }, []);
+
   const onConnect = useCallback(
     (params: Connection) => {
+      // Check if this connection would create a cycle
+      if (wouldCreateCycle(params, edges)) {
+        toast.error("Cannot create connection: This would create a circular flow");
+        return;
+      }
+      
       const edgeType = 'smoothstep';
       setEdges((eds) => addEdge({ 
         ...params, 
@@ -543,7 +600,7 @@ const Canvas = () => {
         },
       }, eds));
     },
-    [setEdges, connectionOrientation]
+    [setEdges, edges, wouldCreateCycle]
   );
 
   const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
