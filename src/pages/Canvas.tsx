@@ -1085,6 +1085,32 @@ const Canvas = () => {
     setIsRightSidebarOpen(true);
   }, []);
 
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedNode) {
+      setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
+      setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
+      setSelectedNode(null);
+      toast.success('Node deleted');
+    }
+  }, [selectedNode, setNodes, setEdges]);
+
+  // Handle DELETE key press
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNode) {
+        // Only delete if not typing in an input field
+        const target = event.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+          event.preventDefault();
+          handleDeleteSelected();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedNode, handleDeleteSelected]);
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
@@ -1121,6 +1147,17 @@ const Canvas = () => {
                 <Trash2 className="h-3.5 w-3.5 sm:mr-2" />
                 <span className="hidden sm:inline">Clear</span>
               </Button>
+              {selectedNode && (
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={handleDeleteSelected} 
+                  className="h-8 text-xs"
+                >
+                  <Trash2 className="h-3.5 w-3.5 sm:mr-2" />
+                  <span className="hidden sm:inline">Delete Node</span>
+                </Button>
+              )}
             </div>
           </div>
           <Button
