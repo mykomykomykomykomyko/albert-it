@@ -16,7 +16,7 @@ interface PageSidebarProps {
 
 export const PageSidebar = ({ title, description, children }: PageSidebarProps) => {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full pt-4">
       <div className="p-6 flex-shrink-0">
         <h2 className="text-lg font-semibold">{title}</h2>
         {description && (
