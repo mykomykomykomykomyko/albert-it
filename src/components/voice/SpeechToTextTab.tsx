@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy, History } from "lucide-react";
+import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy, History, FolderInput } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useVoiceAnalysis } from "@/hooks/useVoiceAnalysis";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -491,6 +491,61 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
     }
   };
 
+  const saveToTranscripts = async () => {
+    if (!displayData?.transcription) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Format the transcription text
+      let transcriptionText = '';
+      let speakers: string[] = [];
+
+      if (displayData.transcription.diarized_sections) {
+        transcriptionText = displayData.transcription.diarized_sections
+          .map((section: any) => `${getSpeakerDisplayName(section.original_speaker_id)}: ${section.text}`)
+          .join('\n\n');
+        speakers = getUniqueSpeakersFromDiarizedSections(displayData.transcription.diarized_sections)
+          .map(id => getSpeakerDisplayName(id));
+      } else if (displayData.transcription.words) {
+        const groups = groupWordsBySpeaker(displayData.transcription.words);
+        transcriptionText = groups
+          .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
+          .join('\n\n');
+        speakers = getUniqueSpeakers(displayData.transcription).map(id => getSpeakerDisplayName(id));
+      } else {
+        transcriptionText = displayData.transcription.text || '';
+      }
+
+      // Insert into meeting_transcripts table
+      const { error } = await supabase
+        .from('meeting_transcripts')
+        .insert({
+          user_id: user.id,
+          title: displayData.name.replace(/\.(webm|wav|mp3|flac|m4a|ogg)$/i, ''),
+          original_filename: displayData.name,
+          file_format: 'voice',
+          content: transcriptionText,
+          structured_data: displayData.transcription,
+          participants: speakers,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Saved to Transcripts",
+        description: "Transcription has been saved to the Transcripts page",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Save Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column - File Upload */}
@@ -738,6 +793,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                 <div className="flex gap-2">
                   {selectedFileData && (
                     <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={saveToTranscripts}
+                      >
+                        <FolderInput className="w-4 h-4 mr-2" />
+                        Save to Transcripts
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
