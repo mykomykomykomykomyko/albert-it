@@ -616,9 +616,6 @@ export const PropertiesPanel = ({
             {activeNode.nodeType === "function" && "Function Properties"}
             {activeNode.nodeType === "tool" && "Tool Properties"}
           </h3>
-          <Button variant="ghost" size="sm" onClick={onDeselectAgent} className="lg:flex hidden">
-            <X className="h-4 w-4" />
-          </Button>
         </div>
         
         {activeNode.nodeType === "agent" && (
