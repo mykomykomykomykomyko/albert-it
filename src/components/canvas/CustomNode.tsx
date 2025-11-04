@@ -82,6 +82,15 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
           className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
       )}
+      
+      {/* Additional right-side input handle for horizontal mode on input nodes */}
+      {data.nodeType === 'input' && data.orientation === 'horizontal' && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+        />
+      )}
 
       {/* Node Header */}
       <div className="px-4 py-3 border-b flex items-center justify-between gap-2 bg-muted/30">
@@ -150,6 +159,15 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
         <Handle
           type="source"
           position={data.orientation === 'horizontal' ? Position.Right : Position.Bottom}
+          className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
+        />
+      )}
+      
+      {/* Additional left-side output handle for horizontal mode on output nodes */}
+      {data.nodeType === 'output' && data.orientation === 'horizontal' && (
+        <Handle
+          type="source"
+          position={Position.Right}
           className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
       )}
