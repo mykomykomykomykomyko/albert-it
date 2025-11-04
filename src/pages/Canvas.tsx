@@ -1643,8 +1643,8 @@ const Canvas = () => {
               </div>
 
               <PropertiesPanel
-                selectedAgent={convertNodeToAgent(selectedNode)}
-                selectedNode={convertNodeToWorkflowNode(selectedNode)}
+                selectedAgent={selectedNode ? convertNodeToAgent(nodes.find(n => n.id === selectedNode.id) || selectedNode) : undefined}
+                selectedNode={selectedNode ? convertNodeToWorkflowNode(nodes.find(n => n.id === selectedNode.id) || selectedNode) : undefined}
                 onUpdateAgent={(nodeId, updates) => handleUpdateNode(nodeId, updates)}
                 onUpdateNode={(nodeId, updates) => handleUpdateNode(nodeId, updates)}
                 onAddToolInstance={(nodeId, toolId) => {
