@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2 } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -1165,16 +1165,31 @@ const Chat = () => {
                       <Download className="h-4 w-4" />
                     </Button>
                     {currentConversation && (
-                      <ShareConversationDialog
-                        conversationId={currentConversation.id}
-                        conversationTitle={currentConversation.title}
-                        isShared={currentConversation.is_shared}
-                        shareToken={currentConversation.share_token}
-                        onShareStatusChange={() => {
-                          // Refresh conversation data to update share status
-                          loadConversations();
-                        }}
-                      />
+                      <>
+                        <ShareConversationDialog
+                          conversationId={currentConversation.id}
+                          conversationTitle={currentConversation.title}
+                          isShared={currentConversation.is_shared}
+                          shareToken={currentConversation.share_token}
+                          onShareStatusChange={() => {
+                            // Refresh conversation data to update share status
+                            loadConversations();
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm(`Delete "${currentConversation.title}"?`)) {
+                              handleDeleteConversation(currentConversation.id);
+                            }
+                          }}
+                          title="Delete conversation"
+                          className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                     <input
                       id="file-upload"
