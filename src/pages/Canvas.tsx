@@ -414,6 +414,7 @@ const Canvas = () => {
   const [isFunctionSelectorOpen, setIsFunctionSelectorOpen] = useState(false);
   const [isAgentSelectorOpen, setIsAgentSelectorOpen] = useState(false);
   const [isToolSelectorOpen, setIsToolSelectorOpen] = useState(false);
+  const [connectionOrientation, setConnectionOrientation] = useState<'vertical' | 'horizontal'>('vertical');
   const [editingNode, setEditingNode] = useState<{
     systemPrompt: string;
     userPrompt: string;
@@ -442,6 +443,7 @@ const Canvas = () => {
               userPrompt: node.userPrompt || '',
               files: [],
               config: node.config || {},
+              orientation: connectionOrientation,
               onEdit: () => {
                 setSelectedNode(newNode);
                 setIsRightSidebarOpen(true);
@@ -541,6 +543,7 @@ const Canvas = () => {
         config: template.config || {},
         functionType: template.functionType,
         toolType: template.toolType,
+        orientation: connectionOrientation,
         onEdit: () => {
           setSelectedNode(newNode);
           setIsRightSidebarOpen(true);
@@ -966,6 +969,7 @@ const Canvas = () => {
         ...node,
         data: {
           ...node.data,
+          orientation: connectionOrientation,
           onEdit: () => {
             setSelectedNode(node);
             setIsRightSidebarOpen(true);
@@ -1019,6 +1023,7 @@ const Canvas = () => {
               ...node,
               data: {
                 ...node.data,
+                orientation: connectionOrientation,
                 onEdit: () => {
                   const nodeRef = node;
                   setSelectedNode(nodeRef);
@@ -1065,6 +1070,7 @@ const Canvas = () => {
         ...node,
         data: {
           ...node.data,
+          orientation: connectionOrientation,
           onEdit: () => {
             setSelectedNode(node as Node);
             setIsRightSidebarOpen(true);
@@ -1111,6 +1117,19 @@ const Canvas = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedNode, handleDeleteSelected]);
 
+  // Update all nodes when orientation changes
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          orientation: connectionOrientation,
+        },
+      }))
+    );
+  }, [connectionOrientation, setNodes]);
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
@@ -1146,6 +1165,18 @@ const Canvas = () => {
               <Button variant="outline" size="sm" onClick={handleClear} className="h-8 text-xs">
                 <Trash2 className="h-3.5 w-3.5 sm:mr-2" />
                 <span className="hidden sm:inline">Clear</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setConnectionOrientation(connectionOrientation === 'vertical' ? 'horizontal' : 'vertical')} 
+                className="h-8 text-xs"
+                title={`Switch to ${connectionOrientation === 'vertical' ? 'horizontal' : 'vertical'} connections`}
+              >
+                {connectionOrientation === 'vertical' ? '↕' : '↔'}
+                <span className="hidden sm:inline ml-1.5">
+                  {connectionOrientation === 'vertical' ? 'Vertical' : 'Horizontal'}
+                </span>
               </Button>
               {selectedNode && (
                 <Button 

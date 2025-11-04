@@ -12,6 +12,7 @@ export interface CustomNodeData {
   description?: string;
   files?: File[];
   config?: Record<string, any>;
+  orientation?: 'vertical' | 'horizontal';
   onEdit?: () => void;
   onRun?: () => void;
 }
@@ -77,7 +78,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       {data.nodeType !== 'input' && (
         <Handle
           type="target"
-          position={Position.Top}
+          position={data.orientation === 'horizontal' ? Position.Left : Position.Top}
           className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
       )}
@@ -148,7 +149,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       {data.nodeType !== 'output' && (
         <Handle
           type="source"
-          position={Position.Bottom}
+          position={data.orientation === 'horizontal' ? Position.Right : Position.Bottom}
           className="!bg-primary !border-2 !border-background !w-3 !h-3 hover:!w-4 hover:!h-4 transition-all"
         />
       )}
