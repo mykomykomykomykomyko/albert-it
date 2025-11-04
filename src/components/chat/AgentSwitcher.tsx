@@ -56,9 +56,9 @@ export function AgentSwitcher({ selectedAgent, onAgentChange }: AgentSwitcherPro
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-background">
+      <DialogContent className="sm:max-w-[600px] bg-background border-border">
         <DialogHeader>
-          <DialogTitle>Select Agent</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Select Agent</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="relative">
@@ -67,49 +67,64 @@ export function AgentSwitcher({ selectedAgent, onAgentChange }: AgentSwitcherPro
               placeholder="Search agents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 border-border focus-visible:ring-primary"
             />
           </div>
           <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-2">
+            <div className="space-y-1">
               <button
                 onClick={() => handleSelectAgent(null)}
-                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
+                  !selectedAgent 
+                    ? 'bg-primary/10 border border-primary/20' 
+                    : 'hover:bg-accent border border-transparent'
+                }`}
               >
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback>AI</AvatarFallback>
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                  <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                    AI
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium">Default Agent</p>
+                  <p className="font-semibold text-foreground">Default Agent</p>
                   <p className="text-sm text-muted-foreground">General purpose assistant</p>
                 </div>
                 {!selectedAgent && (
-                  <Badge variant="secondary">Active</Badge>
+                  <Badge variant="default" className="bg-primary">Active</Badge>
                 )}
               </button>
+              <div className="h-px bg-border my-2" />
               {filteredAgents.length === 0 ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  {searchQuery ? 'No agents found' : 'No custom agents available'}
+                <div className="py-12 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {searchQuery ? 'No agents found' : 'No custom agents available'}
+                  </p>
                 </div>
               ) : (
                 filteredAgents.map((agent) => (
                   <button
                     key={agent.id}
                     onClick={() => handleSelectAgent(agent)}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors text-left"
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
+                      selectedAgent?.id === agent.id
+                        ? 'bg-primary/10 border border-primary/20'
+                        : 'hover:bg-accent border border-transparent'
+                    }`}
                   >
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-10 w-10 ring-2 ring-border">
                       <AvatarImage src={agent.profile_picture_url} />
-                      <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                      <AvatarFallback className="bg-gradient-to-br from-accent to-muted font-semibold">
+                        {agent.name.charAt(0)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{agent.name}</p>
+                      <p className="font-semibold text-foreground truncate">{agent.name}</p>
                       <p className="text-sm text-muted-foreground truncate">
                         {agent.description || agent.type}
                       </p>
                     </div>
                     {selectedAgent?.id === agent.id && (
-                      <Badge variant="secondary">Active</Badge>
+                      <Badge variant="default" className="bg-primary">Active</Badge>
                     )}
                   </button>
                 ))
