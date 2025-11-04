@@ -1515,8 +1515,15 @@ const Canvas = () => {
               ...edge,
               style: {
                 ...edge.style,
-                stroke: selectedEdge?.id === edge.id ? 'hsl(var(--warning))' : 'hsl(var(--primary))',
-                strokeWidth: selectedEdge?.id === edge.id ? 3 : 2,
+                stroke: selectedEdge?.id === edge.id ? 'hsl(var(--warning))' : edge.style?.stroke || 'hsl(var(--primary))',
+                strokeWidth: selectedEdge?.id === edge.id ? 3 : edge.style?.strokeWidth || 2,
+              },
+              markerEnd: selectedEdge?.id === edge.id ? {
+                type: MarkerType.ArrowClosed,
+                color: 'hsl(var(--warning))',
+              } : edge.markerEnd || {
+                type: MarkerType.ArrowClosed,
+                color: 'hsl(var(--primary))',
               },
             }))}
             onNodesChange={onNodesChange}
