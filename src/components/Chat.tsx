@@ -180,6 +180,16 @@ const Chat = () => {
     }
   }, [id]);
 
+  // Handle automatic message send after conversation creation
+  useEffect(() => {
+    if (location.state?.sendMessageOnLoad && currentConversation && input.trim()) {
+      // Clear the flag
+      navigate(location.pathname, { replace: true, state: {} });
+      // Send the message
+      handleSend();
+    }
+  }, [currentConversation, location.state]);
+
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -242,7 +252,7 @@ const Chat = () => {
     setMessages((messagesData || []) as Message[]);
   };
 
-  const handleNewConversation = async () => {
+  const handleNewConversation = async (sendMessageAfter = false) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
@@ -261,7 +271,14 @@ const Chat = () => {
     }
 
     await loadConversations();
-    navigate(`/chat/${data.id}`);
+    
+    // If we need to send a message right after, navigate and set a flag
+    if (sendMessageAfter) {
+      // Navigate to the new conversation
+      navigate(`/chat/${data.id}`, { state: { sendMessageOnLoad: true } });
+    } else {
+      navigate(`/chat/${data.id}`);
+    }
   };
 
   const handleRenameConversation = async (conversationId: string, newTitle: string) => {
@@ -892,9 +909,7 @@ const Chat = () => {
                           if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
                             if (input.trim()) {
-                              handleNewConversation().then(() => {
-                                setTimeout(() => handleSend(), 100);
-                              });
+                              handleNewConversation(true);
                             }
                           }
                         }}
@@ -931,9 +946,7 @@ const Chat = () => {
                       <Button
                         onClick={() => {
                           if (input.trim()) {
-                            handleNewConversation().then(() => {
-                              setTimeout(() => handleSend(), 100);
-                            });
+                            handleNewConversation(true);
                           }
                         }}
                         disabled={!input.trim()}
