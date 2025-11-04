@@ -1515,12 +1515,13 @@ const Canvas = () => {
               ...edge,
               style: {
                 ...edge.style,
-                stroke: selectedEdge?.id === edge.id ? 'hsl(var(--warning))' : edge.style?.stroke || 'hsl(var(--primary))',
-                strokeWidth: selectedEdge?.id === edge.id ? 3 : edge.style?.strokeWidth || 2,
+                stroke: selectedEdge?.id === edge.id ? '#f59e0b' : edge.style?.stroke || 'hsl(var(--primary))',
+                strokeWidth: selectedEdge?.id === edge.id ? 4 : edge.style?.strokeWidth || 2,
+                strokeOpacity: 1,
               },
               markerEnd: selectedEdge?.id === edge.id ? {
                 type: MarkerType.ArrowClosed,
-                color: 'hsl(var(--warning))',
+                color: '#f59e0b',
               } : edge.markerEnd || {
                 type: MarkerType.ArrowClosed,
                 color: 'hsl(var(--primary))',
