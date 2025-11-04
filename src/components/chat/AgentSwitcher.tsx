@@ -67,7 +67,7 @@ export function AgentSwitcher({ selectedAgent, onAgentChange }: AgentSwitcherPro
             No custom agents available
           </div>
         ) : (
-          agents.map((agent) => (
+          [...agents].sort((a, b) => a.name.localeCompare(b.name)).map((agent) => (
             <DropdownMenuItem
               key={agent.id}
               onClick={() => onAgentChange(agent)}
