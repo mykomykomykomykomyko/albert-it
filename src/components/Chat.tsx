@@ -112,14 +112,21 @@ const Chat = () => {
     }
   }, [location.state, currentConversation, navigate, location.pathname]);
 
-  // Handle agent from location state
+  // Handle agent from location state - auto-create conversation
   useEffect(() => {
-    if (location.state?.agent) {
+    if (location.state?.agent && !id) {
+      const agent = location.state.agent;
+      setCurrentAgent(agent);
+      // Automatically create a new conversation with this agent
+      handleNewConversation();
+      // Clear the state so it doesn't persist
+      navigate(location.pathname, { replace: true, state: {} });
+    } else if (location.state?.agent) {
       setCurrentAgent(location.state.agent);
       // Clear the state so it doesn't persist
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate, location.pathname]);
+  }, [location.state, navigate, location.pathname, id]);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
