@@ -15,6 +15,7 @@ import ReactFlow, {
   BackgroundVariant,
   Panel,
   NodeTypes,
+  ConnectionLineType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
@@ -459,6 +460,7 @@ const Canvas = () => {
           id: edge.id,
           source: edge.source,
           target: edge.target,
+          type: 'smoothstep',
           animated: true,
           style: { stroke: 'hsl(var(--primary))' }
         }));
@@ -519,8 +521,16 @@ const Canvas = () => {
   }, [selectedNode, nodes]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: 'hsl(var(--primary))' } }, eds)),
-    [setEdges]
+    (params: Connection) => {
+      const edgeType = 'smoothstep';
+      setEdges((eds) => addEdge({ 
+        ...params, 
+        animated: true, 
+        type: edgeType,
+        style: { stroke: 'hsl(var(--primary))' } 
+      }, eds));
+    },
+    [setEdges, connectionOrientation]
   );
 
   const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
@@ -979,7 +989,12 @@ const Canvas = () => {
       }));
       
       setNodes(restoredNodes);
-      setEdges(workflow.edges || []);
+      setEdges((workflow.edges || []).map((edge: any) => ({
+        ...edge,
+        type: edge.type || 'smoothstep',
+        animated: true,
+        style: { stroke: 'hsl(var(--primary))' }
+      })));
       setGlobalInput(workflow.globalInput || "");
       toast.success("Workflow loaded");
     } else {
@@ -1034,7 +1049,12 @@ const Canvas = () => {
             }));
             
             setNodes(restoredNodes);
-            setEdges(workflowData.edges || []);
+            setEdges((workflowData.edges || []).map((edge: any) => ({
+              ...edge,
+              type: edge.type || 'smoothstep',
+              animated: true,
+              style: { stroke: 'hsl(var(--primary))' }
+            })));
             setGlobalInput(workflowData.globalInput || "");
             toast.success(`Loaded workflow: ${data.name}`);
             
@@ -1079,7 +1099,12 @@ const Canvas = () => {
         }
       }));
       setNodes(restoredNodes);
-      setEdges(template.edges);
+      setEdges(template.edges.map((edge: any) => ({
+        ...edge,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: 'hsl(var(--primary))' }
+      })));
       setIsTemplatesOpen(false);
       setWorkflowName(template.name);
       toast.success(`Template "${template.name}" loaded`);
@@ -1458,6 +1483,12 @@ const Canvas = () => {
             onConnect={onConnect}
             onNodeClick={onNodeClick}
             nodeTypes={nodeTypes}
+            connectionLineType={ConnectionLineType.SmoothStep}
+            defaultEdgeOptions={{
+              type: 'smoothstep',
+              animated: true,
+              style: { stroke: 'hsl(var(--primary))' }
+            }}
             fitView
             className="bg-background"
           >
