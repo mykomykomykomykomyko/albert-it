@@ -782,12 +782,12 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         {selectedFileData?.transcription && (
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="space-y-4">
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
                   Transcription Results
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     size="sm"
                     variant="default"
