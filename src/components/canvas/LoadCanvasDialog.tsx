@@ -1,3 +1,4 @@
+import React from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,7 +14,14 @@ interface LoadCanvasDialogProps {
 }
 
 export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialogProps) => {
-  const { savedCanvases, loading } = useSavedCanvases();
+  const { savedCanvases, loading, refreshCanvases } = useSavedCanvases();
+
+  // Refresh canvases when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      refreshCanvases();
+    }
+  }, [open, refreshCanvases]);
 
   const handleLoad = (canvas: any) => {
     onLoad(canvas.canvas_data);
