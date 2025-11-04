@@ -547,17 +547,17 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Column - File Upload */}
-      <div className="space-y-6 lg:col-span-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-[calc(100vh-8rem)]">
+      {/* Left & Center Column - File Upload & Results */}
+      <div className="space-y-6 lg:col-span-8 flex flex-col overflow-hidden">
+        <Card className="flex-shrink-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Upload className="w-5 h-5" />
               Audio Files
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             {/* Drag & Drop Zone */}
             <div
               onDragOver={handleDragOver}
@@ -612,24 +612,27 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
             {/* File List */}
             {files.length > 0 && (
-              <div className="mt-6 space-y-3">
-                <h4 className="font-medium">Uploaded Files</h4>
+              <div className="space-y-2">
+                <h4 className="font-medium text-sm">Uploaded Files ({files.length})</h4>
                 {files.map((file) => (
                   <div
                     key={file.id}
-                    onClick={() => setSelectedFile(file.id)}
+                    onClick={() => {
+                      setSelectedFile(file.id);
+                      setSelectedHistoryId(null);
+                    }}
                     className={cn(
-                      "p-4 rounded-lg border cursor-pointer transition-smooth",
+                      "p-3 rounded-lg border cursor-pointer transition-smooth group",
                       selectedFile === file.id
                         ? "border-primary bg-primary/5"
                         : "border-border hover:border-primary/50"
                     )}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FileAudio className="w-5 h-5" />
-                        <div>
-                          <p className="font-medium text-sm truncate max-w-[200px]">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <FileAudio className="w-4 h-4 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">
                             {file.name}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -637,29 +640,33 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          file.status === "completed" ? "default" :
-                          file.status === "processing" ? "secondary" :
-                          file.status === "error" ? "destructive" : "outline"
-                        }>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Badge 
+                          variant={
+                            file.status === "completed" ? "default" :
+                            file.status === "processing" ? "secondary" :
+                            file.status === "error" ? "destructive" : "outline"
+                          }
+                          className="text-xs"
+                        >
                           {file.status}
                         </Badge>
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={(e) => {
                             e.stopPropagation();
                             removeFile(file.id);
                           }}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </Button>
                       </div>
                     </div>
                     
                     {file.status === "processing" && (
-                      <Progress value={file.progress} className="mt-3" />
+                      <Progress value={file.progress} className="mt-2" />
                     )}
                     
                     {file.status === "pending" && (
@@ -669,7 +676,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                           e.stopPropagation();
                           processFile(file.id);
                         }}
-                        className="mt-3 w-full"
+                        className="mt-2 w-full"
                       >
                         <Play className="w-4 h-4 mr-2" />
                         Process
@@ -681,14 +688,11 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Right Column - Configuration & Results */}
-      <div className="space-y-6">
         {/* Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Configuration</CardTitle>
+        <Card className="flex-shrink-0">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Configuration</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Model Selection */}
@@ -741,9 +745,9 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           (displayData.transcription.diarized_sections && displayData.transcription.diarized_sections.length > 1) ||
           (displayData.transcription.words && getUniqueSpeakers(displayData.transcription).length > 0)
         ) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="flex-shrink-0">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
                 <Users className="w-5 h-5" />
                 Speaker Names ({displayData.transcription.total_speakers || getUniqueSpeakers(displayData.transcription).length} speakers)
               </CardTitle>
@@ -783,10 +787,10 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
         {/* Results */}
         {displayData?.transcription && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+          <Card className="flex-1 flex flex-col overflow-hidden">
+            <CardHeader className="pb-3 flex-shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg">
                   <Clock className="w-5 h-5" />
                   Transcription Results
                 </CardTitle>
@@ -830,63 +834,65 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+            <CardContent className="flex-1 overflow-hidden flex flex-col">
+              <ScrollArea className="flex-1">
+                <div className="space-y-4 pr-4">
                 {displayData.transcription.diarized_sections && displayData.transcription.diarized_sections.length > 0 ? (
                   // Use diarized_sections from backend if available
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {displayData.transcription.diarized_sections.map((section: any, index: number) => (
-                      <div key={index} className="p-4 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Users className="w-4 h-4" />
-                          <Badge variant="outline">{getSpeakerDisplayName(section.original_speaker_id)}</Badge>
+                      <div key={index} className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          <Badge variant="outline" className="text-xs py-0 h-5">{getSpeakerDisplayName(section.original_speaker_id)}</Badge>
                           <span className="text-xs text-muted-foreground">
                             {section.word_count} words • {section.start_time?.toFixed(1)}s - {section.end_time?.toFixed(1)}s
                           </span>
                         </div>
-                        <p className="text-sm">{section.text}</p>
+                        <p className="text-sm leading-relaxed">{section.text}</p>
                       </div>
                     ))}
                   </div>
                 ) : displayData.transcription.words && displayData.transcription.words.some((w: any) => w.speaker_id) ? (
                   // Fallback to old method for backwards compatibility
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {groupWordsBySpeaker(displayData.transcription.words).map((group, index) => (
-                      <div key={index} className="p-4 bg-muted/50 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Users className="w-4 h-4" />
-                          <Badge variant="outline">{getSpeakerDisplayName(group.speaker_id)}</Badge>
+                      <div key={index} className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <Users className="w-3.5 h-3.5" />
+                          <Badge variant="outline" className="text-xs py-0 h-5">{getSpeakerDisplayName(group.speaker_id)}</Badge>
                         </div>
-                        <p className="text-sm">{group.text}</p>
+                        <p className="text-sm leading-relaxed">{group.text}</p>
                       </div>
                     ))}
                   </div>
                 ) : displayData.transcription.text ? (
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm">{displayData.transcription.text}</p>
+                  <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <p className="text-sm leading-relaxed">{displayData.transcription.text}</p>
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground py-8">
                     No transcription data available
                   </div>
                 )}
-              </div>
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         )}
       </div>
 
       {/* Right Column - History */}
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+      <div className="lg:col-span-4 flex flex-col overflow-hidden">
+        <Card className="flex-1 flex flex-col overflow-hidden">
+          <CardHeader className="pb-3 flex-shrink-0">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <History className="w-5 h-5" />
               Past Transcriptions
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-220px)]">
+          <CardContent className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full">
               {historyLoading ? (
                 <div className="text-center text-muted-foreground py-8">
                   Loading history...
