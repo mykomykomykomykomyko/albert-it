@@ -381,21 +381,25 @@ export default function SharedConversation() {
         </div>
       </ScrollArea>
 
-      {/* Footer */}
+      {/* Footer - Read-only notice */}
       <footer className="flex-shrink-0 bg-card/80 backdrop-blur-sm border-t border-border/50 px-4 py-5 text-center shadow-sm">
         <div className="max-w-5xl mx-auto">
+          <div className="bg-muted/50 border border-border/50 rounded-lg px-4 py-3 mb-3 inline-flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">🔒</span>
+            </div>
+            <p className="text-sm text-foreground font-medium">
+              This is a read-only shared conversation. You can't send messages here.
+            </p>
+          </div>
           <p className="text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              🔒 This is a read-only view of a shared conversation.
-            </span>
-            {' '}
             {user ? (
               <button
                 onClick={handleContinueConversation}
                 className="text-primary hover:text-primary/80 font-semibold transition-colors inline-flex items-center gap-1"
                 disabled={isContinuing}
               >
-                {isContinuing ? 'Copying conversation...' : 'Continue this conversation'}
+                {isContinuing ? 'Copying conversation...' : 'Click here to copy and continue this conversation in your workspace'}
                 {!isContinuing && <ArrowRight className="h-3.5 w-3.5" />}
               </button>
             ) : (
@@ -403,7 +407,7 @@ export default function SharedConversation() {
                 onClick={() => navigate('/auth')}
                 className="text-primary hover:text-primary/80 font-semibold transition-colors inline-flex items-center gap-1"
               >
-                Sign in to continue
+                Sign in to copy and continue this conversation
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             )}
