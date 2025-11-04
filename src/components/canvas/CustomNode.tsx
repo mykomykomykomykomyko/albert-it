@@ -51,15 +51,15 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
   const getNodeColor = () => {
     switch (data.nodeType) {
       case 'input':
-        return 'border-blue-400/50 bg-blue-50/50 dark:bg-blue-950/20';
+        return 'border-blue-400 bg-background dark:bg-background';
       case 'agent':
-        return 'border-primary/50 bg-primary/5';
+        return 'border-primary bg-background';
       case 'output':
-        return 'border-green-400/50 bg-green-50/50 dark:bg-green-950/20';
+        return 'border-green-400 bg-background dark:bg-background';
       case 'join':
-        return 'border-purple-400/50 bg-purple-50/50 dark:bg-purple-950/20';
+        return 'border-purple-400 bg-background dark:bg-background';
       case 'transform':
-        return 'border-orange-400/50 bg-orange-50/50 dark:bg-orange-950/20';
+        return 'border-orange-400 bg-background dark:bg-background';
       default:
         return 'border-border bg-card';
     }
