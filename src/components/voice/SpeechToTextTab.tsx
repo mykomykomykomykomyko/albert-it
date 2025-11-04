@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy } from "lucide-react";
+import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy, FolderInput } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SpeechToTextTabProps {
@@ -356,6 +356,86 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       toast({
         title: "Copy Failed",
         description: "Failed to copy text to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const saveToTranscripts = async (file: AudioFile) => {
+    if (!file.transcription) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to save transcriptions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Format the transcription content
+      let formattedContent = "";
+      let structuredData: any = null;
+      let participants: string[] = [];
+
+      if (file.transcription.diarized_sections && file.transcription.diarized_sections.length > 0) {
+        formattedContent = file.transcription.diarized_sections
+          .map((section: any) => `${getSpeakerDisplayName(section.original_speaker_id)}: ${section.text}`)
+          .join('\n\n');
+        
+        structuredData = {
+          language_code: file.transcription.language_code,
+          language_probability: file.transcription.language_probability,
+          diarized_sections: file.transcription.diarized_sections,
+          total_speakers: file.transcription.total_speakers
+        };
+
+        participants = getUniqueSpeakersFromDiarizedSections(file.transcription.diarized_sections)
+          .map(id => getSpeakerDisplayName(id));
+      } else if (file.transcription.words && file.transcription.words.some((w: any) => w.speaker_id)) {
+        const speakerGroups = groupWordsBySpeaker(file.transcription.words);
+        formattedContent = speakerGroups
+          .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
+          .join('\n\n');
+
+        const uniqueSpeakers = getUniqueSpeakers(file.transcription);
+        participants = uniqueSpeakers.map(id => getSpeakerDisplayName(id));
+
+        structuredData = {
+          language_code: file.transcription.language_code,
+          language_probability: file.transcription.language_probability,
+          total_speakers: uniqueSpeakers.length
+        };
+      } else {
+        formattedContent = file.transcription.text || "No transcription available";
+      }
+
+      // Save to meeting_transcripts table
+      const { error } = await supabase
+        .from("meeting_transcripts")
+        .insert({
+          user_id: session.user.id,
+          title: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
+          original_filename: file.name,
+          file_format: 'voice',
+          content: formattedContent,
+          structured_data: structuredData,
+          participants: participants.length > 0 ? participants : null,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Saved to Transcripts",
+        description: "Voice transcription has been saved to your transcripts library",
+      });
+    } catch (error) {
+      console.error('Error saving to transcripts:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save transcription to library",
         variant: "destructive",
       });
     }
@@ -708,6 +788,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                   Transcription Results
                 </CardTitle>
                 <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => saveToTranscripts(selectedFileData)}
+                  >
+                    <FolderInput className="w-4 h-4 mr-2" />
+                    Save to Transcripts
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
