@@ -408,6 +408,7 @@ const Canvas = () => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedEdge, setSelectedEdge] = useState<Edge | null>(null);
   const [globalInput, setGlobalInput] = useState("");
   const [workflowName, setWorkflowName] = useState("Untitled Workflow");
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -1122,7 +1123,13 @@ const Canvas = () => {
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
+    setSelectedEdge(null); // Deselect edge when node is selected
     setIsRightSidebarOpen(true);
+  }, []);
+
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: Edge) => {
+    setSelectedEdge(edge);
+    setSelectedNode(null); // Deselect node when edge is selected
   }, []);
 
   const handleDeleteSelected = useCallback(() => {
@@ -1131,13 +1138,17 @@ const Canvas = () => {
       setEdges((eds) => eds.filter((e) => e.source !== selectedNode.id && e.target !== selectedNode.id));
       setSelectedNode(null);
       toast.success('Node deleted');
+    } else if (selectedEdge) {
+      setEdges((eds) => eds.filter((e) => e.id !== selectedEdge.id));
+      setSelectedEdge(null);
+      toast.success('Connection deleted');
     }
-  }, [selectedNode, setNodes, setEdges]);
+  }, [selectedNode, selectedEdge, setNodes, setEdges]);
 
   // Handle DELETE key press
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNode) {
+      if ((event.key === 'Delete' || event.key === 'Backspace') && (selectedNode || selectedEdge)) {
         // Only delete if not typing in an input field
         const target = event.target as HTMLElement;
         if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
@@ -1149,7 +1160,7 @@ const Canvas = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedNode, handleDeleteSelected]);
+  }, [selectedNode, selectedEdge, handleDeleteSelected]);
 
   // Update all nodes and edges when orientation changes
   useEffect(() => {
@@ -1500,11 +1511,23 @@ const Canvas = () => {
           )}
           <ReactFlow
             nodes={nodes}
-            edges={edges}
+            edges={edges.map((edge) => ({
+              ...edge,
+              style: {
+                ...edge.style,
+                stroke: selectedEdge?.id === edge.id ? 'hsl(var(--warning))' : 'hsl(var(--primary))',
+                strokeWidth: selectedEdge?.id === edge.id ? 3 : 2,
+              },
+            }))}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
+            onPaneClick={() => {
+              setSelectedNode(null);
+              setSelectedEdge(null);
+            }}
             nodeTypes={nodeTypes}
             connectionLineType={ConnectionLineType.SmoothStep}
             defaultEdgeOptions={{
@@ -1544,6 +1567,27 @@ const Canvas = () => {
               }}
             />
           </ReactFlow>
+          
+          {/* Edge deletion hint */}
+          {selectedEdge && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+              <Card className="p-3 bg-card shadow-lg border-warning/50 pointer-events-auto">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Connection selected</span>
+                  <div className="flex items-center gap-2">
+                    <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded">Delete</kbd>
+                    <span className="text-xs text-muted-foreground">to remove</span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedEdge(null)}
+                    className="p-1 hover:bg-muted rounded pointer-events-auto"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Right Sidebar Toggle Button */}
