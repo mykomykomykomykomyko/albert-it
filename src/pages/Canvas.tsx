@@ -1142,7 +1142,7 @@ const Canvas = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [selectedNode, handleDeleteSelected]);
 
-  // Update all nodes when orientation changes
+  // Update all nodes and edges when orientation changes
   useEffect(() => {
     setNodes((nds) =>
       nds.map((node) => ({
@@ -1153,7 +1153,17 @@ const Canvas = () => {
         },
       }))
     );
-  }, [connectionOrientation, setNodes]);
+    
+    // Force edges to update by creating new edge objects
+    setEdges((eds) =>
+      eds.map((edge) => ({
+        ...edge,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: 'hsl(var(--primary))' }
+      }))
+    );
+  }, [connectionOrientation, setNodes, setEdges]);
 
   return (
     <div className="flex flex-col h-screen bg-background">
