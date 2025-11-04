@@ -9,8 +9,10 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy } from "lucide-react";
+import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useVoiceAnalysis } from "@/hooks/useVoiceAnalysis";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SpeechToTextTabProps {
   // API key no longer needed - handled by edge function
@@ -34,8 +36,10 @@ interface Model {
 
 export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   const { toast } = useToast();
+  const { results, loading: historyLoading, saveResult, deleteResult } = useVoiceAnalysis();
   const [files, setFiles] = useState<AudioFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const [models, setModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [autoDetectSpeakers, setAutoDetectSpeakers] = useState(true);
@@ -177,10 +181,20 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
       // Auto-select this file to show results
       setSelectedFile(fileId);
+      setSelectedHistoryId(null);
+
+      // Save to database
+      const transcriptionText = data.text || JSON.stringify(data);
+      await saveResult(
+        file.name,
+        transcriptionText,
+        '', // analysis field - empty for now
+        selectedModel
+      );
 
       toast({
         title: "Success",
-        description: `Transcription completed for ${file.name}`,
+        description: `Transcription completed and saved for ${file.name}`,
       });
 
     } catch (error) {
@@ -457,16 +471,30 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   };
 
   const selectedFileData = files.find(f => f.id === selectedFile);
+  const selectedHistoryData = results.find(r => r.id === selectedHistoryId);
   
-  // Debug log to see what's happening
-  console.log('Selected file:', selectedFile);
-  console.log('Selected file data:', selectedFileData);
-  console.log('Transcription data:', selectedFileData?.transcription);
+  // Determine what to display - prioritize current file over history
+  const displayData = selectedFileData || (selectedHistoryId && selectedHistoryData ? {
+    id: selectedHistoryData.id,
+    name: selectedHistoryData.original_filename,
+    transcription: { text: selectedHistoryData.transcription },
+    status: 'completed' as const
+  } : null);
+
+  const handleDeleteHistory = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Delete this transcription?')) {
+      await deleteResult(id);
+      if (selectedHistoryId === id) {
+        setSelectedHistoryId(null);
+      }
+    }
+  };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column - File Upload */}
-      <div className="space-y-6">
+      <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -654,22 +682,22 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         </Card>
 
         {/* Speaker Names */}
-        {selectedFileData?.transcription && (
-          (selectedFileData.transcription.diarized_sections && selectedFileData.transcription.diarized_sections.length > 1) ||
-          (selectedFileData.transcription.words && getUniqueSpeakers(selectedFileData.transcription).length > 0)
+        {displayData?.transcription && (
+          (displayData.transcription.diarized_sections && displayData.transcription.diarized_sections.length > 1) ||
+          (displayData.transcription.words && getUniqueSpeakers(displayData.transcription).length > 0)
         ) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Speaker Names ({selectedFileData.transcription.total_speakers || getUniqueSpeakers(selectedFileData.transcription).length} speakers)
+                Speaker Names ({displayData.transcription.total_speakers || getUniqueSpeakers(displayData.transcription).length} speakers)
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {selectedFileData.transcription.diarized_sections ? 
+                {displayData.transcription.diarized_sections ? 
                   // Use unique speakers from diarized_sections
-                  getUniqueSpeakersFromDiarizedSections(selectedFileData.transcription.diarized_sections).map((speakerId) => (
+                  getUniqueSpeakersFromDiarizedSections(displayData.transcription.diarized_sections).map((speakerId) => (
                     <div key={speakerId} className="flex items-center gap-3">
                       <Label className="min-w-[80px]">{speakerId}:</Label>
                       <Input
@@ -681,7 +709,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                     </div>
                   )) :
                   // Fallback to old method
-                  getUniqueSpeakers(selectedFileData.transcription).map((speakerId) => (
+                  getUniqueSpeakers(displayData.transcription).map((speakerId) => (
                     <div key={speakerId} className="flex items-center gap-3">
                       <Label className="min-w-[80px]">{speakerId}:</Label>
                       <Input
@@ -699,7 +727,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         )}
 
         {/* Results */}
-        {selectedFileData?.transcription && (
+        {displayData?.transcription && (
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -708,39 +736,43 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                   Transcription Results
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => copyTranscriptionToClipboard(selectedFileData)}
-                  >
-                    <Copy className="w-4 h-4 mr-2" />
-                    Copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => downloadTranscription(selectedFileData, "txt")}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    TXT
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => downloadTranscription(selectedFileData, "json")}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    JSON
-                  </Button>
+                  {selectedFileData && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => copyTranscriptionToClipboard(selectedFileData)}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadTranscription(selectedFileData, "txt")}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        TXT
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => downloadTranscription(selectedFileData, "json")}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        JSON
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {selectedFileData.transcription.diarized_sections && selectedFileData.transcription.diarized_sections.length > 0 ? (
+                {displayData.transcription.diarized_sections && displayData.transcription.diarized_sections.length > 0 ? (
                   // Use diarized_sections from backend if available
                   <div className="space-y-3">
-                    {selectedFileData.transcription.diarized_sections.map((section: any, index: number) => (
+                    {displayData.transcription.diarized_sections.map((section: any, index: number) => (
                       <div key={index} className="p-4 bg-muted/50 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <Users className="w-4 h-4" />
@@ -753,10 +785,10 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                       </div>
                     ))}
                   </div>
-                ) : selectedFileData.transcription.words && selectedFileData.transcription.words.some((w: any) => w.speaker_id) ? (
+                ) : displayData.transcription.words && displayData.transcription.words.some((w: any) => w.speaker_id) ? (
                   // Fallback to old method for backwards compatibility
                   <div className="space-y-3">
-                    {groupWordsBySpeaker(selectedFileData.transcription.words).map((group, index) => (
+                    {groupWordsBySpeaker(displayData.transcription.words).map((group, index) => (
                       <div key={index} className="p-4 bg-muted/50 rounded-lg">
                         <div className="flex items-center gap-2 mb-2">
                           <Users className="w-4 h-4" />
@@ -766,9 +798,9 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                       </div>
                     ))}
                   </div>
-                ) : selectedFileData.transcription.text ? (
+                ) : displayData.transcription.text ? (
                   <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="text-sm">{selectedFileData.transcription.text}</p>
+                    <p className="text-sm">{displayData.transcription.text}</p>
                   </div>
                 ) : (
                   <div className="text-center text-muted-foreground py-8">
@@ -779,6 +811,71 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             </CardContent>
           </Card>
         )}
+      </div>
+
+      {/* Right Column - History */}
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5" />
+              Past Transcriptions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[calc(100vh-220px)]">
+              {historyLoading ? (
+                <div className="text-center text-muted-foreground py-8">
+                  Loading history...
+                </div>
+              ) : results.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  No past transcriptions
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {results.map((result) => (
+                    <div
+                      key={result.id}
+                      onClick={() => {
+                        setSelectedHistoryId(result.id);
+                        setSelectedFile(null);
+                      }}
+                      className={cn(
+                        "p-3 rounded-lg border cursor-pointer transition-smooth group",
+                        selectedHistoryId === result.id
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {result.original_filename}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(result.created_at).toLocaleDateString()} {new Date(result.created_at).toLocaleTimeString()}
+                          </p>
+                          <Badge variant="outline" className="mt-1 text-xs">
+                            {result.model_used}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => handleDeleteHistory(result.id, e)}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
