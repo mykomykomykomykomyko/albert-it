@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -1052,30 +1052,79 @@ const Chat = () => {
 
                                   {message.attachments && message.attachments.length > 0 && (
                                     <div className="mt-2 flex flex-wrap gap-2">
-                                      {message.attachments.map((file: any, idx: number) => (
-                                        <a
-                                          key={idx}
-                                          href={file.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group ${
-                                            message.role === "user"
-                                              ? "bg-primary-foreground/10 hover:bg-primary-foreground/20"
-                                              : "bg-secondary/50 hover:bg-secondary"
-                                          }`}
-                                        >
-                                          <File className={`h-4 w-4 ${
-                                            message.role === "user"
-                                              ? "text-primary-foreground/70 group-hover:text-primary-foreground"
-                                              : "text-muted-foreground group-hover:text-foreground"
-                                          } transition-colors`} />
-                                          <span className={`text-sm ${
-                                            message.role === "user"
-                                              ? "text-primary-foreground"
-                                              : "text-foreground"
-                                          }`}>{file.name}</span>
-                                        </a>
-                                      ))}
+                                      {message.attachments.map((file: any, idx: number) => {
+                                        const isImage = file.type === 'image' || file.url?.startsWith('data:image/');
+                                        
+                                        if (isImage && file.url) {
+                                          return (
+                                            <button
+                                              key={idx}
+                                              onClick={() => {
+                                                const newWindow = window.open();
+                                                if (newWindow) {
+                                                  newWindow.document.write(`
+                                                    <!DOCTYPE html>
+                                                    <html>
+                                                      <head>
+                                                        <title>${file.name}</title>
+                                                        <style>
+                                                          body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #000; }
+                                                          img { max-width: 100%; max-height: 100vh; object-fit: contain; }
+                                                        </style>
+                                                      </head>
+                                                      <body>
+                                                        <img src="${file.url}" alt="${file.name}" />
+                                                      </body>
+                                                    </html>
+                                                  `);
+                                                  newWindow.document.close();
+                                                }
+                                              }}
+                                              className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group cursor-pointer ${
+                                                message.role === "user"
+                                                  ? "bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                                                  : "bg-secondary/50 hover:bg-secondary"
+                                              }`}
+                                            >
+                                              <ImageIcon className={`h-4 w-4 ${
+                                                message.role === "user"
+                                                  ? "text-primary-foreground/70 group-hover:text-primary-foreground"
+                                                  : "text-muted-foreground group-hover:text-foreground"
+                                              } transition-colors`} />
+                                              <span className={`text-sm ${
+                                                message.role === "user"
+                                                  ? "text-primary-foreground"
+                                                  : "text-foreground"
+                                              }`}>{file.name}</span>
+                                            </button>
+                                          );
+                                        }
+                                        
+                                        return (
+                                          <a
+                                            key={idx}
+                                            href={file.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group ${
+                                              message.role === "user"
+                                                ? "bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                                                : "bg-secondary/50 hover:bg-secondary"
+                                            }`}
+                                          >
+                                            <File className={`h-4 w-4 ${
+                                              message.role === "user"
+                                                ? "text-primary-foreground/70 group-hover:text-primary-foreground"
+                                                : "text-muted-foreground group-hover:text-foreground"
+                                            } transition-colors`} />
+                                            <span className={`text-sm ${
+                                              message.role === "user"
+                                                ? "text-primary-foreground"
+                                                : "text-foreground"
+                                            }`}>{file.name}</span>
+                                          </a>
+                                        );
+                                      })}
                                     </div>
                                   )}
                                  
