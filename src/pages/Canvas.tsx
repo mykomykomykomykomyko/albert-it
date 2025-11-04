@@ -905,6 +905,10 @@ const Canvas = () => {
       id: node.id,
       nodeType: data.nodeType || 'tool',
       name: data.label || node.id,
+      // carry extra fields used by PropertiesPanel
+      userPrompt: data.userPrompt || '',
+      inputType: data.inputType,
+      outputFormat: data.outputFormat,
       config: data.config || {},
       status: data.status || 'idle',
       output: data.output,
@@ -1626,14 +1630,7 @@ const Canvas = () => {
                   <p className="text-xs text-muted-foreground mt-0.5">Configure selected node</p>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => setIsRightSidebarOpen(false)}
-                  >
-                    <PanelRightClose className="h-4 w-4" />
-                  </Button>
+                  {/* Single close button: deselects node */}
                   <Button
                     variant="ghost"
                     size="sm"
