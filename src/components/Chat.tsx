@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -73,6 +73,9 @@ const Chat = () => {
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
   
+  // Ref for auto-expanding textarea
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
   // Presence for real-time typing indicators
   const { broadcastTyping, broadcastThinking } = useConversationPresence(currentConversation?.id || null);
 
@@ -103,6 +106,19 @@ const Chat = () => {
     
     broadcastThinking(isLoading);
   }, [isLoading, currentConversation, broadcastThinking]);
+
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    // Reset height to auto to get the correct scrollHeight
+    textarea.style.height = 'auto';
+    
+    // Set new height based on scrollHeight, respecting min and max
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 200);
+    textarea.style.height = `${newHeight}px`;
+  }, [input]);
 
   // Handle prompt text from location state
   useEffect(() => {
@@ -1172,6 +1188,7 @@ const Chat = () => {
                 <div className="flex flex-col gap-2">
                   {/* Textarea on its own row */}
                   <Textarea
+                    ref={textareaRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1181,7 +1198,7 @@ const Chat = () => {
                       }
                     }}
                     placeholder="Type your message..."
-                    className="min-h-[60px] max-h-[200px] resize-none w-full"
+                    className="min-h-[60px] max-h-[200px] resize-none w-full overflow-y-auto"
                     disabled={isLoading}
                   />
                   
