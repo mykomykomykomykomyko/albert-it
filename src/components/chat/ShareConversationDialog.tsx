@@ -83,12 +83,11 @@ export function ShareConversationDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon"
           title="Share conversation"
-          className="hover:bg-accent text-foreground"
         >
-          <Share2 className="h-5 w-5" />
+          <Share2 className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
