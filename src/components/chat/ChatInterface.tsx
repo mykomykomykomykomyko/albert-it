@@ -88,7 +88,7 @@ const ChatInterface = ({
 
       if (userError) throw userError;
 
-      const updatedMessages = [...messages, savedUserMessage as Message];
+      const updatedMessages = [...messages, savedUserMessage as any];
       onMessagesUpdate(updatedMessages);
 
       // Update conversation title if it's the first message
@@ -143,7 +143,7 @@ const ChatInterface = ({
 
       if (assistantError) throw assistantError;
 
-      const finalMessages = [...updatedMessages, assistantMessage as Message];
+      const finalMessages = [...updatedMessages, assistantMessage as any];
       onMessagesUpdate(finalMessages);
 
       while (!streamDone) {

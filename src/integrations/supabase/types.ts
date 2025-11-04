@@ -458,6 +458,7 @@ export type Database = {
       messages: {
         Row: {
           agent_id: string | null
+          attachments: Json | null
           content: string
           conversation_id: string
           created_at: string | null
@@ -468,6 +469,7 @@ export type Database = {
         }
         Insert: {
           agent_id?: string | null
+          attachments?: Json | null
           content: string
           conversation_id: string
           created_at?: string | null
@@ -478,6 +480,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string | null
+          attachments?: Json | null
           content?: string
           conversation_id?: string
           created_at?: string | null

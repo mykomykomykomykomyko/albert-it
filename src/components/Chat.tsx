@@ -8,7 +8,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2 } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -249,7 +249,7 @@ const Chat = () => {
     });
 
     setCurrentConversation(convData);
-    setMessages((messagesData || []) as Message[]);
+    setMessages((messagesData || []) as any);
   };
 
   const handleNewConversation = async (sendMessageAfter = false) => {
@@ -440,7 +440,7 @@ const Chat = () => {
 
       if (userError) throw userError;
 
-      setMessages(prev => [...prev, savedUserMessage as Message]);
+      setMessages(prev => [...prev, savedUserMessage as any]);
 
       // Update conversation title if first message
       if (messages.length === 0) {
@@ -497,7 +497,7 @@ const Chat = () => {
 
       if (assistantError) throw assistantError;
 
-      setMessages(prev => [...prev, assistantMessage as Message]);
+      setMessages(prev => [...prev, assistantMessage as any]);
       toast.success(sourceImageUrl ? "Image edited successfully!" : "Image generated successfully!");
 
     } catch (error: any) {
@@ -518,7 +518,7 @@ const Chat = () => {
         .single();
         
       if (data) {
-        setMessages(prev => [...prev, data as Message]);
+        setMessages(prev => [...prev, data as any]);
       }
     } finally {
       setIsLoading(false);
@@ -617,20 +617,29 @@ const Chat = () => {
         fullContent = userContent + fileContent;
       }
 
-      // Save user message
+      // Prepare attachments data from image uploads
+      const attachmentsData = images.map(img => ({
+        name: img.name,
+        type: 'image',
+        size: img.size,
+        url: img.dataUrl
+      }));
+
+      // Save user message with attachments
       const { data: savedUserMessage, error: userError } = await supabase
         .from("messages")
         .insert({
           conversation_id: currentConversation.id,
           role: "user" as const,
           content: fullContent,
+          attachments: attachmentsData.length > 0 ? attachmentsData : null,
         })
         .select()
         .single();
 
       if (userError) throw userError;
 
-      const updatedMessages = [...messages, savedUserMessage as Message];
+      const updatedMessages = [...messages, savedUserMessage as any];
       setMessages(updatedMessages);
       setFiles([]);
 
@@ -755,7 +764,7 @@ const Chat = () => {
 
       if (assistantError) throw assistantError;
 
-      const finalMessages = [...updatedMessages, assistantMessage as Message];
+      const finalMessages = [...updatedMessages, assistantMessage as any];
       setMessages(finalMessages);
 
       // Stream response using Gemini format
@@ -1006,7 +1015,7 @@ const Chat = () => {
                                : "bg-card border border-border"
                            }`}
                          >
-                            {(() => {
+                             {(() => {
                               // Extract image URL from markdown if present (including standalone base64)
                               const mdMatch = message.content?.match(/!\[[^\]]*\]\(([^)]+)\)/);
                               const standaloneMatch = message.content?.match(/(data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
@@ -1040,6 +1049,35 @@ const Chat = () => {
                                       [Empty message]
                                     </div>
                                   ) : null}
+
+                                  {message.attachments && message.attachments.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {message.attachments.map((file: any, idx: number) => (
+                                        <a
+                                          key={idx}
+                                          href={file.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors group ${
+                                            message.role === "user"
+                                              ? "bg-primary-foreground/10 hover:bg-primary-foreground/20"
+                                              : "bg-secondary/50 hover:bg-secondary"
+                                          }`}
+                                        >
+                                          <File className={`h-4 w-4 ${
+                                            message.role === "user"
+                                              ? "text-primary-foreground/70 group-hover:text-primary-foreground"
+                                              : "text-muted-foreground group-hover:text-foreground"
+                                          } transition-colors`} />
+                                          <span className={`text-sm ${
+                                            message.role === "user"
+                                              ? "text-primary-foreground"
+                                              : "text-foreground"
+                                          }`}>{file.name}</span>
+                                        </a>
+                                      ))}
+                                    </div>
+                                  )}
                                  
                                   {imageUrl && (
                                     <div className="mt-3 relative group">

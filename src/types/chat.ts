@@ -10,12 +10,20 @@ export interface Conversation {
   retention_days?: number | null;
 }
 
+export interface FileAttachment {
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
   role: 'user' | 'assistant';
   content: string;
   image_url?: string;
+  attachments?: FileAttachment[] | null;
   created_at: string;
 }
 
