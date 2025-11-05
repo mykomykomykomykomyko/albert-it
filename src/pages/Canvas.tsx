@@ -535,8 +535,14 @@ const Canvas = () => {
               config: node.config || {},
               orientation: connectionOrientation,
               onEdit: () => {
-                setSelectedNode(newNode);
-                setIsRightSidebarOpen(true);
+                setNodes((currentNodes) => {
+                  const currentNode = currentNodes.find(n => n.id === nodeId);
+                  if (currentNode) {
+                    setSelectedNode(currentNode);
+                    setIsRightSidebarOpen(true);
+                  }
+                  return currentNodes;
+                });
               },
               onRun: () => handleRunNode(nodeId),
             },
@@ -585,10 +591,16 @@ const Canvas = () => {
             data: {
               ...nodeData,
               orientation: connectionOrientation,
-              onEdit: () => {
-                setSelectedNode(newNode);
-                setIsRightSidebarOpen(true);
-              },
+               onEdit: () => {
+                 setNodes((currentNodes) => {
+                   const currentNode = currentNodes.find(n => n.id === nodeId);
+                   if (currentNode) {
+                     setSelectedNode(currentNode);
+                     setIsRightSidebarOpen(true);
+                   }
+                   return currentNodes;
+                 });
+               },
               onRun: () => handleRunNode(nodeId),
             },
           };
@@ -732,10 +744,16 @@ const Canvas = () => {
         functionType: template.functionType,
         toolType: template.toolType,
         orientation: connectionOrientation,
-        onEdit: () => {
-          setSelectedNode(newNode);
-          setIsRightSidebarOpen(true);
-        },
+         onEdit: () => {
+           setNodes((currentNodes) => {
+             const currentNode = currentNodes.find(n => n.id === id);
+             if (currentNode) {
+               setSelectedNode(currentNode);
+               setIsRightSidebarOpen(true);
+             }
+             return currentNodes;
+           });
+         },
         onRun: () => handleRunNode(id),
       },
     };
@@ -1127,16 +1145,13 @@ const Canvas = () => {
       return n;
     }));
     
-    // Update selectedNode separately to keep it in sync
+    // Update selectedNode separately to keep it in sync with latest edits
     if (selectedNode && selectedNode.id === nodeId) {
       setSelectedNode(prevNode => {
         if (!prevNode) return prevNode;
-        const updatedFromNodes = nodes.find(n => n.id === nodeId);
-        if (!updatedFromNodes) return prevNode;
-        
-        const currentData = updatedFromNodes.data as any;
+        const currentData = (prevNode.data as any) || {};
         return {
-          ...updatedFromNodes,
+          ...prevNode,
           data: {
             ...currentData,
             label: updates.name !== undefined ? updates.name : currentData.label,
@@ -1239,9 +1254,14 @@ const Canvas = () => {
                 ...node.data,
                 orientation: connectionOrientation,
                 onEdit: () => {
-                  const nodeRef = node;
-                  setSelectedNode(nodeRef);
-                  setIsRightSidebarOpen(true);
+                  setNodes((currentNodes) => {
+                    const currentNode = currentNodes.find(n => n.id === node.id);
+                    if (currentNode) {
+                      setSelectedNode(currentNode);
+                      setIsRightSidebarOpen(true);
+                    }
+                    return currentNodes;
+                  });
                 },
                 onRun: () => handleRunNode(node.id),
               }
@@ -1291,8 +1311,14 @@ const Canvas = () => {
           ...node.data,
           orientation: connectionOrientation,
           onEdit: () => {
-            setSelectedNode(node as Node);
-            setIsRightSidebarOpen(true);
+            setNodes((currentNodes) => {
+              const currentNode = currentNodes.find(n => n.id === node.id);
+              if (currentNode) {
+                setSelectedNode(currentNode);
+                setIsRightSidebarOpen(true);
+              }
+              return currentNodes;
+            });
           },
           onRun: () => handleRunNode(node.id),
         }
