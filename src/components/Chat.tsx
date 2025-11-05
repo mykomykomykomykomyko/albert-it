@@ -1101,7 +1101,17 @@ const Chat = () => {
                                       message.role === "user" 
                                         ? "prose-invert" 
                                         : "dark:prose-invert"
-                                    } prose-p:leading-relaxed prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-1 prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-muted prose-pre:border prose-pre:border-border`}>
+                                    } 
+                                    prose-p:leading-relaxed prose-p:my-3 prose-p:text-base
+                                    prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-semibold
+                                    prose-ul:my-3 prose-ul:space-y-2 prose-ul:list-disc prose-ul:pl-6
+                                    prose-ol:my-3 prose-ol:space-y-2 prose-ol:list-decimal prose-ol:pl-6
+                                    prose-li:my-1.5 prose-li:leading-relaxed prose-li:text-base
+                                    prose-strong:font-bold prose-strong:text-foreground
+                                    prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 
+                                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
+                                    prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4
+                                    prose-blockquote:border-l-accent prose-blockquote:my-4`}>
                                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {(() => {
                                           const { cleanContent } = parseWorkflowSuggestion(textContent);
