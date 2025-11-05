@@ -1574,7 +1574,7 @@ const Canvas = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-9 hover:bg-muted"
+                      className="w-full justify-start h-9 hover:bg-muted text-foreground"
                       onClick={() => addNode('output', { name: 'Text Output', description: 'Display results', config: { format: 'text' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
@@ -1583,7 +1583,7 @@ const Canvas = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-start h-9 hover:bg-muted"
+                      className="w-full justify-start h-9 hover:bg-muted text-foreground"
                       onClick={() => addNode('output', { name: 'JSON Output', description: 'Display as JSON', config: { format: 'json' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
