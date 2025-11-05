@@ -176,14 +176,19 @@ const Chat = () => {
   }, [navigate]);
 
   useEffect(() => {
-    console.log('🔍 Chat useEffect triggered:', { id, pathname: location.pathname });
-    if (id) {
-      loadConversation(id);
+    // Extract conversation ID directly from pathname to avoid useParams() issues with persistent pages
+    const pathParts = location.pathname.split('/');
+    const urlId = pathParts[2]; // /chat/[id] -> pathParts[2] is the id
+    
+    console.log('🔍 Chat useEffect triggered:', { urlId, pathname: location.pathname });
+    
+    if (urlId && urlId !== 'undefined' && urlId.trim() !== '') {
+      loadConversation(urlId);
     } else {
       setCurrentConversation(null);
       setMessages([]);
     }
-  }, [id, location.pathname]);
+  }, [location.pathname]);
 
   // Handle automatic message send after conversation creation
   useEffect(() => {
