@@ -1122,21 +1122,35 @@ const Canvas = () => {
             status: updates.status !== undefined ? updates.status : currentData.status,
           }
         };
-        // Keep right panel in sync with live edits
-        if (selectedNode && selectedNode.id === nodeId) {
-          setSelectedNode({
-            ...updatedNode,
-            data: {
-              ...updatedNode.data,
-              onEdit: currentData?.onEdit,
-              onRun: currentData?.onRun,
-            }
-          } as any);
-        }
         return updatedNode;
       }
       return n;
     }));
+    
+    // Update selectedNode separately to keep it in sync
+    if (selectedNode && selectedNode.id === nodeId) {
+      setSelectedNode(prevNode => {
+        if (!prevNode) return prevNode;
+        const updatedFromNodes = nodes.find(n => n.id === nodeId);
+        if (!updatedFromNodes) return prevNode;
+        
+        const currentData = updatedFromNodes.data as any;
+        return {
+          ...updatedFromNodes,
+          data: {
+            ...currentData,
+            label: updates.name !== undefined ? updates.name : currentData.label,
+            systemPrompt: (updates as any).systemPrompt !== undefined ? (updates as any).systemPrompt : currentData.systemPrompt,
+            userPrompt: (updates as any).userPrompt !== undefined ? (updates as any).userPrompt : currentData.userPrompt,
+            config: updates.config !== undefined ? updates.config : currentData.config,
+            output: updates.output !== undefined ? updates.output : currentData.output,
+            status: updates.status !== undefined ? updates.status : currentData.status,
+            onEdit: currentData?.onEdit,
+            onRun: currentData?.onRun,
+          }
+        } as any;
+      });
+    }
   };
 
   const handleSave = () => {
