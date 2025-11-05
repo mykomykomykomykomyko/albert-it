@@ -59,6 +59,7 @@ import SharedConversation from "./pages/SharedConversation";
 import SavedWork from "./pages/SavedWork";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 import { AccessibilityProvider } from "./components/AccessibilityProvider";
+import { PersistentPages } from "./components/layout/PersistentPages";
 
 /**
  * React Query Client Configuration
@@ -83,43 +84,32 @@ const App = () => (
           {/* Root route - handles authentication-based redirects */}
           <Route path="/" element={<Index />} />
           
-          {/* Public routes */}
+          {/* Public routes - these can unmount */}
           <Route path="/landing" element={<Landing />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
           
-          {/* Agent management routes */}
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/marketplace" element={<AgentMarketplace />} />
-          
-          {/* Prompt and framework management */}
-          <Route path="/prompts" element={<PromptLibrary />} />
-          <Route path="/framework" element={<Framework />} />
-          
-          {/* Admin routes */}
+          {/* Admin routes - can unmount */}
           <Route path="/admin/review" element={<AdminReview />} />
           
-          {/* Workflow routes */}
-          <Route path="/workflow-marketplace" element={<WorkflowMarketplace />} />
-          
-          {/* Chat routes */}
-          <Route path="/chat" element={<EnhancedChat />} />
-          <Route path="/chat/:id" element={<EnhancedChat />} />
+          {/* Shared conversation - can unmount */}
           <Route path="/chat/shared/:shareToken" element={<SharedConversation />} />
           
-          {/* Workflow builder routes */}
-          <Route path="/stage" element={<Stage />} />
-          <Route path="/canvas" element={<Canvas />} />
-          <Route path="/saved-work" element={<SavedWork />} />
-          
-          {/* Analysis tools */}
-          <Route path="/image" element={<ImageAnalysis />} />
-          <Route path="/voice" element={<VoiceAnalysis />} />
-          <Route path="/transcripts" element={<MeetingTranscripts />} />
-          
-          {/* Documentation */}
-          <Route path="/docs" element={<Docs />} />
+          {/* Main app routes - persistent state container */}
+          <Route path="/chat/*" element={<PersistentPages />} />
+          <Route path="/canvas/*" element={<PersistentPages />} />
+          <Route path="/stage/*" element={<PersistentPages />} />
+          <Route path="/image/*" element={<PersistentPages />} />
+          <Route path="/voice/*" element={<PersistentPages />} />
+          <Route path="/transcripts/*" element={<PersistentPages />} />
+          <Route path="/agents/*" element={<PersistentPages />} />
+          <Route path="/marketplace/*" element={<PersistentPages />} />
+          <Route path="/prompts/*" element={<PersistentPages />} />
+          <Route path="/framework/*" element={<PersistentPages />} />
+          <Route path="/workflow-marketplace/*" element={<PersistentPages />} />
+          <Route path="/saved-work/*" element={<PersistentPages />} />
+          <Route path="/docs/*" element={<PersistentPages />} />
           
           {/* Catch-all route for 404 errors */}
           {/* ⚠️ IMPORTANT: Keep this as the last route */}
