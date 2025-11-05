@@ -18,10 +18,8 @@ import { generateId, resizeAndCompressImage } from '@/lib/utils';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
-  const [images, setImages] = useState<ProcessedImage[]>(() => {
-    const saved = localStorage.getItem('imageAnalysis_images');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Don't persist images - blob URLs and File objects become invalid after page reload
+  const [images, setImages] = useState<ProcessedImage[]>([]);
   const [prompts, setPrompts] = useState<AnalysisPrompt[]>(() => {
     const saved = localStorage.getItem('imageAnalysis_prompts');
     return saved ? JSON.parse(saved) : [];
@@ -41,12 +39,9 @@ export default function ImageAnalysis() {
 
   useEffect(() => {
     checkAuth();
+    // Clean up any stale image data from previous sessions
+    localStorage.removeItem('imageAnalysis_images');
   }, []);
-
-  // Persist images to localStorage
-  useEffect(() => {
-    localStorage.setItem('imageAnalysis_images', JSON.stringify(images));
-  }, [images]);
 
   // Persist prompts to localStorage
   useEffect(() => {
