@@ -176,13 +176,14 @@ const Chat = () => {
   }, [navigate]);
 
   useEffect(() => {
+    console.log('🔍 Chat useEffect triggered:', { id, pathname: location.pathname });
     if (id) {
       loadConversation(id);
     } else {
       setCurrentConversation(null);
       setMessages([]);
     }
-  }, [id]);
+  }, [id, location.pathname]);
 
   // Handle automatic message send after conversation creation
   useEffect(() => {
