@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
-import { Plus, X, Repeat } from "lucide-react";
+import { Plus, X, Repeat, Zap, TrendingUp } from "lucide-react";
 import type { LoopExitCondition } from "@/types/workflow";
 
 interface LoopConfigDialogProps {
@@ -40,6 +40,34 @@ interface LoopConfigDialogProps {
     timeoutSeconds?: number;
   };
 }
+
+// Preset configurations
+const LOOP_PRESETS = {
+  basic: {
+    name: "Basic Loop (10 iterations)",
+    maxIterations: 10,
+    exitConditions: [{ type: 'max_iterations' as const }],
+    convergenceThreshold: 0.95,
+    timeoutSeconds: 300,
+  },
+  convergence: {
+    name: "Until Convergence",
+    maxIterations: 50,
+    exitConditions: [
+      { type: 'convergence' as const, threshold: 0.95 },
+      { type: 'max_iterations' as const }
+    ],
+    convergenceThreshold: 0.95,
+    timeoutSeconds: 300,
+  },
+  limited: {
+    name: "Limited Loop (5 iterations)",
+    maxIterations: 5,
+    exitConditions: [{ type: 'max_iterations' as const }],
+    convergenceThreshold: 0.95,
+    timeoutSeconds: 60,
+  },
+};
 
 export const LoopConfigDialog = ({
   open,
@@ -75,6 +103,15 @@ export const LoopConfigDialog = ({
     const updated = [...exitConditions];
     updated[index] = { ...updated[index], [field]: value };
     setExitConditions(updated);
+  };
+
+  const applyPreset = (presetKey: keyof typeof LOOP_PRESETS) => {
+    const preset = LOOP_PRESETS[presetKey];
+    setMaxIterations(preset.maxIterations);
+    setExitConditions(preset.exitConditions);
+    setConvergenceThreshold(preset.convergenceThreshold);
+    setTimeoutSeconds(preset.timeoutSeconds);
+    setIsLoopEdge(true);
   };
 
   const handleSave = () => {
@@ -115,6 +152,45 @@ export const LoopConfigDialog = ({
 
           {isLoopEdge && (
             <>
+              {/* Quick Presets */}
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Quick Presets</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Card 
+                    className="p-3 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => applyPreset('basic')}
+                  >
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <Repeat className="h-5 w-5 text-primary" />
+                      <div className="text-xs font-medium">Basic Loop</div>
+                      <div className="text-[10px] text-muted-foreground">10 iterations</div>
+                    </div>
+                  </Card>
+                  
+                  <Card 
+                    className="p-3 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => applyPreset('convergence')}
+                  >
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <div className="text-xs font-medium">Convergence</div>
+                      <div className="text-[10px] text-muted-foreground">Until stable</div>
+                    </div>
+                  </Card>
+                  
+                  <Card 
+                    className="p-3 cursor-pointer hover:bg-accent transition-colors"
+                    onClick={() => applyPreset('limited')}
+                  >
+                    <div className="flex flex-col items-center text-center gap-2">
+                      <Zap className="h-5 w-5 text-primary" />
+                      <div className="text-xs font-medium">Limited</div>
+                      <div className="text-[10px] text-muted-foreground">5 iterations</div>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
               {/* Max Iterations */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">

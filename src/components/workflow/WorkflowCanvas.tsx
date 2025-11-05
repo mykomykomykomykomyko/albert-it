@@ -1,8 +1,10 @@
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Stage } from "./Stage";
 import type { Workflow } from "@/types/workflow";
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { X, Repeat } from "lucide-react";
+import { detectLoopsInWorkflow, getConnectionStyle, getLoopBadgeText, isLoopEdge, type DetectedLoop } from "@/lib/loopVisualization";
 
 interface WorkflowCanvasProps {
   workflow: Workflow;
@@ -42,9 +44,11 @@ export const WorkflowCanvas = ({
   const [forceUpdate, setForceUpdate] = useState(0);
   const [svgDimensions, setSvgDimensions] = useState({ width: 0, height: 0 });
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
+  const [detectedLoops, setDetectedLoops] = useState<DetectedLoop[]>([]);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   // Update SVG dimensions based on scroll content
-  const updateSvgDimensions = () => {
+  const updateSvgDimensions = useCallback(() => {
     const scrollContainer = document.getElementById(`workflow-scroll-container-${layoutId}`);
     if (scrollContainer) {
       // Use clientWidth to prevent horizontal expansion, scrollHeight for vertical scrolling
@@ -53,27 +57,39 @@ export const WorkflowCanvas = ({
         height: Math.max(scrollContainer.scrollHeight, scrollContainer.clientHeight)
       });
     }
-  };
+  }, [layoutId]);
 
-  // Force redraw of arrows when workflow changes
+  // Detect loops when connections change
   useEffect(() => {
-    // Multiple redraws to ensure DOM is ready
-    const timers = [
-      setTimeout(() => {
-        updateSvgDimensions();
-        setForceUpdate((prev) => prev + 1);
-      }, 50),
-      setTimeout(() => {
-        updateSvgDimensions();
-        setForceUpdate((prev) => prev + 1);
-      }, 150),
-      setTimeout(() => {
-        updateSvgDimensions();
-        setForceUpdate((prev) => prev + 1);
-      }, 300),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [workflow.connections, workflow.stages, workflow.stages.flatMap(s => s.nodes).length]);
+    const loops = detectLoopsInWorkflow(workflow.connections);
+    setDetectedLoops(loops);
+  }, [workflow.connections]);
+
+  // Use ResizeObserver for stable connection rendering
+  useEffect(() => {
+    const scrollContainer = document.getElementById(`workflow-scroll-container-${layoutId}`);
+    if (!scrollContainer) return;
+
+    // Initial update
+    updateSvgDimensions();
+    setForceUpdate((prev) => prev + 1);
+
+    // Setup ResizeObserver for automatic updates
+    resizeObserverRef.current = new ResizeObserver(() => {
+      updateSvgDimensions();
+      setForceUpdate((prev) => prev + 1);
+    });
+
+    resizeObserverRef.current.observe(scrollContainer);
+
+    // Also observe all node elements
+    const nodeElements = scrollContainer.querySelectorAll('[id^="port-"]');
+    nodeElements.forEach(el => resizeObserverRef.current?.observe(el as Element));
+
+    return () => {
+      resizeObserverRef.current?.disconnect();
+    };
+  }, [workflow.stages, workflow.connections, layoutId, updateSvgDimensions]);
 
   const [connectingFromPort, setConnectingFromPort] = useState<string | undefined>(undefined);
 
@@ -86,7 +102,7 @@ export const WorkflowCanvas = ({
     }
   }, [connectingFrom]);
 
-  // Redraw arrows on window resize
+  // Window resize handler (ResizeObserver handles most cases)
   useEffect(() => {
     const handleResize = () => {
       updateSvgDimensions();
@@ -95,7 +111,7 @@ export const WorkflowCanvas = ({
     
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [updateSvgDimensions]);
 
   // Handle delete key for connections
   useEffect(() => {
@@ -160,9 +176,16 @@ export const WorkflowCanvas = ({
       const path = `M ${x1} ${y1} C ${x1} ${controlY1}, ${x2} ${controlY2}, ${x2} ${y2}`;
       
       const isSelected = selectedConnection === conn.id;
-      
-      // If we're in connecting mode, don't allow selecting connections
       const isConnectingMode = connectingFrom !== null;
+      
+      // Get style based on loop status
+      const style = getConnectionStyle(conn, detectedLoops, isSelected);
+      const isLoop = isLoopEdge(conn.id, detectedLoops);
+      const badgeText = getLoopBadgeText(conn);
+      
+      // Calculate midpoint for badge
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2;
       
       return (
         <g key={conn.id}>
@@ -183,13 +206,40 @@ export const WorkflowCanvas = ({
           {/* Visible path */}
           <path
             d={path}
-            stroke={isSelected ? "hsl(var(--warning))" : "hsl(var(--primary))"}
-            strokeWidth={isSelected ? "3" : "2"}
-            strokeOpacity={isSelected ? "0.8" : "0.4"}
+            stroke={style.stroke}
+            strokeWidth={style.strokeWidth}
+            strokeOpacity={style.strokeOpacity}
+            strokeDasharray={style.strokeDasharray}
             fill="none"
-            markerEnd={isSelected ? `url(#arrowhead-selected-${layoutId})` : `url(#arrowhead-${layoutId})`}
+            markerEnd={isLoop ? `url(#arrowhead-loop-${layoutId})` : (isSelected ? `url(#arrowhead-selected-${layoutId})` : `url(#arrowhead-${layoutId})`)}
             style={{ pointerEvents: 'none' }}
           />
+          
+          {/* Loop badge */}
+          {isLoop && badgeText && (
+            <g transform={`translate(${midX}, ${midY})`}>
+              <rect
+                x="-40"
+                y="-12"
+                width="80"
+                height="24"
+                rx="12"
+                fill="hsl(var(--accent))"
+                fillOpacity="0.9"
+              />
+              <text
+                x="0"
+                y="0"
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="10"
+                fontWeight="600"
+                fill="hsl(var(--accent-foreground))"
+              >
+                {badgeText}
+              </text>
+            </g>
+          )}
         </g>
       );
     });
@@ -221,9 +271,48 @@ export const WorkflowCanvas = ({
                 <marker id={`arrowhead-selected-${layoutId}`} markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
                   <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--warning))" fillOpacity="0.8" />
                 </marker>
+                <marker id={`arrowhead-loop-${layoutId}`} markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                  <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--accent))" fillOpacity="0.8" />
+                </marker>
               </defs>
               {renderConnections()}
             </svg>
+            
+            {/* Loop detection panel */}
+            {detectedLoops.length > 0 && (
+              <div className="absolute top-4 right-4 z-20 max-w-sm">
+                <Card className="p-3 bg-card/95 backdrop-blur-sm border-accent/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Repeat className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-semibold">Detected Loops</span>
+                    <Badge variant="secondary" className="ml-auto">{detectedLoops.length}</Badge>
+                  </div>
+                  <div className="space-y-2">
+                    {detectedLoops.map((loop) => (
+                      <div key={loop.id} className="text-xs space-y-1 p-2 bg-muted/50 rounded">
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">{loop.nodes.size} nodes</span>
+                          {loop.hasConfig ? (
+                            <Badge variant="default" className="text-xs bg-green-500/20 text-green-700 dark:text-green-300">
+                              Configured
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="text-xs">
+                              Not Configured
+                            </Badge>
+                          )}
+                        </div>
+                        {!loop.hasConfig && (
+                          <p className="text-muted-foreground text-[10px]">
+                            Click the loop edge to configure
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
             
             {/* Connection delete UI */}
             {selectedConnection && !connectingFrom && (

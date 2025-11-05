@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, CheckCircle2, AlertCircle, Circle, Trash2, Minimize2, Copy } from "lucide-react";
+import { Play, CheckCircle2, AlertCircle, Circle, Trash2, Minimize2, Copy, Repeat } from "lucide-react";
 import type { FunctionNode as FunctionNodeType } from "@/types/workflow";
 import { useToast } from "@/hooks/use-toast";
 import { FunctionRegistry } from "@/lib/functionRegistry";
@@ -83,9 +83,9 @@ export const FunctionNode = ({
   };
 
   const statusStyles = {
-    running: "bg-yellow-50 dark:bg-yellow-950/20",
-    complete: "ring-2 ring-green-500",
-    error: "ring-2 ring-destructive",
+    running: "relative before:absolute before:inset-0 before:rounded-lg before:border-2 before:border-warning before:animate-pulse bg-warning/5",
+    complete: "ring-2 ring-success/50 bg-success/5",
+    error: "ring-2 ring-destructive/50 bg-destructive/5",
     idle: "",
   };
 
@@ -219,7 +219,7 @@ export const FunctionNode = ({
         
         <div className="flex items-center gap-2 flex-wrap">
           <div className={`flex items-center gap-1 ${statusInfo.color}`}>
-            <StatusIcon className="h-3 w-3" />
+            <StatusIcon className={`h-3 w-3 ${node.status === 'running' ? 'animate-spin' : ''}`} />
             <span className="text-xs capitalize">{node.status || 'idle'}</span>
           </div>
           <Badge variant="secondary" className="text-xs">
@@ -228,6 +228,17 @@ export const FunctionNode = ({
           {node.outputPorts.length > 1 && (
             <Badge variant="outline" className="text-xs">
               {node.outputPorts.length} outputs
+            </Badge>
+          )}
+          {node.isInLoop && (
+            <Badge variant="secondary" className="text-xs gap-1 bg-accent/20 text-accent-foreground">
+              <Repeat className="h-2.5 w-2.5" />
+              Loop
+            </Badge>
+          )}
+          {node.executionCount !== undefined && node.executionCount > 0 && (
+            <Badge variant="outline" className="text-xs">
+              Run {node.executionCount}{node.maxExecutions ? `/${node.maxExecutions}` : ''}
             </Badge>
           )}
         </div>

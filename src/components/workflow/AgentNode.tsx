@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, FileText, Bot, Play, CheckCircle2, AlertCircle, Circle, Trash2, Minimize2, Download, Copy } from "lucide-react";
+import { Search, FileText, Bot, Play, CheckCircle2, AlertCircle, Circle, Trash2, Minimize2, Download, Copy, Repeat } from "lucide-react";
 import type { AgentNode as AgentNodeType } from "@/types/workflow";
 import { useToast } from "@/hooks/use-toast";
 
@@ -106,9 +106,9 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
   };
 
   const statusStyles = {
-    running: "bg-yellow-50 dark:bg-yellow-950/20",
-    complete: "ring-2 ring-green-500",
-    error: "ring-2 ring-destructive",
+    running: "relative before:absolute before:inset-0 before:rounded-lg before:border-2 before:border-warning before:animate-pulse bg-warning/5",
+    complete: "ring-2 ring-success/50 bg-success/5",
+    error: "ring-2 ring-destructive/50 bg-destructive/5",
     idle: "",
   };
 
@@ -230,12 +230,23 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
         
         <div className="flex items-center gap-2 flex-wrap">
           <div className={`flex items-center gap-1 ${statusInfo.color}`}>
-            <StatusIcon className="h-3 w-3" />
+            <StatusIcon className={`h-3 w-3 ${agent.status === 'running' ? 'animate-spin' : ''}`} />
             <span className="text-xs capitalize">{agent.status || 'idle'}</span>
           </div>
           {agent.tools && agent.tools.length > 0 && (
             <Badge variant="outline" className="text-xs">
               {agent.tools.length} tools
+            </Badge>
+          )}
+          {agent.isInLoop && (
+            <Badge variant="secondary" className="text-xs gap-1 bg-accent/20 text-accent-foreground">
+              <Repeat className="h-2.5 w-2.5" />
+              Loop
+            </Badge>
+          )}
+          {agent.executionCount !== undefined && agent.executionCount > 0 && (
+            <Badge variant="outline" className="text-xs">
+              Run {agent.executionCount}{agent.maxExecutions ? `/${agent.maxExecutions}` : ''}
             </Badge>
           )}
         </div>
