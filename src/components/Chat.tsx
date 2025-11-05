@@ -229,10 +229,13 @@ const Chat = () => {
 
   const cleanupEmptyConversations = async () => {
     try {
-      // Get all conversations for the user
+      // Get conversations older than 5 minutes without messages
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
       const { data: allConversations, error: fetchError } = await supabase
         .from("conversations")
-        .select("id");
+        .select("id, created_at")
+        .lt("created_at", fiveMinutesAgo); // Only check conversations older than 5 minutes
 
       if (fetchError || !allConversations) return;
 
