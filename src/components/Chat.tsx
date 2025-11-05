@@ -270,10 +270,18 @@ const Chat = () => {
       .from("conversations")
       .select("*")
       .eq("id", conversationId)
-      .single();
+      .maybeSingle();
 
     if (convError) {
+      console.error("Error loading conversation:", convError);
       toast.error("Failed to load conversation");
+      navigate("/chat");
+      return;
+    }
+
+    // If conversation doesn't exist (was deleted or never created)
+    if (!convData) {
+      console.log("Conversation not found, redirecting to chat");
       navigate("/chat");
       return;
     }
