@@ -210,9 +210,11 @@ const Chat = () => {
     setLoading(false);
   };
 
-  const loadConversations = async () => {
-    // First, clean up empty conversations
-    await cleanupEmptyConversations();
+  const loadConversations = async (skipCleanup = false) => {
+    // Only run cleanup on initial page load, not on every action
+    if (!skipCleanup) {
+      await cleanupEmptyConversations();
+    }
     
     const { data, error } = await supabase
       .from("conversations")
@@ -346,7 +348,8 @@ const Chat = () => {
       return;
     }
 
-    await loadConversations();
+    // Skip cleanup since we just created this conversation
+    await loadConversations(true);
     
     // If we need to send a message right after, navigate and set a flag
     if (sendMessageAfter) {
@@ -368,7 +371,7 @@ const Chat = () => {
       return;
     }
 
-    await loadConversations();
+    await loadConversations(true); // Skip cleanup for immediate action
     if (currentConversation?.id === conversationId) {
       setCurrentConversation({ ...currentConversation, title: newTitle });
     }
@@ -386,7 +389,7 @@ const Chat = () => {
       return;
     }
 
-    await loadConversations();
+    await loadConversations(true); // Skip cleanup for immediate action
     if (currentConversation?.id === conversationId) {
       setCurrentConversation({ ...currentConversation, retention_days: retentionDays });
     }
@@ -528,7 +531,7 @@ const Chat = () => {
           .update({ title, updated_at: new Date().toISOString() })
           .eq("id", currentConversation.id);
         setCurrentConversation({ ...currentConversation, title });
-        await loadConversations();
+        await loadConversations(true); // Skip cleanup for immediate action
       }
 
       // Get session for auth
@@ -727,7 +730,7 @@ const Chat = () => {
           .update({ title, updated_at: new Date().toISOString() })
           .eq("id", currentConversation.id);
         setCurrentConversation({ ...currentConversation, title });
-        await loadConversations();
+        await loadConversations(true); // Skip cleanup for immediate action
       }
 
       // Get session for auth
@@ -1460,7 +1463,7 @@ const Chat = () => {
                           shareToken={currentConversation.share_token}
                           onShareStatusChange={() => {
                             // Refresh conversation data to update share status
-                            loadConversations();
+                            loadConversations(true); // Skip cleanup for immediate action
                           }}
                         />
                         <Button
