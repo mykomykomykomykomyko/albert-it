@@ -211,6 +211,9 @@ const Chat = () => {
   };
 
   const loadConversations = async () => {
+    // First, clean up empty conversations
+    await cleanupEmptyConversations();
+    
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
@@ -222,6 +225,44 @@ const Chat = () => {
     }
 
     setConversations(data || []);
+  };
+
+  const cleanupEmptyConversations = async () => {
+    try {
+      // Get all conversations for the user
+      const { data: allConversations, error: fetchError } = await supabase
+        .from("conversations")
+        .select("id");
+
+      if (fetchError || !allConversations) return;
+
+      // For each conversation, check if it has any messages
+      const emptyConversationIds: string[] = [];
+      
+      for (const conv of allConversations) {
+        const { data: messages, error: msgError } = await supabase
+          .from("messages")
+          .select("id")
+          .eq("conversation_id", conv.id)
+          .limit(1);
+
+        if (!msgError && (!messages || messages.length === 0)) {
+          emptyConversationIds.push(conv.id);
+        }
+      }
+
+      // Delete all empty conversations
+      if (emptyConversationIds.length > 0) {
+        await supabase
+          .from("conversations")
+          .delete()
+          .in("id", emptyConversationIds);
+        
+        console.log(`🗑️ Cleaned up ${emptyConversationIds.length} empty conversations`);
+      }
+    } catch (error) {
+      console.error("Error cleaning up empty conversations:", error);
+    }
   };
 
   const loadConversation = async (conversationId: string) => {
