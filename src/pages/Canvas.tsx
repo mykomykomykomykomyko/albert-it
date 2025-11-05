@@ -642,6 +642,33 @@ const Canvas = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Update all nodes when orientation changes
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          orientation: connectionOrientation,
+        },
+      }))
+    );
+
+    // Force edges to re-render
+    setEdges((eds) =>
+      eds.map((edge) => ({
+        ...edge,
+        type: 'smoothstep',
+        animated: true,
+        style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
+        markerEnd: edge.markerEnd || {
+          type: MarkerType.ArrowClosed,
+          color: 'hsl(var(--primary))',
+        },
+      }))
+    );
+  }, [connectionOrientation, setNodes, setEdges]);
+
   useEffect(() => {
     if (selectedNode) {
       const node = nodes.find(n => n.id === selectedNode.id);
@@ -657,6 +684,12 @@ const Canvas = () => {
       setEditingNode(null);
     }
   }, [selectedNode, nodes]);
+
+  const toggleOrientation = useCallback(() => {
+    const newOrientation = connectionOrientation === 'vertical' ? 'horizontal' : 'vertical';
+    setConnectionOrientation(newOrientation);
+    toast.success(`Switched to ${newOrientation} connections`);
+  }, [connectionOrientation]);
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -1379,7 +1412,7 @@ const Canvas = () => {
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => setConnectionOrientation(connectionOrientation === 'vertical' ? 'horizontal' : 'vertical')} 
+                onClick={toggleOrientation} 
                 className="h-8 text-xs"
                 title={`Switch to ${connectionOrientation === 'vertical' ? 'horizontal' : 'vertical'} connections`}
               >
