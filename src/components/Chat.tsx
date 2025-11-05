@@ -29,6 +29,7 @@ import { parseWorkflowSuggestion } from '@/utils/parseWorkflowSuggestion';
 import { ShareConversationDialog } from './chat/ShareConversationDialog';
 import { useConversationPresence } from '@/hooks/useConversationPresence';
 import { useAuth } from '@/hooks/useAuth';
+import { useRef } from 'react';
 
 interface ImageAttachment {
   name: string;
@@ -71,6 +72,9 @@ const Chat = () => {
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
+  
+  // Ref for auto-scrolling to bottom
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   // Presence for real-time typing indicators
   const { broadcastTyping, broadcastThinking } = useConversationPresence(currentConversation?.id || null);
@@ -250,6 +254,20 @@ const Chat = () => {
 
     setCurrentConversation(convData);
     setMessages((messagesData || []) as any);
+    
+    // Auto-scroll to bottom after messages load
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+  };
+  
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
   };
 
   const handleNewConversation = async (sendMessageAfter = false) => {
@@ -995,7 +1013,7 @@ const Chat = () => {
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
               <div className="max-w-4xl mx-auto space-y-4">
                 {messages.map((message) => (
                   <div
