@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sparkles, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentSelectorDialog } from '@/components/agents/AgentSelectorDialog';
@@ -506,20 +507,20 @@ export default function ImageAnalysis() {
                 {images.length} image{images.length !== 1 ? 's' : ''} uploaded
               </p>
             </div>
-            <div className="flex-1 overflow-y-auto bg-background">
-            <div className="p-6">
-              <ImageGallery
-                images={images}
-                onImageSelect={handleImageSelect}
-                onImageRemove={handleImageRemove}
-                onSelectAll={handleSelectAll}
-                onDeselectAll={handleDeselectAll}
-                selectedCount={selectedImageCount}
-                onImageClick={handleImageClick}
-                onResizeToggle={handleResizeToggle}
-              />
+            <ScrollArea className="flex-1">
+              <div className="p-6">
+                <ImageGallery
+                  images={images}
+                  onImageSelect={handleImageSelect}
+                  onImageRemove={handleImageRemove}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                  selectedCount={selectedImageCount}
+                  onImageClick={handleImageClick}
+                  onResizeToggle={handleResizeToggle}
+                />
               </div>
-            </div>
+            </ScrollArea>
           </div>
 
           {/* Results Panel */}
@@ -531,15 +532,17 @@ export default function ImageAnalysis() {
             </p>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto p-6">
-            <ResultsDisplay
-              results={results}
-              images={images}
-              prompts={prompts}
-              selectedImageId={selectedImageId || undefined}
-              onImageClick={handleImageClick}
-            />
+          <ScrollArea className="flex-1">
+            <div className="p-6">
+              <ResultsDisplay
+                results={results}
+                images={images}
+                prompts={prompts}
+                selectedImageId={selectedImageId || undefined}
+                onImageClick={handleImageClick}
+              />
             </div>
+          </ScrollArea>
           </div>
         </div>
       </div>
