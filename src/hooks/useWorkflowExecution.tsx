@@ -361,128 +361,149 @@ export const useWorkflowExecution = ({
     };
 
     // Execute workflow with loop handling
-    for (let i = 0; i < workflow.stages.length; i++) {
-      const stage = workflow.stages[i];
-      if (stage.nodes.length === 0) continue;
+    let continueLoop = true;
+    let globalLoopIteration = 0;
+    const MAX_LOOP_ITERATIONS = 1000; // Safety limit for infinite loops
 
-      const agentCount = stage.nodes.filter((n) => n.nodeType === "agent").length;
-      const functionCount = stage.nodes.filter(
-        (n) => n.nodeType === "function"
-      ).length;
-      onAddLog(
-        "info",
-        `▸ Stage ${i + 1}: Processing ${agentCount} agent(s) and ${functionCount} function(s)`
-      );
+    while (continueLoop && globalLoopIteration < MAX_LOOP_ITERATIONS) {
+      continueLoop = false; // Will be set to true if any active loops remain
+      globalLoopIteration++;
 
-      const nodePromises = stage.nodes.map(async (node) => {
-        // Safety check: global execution limit
-        if (globalExecutionCountRef.current >= MAX_GLOBAL_EXECUTIONS) {
-          onAddLog("error", "⚠️ Global execution limit reached - stopping workflow");
-          throw new Error("Global execution limit reached");
-        }
+      for (let i = 0; i < workflow.stages.length; i++) {
+        const stage = workflow.stages[i];
+        if (stage.nodes.length === 0) continue;
 
-        // Check node-specific execution limit
-        const nodeExecutionCount = (node as any).executionCount || 0;
-        const nodeMaxExecutions = (node as any).maxExecutions || 100;
-        
-        if (nodeExecutionCount >= nodeMaxExecutions) {
-          onAddLog("warning", `Node ${node.name} reached max executions (${nodeMaxExecutions})`);
-          return;
-        }
-
-        globalExecutionCountRef.current++;
-        const incomingConnections = workflow.connections.filter(
-          (c) => c.toNodeId === node.id
+        const agentCount = stage.nodes.filter((n) => n.nodeType === "agent").length;
+        const functionCount = stage.nodes.filter(
+          (n) => n.nodeType === "function"
+        ).length;
+        onAddLog(
+          "info",
+          `▸ Stage ${i + 1}: Processing ${agentCount} agent(s) and ${functionCount} function(s)`
         );
 
-        let input = userInput || "No input provided";
-
-        if (incomingConnections.length > 0) {
-          const connectedOutputs = incomingConnections
-            .map((c) => {
-              if (c.fromOutputPort) {
-                const portOutput = outputs.get(`${c.fromNodeId}:${c.fromOutputPort}`);
-                return portOutput;
-              }
-              const nodeOutput = outputs.get(c.fromNodeId);
-              if (typeof nodeOutput === "object") {
-                console.warn(
-                  `Warning: Node ${c.fromNodeId} output is an object, concatenating values`
-                );
-                return Object.values(nodeOutput)
-                  .filter((v) => v)
-                  .join("\n\n---\n\n");
-              }
-              return nodeOutput;
-            })
-            .filter(Boolean);
-
-          if (connectedOutputs.length > 0) {
-            input = connectedOutputs.join("\n\n---\n\n");
-            onAddLog(
-              "info",
-              `${node.name} received input from ${incomingConnections.length} connection(s) (${input.length} chars)`
-            );
+        const nodePromises = stage.nodes.map(async (node) => {
+          // Safety check: global execution limit
+          if (globalExecutionCountRef.current >= MAX_GLOBAL_EXECUTIONS) {
+            onAddLog("error", "⚠️ Global execution limit reached - stopping workflow");
+            throw new Error("Global execution limit reached");
           }
-        }
 
-        if (node.nodeType === "agent") {
-          const output = await executeAgent(node.id, input);
-          outputs.set(node.id, output);
+          // Check node-specific execution limit
+          const nodeExecutionCount = (node as any).executionCount || 0;
+          const nodeMaxExecutions = (node as any).maxExecutions || 100;
           
-          // Update execution tracking
-          onUpdateNode(node.id, {
-            executionCount: nodeExecutionCount + 1,
-            previousOutputs: [...((node as any).previousOutputs || []), output].slice(-10),
-          });
+          if (nodeExecutionCount >= nodeMaxExecutions) {
+            onAddLog("warning", `Node ${node.name} reached max executions (${nodeMaxExecutions})`);
+            return;
+          }
 
-          // Check if node is in a loop and handle loop logic
-          if ((node as any).isInLoop) {
-            const loopId = (node as any).loopId;
-            const loopMetadata = loopMetadataMap.get(loopId);
-            
-            if (loopMetadata) {
-              loopMetadata.currentIteration++;
-              loopMetadata.history.push(output);
-              
-              // Update active loops display
-              setActiveLoops(prev => {
-                const updated = prev.filter(l => l.loopId !== loopId);
-                return [...updated, { ...loopMetadata }];
-              });
+          globalExecutionCountRef.current++;
+          const incomingConnections = workflow.connections.filter(
+            (c) => c.toNodeId === node.id
+          );
 
-              // Check exit conditions
-              const exitCheck = BreakConditionEvaluator.shouldExitLoop(loopMetadata, output);
-              
-              if (exitCheck.shouldExit) {
-                onAddLog("info", `🔄 Loop exit: ${exitCheck.reason}`);
-                // Mark loop as completed
-                loopMetadata.nodes.forEach(nodeId => {
-                  onUpdateNode(nodeId, { isInLoop: false });
-                });
-                loopMetadataMap.delete(loopId);
-                setActiveLoops(prev => prev.filter(l => l.loopId !== loopId));
-              }
+          let input = userInput || "No input provided";
+
+          if (incomingConnections.length > 0) {
+            const connectedOutputs = incomingConnections
+              .map((c) => {
+                if (c.fromOutputPort) {
+                  const portOutput = outputs.get(`${c.fromNodeId}:${c.fromOutputPort}`);
+                  return portOutput;
+                }
+                const nodeOutput = outputs.get(c.fromNodeId);
+                if (typeof nodeOutput === "object") {
+                  console.warn(
+                    `Warning: Node ${c.fromNodeId} output is an object, concatenating values`
+                  );
+                  return Object.values(nodeOutput)
+                    .filter((v) => v)
+                    .join("\n\n---\n\n");
+                }
+                return nodeOutput;
+              })
+              .filter(Boolean);
+
+            if (connectedOutputs.length > 0) {
+              input = connectedOutputs.join("\n\n---\n\n");
+              onAddLog(
+                "info",
+                `${node.name} received input from ${incomingConnections.length} connection(s) (${input.length} chars)`
+              );
             }
           }
-        } else if (node.nodeType === "function") {
-          const { outputs: functionOutputs, primaryOutput } =
-            await executeFunction(node.id, input);
-          functionOutputs.forEach((value, key) => {
-            outputs.set(key, value);
-          });
-          outputs.set(node.id, primaryOutput);
-          
-          // Update execution tracking
-          onUpdateNode(node.id, {
-            executionCount: nodeExecutionCount + 1,
-            previousOutputs: [...((node as any).previousOutputs || []), primaryOutput].slice(-10),
-          });
-        }
-      });
 
-      await Promise.all(nodePromises);
-      onAddLog("success", `✓ Stage ${i + 1} completed`);
+          if (node.nodeType === "agent") {
+            const output = await executeAgent(node.id, input);
+            outputs.set(node.id, output);
+            
+            // Update execution tracking
+            onUpdateNode(node.id, {
+              executionCount: nodeExecutionCount + 1,
+              previousOutputs: [...((node as any).previousOutputs || []), output].slice(-10),
+            });
+
+            // Check if node is in a loop and handle loop logic
+            if ((node as any).isInLoop) {
+              const loopId = (node as any).loopId;
+              const loopMetadata = loopMetadataMap.get(loopId);
+              
+              if (loopMetadata) {
+                loopMetadata.currentIteration++;
+                loopMetadata.history.push(output);
+                
+                // Update active loops display
+                setActiveLoops(prev => {
+                  const updated = prev.filter(l => l.loopId !== loopId);
+                  return [...updated, { ...loopMetadata }];
+                });
+
+                // Check exit conditions
+                const exitCheck = BreakConditionEvaluator.shouldExitLoop(loopMetadata, output);
+                
+                if (exitCheck.shouldExit) {
+                  onAddLog("info", `🔄 Loop exit: ${exitCheck.reason}`);
+                  // Mark loop as completed
+                  loopMetadata.nodes.forEach(nodeId => {
+                    onUpdateNode(nodeId, { isInLoop: false });
+                  });
+                  loopMetadataMap.delete(loopId);
+                  setActiveLoops(prev => prev.filter(l => l.loopId !== loopId));
+                } else {
+                  // Loop should continue
+                  continueLoop = true;
+                }
+              }
+            }
+          } else if (node.nodeType === "function") {
+            const { outputs: functionOutputs, primaryOutput } =
+              await executeFunction(node.id, input);
+            functionOutputs.forEach((value, key) => {
+              outputs.set(key, value);
+            });
+            outputs.set(node.id, primaryOutput);
+            
+            // Update execution tracking
+            onUpdateNode(node.id, {
+              executionCount: nodeExecutionCount + 1,
+              previousOutputs: [...((node as any).previousOutputs || []), primaryOutput].slice(-10),
+            });
+          }
+        });
+
+        await Promise.all(nodePromises);
+        onAddLog("success", `✓ Stage ${i + 1} completed`);
+      }
+
+      // If no active loops remain, exit
+      if (loopMetadataMap.size === 0) {
+        continueLoop = false;
+      }
+    }
+
+    if (globalLoopIteration >= MAX_LOOP_ITERATIONS) {
+      onAddLog("error", "⚠️ Maximum loop iterations reached - stopping workflow");
     }
 
     // Clear any remaining active loops
