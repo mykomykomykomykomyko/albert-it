@@ -3,7 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Stage } from "./Stage";
 import type { Workflow } from "@/types/workflow";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { X, Repeat } from "lucide-react";
+import { X, Repeat, Plus, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { detectLoopsInWorkflow, getConnectionStyle, getLoopBadgeText, isLoopEdge, type DetectedLoop } from "@/lib/loopVisualization";
 
 interface WorkflowCanvasProps {
@@ -45,7 +46,12 @@ export const WorkflowCanvas = ({
   const [svgDimensions, setSvgDimensions] = useState({ width: 0, height: 0 });
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null);
   const [detectedLoops, setDetectedLoops] = useState<DetectedLoop[]>([]);
+  const [scale, setScale] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [touchStartDistance, setTouchStartDistance] = useState(0);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const lastTouchRef = useRef({ x: 0, y: 0 });
 
   // Update SVG dimensions based on scroll content
   const updateSvgDimensions = useCallback(() => {
@@ -137,6 +143,66 @@ export const WorkflowCanvas = ({
       setConnectingFromPort(undefined);
       onStartConnection(null);
     }
+  };
+
+  // Touch gesture handlers for pinch-to-zoom and pan
+  const getTouchDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Two-finger gesture - prepare for pinch/pan
+      const distance = getTouchDistance(e.touches[0], e.touches[1]);
+      setTouchStartDistance(distance);
+      setIsPanning(true);
+      lastTouchRef.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && isPanning) {
+      e.preventDefault();
+      
+      // Handle pinch-to-zoom
+      const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+      if (touchStartDistance > 0) {
+        const scaleChange = currentDistance / touchStartDistance;
+        const newScale = Math.max(0.5, Math.min(2, scale * scaleChange));
+        setScale(newScale);
+        setTouchStartDistance(currentDistance);
+      }
+
+      // Handle two-finger pan
+      const currentMidpoint = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+      
+      setPanOffset({
+        x: panOffset.x + (currentMidpoint.x - lastTouchRef.current.x),
+        y: panOffset.y + (currentMidpoint.y - lastTouchRef.current.y),
+      });
+      
+      lastTouchRef.current = currentMidpoint;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+    setTouchStartDistance(0);
+  };
+
+  const handleZoomIn = () => setScale(Math.min(2, scale + 0.1));
+  const handleZoomOut = () => setScale(Math.max(0.5, scale - 0.1));
+  const handleResetZoom = () => {
+    setScale(1);
+    setPanOffset({ x: 0, y: 0 });
   };
 
   const renderConnections = () => {
@@ -246,8 +312,42 @@ export const WorkflowCanvas = ({
   };
   return (
     <div className="h-full bg-gradient-to-br from-canvas-background to-muted/20 overflow-hidden relative" id={`workflow-canvas-${layoutId}`}>
+      {/* Mobile zoom controls */}
+      <div className="fixed bottom-24 right-4 z-30 flex flex-col gap-2 lg:hidden">
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-12 w-12 rounded-full shadow-lg"
+          onClick={handleZoomIn}
+        >
+          <Plus className="h-5 w-5" />
+        </Button>
+        <Button
+          size="icon"
+          variant="secondary"
+          className="h-12 w-12 rounded-full shadow-lg"
+          onClick={handleZoomOut}
+        >
+          <Minus className="h-5 w-5" />
+        </Button>
+        <Button
+          size="icon"
+          variant="outline"
+          className="h-12 w-12 rounded-full shadow-lg"
+          onClick={handleResetZoom}
+        >
+          <span className="text-xs font-bold">1:1</span>
+        </Button>
+      </div>
+
       <div className="h-full p-2 lg:p-3">
-        <Card className="h-full bg-canvas-background/50 backdrop-blur-sm border-2 border-dashed border-border/50 rounded-xl overflow-x-hidden overflow-y-auto flex flex-col relative" id={`workflow-scroll-container-${layoutId}`} onClick={(e) => {
+        <Card 
+          className="h-full bg-canvas-background/50 backdrop-blur-sm border-2 border-dashed border-border/50 rounded-xl overflow-x-hidden overflow-y-auto flex flex-col relative touch-pan-y" 
+          id={`workflow-scroll-container-${layoutId}`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setSelectedConnection(null);
               }
@@ -314,25 +414,25 @@ export const WorkflowCanvas = ({
               </div>
             )}
             
-            {/* Connection delete UI */}
+      {/* Connection delete UI */}
             {selectedConnection && !connectingFrom && (
               <>
                 {/* Mobile delete button */}
-                <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 lg:hidden">
-                  <Card className="p-2 bg-card shadow-lg flex items-center gap-2">
+                <div className="fixed bottom-24 lg:bottom-20 left-1/2 -translate-x-1/2 z-50 lg:hidden">
+                  <Card className="p-3 bg-card shadow-lg flex items-center gap-2">
                     <span className="text-xs text-muted-foreground px-2">Connection selected</span>
                     <button
                       onClick={() => {
                         onDeleteConnection(selectedConnection);
                         setSelectedConnection(null);
                       }}
-                      className="px-3 py-1.5 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90"
+                      className="px-3 py-2 bg-destructive text-destructive-foreground rounded-md text-sm font-medium hover:bg-destructive/90 active:scale-95 transition-transform"
                     >
                       Delete
                     </button>
                     <button
                       onClick={() => setSelectedConnection(null)}
-                      className="px-3 py-1.5 bg-muted text-foreground rounded-md text-sm font-medium hover:bg-muted/80"
+                      className="px-3 py-2 bg-muted text-foreground rounded-md text-sm font-medium hover:bg-muted/80 active:scale-95 transition-transform"
                     >
                       Cancel
                     </button>
@@ -360,7 +460,14 @@ export const WorkflowCanvas = ({
               </>
             )}
             
-            <div className="p-2 lg:p-3 space-y-3 w-full max-w-full" style={{ position: 'relative', zIndex: 5 }}>
+            <div 
+              className="p-2 lg:p-3 space-y-3 w-full max-w-full transition-transform origin-top-left" 
+              style={{ 
+                position: 'relative', 
+                zIndex: 5,
+                transform: `scale(${scale}) translate(${panOffset.x / scale}px, ${panOffset.y / scale}px)`,
+              }}
+            >
               {workflow.stages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center space-y-3 max-w-md">

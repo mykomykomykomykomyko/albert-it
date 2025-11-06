@@ -113,8 +113,15 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
   };
 
   if (agent.minimized) {
-    return (
-      <Card 
+  return (
+    <Card
+      onTouchStart={(e) => {
+        // Longer touch targets for mobile
+        e.currentTarget.style.transform = 'scale(0.98)';
+      }}
+      onTouchEnd={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
         className={`w-16 h-16 cursor-pointer transition-all hover:shadow-lg bg-card/50 backdrop-blur-sm flex items-center justify-center relative ${
           isSelected ? "ring-2 ring-primary shadow-lg" : ""
         } ${statusStyles[agent.status || 'idle']}`}
@@ -123,7 +130,7 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
       >
         <div 
           id={`port-input-${agent.id}-${layoutId}`}
-          className={`absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
+          className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 lg:w-3 lg:h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
             isConnecting ? "ring-2 ring-primary animate-pulse" : ""
           }`}
           onClick={(e) => {
@@ -133,7 +140,7 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
         />
         <div 
           id={`port-output-${agent.id}-${layoutId}`}
-          className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
+          className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 lg:w-3 lg:h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
             isConnecting ? "ring-2 ring-primary animate-pulse" : ""
           }`}
           onClick={(e) => {
@@ -152,6 +159,12 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
 
   return (
     <Card 
+      onTouchStart={(e) => {
+        e.currentTarget.style.transform = 'scale(0.98)';
+      }}
+      onTouchEnd={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
       className={`p-3 cursor-pointer transition-all hover:shadow-lg w-full min-w-[240px] bg-card/50 backdrop-blur-sm group ${
         isSelected ? "ring-2 ring-primary shadow-lg" : ""
       } ${statusStyles[agent.status || 'idle']}`}
@@ -160,7 +173,7 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
     >
       <div 
         id={`port-input-${agent.id}-${layoutId}`}
-        className={`absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
+        className={`absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 lg:w-3 lg:h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
           isConnecting ? "ring-2 ring-primary animate-pulse" : ""
         }`}
         onClick={(e) => {
@@ -170,7 +183,7 @@ export const AgentNode = ({ agent, isSelected, isConnecting, agentNumber, stageI
       />
       <div 
         id={`port-output-${agent.id}-${layoutId}`}
-        className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
+        className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 lg:w-3 lg:h-3 rounded-full bg-primary border-2 border-card cursor-pointer hover:scale-125 transition-transform z-20 ${
           isConnecting ? "ring-2 ring-primary animate-pulse" : ""
         }`}
         onClick={(e) => {

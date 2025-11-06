@@ -172,11 +172,11 @@ export const Stage = ({
         <Button 
           variant="outline" 
           size="sm" 
-          className="gap-2"
+          className="gap-2 min-h-[44px] lg:min-h-0"
           onClick={() => setIsAddAgentOpen(true)}
         >
           <Bot className="h-4 w-4" />
-          <span className="lg:hidden">Add Agent</span>
+          <span className="hidden lg:inline">Agent</span>
         </Button>
 
         <AgentSelectorDialog
@@ -188,11 +188,11 @@ export const Stage = ({
         <Button 
           variant="outline" 
           size="sm" 
-          className="gap-2"
+          className="gap-2 min-h-[44px] lg:min-h-0"
           onClick={() => setIsAddFunctionOpen(true)}
         >
           <Zap className="h-4 w-4" />
-          <span className="lg:hidden">Add Function</span>
+          <span className="hidden lg:inline">Fn</span>
         </Button>
 
         <FunctionSelector
@@ -206,19 +206,19 @@ export const Stage = ({
         </Button>
       </div>
 
-      <div className="min-h-[100px]">
+      <div className="min-h-[100px] lg:min-h-[120px]">
         {stage.nodes.length === 0 ? (
-          <div className="flex items-center justify-center h-24 border-2 border-dashed border-border/50 rounded-lg">
+          <div className="flex items-center justify-center h-32 lg:h-24 border-2 border-dashed border-border/50 rounded-lg">
             <p className="text-sm text-muted-foreground hidden lg:block">Drop an agent or function here</p>
             <p className="text-sm text-muted-foreground lg:hidden">No nodes yet</p>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3 items-start">
+          <div className="flex flex-wrap gap-3 lg:gap-4 items-start">
             {stage.nodes.map((node, index) => (
               <div 
                 key={node.id} 
                 id={`agent-${node.id}`}
-                className={node.minimized ? "w-16 flex-shrink-0" : "w-full md:w-[calc(50%-0.375rem)] flex-shrink-0"}
+                className={node.minimized ? "w-20 lg:w-16 flex-shrink-0" : "w-full md:w-[calc(50%-0.5rem)] flex-shrink-0"}
               >
                 {node.nodeType === "agent" ? (
                   <AgentNode
