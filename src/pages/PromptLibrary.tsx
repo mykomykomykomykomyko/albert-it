@@ -134,7 +134,8 @@ export default function PromptLibrary() {
   };
 
   const handleExecute = async (promptId: string) => {
-    const result = await executePrompt(promptId);
+    const promptData = selectedPromptData;
+    const result = await executePrompt(promptId, undefined, promptData);
     if (result) {
       // Create a new conversation
       const { data: { session } } = await supabase.auth.getSession();
@@ -262,19 +263,20 @@ export default function PromptLibrary() {
               <p className="text-muted-foreground">Store, test, and share reusable prompts</p>
             </div>
             
-            <Dialog open={isCreateOpen} onOpenChange={(open) => {
-              setIsCreateOpen(open);
-              if (!open) {
-                setEditingPrompt(null);
-                resetForm();
-              }
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Prompt
-                </Button>
-              </DialogTrigger>
+            {activeTab === 'personal' && (
+              <Dialog open={isCreateOpen} onOpenChange={(open) => {
+                setIsCreateOpen(open);
+                if (!open) {
+                  setEditingPrompt(null);
+                  resetForm();
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Prompt
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
                   <DialogTitle>{editingPrompt ? 'Edit Prompt' : 'Create New Prompt'}</DialogTitle>
@@ -355,6 +357,7 @@ export default function PromptLibrary() {
                 </div>
               </DialogContent>
             </Dialog>
+            )}
           </div>
 
           {selectedPromptData ? (

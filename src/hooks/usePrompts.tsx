@@ -248,10 +248,10 @@ export const usePrompts = () => {
     }
   };
 
-  const executePrompt = async (promptId: string, inputVariables?: Record<string, any>): Promise<string | null> => {
+  const executePrompt = async (promptId: string, inputVariables?: Record<string, any>, promptData?: Prompt): Promise<string | null> => {
     try {
       const startTime = Date.now();
-      const prompt = prompts.find(p => p.id === promptId);
+      const prompt = promptData || prompts.find(p => p.id === promptId);
       if (!prompt) throw new Error('Prompt not found');
 
       // Here you would integrate with your LLM API
