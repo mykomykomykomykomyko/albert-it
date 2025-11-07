@@ -41,6 +41,23 @@ export default function ImageAnalysis() {
     checkAuth();
     // Clean up any stale image data from previous sessions
     localStorage.removeItem('imageAnalysis_images');
+    
+    // Clean up orphaned results (results for images that don't exist)
+    const savedResults = localStorage.getItem('imageAnalysis_results');
+    if (savedResults) {
+      try {
+        const parsedResults = JSON.parse(savedResults);
+        const cleanedResults = parsedResults.filter((r: AnalysisResult) => 
+          images.some(img => img.id === r.imageId)
+        );
+        if (cleanedResults.length !== parsedResults.length) {
+          console.log(`Cleaned up ${parsedResults.length - cleanedResults.length} orphaned results on mount`);
+          setResults(cleanedResults);
+        }
+      } catch (error) {
+        console.error('Error cleaning up results:', error);
+      }
+    }
   }, []);
 
   // Persist prompts to localStorage
@@ -92,7 +109,13 @@ export default function ImageAnalysis() {
 
   const handleImageRemove = (imageId: string) => {
     setImages(prev => prev.filter(img => img.id !== imageId));
-    setResults(prev => prev.filter(r => r.imageId !== imageId));
+    // Remove all results associated with this image
+    setResults(prev => {
+      const removedCount = prev.filter(r => r.imageId === imageId).length;
+      const filtered = prev.filter(r => r.imageId !== imageId);
+      console.log(`Removed ${removedCount} results associated with deleted image`);
+      return filtered;
+    });
   };
 
   const handleSelectAll = () => {
@@ -414,6 +437,7 @@ export default function ImageAnalysis() {
 
   const handleClearAll = () => {
     if (confirm('Are you sure you want to clear all images, prompts, and results? This cannot be undone.')) {
+      console.log('Clearing all data...');
       setImages([]);
       setPrompts([]);
       setSelectedPromptIds([]);
@@ -423,6 +447,7 @@ export default function ImageAnalysis() {
       localStorage.removeItem('imageAnalysis_prompts');
       localStorage.removeItem('imageAnalysis_selectedPromptIds');
       localStorage.removeItem('imageAnalysis_results');
+      console.log('All data cleared successfully');
       toast.success('All data cleared');
     }
   };
@@ -533,7 +558,7 @@ export default function ImageAnalysis() {
           <div className="p-6 border-b border-border flex-shrink-0">
             <h3 className="text-xl font-semibold">Analysis Results</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {results.length} result{results.length !== 1 ? 's' : ''} generated
+              {results.filter(r => images.some(img => img.id === r.imageId)).length} result{results.filter(r => images.some(img => img.id === r.imageId)).length !== 1 ? 's' : ''} generated
             </p>
           </div>
 

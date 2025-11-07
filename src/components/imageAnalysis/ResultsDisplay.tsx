@@ -40,7 +40,12 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   console.log('Images count:', images.length);
   console.log('Prompts count:', prompts.length);
   
-  if (results.length === 0) {
+  // Filter out results for images that no longer exist
+  const validResults = results.filter(r => images.some(img => img.id === r.imageId));
+  console.log('Valid results count:', validResults.length);
+  console.log('Filtered out:', results.length - validResults.length, 'orphaned results');
+  
+  if (validResults.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center text-muted-foreground py-8">
@@ -57,7 +62,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       <ScrollArea className="flex-1">
         <div className="space-y-3">
           {images.map((image) => {
-            const imageResults = results.filter(r => r.imageId === image.id);
+            const imageResults = validResults.filter(r => r.imageId === image.id);
             if (imageResults.length === 0) return null;
 
             return (
