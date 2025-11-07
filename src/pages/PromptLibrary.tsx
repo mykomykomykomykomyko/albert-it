@@ -10,18 +10,36 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Trash2, Edit, Play, Copy, Search, FileText } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Trash2, Edit, Play, Copy, Search, FileText, Share2, Upload, Store } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 export default function PromptLibrary() {
   const navigate = useNavigate();
-  const { prompts, loading, createPrompt, updatePrompt, deletePrompt, executePrompt } = usePrompts();
+  const { 
+    prompts, 
+    loading, 
+    isAdmin,
+    createPrompt, 
+    updatePrompt, 
+    deletePrompt, 
+    executePrompt,
+    sharePrompt,
+    publishToMarketplace,
+    unpublishFromMarketplace,
+    loadMarketplacePrompts
+  } = usePrompts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'personal' | 'marketplace'>('personal');
+  const [marketplacePrompts, setMarketplacePrompts] = useState<Prompt[]>([]);
+  const [shareEmail, setShareEmail] = useState('');
+  const [sharePermission, setSharePermission] = useState<'view' | 'edit'>('view');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -30,6 +48,7 @@ export default function PromptLibrary() {
     tags: '',
     is_public: false,
     is_template: false,
+    is_marketplace: false,
   });
 
   const handleSubmit = async () => {
@@ -58,6 +77,12 @@ export default function PromptLibrary() {
     }
   };
 
+  useEffect(() => {
+    if (activeTab === 'marketplace') {
+      loadMarketplacePrompts().then(setMarketplacePrompts);
+    }
+  }, [activeTab]);
+
   const resetForm = () => {
     setFormData({
       name: '',
@@ -67,6 +92,7 @@ export default function PromptLibrary() {
       tags: '',
       is_public: false,
       is_template: false,
+      is_marketplace: false,
     });
   };
 
@@ -80,8 +106,30 @@ export default function PromptLibrary() {
       tags: prompt.tags?.join(', ') || '',
       is_public: prompt.is_public,
       is_template: prompt.is_template,
+      is_marketplace: prompt.is_marketplace,
     });
     setIsCreateOpen(true);
+  };
+
+  const handleShare = async () => {
+    if (!selectedPrompt || !shareEmail) {
+      toast.error('Please enter an email address');
+      return;
+    }
+    const success = await sharePrompt(selectedPrompt, shareEmail, sharePermission);
+    if (success) {
+      setIsShareOpen(false);
+      setShareEmail('');
+      setSharePermission('view');
+    }
+  };
+
+  const handlePublishToggle = async (promptId: string, isCurrentlyMarketplace: boolean) => {
+    if (isCurrentlyMarketplace) {
+      await unpublishFromMarketplace(promptId);
+    } else {
+      await publishToMarketplace(promptId);
+    }
   };
 
   const handleExecute = async (promptId: string) => {
@@ -118,9 +166,11 @@ export default function PromptLibrary() {
     toast.success('Copied to clipboard');
   };
 
-  const selectedPromptData = prompts.find(p => p.id === selectedPrompt);
+  const currentPrompts = activeTab === 'personal' ? prompts : marketplacePrompts;
+  const selectedPromptData = currentPrompts.find(p => p.id === selectedPrompt);
   
-  const filteredPrompts = prompts.filter(p =>
+  const personalPrompts = prompts.filter(p => !p.is_marketplace);
+  const filteredPrompts = (activeTab === 'personal' ? personalPrompts : marketplacePrompts).filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.category?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -134,6 +184,15 @@ export default function PromptLibrary() {
         <div className="hidden md:flex w-64 lg:w-80 border-r border-border flex-col bg-card">
           <div className="p-4 flex-shrink-0 border-b border-border">
             <h2 className="text-base font-semibold mb-3">Prompts</h2>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'personal' | 'marketplace')} className="mb-3">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="personal">Personal</TabsTrigger>
+                <TabsTrigger value="marketplace">
+                  <Store className="h-3 w-3 mr-1" />
+                  Marketplace
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -303,20 +362,42 @@ export default function PromptLibrary() {
                 <div className="flex items-start justify-between mb-2">
                   <CardTitle>{selectedPromptData.name}</CardTitle>
                   <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(selectedPromptData)}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deletePrompt(selectedPromptData.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {activeTab === 'personal' && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsShareOpen(true)}
+                          title="Share with another user"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handlePublishToggle(selectedPromptData.id, selectedPromptData.is_marketplace)}
+                            title={selectedPromptData.is_marketplace ? "Unpublish from marketplace" : "Publish to marketplace"}
+                          >
+                            <Upload className="w-4 h-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(selectedPromptData)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deletePrompt(selectedPromptData.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
                 {selectedPromptData.description && (
@@ -341,6 +422,12 @@ export default function PromptLibrary() {
                     )}
                     {selectedPromptData.is_template && (
                       <Badge variant="outline">Template</Badge>
+                    )}
+                    {selectedPromptData.is_marketplace && (
+                      <Badge variant="default">
+                        <Store className="h-3 w-3 mr-1" />
+                        Marketplace
+                      </Badge>
                     )}
                     {selectedPromptData.tags?.map((tag: string) => (
                       <Badge key={tag} variant="outline">{tag}</Badge>
@@ -388,6 +475,52 @@ export default function PromptLibrary() {
           )}
         </div>
       </div>
+
+      {/* Share Dialog */}
+      <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Share Prompt</DialogTitle>
+            <DialogDescription>
+              Share this prompt with another user by entering their email address
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="shareEmail">User Email</Label>
+              <Input
+                id="shareEmail"
+                type="email"
+                value={shareEmail}
+                onChange={(e) => setShareEmail(e.target.value)}
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <Label>Permission</Label>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant={sharePermission === 'view' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSharePermission('view')}
+                >
+                  View Only
+                </Button>
+                <Button
+                  variant={sharePermission === 'edit' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSharePermission('edit')}
+                >
+                  Can Edit
+                </Button>
+              </div>
+            </div>
+            <Button onClick={handleShare} className="w-full">
+              Share Prompt
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </>
   );

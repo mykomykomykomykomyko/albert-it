@@ -571,12 +571,48 @@ export type Database = {
           },
         ]
       }
+      prompt_shares: {
+        Row: {
+          created_at: string
+          id: string
+          permission: string | null
+          prompt_id: string
+          shared_by_user_id: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission?: string | null
+          prompt_id: string
+          shared_by_user_id: string
+          shared_with_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: string | null
+          prompt_id?: string
+          shared_by_user_id?: string
+          shared_with_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_shares_prompt_id_fkey"
+            columns: ["prompt_id"]
+            isOneToOne: false
+            referencedRelation: "prompts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prompts: {
         Row: {
           category: string | null
           created_at: string | null
           description: string | null
           id: string
+          is_marketplace: boolean | null
           is_public: boolean | null
           is_template: boolean | null
           name: string
@@ -591,6 +627,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_marketplace?: boolean | null
           is_public?: boolean | null
           is_template?: boolean | null
           name: string
@@ -605,6 +642,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_marketplace?: boolean | null
           is_public?: boolean | null
           is_template?: boolean | null
           name?: string

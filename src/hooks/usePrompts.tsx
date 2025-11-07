@@ -12,9 +12,19 @@ export interface Prompt {
   tags?: string[];
   is_public: boolean;
   is_template: boolean;
+  is_marketplace: boolean;
   usage_count: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface PromptShare {
+  id: string;
+  prompt_id: string;
+  shared_with_user_id: string;
+  shared_by_user_id: string;
+  permission: 'view' | 'edit';
+  created_at: string;
 }
 
 export interface PromptExecution {
@@ -30,6 +40,25 @@ export interface PromptExecution {
 export const usePrompts = () => {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  const checkAdminStatus = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+
+      setIsAdmin(!!data && !error);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
+    }
+  };
 
   const loadPrompts = async () => {
     try {
@@ -45,6 +74,23 @@ export const usePrompts = () => {
       toast.error('Failed to load prompts');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMarketplacePrompts = async (): Promise<Prompt[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('is_marketplace', true)
+        .order('usage_count', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading marketplace prompts:', error);
+      toast.error('Failed to load marketplace prompts');
+      return [];
     }
   };
 
@@ -114,6 +160,94 @@ export const usePrompts = () => {
     }
   };
 
+  const sharePrompt = async (promptId: string, userEmail: string, permission: 'view' | 'edit' = 'view'): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      // Get the user ID from email
+      const { data: targetUser, error: userError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', userEmail)
+        .single();
+
+      if (userError || !targetUser) {
+        toast.error('User not found');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('prompt_shares')
+        .insert({
+          prompt_id: promptId,
+          shared_with_user_id: targetUser.id,
+          shared_by_user_id: user.id,
+          permission
+        });
+
+      if (error) throw error;
+      toast.success('Prompt shared successfully');
+      return true;
+    } catch (error) {
+      console.error('Error sharing prompt:', error);
+      toast.error('Failed to share prompt');
+      return false;
+    }
+  };
+
+  const publishToMarketplace = async (promptId: string): Promise<boolean> => {
+    try {
+      if (!isAdmin) {
+        toast.error('Only admins can publish to marketplace');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('prompts')
+        .update({ is_marketplace: true })
+        .eq('id', promptId);
+
+      if (error) throw error;
+
+      setPrompts(prev => prev.map(prompt =>
+        prompt.id === promptId ? { ...prompt, is_marketplace: true } : prompt
+      ));
+      toast.success('Published to marketplace successfully');
+      return true;
+    } catch (error) {
+      console.error('Error publishing to marketplace:', error);
+      toast.error('Failed to publish to marketplace');
+      return false;
+    }
+  };
+
+  const unpublishFromMarketplace = async (promptId: string): Promise<boolean> => {
+    try {
+      if (!isAdmin) {
+        toast.error('Only admins can unpublish from marketplace');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('prompts')
+        .update({ is_marketplace: false })
+        .eq('id', promptId);
+
+      if (error) throw error;
+
+      setPrompts(prev => prev.map(prompt =>
+        prompt.id === promptId ? { ...prompt, is_marketplace: false } : prompt
+      ));
+      toast.success('Unpublished from marketplace successfully');
+      return true;
+    } catch (error) {
+      console.error('Error unpublishing from marketplace:', error);
+      toast.error('Failed to unpublish from marketplace');
+      return false;
+    }
+  };
+
   const executePrompt = async (promptId: string, inputVariables?: Record<string, any>): Promise<string | null> => {
     try {
       const startTime = Date.now();
@@ -157,16 +291,22 @@ export const usePrompts = () => {
   };
 
   useEffect(() => {
+    checkAdminStatus();
     loadPrompts();
   }, []);
 
   return {
     prompts,
     loading,
+    isAdmin,
     createPrompt,
     updatePrompt,
     deletePrompt,
     executePrompt,
+    sharePrompt,
+    publishToMarketplace,
+    unpublishFromMarketplace,
+    loadMarketplacePrompts,
     refreshPrompts: loadPrompts,
   };
 };
