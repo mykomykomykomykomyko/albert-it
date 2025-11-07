@@ -1099,6 +1099,41 @@ const Chat = () => {
                 </div>
               )}
               
+              {/* File previews on welcome screen */}
+              {(images.length > 0 || files.length > 0) && (
+                <div className="mb-6">
+                  <p className="text-sm font-medium mb-3 text-foreground">Attached Files ({images.length + files.length})</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {images.map((img, idx) => (
+                      <FilePreviewCard
+                        key={`welcome-img-${idx}`}
+                        file={{
+                          name: img.name,
+                          dataUrl: img.dataUrl,
+                          size: img.size,
+                          type: 'image'
+                        }}
+                        onRemove={() => setImages(prev => prev.filter((_, i) => i !== idx))}
+                        type="image"
+                      />
+                    ))}
+                    {files.map((file, idx) => (
+                      <FilePreviewCard
+                        key={`welcome-file-${idx}`}
+                        file={{
+                          name: file.filename,
+                          size: new Blob([file.content]).size,
+                          type: file.type || 'text',
+                          content: file.content
+                        }}
+                        onRemove={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                        type="file"
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               {/* Modern input card */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300" />
