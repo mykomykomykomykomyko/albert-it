@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from 'react-i18next';
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import { ChatHeader } from "@/components/ChatHeader";
 import { Conversation, Message } from "@/types/chat";
@@ -50,6 +51,7 @@ interface FileAttachment {
 }
 
 const Chat = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams();
@@ -1151,11 +1153,11 @@ const Chat = () => {
                             }
                           }
                         }}
-                        placeholder="Ask me anything..."
+                         placeholder={t('chat:placeholderEmpty')}
                         className="min-h-[120px] max-h-[240px] resize-none w-full bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200 rounded-2xl text-base placeholder:text-muted-foreground/60"
                       />
                       <div className="absolute bottom-3 right-3 text-xs text-muted-foreground/50">
-                        Press Enter to send
+                        {t('chat:pressEnterToSend')}
                       </div>
                     </div>
                     
@@ -1192,7 +1194,7 @@ const Chat = () => {
                         className="bg-gradient-to-r from-primary to-accent hover:shadow-lg hover:shadow-primary/25 transition-all duration-200 rounded-xl px-8"
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        Start Chatting
+                        {t('chat:startChatting')}
                       </Button>
                     </div>
                   </div>
