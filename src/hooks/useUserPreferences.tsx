@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -11,30 +11,24 @@ export interface UserPreferences {
   default_retention_days: number | null;
 }
 
+const defaultPreferences: UserPreferences = {
+  text_size: 'medium',
+  font_family: 'default',
+  line_spacing: 'normal',
+  contrast_theme: 'default',
+  enhance_inputs: false,
+  default_retention_days: null,
+};
+
 export const useUserPreferences = () => {
   const { user } = useAuth();
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    text_size: 'medium',
-    font_family: 'default',
-    line_spacing: 'normal',
-    contrast_theme: 'default',
-    enhance_inputs: false,
-    default_retention_days: null,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (user) {
-      loadPreferences();
-    } else {
-      setIsLoading(false);
-    }
-  }, [user]);
+  const { data: preferences = defaultPreferences, isLoading } = useQuery({
+    queryKey: ['user_preferences', user?.id],
+    queryFn: async () => {
+      if (!user) return defaultPreferences;
 
-  const loadPreferences = async () => {
-    if (!user) return;
-
-    try {
       const { data, error } = await supabase
         .from('user_preferences')
         .select('*')
@@ -44,29 +38,29 @@ export const useUserPreferences = () => {
       if (error) throw error;
 
       if (data) {
-        setPreferences({
+        return {
           text_size: data.text_size as UserPreferences['text_size'],
           font_family: data.font_family as UserPreferences['font_family'],
           line_spacing: data.line_spacing as UserPreferences['line_spacing'],
           contrast_theme: data.contrast_theme as UserPreferences['contrast_theme'],
           enhance_inputs: data.enhance_inputs,
           default_retention_days: data.default_retention_days,
-        });
+        };
       }
-    } catch (error) {
-      console.error('Error loading preferences:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
-    if (!user) return;
+      return defaultPreferences;
+    },
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  });
 
-    const updatedPreferences = { ...preferences, ...newPreferences };
-    setPreferences(updatedPreferences);
+  const updateMutation = useMutation({
+    mutationFn: async (newPreferences: Partial<UserPreferences>) => {
+      if (!user) throw new Error('No user');
 
-    try {
+      const updatedPreferences = { ...preferences, ...newPreferences };
+
       const { error } = await supabase
         .from('user_preferences')
         .upsert({
@@ -78,21 +72,19 @@ export const useUserPreferences = () => {
         });
 
       if (error) throw error;
-    } catch (error) {
-      console.error('Error updating preferences:', error);
-    }
+      return updatedPreferences;
+    },
+    onSuccess: (updatedPreferences) => {
+      queryClient.setQueryData(['user_preferences', user?.id], updatedPreferences);
+    },
+  });
+
+  const updatePreferences = async (newPreferences: Partial<UserPreferences>) => {
+    await updateMutation.mutateAsync(newPreferences);
   };
 
   const resetPreferences = async () => {
-    const defaultPrefs: UserPreferences = {
-      text_size: 'medium',
-      font_family: 'default',
-      line_spacing: 'normal',
-      contrast_theme: 'default',
-      enhance_inputs: false,
-      default_retention_days: null,
-    };
-    await updatePreferences(defaultPrefs);
+    await updatePreferences(defaultPreferences);
   };
 
   return {
