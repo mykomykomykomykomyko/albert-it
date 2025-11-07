@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { Brain, Eye, EyeOff, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { LanguageToggle } from "@/components/LanguageToggle";
+// import { LanguageToggle } from "@/components/LanguageToggle";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -181,9 +181,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
-      <div className="absolute top-4 right-4">
+      {/* <div className="absolute top-4 right-4">
         <LanguageToggle />
-      </div>
+      </div> */}
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4 glow-effect">
