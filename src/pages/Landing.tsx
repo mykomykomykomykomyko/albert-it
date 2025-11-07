@@ -53,12 +53,12 @@ const Landing = () => {
 
       <main className="pt-16 sm:pt-20">
         <section className="container mx-auto px-4 py-12 sm:py-20 text-center">
-          <div className="animate-fade-in max-w-4xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20 mb-6 sm:mb-8">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
               <span className="text-xs sm:text-sm text-primary">Always Open Source (MIT License)</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 animate-slide-up">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6">
               Your AI Assistant from the{" "}
               <span className="text-gradient">Government of Alberta</span>
             </h1>
