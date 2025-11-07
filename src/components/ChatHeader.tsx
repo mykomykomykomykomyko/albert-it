@@ -173,6 +173,16 @@ export function ChatHeader() {
               Stage
             </button>
             <button
+              onClick={() => navigate('/canvas')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                currentTab === 'canvas'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-foreground hover:bg-accent'
+              }`}
+            >
+              Canvas
+            </button>
+            <button
               onClick={() => navigate('/image')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'image'
@@ -191,16 +201,6 @@ export function ChatHeader() {
               }`}
             >
               Voice
-            </button>
-            <button
-              onClick={() => navigate('/canvas')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                currentTab === 'canvas'
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              Canvas
             </button>
             <button
               onClick={() => navigate('/transcripts')}
