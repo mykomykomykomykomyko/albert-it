@@ -16,11 +16,13 @@ import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useTranslation } from "react-i18next";
 
 const agentTypes = ['Text', 'Voice', 'Image', 'Audio', 'Multimodal'] as const;
 
 const Agents = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('agents');
   const { agents, loading, createAgent, updateAgent, deleteAgent, refreshAgents, shareAgent, submitForReview } = useAgents();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -412,20 +414,20 @@ const Agents = () => {
                 <DialogTrigger asChild>
                   <Button className="w-full">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Agent
+                    {t('createAgent')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="w-[90vw] h-[90vh] max-w-[90vw] max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
-                    <DialogTitle>{editingAgent ? 'Edit Agent' : 'Create New Agent'}</DialogTitle>
+                    <DialogTitle>{editingAgent ? t('form.update') : t('createAgent')}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-medium">Name *</label>
+                      <label className="text-sm font-medium">{t('form.name')} *</label>
                       <Input
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Agent name"
+                        placeholder={t('form.name')}
                       />
                     </div>
                     
@@ -444,17 +446,17 @@ const Agents = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium">Description</label>
+                      <label className="text-sm font-medium">{t('form.description')}</label>
                       <Textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        placeholder="What does this agent do?"
+                        placeholder={t('form.description')}
                         rows={2}
                       />
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium">Tags (comma-separated)</label>
+                      <label className="text-sm font-medium">{t('form.tags')}</label>
                       <Input
                         value={formData.metadata_tags_input}
                         onChange={(e) => setFormData({ ...formData, metadata_tags_input: e.target.value })}
@@ -463,7 +465,7 @@ const Agents = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-medium">Profile Picture</label>
+                      <label className="text-sm font-medium">{t('form.profilePicture')}</label>
                       <div className="space-y-3">
                         {formData.profile_picture_url && (
                           <div className="flex items-center gap-3">
@@ -545,7 +547,7 @@ const Agents = () => {
 
                     <div className="flex gap-2 pt-4">
                       <Button onClick={handleSubmit} className="flex-1">
-                        {editingAgent ? 'Update Agent' : 'Create Agent'}
+                        {editingAgent ? t('form.update') : t('form.save')}
                       </Button>
                       <Button
                         variant="outline"
@@ -555,7 +557,7 @@ const Agents = () => {
                           resetForm();
                         }}
                       >
-                        Cancel
+                        {t('form.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -617,8 +619,8 @@ const Agents = () => {
           ) : filteredAgents.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground">No agents found</p>
-                <p className="text-sm text-muted-foreground mt-1">Create your first agent to get started</p>
+                <p className="text-muted-foreground">{t('noAgents')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('noAgentsDesc')}</p>
               </CardContent>
             </Card>
           ) : viewMode === "cards" ? (
@@ -654,7 +656,7 @@ const Agents = () => {
                         className="flex-1"
                       >
                         <Edit className="h-3 w-3 mr-1" />
-                        Edit
+                        {t('actions.edit')}
                       </Button>
                       <Button
                         size="sm"

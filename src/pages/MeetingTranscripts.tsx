@@ -13,6 +13,7 @@ import { Upload, FileText, Search, Calendar, Users, Sparkles, ChevronRight, Tag,
 import { parseVTT, parseTextTranscript } from "@/utils/parseVTT";
 import * as mammoth from "mammoth";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTranslation } from "react-i18next";
 
 interface MeetingTranscript {
   id: string;
@@ -37,6 +38,7 @@ export default function MeetingTranscripts() {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('transcripts');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -263,11 +265,11 @@ export default function MeetingTranscripts() {
         {/* Left side - Transcripts List */}
         <div className="w-80 border-r border-border flex flex-col bg-card">
           <div className="p-4 flex-shrink-0 border-b border-border">
-            <h2 className="text-base font-semibold mb-3">Transcripts</h2>
+            <h2 className="text-base font-semibold mb-3">{t('title')}</h2>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-9 text-sm"
@@ -280,8 +282,8 @@ export default function MeetingTranscripts() {
               {filteredTranscripts.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-medium">No transcripts</p>
-                  <p className="text-xs mt-1">Upload to get started</p>
+                  <p className="text-sm font-medium">{t('noTranscripts')}</p>
+                  <p className="text-xs mt-1">{t('noTranscriptsDesc')}</p>
                 </div>
               ) : (
                 filteredTranscripts.map((transcript) => (

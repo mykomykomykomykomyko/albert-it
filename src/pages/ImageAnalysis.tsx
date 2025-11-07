@@ -15,9 +15,11 @@ import { ResultsViewer } from '@/components/imageAnalysis/ResultsViewer';
 import { PromptManager } from '@/components/imageAnalysis/PromptManager';
 import { ProcessedImage, AnalysisResult, AnalysisPrompt, PREDEFINED_PROMPTS } from '@/types/imageAnalysis';
 import { generateId, resizeAndCompressImage } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
+  const { t } = useTranslation('image');
   // Don't persist images - blob URLs and File objects become invalid after page reload
   const [images, setImages] = useState<ProcessedImage[]>([]);
   const [prompts, setPrompts] = useState<AnalysisPrompt[]>(() => {
@@ -462,21 +464,21 @@ export default function ImageAnalysis() {
           <ScrollArea className="flex-1">
             <div className="p-6 space-y-6">
             <div>
-              <h2 className="text-lg font-semibold">Image Analysis</h2>
+              <h2 className="text-lg font-semibold">{t('title')}</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Upload images and run AI analysis
+                {t('subtitle')}
               </p>
             </div>
 
             {/* File Uploader */}
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Upload Images</h3>
+              <h3 className="text-sm font-medium">{t('uploadImage')}</h3>
               <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
             </div>
 
             {/* Prompt Manager */}
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Analysis Prompts</h3>
+              <h3 className="text-sm font-medium">{t('prompt.examples')}</h3>
               <PromptManager
                 prompts={prompts}
                 selectedPromptIds={selectedPromptIds}
@@ -489,7 +491,7 @@ export default function ImageAnalysis() {
 
             {/* Analysis Button */}
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Run Analysis</h3>
+              <h3 className="text-sm font-medium">{t('analyze')}</h3>
               <Button
                 onClick={startAnalysis}
                 disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
@@ -499,12 +501,12 @@ export default function ImageAnalysis() {
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Analyzing...
+                    {t('analyzing')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Analyze {selectedImageCount} × {selectedPromptIds.length}
+                    {t('analyze')} {selectedImageCount} × {selectedPromptIds.length}
                   </>
                 )}
               </Button>
