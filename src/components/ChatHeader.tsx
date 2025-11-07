@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers, User, ChevronDown, Share2, MessageSquare } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers, User, ChevronDown, Share2, MessageSquare, FolderOpen } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -243,6 +243,15 @@ export function ChatHeader() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={() => navigate('/files')}
+            title="File Manager"
+            className="hover:bg-accent text-foreground"
+          >
+            <FolderOpen className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={openDocs}
             title="Documentation & Training"
             className="hover:bg-accent text-foreground"
@@ -375,6 +384,14 @@ export function ChatHeader() {
               >
                 <Layers className="h-4 w-4 mr-2" />
                 Framework Library
+              </Button>
+              <Button
+                variant="ghost"
+                className="justify-start"
+                onClick={() => handleNavClick('/files')}
+              >
+                <FolderOpen className="h-4 w-4 mr-2" />
+                File Manager
               </Button>
               <Button
                 variant="ghost"

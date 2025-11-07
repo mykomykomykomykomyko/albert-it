@@ -28,6 +28,7 @@ import Framework from "@/pages/Framework";
 import WorkflowMarketplace from "@/pages/WorkflowMarketplace";
 import SavedWork from "@/pages/SavedWork";
 import Docs from "@/pages/Docs";
+import FileManager from "@/pages/FileManager";
 
 export const PersistentPages = () => {
   const location = useLocation();
@@ -43,7 +44,7 @@ export const PersistentPages = () => {
   useEffect(() => {
     const routes = ['/chat', '/canvas', '/stage', '/image', '/voice', '/transcripts', 
                     '/agents', '/marketplace', '/prompts', '/framework', 
-                    '/workflow-marketplace', '/saved-work', '/docs'];
+                    '/workflow-marketplace', '/saved-work', '/files', '/docs'];
     
     const currentRoute = routes.find(route => path.startsWith(route));
     if (currentRoute && !visitedPages.has(currentRoute)) {
@@ -248,6 +249,21 @@ export const PersistentPages = () => {
           }}
         >
           <Docs />
+        </div>
+      )}
+
+      {/* File Manager - /files */}
+      {shouldRender('/files') && (
+        <div 
+          style={{ 
+            display: isActive('/files') ? 'flex' : 'none',
+            flexDirection: 'column',
+            height: '100vh',
+            width: '100%',
+            overflow: 'hidden'
+          }}
+        >
+          <FileManager />
         </div>
       )}
     </>

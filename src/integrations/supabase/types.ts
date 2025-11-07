@@ -228,6 +228,62 @@ export type Database = {
           },
         ]
       }
+      file_attachments: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          data_url: string | null
+          file_size: number
+          file_type: string
+          filename: string
+          id: string
+          metadata: Json | null
+          mime_type: string | null
+          storage_path: string | null
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          data_url?: string | null
+          file_size: number
+          file_type: string
+          filename: string
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          storage_path?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          data_url?: string | null
+          file_size?: number
+          file_type?: string
+          filename?: string
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          storage_path?: string | null
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_attachments_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       frameworks: {
         Row: {
           category: string | null

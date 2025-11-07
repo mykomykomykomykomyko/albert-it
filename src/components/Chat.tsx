@@ -30,6 +30,7 @@ import { ShareConversationDialog } from './chat/ShareConversationDialog';
 import { useConversationPresence } from '@/hooks/useConversationPresence';
 import { useAuth } from '@/hooks/useAuth';
 import { useRef } from 'react';
+import { FilePreviewCard } from './chat/FilePreviewCard';
 
 interface ImageAttachment {
   name: string;
@@ -107,6 +108,38 @@ const Chat = () => {
     
     broadcastThinking(isLoading);
   }, [isLoading, currentConversation, broadcastThinking]);
+
+  // Add clipboard paste listener for images
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const img: ImageAttachment = {
+                name: `pasted-image-${Date.now()}.png`,
+                dataUrl: e.target?.result as string,
+                size: file.size,
+                source: 'clipboard'
+              };
+              setImages(prev => [...prev, img]);
+              toast.success('Image pasted from clipboard');
+            };
+            reader.readAsDataURL(file);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, []);
 
   // Handle prompt text from location state
   useEffect(() => {
@@ -739,6 +772,39 @@ const Chat = () => {
         size: img.size,
         url: img.dataUrl
       }));
+
+      // Save files to database for file manager
+      const { data: { session: userSession } } = await supabase.auth.getSession();
+      if (userSession) {
+        // Save images to file_attachments table
+        for (const img of images) {
+          await supabase.from('file_attachments').insert({
+            user_id: userSession.user.id,
+            conversation_id: currentConversation.id,
+            filename: img.name,
+            file_type: 'image',
+            file_size: img.size,
+            data_url: img.dataUrl,
+            metadata: { source: img.source || 'upload' }
+          });
+        }
+
+        // Save text files to file_attachments table
+        for (const file of files) {
+          await supabase.from('file_attachments').insert({
+            user_id: userSession.user.id,
+            conversation_id: currentConversation.id,
+            filename: file.filename,
+            file_type: file.type || 'text',
+            file_size: new Blob([file.content]).size,
+            metadata: { 
+              pageCount: file.pageCount,
+              totalSheets: file.totalSheets,
+              totalRows: file.totalRows
+            }
+          });
+        }
+      }
 
       // Save user message with attachments
       const { data: savedUserMessage, error: userError } = await supabase
@@ -1407,44 +1473,32 @@ const Chat = () => {
                 )}
                 
                 {(images.length > 0 || files.length > 0) && (
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="mb-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {images.map((img, idx) => (
-                      <div key={idx} className="relative group">
-                        <img src={img.dataUrl} alt={img.name} className="h-20 w-20 object-cover rounded-lg border" />
-                        <button
-                          onClick={() => setImages(prev => prev.filter((_, i) => i !== idx))}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 rounded-b-lg truncate">
-                          {img.name}
-                        </div>
-                      </div>
+                      <FilePreviewCard
+                        key={`img-${idx}`}
+                        file={{
+                          name: img.name,
+                          dataUrl: img.dataUrl,
+                          size: img.size,
+                          type: 'image'
+                        }}
+                        onRemove={() => setImages(prev => prev.filter((_, i) => i !== idx))}
+                        type="image"
+                      />
                     ))}
                     {files.map((file, idx) => (
-                      <div key={idx} className="relative group flex items-center gap-2 bg-secondary text-secondary-foreground px-3 py-2 rounded-lg border">
-                        {file.type === 'excel' ? <FileSpreadsheet className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
-                        <span className="text-sm truncate max-w-[200px]" title={file.filename}>
-                          {file.filename}
-                        </span>
-                        {file.pageCount && (
-                          <span className="text-xs text-muted-foreground">
-                            ({file.pageCount} pages)
-                          </span>
-                        )}
-                        {file.totalRows && (
-                          <span className="text-xs text-muted-foreground">
-                            ({file.totalRows} rows)
-                          </span>
-                        )}
-                        <button
-                          onClick={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
-                          className="ml-2 hover:text-destructive transition-colors"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
+                      <FilePreviewCard
+                        key={`file-${idx}`}
+                        file={{
+                          name: file.filename,
+                          size: new Blob([file.content]).size,
+                          type: file.type || 'text',
+                          content: file.content
+                        }}
+                        onRemove={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                        type="file"
+                      />
                     ))}
                   </div>
                 )}
