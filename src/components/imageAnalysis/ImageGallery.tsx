@@ -28,8 +28,10 @@ export function ImageGallery({
   onImageClick,
   onResizeToggle
 }: ImageGalleryProps) {
-  console.log('ImageGallery render - images count:', images.length);
-  console.log('ImageGallery images:', images);
+  console.log('=== ImageGallery render ===');
+  console.log('Images prop received - count:', images.length);
+  console.log('Images data:', images);
+  console.log('Selected count:', selectedCount);
   
   const formatFileSize = (bytes: number) => {
     return formatBytes ? formatBytes(bytes) : `${Math.round(bytes / 1024)}KB`;

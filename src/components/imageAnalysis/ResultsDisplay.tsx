@@ -35,13 +35,18 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     });
   };
 
+  console.log('=== ResultsDisplay render ===');
+  console.log('Results count:', results.length);
+  console.log('Images count:', images.length);
+  console.log('Prompts count:', prompts.length);
+  
   if (results.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center text-muted-foreground py-8">
           <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No analysis results yet</p>
-          <p className="text-sm">Select images and prompts, then click "Start Analysis"</p>
+          <p className="text-sm">Select images and prompts, then click "Analyze"</p>
         </div>
       </div>
     );

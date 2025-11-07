@@ -66,12 +66,20 @@ export default function ImageAnalysis() {
   };
 
   const handleFilesAdded = (newImages: ProcessedImage[]) => {
-    console.log('handleFilesAdded called with:', newImages.length, 'images');
-    console.log('New images data:', newImages);
+    console.log('=== handleFilesAdded called ===');
+    console.log('New images count:', newImages.length);
+    console.log('New images:', newImages);
+    
     setImages(prev => {
       const updated = [...prev, ...newImages];
-      console.log('Updated images state:', updated.length, 'total images');
-      console.log('Full images array:', updated);
+      console.log('Updated images state - total count:', updated.length);
+      console.log('Updated images array:', updated);
+      
+      // Force a re-render by also logging after state update
+      setTimeout(() => {
+        console.log('After state update - images length should be:', updated.length);
+      }, 100);
+      
       return updated;
     });
   };
