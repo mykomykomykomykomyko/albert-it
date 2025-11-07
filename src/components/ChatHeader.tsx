@@ -1,4 +1,4 @@
-import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers, User, ChevronDown, Share2 } from 'lucide-react';
+import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers, User, ChevronDown, Share2, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -125,6 +125,15 @@ export function ChatHeader() {
             className="hover:bg-accent text-foreground"
           >
             <HelpCircle className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=Bhy1K5uvxUKL9Tw7exCFC-ArfiIhCdZNpgqZfDSOsH1UOTdTNVI2NkVLNFZLUUExUzlFQTBHRU1QOC4u', '_blank')}
+            title="Give Feedback"
+            className="hover:bg-accent text-foreground"
+          >
+            <MessageSquare className="h-5 w-5" />
           </Button>
         </div>
         
