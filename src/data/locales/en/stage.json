@@ -7,6 +7,84 @@
   "runWorkflow": "Run Workflow",
   "stopWorkflow": "Stop Workflow",
   "clearCanvas": "Clear Canvas",
+  "toolbar": {
+    "addStage": "Add Stage",
+    "load": "Load",
+    "save": "Save",
+    "clear": "Clear",
+    "runWorkflow": "Run Workflow"
+  },
+  "sidebar": {
+    "workflowName": "Workflow Name",
+    "initialInput": "Initial Input",
+    "agentTemplates": "Agent Templates",
+    "functions": "Functions",
+    "searchFunctions": "Search functions...",
+    "myWorkflow": "My Workflow",
+    "initialInputPlaceholder": "Enter initial input for the workflow..."
+  },
+  "properties": {
+    "selectNode": "Select a node to view and edit its properties",
+    "nodeName": "Node Name",
+    "nodeType": "Node Type",
+    "configuration": "Configuration",
+    "connections": "Connections",
+    "systemPrompt": "System Prompt",
+    "userPrompt": "User Prompt",
+    "tools": "Available Tools",
+    "addTool": "Add Tool",
+    "removeTool": "Remove",
+    "configure": "Configure",
+    "runNode": "Run Node",
+    "testInput": "Test Input",
+    "testInputPlaceholder": "Enter test input...",
+    "testNode": "Test Node",
+    "output": "Output",
+    "noOutput": "No output yet",
+    "contentConfiguration": "Content Configuration",
+    "uploadFiles": "Upload Files",
+    "processing": "Processing...",
+    "viewEditContent": "View / Edit Content",
+    "clearContent": "Clear Content",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "noContent": "No content...",
+    "uploadSupported": "Upload files or enter content manually. Supports text files, PDFs, DOCX, and Excel files."
+  },
+  "output": {
+    "title": "Output Log",
+    "clear": "Clear",
+    "noOutput": "No output yet. Run your workflow to see execution logs.",
+    "entry": "entry",
+    "entries": "entries",
+    "noLogs": "No logs yet. Run the workflow to see execution logs."
+  },
+  "messages": {
+    "workflowSaved": "Workflow saved successfully",
+    "workflowSavedToDb": "Workflow saved to database",
+    "failedToSave": "Failed to save workflow",
+    "workflowLoaded": "Workflow loaded successfully",
+    "failedToLoad": "Failed to load workflow file",
+    "executionStarted": "Workflow execution started",
+    "executionComplete": "Workflow execution complete",
+    "executionError": "Workflow execution failed",
+    "clearConfirm": "Are you sure you want to clear the entire workflow?",
+    "removedInvalidConnections": "Removed {{count}} invalid connection(s) after stage reordering",
+    "fileExtracted": "File extracted",
+    "extractedFrom": "Extracted text from {{filename}}",
+    "extractionFailed": "Extraction failed",
+    "unsupportedFileType": "Unsupported file type: {{filename}}",
+    "failedToExtract": "Failed to extract text from {{filename}}",
+    "excelParsingFailed": "Excel parsing failed",
+    "excelDataAdded": "Excel data added",
+    "addedRows": "Added {{count}} rows from {{filename}}",
+    "contentCleared": "Content cleared",
+    "contentHasBeenCleared": "Content has been cleared",
+    "contentUpdated": "Content updated",
+    "changesHaveBeenSaved": "Your changes have been saved",
+    "processingFailed": "Processing failed",
+    "failedToProcessFiles": "Failed to process files"
+  },
   "nodes": {
     "agent": "Agent Node",
     "function": "Function Node",
@@ -15,27 +93,24 @@
     "condition": "Condition",
     "loop": "Loop"
   },
-  "sidebar": {
-    "agents": "Agents",
-    "functions": "Functions",
-    "properties": "Properties"
-  },
-  "properties": {
-    "nodeName": "Node Name",
-    "nodeType": "Node Type",
-    "configuration": "Configuration",
-    "connections": "Connections"
-  },
-  "output": {
-    "title": "Output Log",
-    "clear": "Clear",
-    "noOutput": "No output yet. Run your workflow to see results."
-  },
-  "messages": {
-    "workflowSaved": "Workflow saved successfully",
-    "workflowLoaded": "Workflow loaded successfully",
-    "executionStarted": "Workflow execution started",
-    "executionComplete": "Workflow execution complete",
-    "executionError": "Workflow execution failed"
+  "agentTemplates": {
+    "researcher": {
+      "name": "Researcher",
+      "description": "Gather and analyze information",
+      "systemPrompt": "You are a research assistant specializing in gathering and analyzing information from various sources.",
+      "userPrompt": "Research the following topic and provide detailed findings: {input}"
+    },
+    "summarizer": {
+      "name": "Summarizer",
+      "description": "Condense long content",
+      "systemPrompt": "You are a summarization expert who creates concise, accurate summaries of long content.",
+      "userPrompt": "Summarize the following content: {input}"
+    },
+    "analyst": {
+      "name": "Analyst",
+      "description": "Deep data analysis",
+      "systemPrompt": "You are a data analyst who provides insightful analysis and identifies patterns in data.",
+      "userPrompt": "Analyze the following data and provide insights: {input}"
+    }
   }
 }

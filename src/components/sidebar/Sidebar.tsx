@@ -27,6 +27,7 @@ import { extractTextFromFile, formatExtractedContent, ExtractedContent } from "@
 import { parseExcelFile, ExcelData } from "@/utils/parseExcel";
 import { ExcelSelector } from "@/components/ExcelSelector";
 import type { Workflow } from "@/types/workflow";
+import { useTranslation } from "react-i18next";
 
 // Icon mapping for serialization
 const iconMap: Record<string, LucideIcon> = {
@@ -89,6 +90,7 @@ export const Sidebar = ({
   workflowName,
   onWorkflowNameChange,
 }: SidebarProps) => {
+  const { t } = useTranslation('stage');
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   
@@ -117,22 +119,22 @@ export const Sidebar = ({
           {/* Workflow meta (now scrollable) */}
           <div className="space-y-4 border-b border-border pb-4">
             <div>
-              <Label htmlFor="workflow-name" className="text-sm font-medium">Workflow Name</Label>
+              <Label htmlFor="workflow-name" className="text-sm font-medium">{t('sidebar.workflowName')}</Label>
               <Input
                 id="workflow-name"
                 value={workflowName}
                 onChange={(e) => onWorkflowNameChange(e.target.value)}
-                placeholder="My Workflow"
+                placeholder={t('sidebar.myWorkflow')}
                 className="mt-1.5"
               />
             </div>
             <div>
-              <Label htmlFor="user-input" className="text-sm font-medium">Initial Input</Label>
+              <Label htmlFor="user-input" className="text-sm font-medium">{t('sidebar.initialInput')}</Label>
               <Textarea
                 id="user-input"
                 value={userInput}
                 onChange={(e) => onUserInputChange(e.target.value)}
-                placeholder="Enter initial input for the workflow..."
+                placeholder={t('sidebar.initialInputPlaceholder')}
                 className="mt-1.5 min-h-[100px] resize-none"
               />
             </div>
@@ -142,7 +144,7 @@ export const Sidebar = ({
           <div>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <Bot className="h-4 w-4" />
-              Agent Templates
+              {t('sidebar.agentTemplates')}
             </h3>
             <div className="space-y-2">
               {agentTemplates.map((template) => {
@@ -170,10 +172,10 @@ export const Sidebar = ({
           </div>
 
           <div>
-            <h3 className="text-sm font-semibold mb-3">Functions</h3>
+            <h3 className="text-sm font-semibold mb-3">{t('sidebar.functions')}</h3>
             <div className="space-y-3 mb-4">
               <Input
-                placeholder="Search functions..."
+                placeholder={t('sidebar.searchFunctions')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9"

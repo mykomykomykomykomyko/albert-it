@@ -7,6 +7,84 @@
   "runWorkflow": "Exécuter le flux",
   "stopWorkflow": "Arrêter le flux",
   "clearCanvas": "Effacer le canevas",
+  "toolbar": {
+    "addStage": "Ajouter une étape",
+    "load": "Charger",
+    "save": "Enregistrer",
+    "clear": "Effacer",
+    "runWorkflow": "Exécuter le flux"
+  },
+  "sidebar": {
+    "workflowName": "Nom du flux",
+    "initialInput": "Entrée initiale",
+    "agentTemplates": "Modèles d'agent",
+    "functions": "Fonctions",
+    "searchFunctions": "Rechercher des fonctions...",
+    "myWorkflow": "Mon flux",
+    "initialInputPlaceholder": "Entrez l'entrée initiale pour le flux..."
+  },
+  "properties": {
+    "selectNode": "Sélectionnez un nœud pour afficher et modifier ses propriétés",
+    "nodeName": "Nom du nœud",
+    "nodeType": "Type de nœud",
+    "configuration": "Configuration",
+    "connections": "Connexions",
+    "systemPrompt": "Instruction système",
+    "userPrompt": "Instruction utilisateur",
+    "tools": "Outils disponibles",
+    "addTool": "Ajouter un outil",
+    "removeTool": "Retirer",
+    "configure": "Configurer",
+    "runNode": "Exécuter le nœud",
+    "testInput": "Entrée de test",
+    "testInputPlaceholder": "Entrez l'entrée de test...",
+    "testNode": "Tester le nœud",
+    "output": "Sortie",
+    "noOutput": "Aucune sortie pour le moment",
+    "contentConfiguration": "Configuration du contenu",
+    "uploadFiles": "Téléverser des fichiers",
+    "processing": "Traitement en cours...",
+    "viewEditContent": "Voir / Modifier le contenu",
+    "clearContent": "Effacer le contenu",
+    "saveChanges": "Enregistrer les modifications",
+    "cancel": "Annuler",
+    "noContent": "Aucun contenu...",
+    "uploadSupported": "Téléversez des fichiers ou entrez le contenu manuellement. Prend en charge les fichiers texte, PDF, DOCX et Excel."
+  },
+  "output": {
+    "title": "Journal de sortie",
+    "clear": "Effacer",
+    "noOutput": "Aucune sortie pour le moment. Exécutez votre flux pour voir les résultats.",
+    "entry": "entrée",
+    "entries": "entrées",
+    "noLogs": "Aucun journal pour le moment. Exécutez le flux pour voir les journaux d'exécution."
+  },
+  "messages": {
+    "workflowSaved": "Flux enregistré avec succès",
+    "workflowSavedToDb": "Flux enregistré dans la base de données",
+    "failedToSave": "Échec de l'enregistrement du flux",
+    "workflowLoaded": "Flux chargé avec succès",
+    "failedToLoad": "Échec du chargement du fichier de flux",
+    "executionStarted": "Exécution du flux démarrée",
+    "executionComplete": "Exécution du flux terminée",
+    "executionError": "Échec de l'exécution du flux",
+    "clearConfirm": "Êtes-vous sûr de vouloir effacer tout le flux ?",
+    "removedInvalidConnections": "{{count}} connexion(s) invalide(s) supprimée(s) après réorganisation des étapes",
+    "fileExtracted": "Fichier extrait",
+    "extractedFrom": "Texte extrait de {{filename}}",
+    "extractionFailed": "Échec de l'extraction",
+    "unsupportedFileType": "Type de fichier non pris en charge : {{filename}}",
+    "failedToExtract": "Échec de l'extraction du texte de {{filename}}",
+    "excelParsingFailed": "Échec de l'analyse Excel",
+    "excelDataAdded": "Données Excel ajoutées",
+    "addedRows": "{{count}} lignes ajoutées de {{filename}}",
+    "contentCleared": "Contenu effacé",
+    "contentHasBeenCleared": "Le contenu a été effacé",
+    "contentUpdated": "Contenu mis à jour",
+    "changesHaveBeenSaved": "Vos modifications ont été enregistrées",
+    "processingFailed": "Échec du traitement",
+    "failedToProcessFiles": "Échec du traitement des fichiers"
+  },
   "nodes": {
     "agent": "Nœud agent",
     "function": "Nœud fonction",
@@ -15,27 +93,24 @@
     "condition": "Condition",
     "loop": "Boucle"
   },
-  "sidebar": {
-    "agents": "Agents",
-    "functions": "Fonctions",
-    "properties": "Propriétés"
-  },
-  "properties": {
-    "nodeName": "Nom du nœud",
-    "nodeType": "Type de nœud",
-    "configuration": "Configuration",
-    "connections": "Connexions"
-  },
-  "output": {
-    "title": "Journal de sortie",
-    "clear": "Effacer",
-    "noOutput": "Aucune sortie pour le moment. Exécutez votre flux pour voir les résultats."
-  },
-  "messages": {
-    "workflowSaved": "Flux enregistré avec succès",
-    "workflowLoaded": "Flux chargé avec succès",
-    "executionStarted": "Exécution du flux démarrée",
-    "executionComplete": "Exécution du flux terminée",
-    "executionError": "Échec de l'exécution du flux"
+  "agentTemplates": {
+    "researcher": {
+      "name": "Chercheur",
+      "description": "Recueillir et analyser des informations",
+      "systemPrompt": "Vous êtes un assistant de recherche spécialisé dans la collecte et l'analyse d'informations provenant de diverses sources.",
+      "userPrompt": "Recherchez le sujet suivant et fournissez des résultats détaillés : {input}"
+    },
+    "summarizer": {
+      "name": "Résumeur",
+      "description": "Condensez un contenu long",
+      "systemPrompt": "Vous êtes un expert en résumé qui crée des résumés concis et précis de contenus longs.",
+      "userPrompt": "Résumez le contenu suivant : {input}"
+    },
+    "analyst": {
+      "name": "Analyste",
+      "description": "Analyse approfondie des données",
+      "systemPrompt": "Vous êtes un analyste de données qui fournit une analyse perspicace et identifie des modèles dans les données.",
+      "userPrompt": "Analysez les données suivantes et fournissez des informations : {input}"
+    }
   }
 }

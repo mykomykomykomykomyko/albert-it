@@ -13,6 +13,7 @@ import type { WorkflowNode, AgentNode, FunctionNode, ToolInstance, ToolNode } fr
 import { FunctionRegistry } from "@/lib/functionRegistry";
 import { FunctionExecutor } from "@/lib/functionExecutor";
 import { toolDefinitions } from "@/lib/toolDefinitions";
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -70,6 +71,7 @@ export const PropertiesPanel = ({
   onRunAgent,
   onRunFunction,
 }: PropertiesPanelProps) => {
+  const { t } = useTranslation('stage');
   const [toolDialogOpen, setToolDialogOpen] = useState(false);
   const [configDialogInstance, setConfigDialogInstance] = useState<string | null>(null);
   const [memoryDialogOpen, setMemoryDialogOpen] = useState(false);
@@ -96,7 +98,7 @@ export const PropertiesPanel = ({
             </svg>
           </div>
           <p className="text-sm text-muted-foreground">
-            Select a node to view and edit its properties
+            {t('properties.selectNode')}
           </p>
         </div>
       </div>
@@ -331,7 +333,7 @@ export const PropertiesPanel = ({
     if (node.functionType === "content") {
       return (
         <div className="space-y-4">
-          <Label className="text-sm font-medium">Content Configuration</Label>
+          <Label className="text-sm font-medium">{t('properties.contentConfiguration')}</Label>
           <Card className="p-3 bg-muted/30 space-y-3">
             <Textarea 
               placeholder="Enter your content here or upload files..."
@@ -356,7 +358,7 @@ export const PropertiesPanel = ({
                 disabled={isProcessingFiles}
               >
                 <Upload className="h-3.5 w-3.5" />
-                {isProcessingFiles ? "Processing..." : "Upload Files"}
+                {isProcessingFiles ? t('properties.processing') : t('properties.uploadFiles')}
               </Button>
               <Button 
                 size="sm" 
@@ -364,7 +366,7 @@ export const PropertiesPanel = ({
                 className="h-9 w-9 p-0"
                 onClick={handleViewContent}
                 disabled={!node.config.content}
-                title="View/Edit Content"
+                title={t('properties.viewEditContent')}
               >
                 <Eye className="h-3.5 w-3.5" />
               </Button>
@@ -374,13 +376,13 @@ export const PropertiesPanel = ({
                 className="h-9 w-9 p-0"
                 onClick={handleClearContent}
                 disabled={!node.config.content}
-                title="Clear Content"
+                title={t('properties.clearContent')}
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
             </div>
             <p className="text-xs text-muted-foreground">
-              Upload files or enter content manually. Supports text files, PDFs, DOCX, and Excel files.
+              {t('properties.uploadSupported')}
             </p>
           </Card>
 
@@ -388,22 +390,22 @@ export const PropertiesPanel = ({
           <Dialog open={isViewContentOpen} onOpenChange={setIsViewContentOpen}>
             <DialogContent className="max-w-[90vw] max-h-[90vh] flex flex-col">
               <DialogHeader>
-                <DialogTitle>View / Edit Content</DialogTitle>
+                <DialogTitle>{t('properties.viewEditContent')}</DialogTitle>
               </DialogHeader>
               <div className="flex-1 min-h-0 py-4">
                 <Textarea
                   value={editedContent}
                   onChange={(e) => setEditedContent(e.target.value)}
                   className="w-full h-full min-h-[60vh] resize-none"
-                  placeholder="No content..."
+                  placeholder={t('properties.noContent')}
                 />
               </div>
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setIsViewContentOpen(false)}>
-                  Cancel
+                  {t('properties.cancel')}
                 </Button>
                 <Button onClick={handleSaveEditedContent}>
-                  Save Changes
+                  {t('properties.saveChanges')}
                 </Button>
               </div>
             </DialogContent>
@@ -424,7 +426,7 @@ export const PropertiesPanel = ({
     return (
       <div className="space-y-4 mt-4">
         <div className="flex items-center gap-2">
-          <Label className="text-sm font-medium">Configuration</Label>
+          <Label className="text-sm font-medium">{t('properties.configuration')}</Label>
         </div>
         <Card className="p-4 bg-muted/30 border-border space-y-4">
           {Object.entries(functionDef.configSchema).map(([key, schema]) => (

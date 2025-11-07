@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChevronDown, Terminal, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export interface LogEntry {
   time: string;
@@ -32,6 +33,7 @@ const logColors = {
 };
 
 export const OutputLog = ({ logs }: OutputLogProps) => {
+  const { t } = useTranslation('stage');
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -42,10 +44,10 @@ export const OutputLog = ({ logs }: OutputLogProps) => {
       <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
           <Terminal className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-semibold text-foreground">Output Log</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t('output.title')}</h3>
           {!isExpanded && logs.length > 0 && (
             <span className="text-xs text-muted-foreground">
-              {logs.length} {logs.length === 1 ? 'entry' : 'entries'}
+              {logs.length} {logs.length === 1 ? t('output.entry') : t('output.entries')}
             </span>
           )}
         </div>
@@ -67,7 +69,7 @@ export const OutputLog = ({ logs }: OutputLogProps) => {
           <div className="p-3 space-y-2 font-mono text-xs">
             {logs.length === 0 ? (
               <div className="text-muted-foreground text-center py-4">
-                No logs yet. Run the workflow to see execution logs.
+                {t('output.noLogs')}
               </div>
             ) : (
               logs.map((log, index) => {

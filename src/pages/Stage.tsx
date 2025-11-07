@@ -25,7 +25,10 @@ import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
 export type { ToolInstance, LogEntry } from "@/types/workflow";
 export type Agent = AgentNode;
 
+import { useTranslation } from "react-i18next";
+
 const Stage = () => {
+  const { t } = useTranslation('stage');
   const { workflows, createWorkflow, updateWorkflow } = useWorkflows();
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(() => {
     return localStorage.getItem('canvas_currentWorkflowId');
@@ -325,7 +328,7 @@ const Stage = () => {
           workflow_data: workflow,
           name: workflowName,
         });
-        toast.success('Workflow saved to database');
+        toast.success(t('messages.workflowSavedToDb'));
       } else {
         // Create new
         const newWorkflow = await createWorkflow({
@@ -336,12 +339,12 @@ const Stage = () => {
         if (newWorkflow) {
           setCurrentWorkflowId(newWorkflow.id);
           localStorage.setItem('canvas_currentWorkflowId', newWorkflow.id);
-          toast.success('Workflow saved to database');
+          toast.success(t('messages.workflowSavedToDb'));
         }
       }
     } catch (error) {
       console.error('Error saving workflow:', error);
-      toast.error('Failed to save workflow');
+      toast.error(t('messages.failedToSave'));
     }
   };
 
@@ -373,7 +376,7 @@ const Stage = () => {
   };
 
   const clearWorkflow = () => {
-    if (confirm("Are you sure you want to clear the entire workflow?")) {
+    if (confirm(t('messages.clearConfirm'))) {
       setWorkflow({ stages: [], connections: [] });
       setUserInput("");
       setWorkflowName("Untitled Workflow");
