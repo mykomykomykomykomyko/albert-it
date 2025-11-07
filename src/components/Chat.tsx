@@ -72,6 +72,7 @@ const Chat = () => {
   const [showTroubleshoot, setShowTroubleshoot] = useState(false);
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   
   // Ref for auto-scrolling to bottom
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -444,9 +445,7 @@ const Chat = () => {
     toast.success("Chat history downloaded");
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files || []);
-    
+  const processFiles = async (uploadedFiles: File[]) => {
     for (const file of uploadedFiles) {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
@@ -492,7 +491,44 @@ const Chat = () => {
         toast.error(`Unsupported file type: ${file.name}`);
       }
     }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFiles = Array.from(event.target.files || []);
+    await processFiles(uploadedFiles);
     event.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the drop zone itself
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    if (droppedFiles.length > 0) {
+      await processFiles(droppedFiles);
+    }
   };
 
   const handleGenerateImage = async (prompt: string, sourceImageUrl?: string) => {
@@ -968,7 +1004,13 @@ const Chat = () => {
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {!currentConversation ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-accent/5">
+          <div 
+            className={`flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-accent/5 transition-all ${isDragging ? 'bg-primary/5 ring-2 ring-primary ring-inset' : ''}`}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
             <div className="text-center max-w-3xl w-full animate-fade-in">
               <div className="relative mb-8">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 blur-3xl rounded-full" />
@@ -983,6 +1025,13 @@ const Chat = () => {
               <p className="text-muted-foreground mb-12 text-lg">
                 Your AI assistant from the Government of Alberta
               </p>
+              
+              {/* Drag and drop hint */}
+              {isDragging && (
+                <div className="mb-6 p-4 bg-primary/10 border-2 border-dashed border-primary rounded-2xl animate-pulse">
+                  <p className="text-primary font-medium">Drop files here to attach</p>
+                </div>
+              )}
               
               {/* Modern input card */}
               <div className="relative group">
@@ -1074,7 +1123,14 @@ const Chat = () => {
           </div>
         ) : (
           <>
-            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
+            <ScrollArea 
+              ref={scrollAreaRef} 
+              className={`flex-1 p-4 transition-all ${isDragging ? 'bg-primary/5 ring-2 ring-primary ring-inset' : ''}`}
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <div className="max-w-4xl mx-auto space-y-4">
                 {messages.map((message) => (
                   <div
