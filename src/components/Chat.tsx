@@ -1573,12 +1573,7 @@ const Chat = () => {
         {/* Getting Started Wizard */}
         <GettingStartedWizard
           open={showGettingStarted}
-          onOpenChange={(open) => {
-            setShowGettingStarted(open);
-            if (!open) {
-              localStorage.setItem('getting-started-completed', 'true');
-            }
-          }}
+          onOpenChange={setShowGettingStarted}
         />
         </div>
       </div>
