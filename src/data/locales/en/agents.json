@@ -7,10 +7,24 @@
   "noAgentsDesc": "Create your first agent to get started",
   "myAgents": "My Agents",
   "allAgents": "All Agents",
+  "sidebar": {
+    "title": "Agent Management",
+    "description": "Search, filter, and manage your AI agents",
+    "searchFilter": "Search & Filter",
+    "allTypes": "All Types",
+    "cards": "Cards",
+    "table": "Table",
+    "actions": "Actions",
+    "marketplace": "Marketplace",
+    "downloadAll": "Download All",
+    "importAgents": "Import Agents",
+    "exportAll": "Export All"
+  },
   "form": {
     "name": "Agent Name",
     "description": "Description",
     "systemPrompt": "System Prompt",
+    "userPrompt": "User Prompt",
     "category": "Category",
     "tags": "Tags",
     "profilePicture": "Profile Picture",
@@ -18,7 +32,10 @@
     "modelSelection": "AI Model",
     "cancel": "Cancel",
     "save": "Save Agent",
-    "update": "Update Agent"
+    "update": "Update Agent",
+    "remove": "Remove",
+    "upload": "Upload",
+    "generate": "Generate with AI"
   },
   "categories": {
     "general": "General",

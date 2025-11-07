@@ -7,10 +7,24 @@
   "noAgentsDesc": "Créez votre premier agent pour commencer",
   "myAgents": "Mes agents",
   "allAgents": "Tous les agents",
+  "sidebar": {
+    "title": "Gestion des agents",
+    "description": "Rechercher, filtrer et gérer vos agents IA",
+    "searchFilter": "Recherche et filtre",
+    "allTypes": "Tous les types",
+    "cards": "Cartes",
+    "table": "Tableau",
+    "actions": "Actions",
+    "marketplace": "Marché",
+    "downloadAll": "Tout télécharger",
+    "importAgents": "Importer des agents",
+    "exportAll": "Tout exporter"
+  },
   "form": {
     "name": "Nom de l'agent",
     "description": "Description",
     "systemPrompt": "Instruction système",
+    "userPrompt": "Instruction utilisateur",
     "category": "Catégorie",
     "tags": "Étiquettes",
     "profilePicture": "Photo de profil",
@@ -18,7 +32,10 @@
     "modelSelection": "Modèle IA",
     "cancel": "Annuler",
     "save": "Enregistrer l'agent",
-    "update": "Mettre à jour l'agent"
+    "update": "Mettre à jour l'agent",
+    "remove": "Retirer",
+    "upload": "Téléverser",
+    "generate": "Générer avec IA"
   },
   "categories": {
     "general": "Général",

@@ -352,15 +352,15 @@ const Agents = () => {
     <AppLayout
       sidebar={
         <PageSidebar
-          title="Agent Management"
-          description="Search, filter, and manage your AI agents"
+          title={t('sidebar.title')}
+          description={t('sidebar.description')}
         >
-          <PageSidebarSection title="Search & Filter">
+          <PageSidebarSection title={t('sidebar.searchFilter')}>
             <div className="space-y-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search agents..."
+                  placeholder={t('searchPlaceholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -369,10 +369,10 @@ const Agents = () => {
               
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All Types" />
+                  <SelectValue placeholder={t('sidebar.allTypes')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="all">{t('sidebar.allTypes')}</SelectItem>
                   {agentTypes.map(type => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
@@ -387,7 +387,7 @@ const Agents = () => {
                   className="flex-1"
                 >
                   <LayoutGrid className="h-4 w-4 mr-2" />
-                  Cards
+                  {t('sidebar.cards')}
                 </Button>
                 <Button
                   variant={viewMode === "table" ? "default" : "outline"}
@@ -396,13 +396,13 @@ const Agents = () => {
                   className="flex-1"
                 >
                   <Table className="h-4 w-4 mr-2" />
-                  Table
+                  {t('sidebar.table')}
                 </Button>
               </div>
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Actions">
+          <PageSidebarSection title={t('sidebar.actions')}>
             <div className="space-y-2">
               <Dialog open={isCreateOpen} onOpenChange={(open) => {
                 setIsCreateOpen(open);
@@ -479,7 +479,7 @@ const Agents = () => {
                               size="sm"
                               onClick={() => setFormData({ ...formData, profile_picture_url: "" })}
                             >
-                              Remove
+                              {t('form.remove')}
                             </Button>
                           </div>
                         )}
@@ -492,7 +492,7 @@ const Agents = () => {
                             className="flex-1"
                           >
                             <Sparkles className="h-4 w-4 mr-2" />
-                            Generate
+                            {t('form.generate')}
                           </Button>
                           <Button
                             type="button"
@@ -502,7 +502,7 @@ const Agents = () => {
                             className="flex-1"
                           >
                             <Upload className="h-4 w-4 mr-2" />
-                            {isUploading ? "Uploading..." : "Upload"}
+                            {isUploading ? "Uploading..." : t('form.upload')}
                           </Button>
                           <input
                             ref={fileInputRef}
@@ -522,8 +522,8 @@ const Agents = () => {
 
                     <Tabs defaultValue="system">
                       <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="system">System Prompt</TabsTrigger>
-                        <TabsTrigger value="user">User Prompt</TabsTrigger>
+                        <TabsTrigger value="system">{t('form.systemPrompt')}</TabsTrigger>
+                        <TabsTrigger value="user">{t('form.userPrompt')}</TabsTrigger>
                       </TabsList>
                       <TabsContent value="system" className="mt-4">
                         <Textarea
@@ -570,7 +570,7 @@ const Agents = () => {
                 onClick={() => navigate('/marketplace')}
               >
                 <Store className="h-4 w-4 mr-2" />
-                Marketplace
+                {t('sidebar.marketplace')}
               </Button>
               
               <Button
@@ -580,7 +580,7 @@ const Agents = () => {
                 disabled={agents.length === 0}
               >
                 <Download className="h-4 w-4 mr-2" />
-                Download All
+                {t('sidebar.downloadAll')}
               </Button>
               
               <Button
@@ -589,7 +589,7 @@ const Agents = () => {
                 onClick={() => agentImportInputRef.current?.click()}
               >
                 <Upload className="h-4 w-4 mr-2" />
-                Import Agents
+                {t('sidebar.importAgents')}
               </Button>
               <input
                 ref={agentImportInputRef}
