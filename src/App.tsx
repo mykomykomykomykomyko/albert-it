@@ -36,30 +36,20 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import Landing from "./pages/Landing";
-import Auth from "./pages/Auth";
-import ResetPassword from "./pages/ResetPassword";
-import ResetPasswordOTP from "./pages/ResetPasswordOTP";
-import Agents from "./pages/Agents";
-import AgentMarketplace from "./pages/AgentMarketplace";
-import PromptLibrary from "./pages/PromptLibrary";
-import Framework from "./pages/Framework";
-import AdminReview from "./pages/AdminReview";
-import WorkflowMarketplace from "./pages/WorkflowMarketplace";
-import EnhancedChat from "./components/Chat";
-import Stage from "./pages/Stage";
-import Canvas from "./pages/Canvas";
-import ImageAnalysis from "./pages/ImageAnalysis";
-import VoiceAnalysis from "./pages/VoiceAnalysis";
-import MeetingTranscripts from "./pages/MeetingTranscripts";
-import Docs from "./pages/Docs";
-import NotFound from "./pages/NotFound";
-import SharedConversation from "./pages/SharedConversation";
-import SavedWork from "./pages/SavedWork";
+import { lazy, Suspense } from "react";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 import { AccessibilityProvider } from "./components/AccessibilityProvider";
 import { PersistentPages } from "./components/layout/PersistentPages";
+
+// Lazy load pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const Landing = lazy(() => import("./pages/Landing"));
+const Auth = lazy(() => import("./pages/Auth"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const ResetPasswordOTP = lazy(() => import("./pages/ResetPasswordOTP"));
+const AdminReview = lazy(() => import("./pages/AdminReview"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SharedConversation = lazy(() => import("./pages/SharedConversation"));
 
 /**
  * React Query Client Configuration
@@ -80,42 +70,51 @@ const App = () => (
         <Sonner />
       
       <BrowserRouter>
-        <Routes>
-          {/* Root route - handles authentication-based redirects */}
-          <Route path="/" element={<Index />} />
-          
-          {/* Public routes - these can unmount */}
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
-          
-          {/* Admin routes - can unmount */}
-          <Route path="/admin/review" element={<AdminReview />} />
-          
-          {/* Shared conversation - can unmount */}
-          <Route path="/chat/shared/:shareToken" element={<SharedConversation />} />
-          
-          {/* Main app routes - persistent state container */}
-          <Route path="/chat/*" element={<PersistentPages />} />
-          <Route path="/canvas/*" element={<PersistentPages />} />
-          <Route path="/stage/*" element={<PersistentPages />} />
-          <Route path="/image/*" element={<PersistentPages />} />
-          <Route path="/voice/*" element={<PersistentPages />} />
-          <Route path="/transcripts/*" element={<PersistentPages />} />
-          <Route path="/agents/*" element={<PersistentPages />} />
-          <Route path="/marketplace/*" element={<PersistentPages />} />
-          <Route path="/prompts/*" element={<PersistentPages />} />
-          <Route path="/framework/*" element={<PersistentPages />} />
-          <Route path="/workflow-marketplace/*" element={<PersistentPages />} />
-          <Route path="/saved-work/*" element={<PersistentPages />} />
-          <Route path="/files/*" element={<PersistentPages />} />
-          <Route path="/docs/*" element={<PersistentPages />} />
-          
-          {/* Catch-all route for 404 errors */}
-          {/* ⚠️ IMPORTANT: Keep this as the last route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen bg-background">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground">Loading...</p>
+            </div>
+          </div>
+        }>
+          <Routes>
+            {/* Root route - handles authentication-based redirects */}
+            <Route path="/" element={<Index />} />
+            
+            {/* Public routes - these can unmount */}
+            <Route path="/landing" element={<Landing />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
+            
+            {/* Admin routes - can unmount */}
+            <Route path="/admin/review" element={<AdminReview />} />
+            
+            {/* Shared conversation - can unmount */}
+            <Route path="/chat/shared/:shareToken" element={<SharedConversation />} />
+            
+            {/* Main app routes - persistent state container */}
+            <Route path="/chat/*" element={<PersistentPages />} />
+            <Route path="/canvas/*" element={<PersistentPages />} />
+            <Route path="/stage/*" element={<PersistentPages />} />
+            <Route path="/image/*" element={<PersistentPages />} />
+            <Route path="/voice/*" element={<PersistentPages />} />
+            <Route path="/transcripts/*" element={<PersistentPages />} />
+            <Route path="/agents/*" element={<PersistentPages />} />
+            <Route path="/marketplace/*" element={<PersistentPages />} />
+            <Route path="/prompts/*" element={<PersistentPages />} />
+            <Route path="/framework/*" element={<PersistentPages />} />
+            <Route path="/workflow-marketplace/*" element={<PersistentPages />} />
+            <Route path="/saved-work/*" element={<PersistentPages />} />
+            <Route path="/files/*" element={<PersistentPages />} />
+            <Route path="/docs/*" element={<PersistentPages />} />
+            
+            {/* Catch-all route for 404 errors */}
+            {/* ⚠️ IMPORTANT: Keep this as the last route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
         
         {/* Global Helper Agent - Accessible via ? button on all pages */}
         <GlobalHelperAgent />

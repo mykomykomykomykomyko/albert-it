@@ -122,6 +122,7 @@ export function ChatHeader() {
             size="icon"
             onClick={openHelperAgent}
             title="AI Helper - Ask me anything!"
+            aria-label="AI Helper - Ask me anything!"
             className="hover:bg-accent text-foreground"
           >
             <HelpCircle className="h-5 w-5" />
@@ -131,6 +132,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=Bhy1K5uvxUKL9Tw7exCFC-ArfiIhCdZNpgqZfDSOsH1UOTdTNVI2NkVLNFZLUUExUzlFQTBHRU1QOC4u', '_blank')}
             title="Give Feedback"
+            aria-label="Give Feedback"
             className="hover:bg-accent text-foreground"
           >
             <MessageSquare className="h-5 w-5" />
@@ -218,6 +220,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/')}
             title="Go to Home"
+            aria-label="Go to Home"
             className="hover:bg-accent text-foreground"
           >
             <Home className="h-5 w-5" />
@@ -227,6 +230,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/prompts')}
             title="Prompt Library"
+            aria-label="Prompt Library"
             className="hover:bg-accent text-foreground"
           >
             <Library className="h-5 w-5" />
@@ -236,6 +240,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/framework')}
             title="Framework Library"
+            aria-label="Framework Library"
             className="hover:bg-accent text-foreground"
           >
             <Layers className="h-5 w-5" />
@@ -245,6 +250,7 @@ export function ChatHeader() {
             size="icon"
             onClick={() => navigate('/files')}
             title="File Manager"
+            aria-label="File Manager"
             className="hover:bg-accent text-foreground"
           >
             <FolderOpen className="h-5 w-5" />
@@ -254,6 +260,7 @@ export function ChatHeader() {
             size="icon"
             onClick={openDocs}
             title="Documentation & Training"
+            aria-label="Documentation & Training"
             className="hover:bg-accent text-foreground"
           >
             <BookOpen className="h-5 w-5" />
@@ -264,6 +271,7 @@ export function ChatHeader() {
             size="icon"
             onClick={toggleTheme}
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             className="hover:bg-accent text-foreground"
           >
             {theme === 'dark' ? (
@@ -323,7 +331,12 @@ export function ChatHeader() {
         {/* Mobile Hamburger Menu */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild className="lg:hidden">
-            <Button variant="ghost" size="icon" className="text-foreground flex-shrink-0 mr-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              aria-label="Open menu"
+              className="text-foreground flex-shrink-0 mr-1"
+            >
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
