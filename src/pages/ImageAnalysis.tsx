@@ -425,8 +425,9 @@ export default function ImageAnalysis() {
       
       <div className="flex-1 overflow-hidden flex min-h-0">
         {/* Left Sidebar */}
-        <div className="w-80 border-r border-border flex-shrink-0 overflow-y-auto">
-          <div className="p-6 space-y-6">
+        <div className="w-80 border-r border-border flex-shrink-0 flex flex-col h-full">
+          <ScrollArea className="flex-1">
+            <div className="p-6 space-y-6">
             <div>
               <h2 className="text-lg font-semibold">Image Analysis</h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -489,7 +490,8 @@ export default function ImageAnalysis() {
                 Clear All
               </Button>
             </div>
-          </div>
+            </div>
+          </ScrollArea>
         </div>
 
         {/* Main Content Area */}
