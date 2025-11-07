@@ -1,1250 +1,1428 @@
-# Albert AI Assistant - Technical Documentation
+# Albert AI Assistant - Complete User Manual
+
+Welcome to Albert, your comprehensive AI assistant platform. This manual will guide you through every feature and tool available.
+
+---
 
 ## Table of Contents
 
-1. [Architecture Overview](#architecture-overview)
-2. [Frontend Components](#frontend-components)
-3. [Backend Services](#backend-services)
-4. [Database Schema](#database-schema)
-5. [API Reference](#api-reference)
-6. [Hooks Reference](#hooks-reference)
-7. [Utility Functions](#utility-functions)
-8. [Design System](#design-system)
-9. [Development Workflow](#development-workflow)
-10. [Deployment Guide](#deployment-guide)
+1. [What is Albert?](#what-is-albert)
+2. [Getting Started](#getting-started)
+3. [Chat Interface](#chat-interface)
+4. [Agents](#agents)
+5. [Agent Marketplace](#agent-marketplace)
+6. [Stage Workflow Builder](#stage-workflow-builder)
+7. [Canvas Workflow Builder](#canvas-workflow-builder)
+8. [Workflow Marketplace](#workflow-marketplace)
+9. [Image Analysis](#image-analysis)
+10. [Voice Analysis](#voice-analysis)
+11. [Meeting Transcripts](#meeting-transcripts)
+12. [Prompt Library](#prompt-library)
+13. [Framework Library](#framework-library)
+14. [Best Practices](#best-practices)
+15. [Tips & Tricks](#tips--tricks)
 
 ---
 
-## Architecture Overview
+## What is Albert?
 
-### High-Level Architecture
+Albert is an advanced AI assistant platform designed to help you accomplish complex tasks through multiple powerful tools and interfaces. Unlike simple chatbots, Albert provides:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Client (React SPA)                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │   Chat   │  │ Workflow │  │  Agents  │  │  Image   │   │
-│  │Interface │  │ Builders │  │ Manager  │  │ Analysis │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-└───────────────────────┬─────────────────────────────────────┘
-                        │ HTTPS
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Supabase Backend                          │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │   Auth   │  │PostgreSQL│  │  Storage │  │   Edge   │   │
-│  │          │  │ Database │  │  Bucket  │  │Functions │   │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘   │
-└───────────────────────┬─────────────────────────────────────┘
-                        │ API Calls
-                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  External AI Services                       │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                 │
-│  │  Google  │  │ElevenLabs│  │  Lovable │                 │
-│  │  Gemini  │  │   TTS    │  │    AI    │                 │
-│  └──────────┘  └──────────┘  └──────────┘                 │
-└─────────────────────────────────────────────────────────────┘
-```
+- **Multiple AI Models**: Access to Google Gemini, OpenAI GPT, and other cutting-edge AI models
+- **Custom Agents**: Create specialized AI assistants for specific tasks
+- **Visual Workflows**: Build complex multi-step processes with drag-and-drop interfaces
+- **Multimodal Capabilities**: Work with text, images, voice, and documents
+- **Collaboration**: Share agents and workflows with your team or the community
 
-### Technology Stack Details
+### Key Features at a Glance
 
-#### Frontend Stack
-- **React 18.3.1**: UI framework with hooks
-- **TypeScript**: Type-safe development
-- **Vite**: Fast build tool and dev server
-- **TanStack Query**: Server state management
-- **React Router DOM**: Client-side routing
-- **Tailwind CSS**: Utility-first styling
-- **shadcn/ui**: Component library (Radix UI + Tailwind)
-- **ReactFlow**: Workflow visualization
-- **Recharts**: Data visualization
-
-#### Backend Stack
-- **Supabase**: Backend-as-a-Service
-  - PostgreSQL database
-  - Row-Level Security (RLS)
-  - Authentication
-  - File storage
-  - Edge Functions (Deno runtime)
-
-#### External Services
-- **Google Gemini API**: Conversational AI
-- **ElevenLabs API**: Text-to-Speech
-- **Google Speech-to-Text**: Speech recognition
-- **Lovable AI Gateway**: Multi-model AI access
+- **Chat**: Conversational AI for quick questions and tasks
+- **Agents**: Specialized AI assistants with custom personalities and tools
+- **Workflows**: Automated multi-step processes combining multiple agents
+- **Image Analysis**: Process and analyze images with AI vision
+- **Voice**: Speech-to-text and text-to-speech capabilities
+- **Prompts & Frameworks**: Reusable templates and best practices
 
 ---
 
-## Frontend Components
+## Getting Started
 
-### Page Components (`src/pages/`)
+### Creating Your Account
 
-#### `Index.tsx` - Root Handler
-- Entry point for the application
-- Handles authentication-based routing
-- Redirects to `/chat` if authenticated, `/landing` if not
+1. Navigate to Albert's home page
+2. Click "Sign Up" 
+3. Enter your email and create a password
+4. Verify your email (if required)
+5. You're ready to go!
 
-#### `Landing.tsx` - Public Landing Page
-- Marketing page for unauthenticated users
-- Feature showcase
-- Call-to-action buttons
-- Theme toggle
+### First Steps
 
-#### `Auth.tsx` - Authentication Page
-- Email/password login
-- Email/password signup
-- Google OAuth integration
-- Session management
+After logging in, you'll see the main navigation bar with these sections:
 
-#### `Chat.tsx` - Main Chat Interface (via `components/Chat.tsx`)
-- Real-time AI conversations
-- File upload support
-- Agent switching
-- Workflow suggestions
-- Conversation history
+- **Chat**: Start here for quick conversations
+- **Agents**: Create and manage AI assistants
+- **Stage**: Build sequential workflows
+- **Image**: Analyze images and documents
+- **Voice**: Process audio
+- **Canvas**: Create complex workflows
+- **Transcripts**: Analyze meeting recordings
 
-#### `Agents.tsx` - Agent Management
-- CRUD operations for agents
-- Agent configuration
-- Profile image generation
-- Tool selection
-- Marketplace submission
+### Navigation Tips
 
-#### `Canvas.tsx` - Canvas Workflow Builder
-- Free-form workflow design
-- Custom node positioning
-- Complex workflow patterns
-- Import/export capabilities
-
-#### `Stage.tsx` - Stage Workflow Builder
-- Sequential workflow pipelines
-- Agent and function nodes
-- Real-time execution
-- Output logging
-- Save/load workflows
-
-#### `AgentMarketplace.tsx` - Community Agents
-- Browse published agents
-- Search and filter
-- Clone agents
-- Rate and review
-
-#### `WorkflowMarketplace.tsx` - Community Workflows
-- Browse published workflows
-- Preview workflow structure
-- Import to Canvas or Stage
-- Share workflows
-
-#### `PromptLibrary.tsx` - Prompt Management
-- Curated prompt collection
-- Framework-based organization
-- Search and categorization
-- Custom prompt creation
-
-#### `ImageAnalysis.tsx` - Image Processing
-- Multi-image upload
-- PDF document analysis
-- Custom prompt analysis
-- Batch processing
-- Result export
-
-#### `VoiceAnalysis.tsx` - Voice Processing
-- Speech-to-text conversion
-- Text-to-speech generation
-- Multiple voice options
-- Audio file upload
-
-#### `MeetingTranscripts.tsx` - Transcript Analysis
-- VTT file support
-- Action item extraction
-- Executive summary generation
-- Key decision identification
-
-### Shared Components (`src/components/`)
-
-#### Chat Components (`src/components/chat/`)
-
-**`ChatInterface.tsx`**
-- Message rendering
-- Markdown support with syntax highlighting
-- Image/file attachment display
-- Streaming message updates
-
-**`ChatSidebar.tsx`**
-- Conversation list
-- New conversation creation
-- Conversation deletion
-- Active conversation highlighting
-
-**`ChatHeader.tsx`**
-- Page title and navigation
-- Theme toggle
-- Help button (opens GlobalHelperAgent)
-- Agent display
-
-**`AgentSwitcher.tsx`**
-- Agent selection dropdown
-- Live agent switching
-- Agent profile display
-
-**`AudioUploader.tsx`**
-- Audio file upload
-- Speech-to-text integration
-- Transcription display
-
-**`ToolsToolbar.tsx`**
-- Quick access to analysis tools
-- Image analysis button
-- Voice processing button
-- File upload button
-
-**`TransparencyPanel.tsx`**
-- Shows AI reasoning process
-- Tool usage display
-- Debug information
-
-**`WorkflowSuggestion.tsx`**
-- Displays AI-suggested workflows
-- Accept/decline/edit options
-- Navigation to workflow builders
-- JSON editor for workflows
-
-#### Workflow Components (`src/components/workflow/`)
-
-**`stage/` Directory**
-- `Stage.tsx`: Main stage canvas
-- `AgentNode.tsx`: Agent workflow nodes
-- `FunctionNode.tsx`: Function workflow nodes
-- `WorkflowCanvas.tsx`: ReactFlow integration
-- `Toolbar.tsx`: Workflow controls (desktop)
-- `MobileNav.tsx`: Workflow controls (mobile)
-- `Sidebar.tsx`: Node palette
-- `PropertiesPanel.tsx`: Node configuration
-- `OutputLog.tsx`: Execution logs
-- `HelpModal.tsx`: User guidance
-
-**`AgentSelector.tsx`**
-- Agent selection for workflows
-- Agent preview
-- Search and filter
-
-**`FunctionSelector.tsx`**
-- Function node selection
-- Function descriptions
-- Category organization
-
-**`SaveWorkflowDialog.tsx`**
-- Workflow name and description
-- Save to database
-- Validation
-
-**`LoadWorkflowDialog.tsx`**
-- Browse saved workflows
-- Load workflow into builder
-- Preview workflow structure
-
-**`ShareWorkflowDialog.tsx`**
-- Share with specific users
-- Publish to marketplace
-- Access control
-
-#### Agent Components (`src/components/agents/`)
-
-**`AgentSelectorDialog.tsx`**
-- Modal for agent selection
-- Agent list with search
-- Agent preview
-- Clone/use buttons
-
-#### Image Analysis Components (`src/components/imageAnalysis/`)
-
-**`FileUploader.tsx`**
-- Drag-and-drop upload
-- Multi-file selection
-- File type validation
-- Preview thumbnails
-
-**`ImageGallery.tsx`**
-- Image grid display
-- Image selection
-- Zoom/preview
-- Delete images
-
-**`ResultsViewer.tsx`**
-- Analysis results display
-- JSON formatting
-- Export options
-
-**`PromptManager.tsx`**
-- Custom prompt input
-- Prompt templates
-- Prompt history
-
-**`PDFSelector.tsx`**
-- PDF page selection
-- Page range input
-- Preview selected pages
-
-#### Voice Components (`src/components/voice/`)
-
-**`SpeechToTextTab.tsx`**
-- Audio file upload
-- Transcription display
-- Language selection
-- Export transcript
-
-**`TextToSpeechTab.tsx`**
-- Text input for synthesis
-- Voice selection
-- Model selection
-- Audio playback
-- Download MP3
-
-**`VoiceProcessor.tsx`**
-- Core voice processing logic
-- API integration
-- Error handling
-
-#### UI Components (`src/components/ui/`)
-
-These are shadcn/ui components built on Radix UI:
-
-- `button.tsx`: Button variants
-- `input.tsx`: Text input
-- `textarea.tsx`: Multi-line text input
-- `select.tsx`: Dropdown selection
-- `dialog.tsx`: Modal dialogs
-- `card.tsx`: Container component
-- `badge.tsx`: Status badges
-- `toast.tsx`: Notification system
-- `tabs.tsx`: Tabbed interface
-- `accordion.tsx`: Collapsible sections
-- `dropdown-menu.tsx`: Context menus
-- `scroll-area.tsx`: Scrollable containers
-- ... and many more
+- **Home Icon** (🏠): Returns to the main dashboard
+- **Library Icon** (📚): Access your saved prompts
+- **Layers Icon** (⚡): Quick access to frameworks
+- **Docs Icon** (📖): Opens this manual
+- **Theme Toggle** (🌙/☀️): Switch between dark and light modes
+- **User Menu**: Sign out and manage settings
 
 ---
 
-## Backend Services
+## Chat Interface
 
-### Edge Functions (`supabase/functions/`)
+### What is Chat?
 
-All backend logic runs in Supabase Edge Functions using Deno runtime.
+The Chat interface is your direct line to AI assistance. It's perfect for:
+- Quick questions and answers
+- Brainstorming ideas
+- Getting explanations
+- Writing assistance
+- Code help
+- General research
 
-#### `chat/index.ts`
-**Purpose**: Proxy to Lovable AI Gateway
+### How to Use Chat
 
-**Request**:
-```json
-{
-  "messages": [
-    { "role": "user", "content": "Hello" }
-  ],
-  "model": "google/gemini-2.5-flash" // optional
-}
-```
+1. **Start a Conversation**
+   - Type your message in the text box at the bottom
+   - Press Enter or click the send button
+   - The AI will respond in real-time
 
-**Response**: Server-Sent Events stream
+2. **Upload Files**
+   - Click the paperclip icon (📎) to attach files
+   - Supported formats: Images, PDFs, text files, Excel spreadsheets
+   - The AI can analyze and discuss the content
 
-**Features**:
-- Streaming responses
-- Rate limit handling
-- Error handling
-- CORS support
+3. **Switch Agents**
+   - Click on the agent name at the top
+   - Select a different agent from your library
+   - Each agent has unique capabilities and personalities
 
-#### `gemini-chat/index.ts`
-**Purpose**: Direct Gemini API integration
+4. **Manage Conversations**
+   - **Left Sidebar**: View all your conversations
+   - **New Chat**: Click "+" to start fresh
+   - **Delete**: Hover over a conversation and click the trash icon
+   - **Search**: Find old conversations by content
 
-**Request**:
-```json
-{
-  "messages": [
-    { "role": "user", "content": "Hello" }
-  ],
-  "stream": true
-}
-```
+### Chat Features
 
-**Features**:
-- Text-only chat
-- Streaming support
-- System prompt injection
-- Workflow suggestion detection
+**Markdown Support**: The chat supports rich text formatting:
+- **Bold text** with `**text**`
+- *Italic text* with `*text*`
+- Code blocks with triple backticks
+- Lists, tables, and more
 
-**Workflow Suggestion Format**:
-The edge function adds a system prompt that instructs Gemini to suggest workflows:
+**Context Awareness**: The AI remembers your conversation history within each chat session.
 
-```
-When you detect that a user's request could benefit from:
-- Multi-agent collaboration → Suggest Canvas workflow
-- Sequential processing → Suggest Stage workflow
-- Reusable prompts → Suggest Prompt Library
+**File Understanding**: Upload documents and ask questions about them:
+- "Summarize this PDF"
+- "What are the key points in this spreadsheet?"
+- "Extract data from this image"
 
-Format: [WORKFLOW_SUGGESTION:type:json]
-```
+### When to Use Chat
 
-#### `gemini-chat-with-images/index.ts`
-**Purpose**: Multimodal Gemini chat with images
+✅ **Use Chat for**:
+- Quick one-off questions
+- Simple tasks
+- Exploring ideas
+- Getting started with a topic
 
-**Request**:
-```json
-{
-  "messages": [
-    {
-      "role": "user",
-      "content": "What's in this image?",
-      "images": ["data:image/jpeg;base64,..."]
-    }
-  ]
-}
-```
-
-**Features**:
-- Image analysis
-- PDF page analysis
-- Multiple image support
-- Streaming responses
-
-#### `speech-to-text/index.ts`
-**Purpose**: Convert audio to text using Google STT
-
-**Request**:
-```json
-{
-  "audioData": "data:audio/wav;base64,...",
-  "languageCode": "en-US"
-}
-```
-
-**Response**:
-```json
-{
-  "transcript": "This is the transcribed text"
-}
-```
-
-#### `text-to-speech/index.ts`
-**Purpose**: Generate speech using ElevenLabs
-
-**Request**:
-```json
-{
-  "text": "Hello, world!",
-  "voiceId": "21m00Tcm4TlvDq8ikWAM",
-  "modelId": "eleven_monolingual_v1"
-}
-```
-
-**Response**: Audio stream (MP3)
-
-**Features**:
-- Streaming audio
-- Multiple voices
-- Multiple models
-- Natural-sounding speech
-
-#### `get-elevenlabs-voices/index.ts`
-**Purpose**: List available TTS voices
-
-**Response**:
-```json
-{
-  "voices": [
-    {
-      "voice_id": "21m00Tcm4TlvDq8ikWAM",
-      "name": "Rachel",
-      "preview_url": "https://...",
-      "category": "premade"
-    }
-  ]
-}
-```
-
-#### `get-elevenlabs-models/index.ts`
-**Purpose**: List available TTS models
-
-**Response**:
-```json
-{
-  "models": [
-    {
-      "model_id": "eleven_monolingual_v1",
-      "name": "Eleven Monolingual v1",
-      "languages": ["en"]
-    }
-  ]
-}
-```
-
-#### `analyze-transcript/index.ts`
-**Purpose**: Analyze meeting transcripts
-
-**Request**:
-```json
-{
-  "transcript": "Meeting transcript text..."
-}
-```
-
-**Response**:
-```json
-{
-  "executiveSummary": "...",
-  "actionItems": ["..."],
-  "keyDecisions": ["..."],
-  "importantTopics": ["..."]
-}
-```
-
-#### `web-scrape/index.ts`
-**Purpose**: Extract content from web pages
-
-**Request**:
-```json
-{
-  "url": "https://example.com",
-  "returnHtml": false
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "url": "https://example.com",
-  "title": "Page Title",
-  "content": "Extracted text content...",
-  "contentLength": 1234
-}
-```
-
-**Features**:
-- Rotating user agents
-- Retry logic
-- HTML to text conversion
-- Title extraction
-
-#### `google-search/index.ts`
-**Purpose**: Google Custom Search integration
-
-**Request**:
-```json
-{
-  "query": "search term",
-  "numResults": 10,
-  "apiKey": "optional",
-  "searchEngineId": "optional"
-}
-```
-
-**Response**:
-```json
-{
-  "results": [
-    {
-      "title": "Result Title",
-      "link": "https://...",
-      "snippet": "Description..."
-    }
-  ]
-}
-```
-
-#### `run-agent/index.ts`
-**Purpose**: Execute agent workflows with tools
-
-**Request**:
-```json
-{
-  "systemPrompt": "You are...",
-  "userPrompt": "User message",
-  "tools": [
-    {
-      "name": "google-search",
-      "params": { "query": "test" }
-    }
-  ]
-}
-```
-
-**Flow**:
-1. Execute all requested tools
-2. Collect tool outputs
-3. Send to AI with combined context
-4. Return AI response + tool outputs
-
-**Supported Tools**:
-- `google-search`: Web search
-- `weather`: Weather data
-- `time`: Current time
-- `web-scrape`: Web scraping
-- `api-call`: Generic API calls
-
-#### `api-call/index.ts`
-**Purpose**: Generic API proxy
-
-**Request**:
-```json
-{
-  "url": "https://api.example.com/data",
-  "method": "POST",
-  "headers": { "Authorization": "Bearer ..." },
-  "body": { "key": "value" }
-}
-```
-
-#### `generate-agent-image/index.ts`
-**Purpose**: Generate AI profile images for agents
-
-**Request**:
-```json
-{
-  "prompt": "A friendly robot assistant"
-}
-```
-
-**Response**:
-```json
-{
-  "imageUrl": "https://storage.supabase.co/...",
-  "fileName": "agent-image-123.png",
-  "prompt": "A friendly robot assistant"
-}
-```
-
-**Flow**:
-1. Call Lovable AI image generation
-2. Convert base64 to blob
-3. Upload to Supabase Storage
-4. Return public URL
+❌ **Don't Use Chat for**:
+- Complex multi-step processes → Use Stage or Canvas
+- Repetitive tasks → Create a workflow
+- Processing many files → Use Image Analysis
 
 ---
 
-## Database Schema
+## Agents
 
-### Authentication Tables
+### What are Agents?
 
-#### `auth.users` (Supabase managed)
-- User accounts
-- Email, password hashes
-- OAuth provider info
-- Session tokens
+Agents are specialized AI assistants you create for specific purposes. Each agent has:
+- **Personality**: A unique character and communication style
+- **Instructions**: Specific guidelines on how to respond
+- **Tools**: Special capabilities like web search, calculations, or API access
+- **Model**: The AI model powering the agent (Gemini, GPT, etc.)
 
-### Application Tables
+### Why Use Agents?
 
-#### `agents`
-```sql
-CREATE TABLE agents (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users NOT NULL,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL,
-  description TEXT,
-  system_prompt TEXT NOT NULL,
-  user_prompt TEXT NOT NULL,
-  icon_name TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  metadata_tags TEXT[],
-  profile_picture_url TEXT,
-  visibility TEXT DEFAULT 'private', -- 'private', 'shared', 'pending_review', 'published'
-  submitted_at TIMESTAMPTZ,
-  reviewed_at TIMESTAMPTZ,
-  reviewer_id UUID REFERENCES auth.users,
-  is_template BOOLEAN DEFAULT false,
-  usage_count INTEGER DEFAULT 0,
-  rating NUMERIC(3,2),
-  category TEXT
-);
+Instead of repeatedly telling the AI how you want it to behave, create an agent that:
+- Responds consistently every time
+- Follows your specific guidelines
+- Uses tools you need regularly
+- Can be shared with team members
+
+### Creating an Agent
+
+1. **Navigate to Agents**
+   - Click "Agents" in the top navigation
+   - Click "+ New Agent"
+
+2. **Basic Information**
+   - **Name**: What you'll call this agent
+   - **Description**: What this agent does (optional but recommended)
+   - **Image**: Generate an AI profile picture or use a custom one
+
+3. **Configure the Agent**
+   - **System Prompt**: Instructions defining the agent's behavior
+     - Example: "You are a Python expert who explains code clearly and suggests best practices"
+   - **AI Model**: Choose the best model for your needs
+     - **gemini-2.5-flash**: Fast, balanced, great for most tasks
+     - **gemini-2.5-pro**: Most capable, best for complex reasoning
+     - **gpt-5**: Excellent all-rounder, strong reasoning
+     - **gpt-5-mini**: Cost-effective, good performance
+   - **Temperature**: Control randomness (0 = focused, 1 = creative)
+
+4. **Select Tools** (Optional)
+   Choose which capabilities your agent can use:
+   - 🔍 **Web Search**: Find current information online
+   - 🌐 **Web Scraping**: Extract data from websites
+   - 📊 **Data Analysis**: Process and analyze data
+   - 🧮 **Math**: Perform calculations
+   - 🌤️ **Weather**: Get weather information
+   - 🕐 **Time**: Check current time/date
+   - 🔌 **API Calls**: Connect to external services
+
+5. **Save Your Agent**
+   - Click "Create Agent"
+   - Your agent is now available in Chat and Workflows
+
+### Agent Examples
+
+**Marketing Writer Agent**
+```
+Name: Marketing Writer
+Model: gemini-2.5-pro
+System Prompt: You are a creative marketing copywriter specializing in engaging, conversion-focused content. Write in an enthusiastic but professional tone. Always include a clear call-to-action. Focus on benefits over features.
+Tools: Web Search
 ```
 
-**RLS Policies**:
-- Users can read their own agents
-- Users can read published agents
-- Users can create/update/delete their own agents
-- Only admins can approve marketplace submissions
-
-#### `agent_shares`
-```sql
-CREATE TABLE agent_shares (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agent_id UUID REFERENCES agents NOT NULL,
-  shared_with_user_id UUID REFERENCES auth.users NOT NULL,
-  shared_by_user_id UUID REFERENCES auth.users NOT NULL,
-  permission TEXT NOT NULL, -- 'view' or 'edit'
-  created_at TIMESTAMPTZ DEFAULT now()
-);
+**Code Reviewer Agent**
+```
+Name: Code Reviewer
+Model: gpt-5
+System Prompt: You are a senior software engineer reviewing code. Focus on:
+- Security vulnerabilities
+- Performance issues
+- Best practices
+- Code readability
+Provide specific suggestions for improvement with examples.
+Tools: None
 ```
 
-#### `conversations`
-```sql
-CREATE TABLE conversations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users NOT NULL,
-  title TEXT,
-  agent_id UUID REFERENCES agents,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+**Research Assistant Agent**
+```
+Name: Research Assistant
+Model: gemini-2.5-flash
+System Prompt: You are a thorough research assistant. When answering questions:
+1. Use web search to find current information
+2. Cite sources
+3. Present multiple viewpoints
+4. Summarize key findings
+Tools: Web Search, Web Scraping
 ```
 
-#### `messages`
-```sql
-CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID REFERENCES conversations NOT NULL,
-  role TEXT NOT NULL, -- 'user' or 'assistant'
-  content TEXT NOT NULL,
-  attachments JSONB, -- Images and files
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
+### Managing Agents
 
-**Realtime**:
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE messages;
-```
+- **Edit**: Click the pencil icon to modify an agent
+- **Delete**: Remove agents you no longer need
+- **Clone**: Duplicate an agent to create variations
+- **Share**: Publish to the Agent Marketplace
 
-#### `workflows`
-```sql
-CREATE TABLE workflows (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users NOT NULL,
-  name TEXT NOT NULL,
-  description TEXT,
-  type TEXT NOT NULL, -- 'canvas' or 'stage'
-  definition JSONB NOT NULL, -- Workflow structure
-  is_public BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-```
+### Best Practices for Agents
 
-#### `prompts`
-```sql
-CREATE TABLE prompts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users,
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  framework_id UUID REFERENCES frameworks,
-  is_public BOOLEAN DEFAULT false,
-  tags TEXT[],
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-#### `frameworks`
-```sql
-CREATE TABLE frameworks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  description TEXT,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### Storage Buckets
-
-#### `profile-images`
-- Agent profile pictures
-- AI-generated images
-- Public read access
-- Authenticated write access
-
-#### `user-uploads`
-- User-uploaded files
-- Images for analysis
-- Audio files
-- Documents
-- Private access (user-specific)
+1. **Be Specific**: Clear system prompts lead to consistent behavior
+2. **Test Thoroughly**: Try your agent with various inputs
+3. **One Purpose**: Don't make "do everything" agents - specialize!
+4. **Name Clearly**: Use descriptive names you'll remember
+5. **Document**: Add descriptions so others (and future you) understand the agent's purpose
 
 ---
 
-## API Reference
+## Agent Marketplace
 
-### Calling Edge Functions
+### What is the Agent Marketplace?
 
-From the client:
+The Agent Marketplace is a community hub where users share their best agents. Instead of building from scratch, you can:
+- Browse agents created by others
+- Clone agents to your library
+- Share your own agents with the community
+- Learn from well-designed agent configurations
 
-```typescript
-import { supabase } from '@/integrations/supabase/client';
+### Browsing the Marketplace
 
-// Example: Call chat function
-const { data, error } = await supabase.functions.invoke('chat', {
-  body: {
-    messages: [
-      { role: 'user', content: 'Hello!' }
-    ]
-  }
-});
+1. **Navigate**: Click "Agent Marketplace" in the navigation
+2. **Search**: Use the search bar to find specific types of agents
+3. **Filter**: Sort by popularity, recent uploads, or category
+4. **Preview**: Click any agent to see its configuration
 
-// Example: Call with streaming
-const response = await fetch(
-  `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-    },
-    body: JSON.stringify({
-      messages: [...]
-    })
-  }
-);
+### Agent Cards Display
 
-// Handle streaming response
-const reader = response.body.getReader();
-const decoder = new TextDecoder();
+Each agent shows:
+- **Name & Description**: What the agent does
+- **Creator**: Who built it
+- **Rating**: Community feedback
+- **Tools Used**: Which capabilities it has
+- **Model**: The AI model it uses
+- **Downloads**: How popular it is
 
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  
-  const chunk = decoder.decode(value);
-  console.log(chunk); // Process chunk
-}
+### Using Marketplace Agents
+
+**To Clone an Agent**:
+1. Find an agent you like
+2. Click "Clone to My Agents"
+3. The agent is copied to your personal library
+4. You can modify it however you want
+5. Your changes don't affect the original
+
+**To Rate Agents**:
+- Give 1-5 stars based on performance
+- Leave comments to help others
+- Report inappropriate agents
+
+### Publishing Your Agents
+
+**When to Publish**:
+- ✅ The agent solves a common problem
+- ✅ It works reliably
+- ✅ You've tested it thoroughly
+- ✅ The description is clear
+
+**How to Publish**:
+1. Go to your Agents page
+2. Click on the agent you want to share
+3. Click "Publish to Marketplace"
+4. Add tags for discoverability
+5. Write a clear description
+6. Submit for review (if applicable)
+
+**Publishing Tips**:
+- Use descriptive names
+- Include example use cases
+- Explain any special setup needed
+- Keep system prompts professional
+- Test with various inputs first
+
+---
+
+## Stage Workflow Builder
+
+### What is Stage?
+
+Stage is a sequential workflow builder that lets you chain multiple agents and functions together in a pipeline. Think of it like an assembly line where each station (agent or function) performs a specific task before passing work to the next.
+
+### When to Use Stage
+
+Perfect for tasks that follow a clear sequence:
+- Content creation → Editing → Fact-checking → Publishing
+- Data collection → Processing → Analysis → Reporting
+- Research → Summarization → Translation → Formatting
+- Customer inquiry → Classification → Routing → Response
+
+### Stage Components
+
+**1. Agent Nodes**
+- AI assistants that process information
+- Can read input from previous steps
+- Output text for the next step
+
+**2. Function Nodes**
+- Specialized operations like:
+  - Math calculations
+  - Data transformations
+  - API calls
+  - Time/date operations
+  - Web searches
+
+**3. Connections**
+- Arrows showing the flow of data
+- Output from one node feeds into the next
+- Can branch and merge (in Canvas mode)
+
+### Building Your First Workflow
+
+**Example: Blog Post Generator**
+
+1. **Open Stage**
+   - Click "Stage" in navigation
+   - You see a blank canvas with a toolbar
+
+2. **Add Nodes**
+   - **Node 1**: Research Agent
+     - Drag "Agent" from sidebar
+     - Select your Research Assistant agent
+     - Input: "Topic for blog post"
+   
+   - **Node 2**: Writer Agent
+     - Add another Agent node
+     - Select your Marketing Writer agent
+     - This will receive research from Node 1
+   
+   - **Node 3**: Editor Agent
+     - Add final Agent node
+     - Select a Code Reviewer or Editor agent
+     - Polishes the output
+
+3. **Connect Nodes**
+   - Click the output port of Node 1
+   - Drag to input port of Node 2
+   - Repeat to connect Node 2 → Node 3
+
+4. **Configure Each Node**
+   - Click a node to open properties panel
+   - Set specific instructions
+   - Configure input/output handling
+
+5. **Test Your Workflow**
+   - Click "Run" in toolbar
+   - Enter initial input
+   - Watch as each agent processes in sequence
+   - View output in the log panel
+
+6. **Save Your Workflow**
+   - Click "Save" icon
+   - Name: "Blog Post Generator"
+   - Description: "Researches, writes, and edits blog posts"
+   - Save to your library
+
+### Advanced Stage Features
+
+**Loop Detection**
+- Stage automatically detects when you create loops
+- Prevents infinite processing
+- Shows loop badge on nodes
+- Configure loop conditions:
+  - Max iterations
+  - Convergence criteria
+  - Break conditions
+
+**Execution Monitoring**
+- Real-time progress indicators
+- Each node shows status: waiting, running, complete, error
+- Output log shows results
+- Execution count tracks iterations
+
+**Mobile Support**
+- Touch-friendly interface
+- Pinch to zoom
+- Two-finger pan
+- Floating controls
+
+### Stage Best Practices
+
+1. **Start Simple**: Begin with 2-3 nodes, then expand
+2. **Clear Names**: Label nodes descriptively
+3. **Test Incrementally**: Test each node before adding the next
+4. **Save Versions**: Save different iterations as you refine
+5. **Document**: Add descriptions so you remember what each workflow does
+
+### Common Stage Workflows
+
+**Customer Support Pipeline**
+```
+[Ticket Input] → [Classify Intent Agent] → [Route to Department] → [Generate Response Agent] → [Quality Check Agent]
 ```
 
-### Database Queries
-
-#### Fetching Agents
-
-```typescript
-const { data: agents, error } = await supabase
-  .from('agents')
-  .select('*')
-  .eq('user_id', userId)
-  .order('created_at', { ascending: false });
+**Content Localization**
+```
+[English Content] → [Translator Agent] → [Cultural Adaptation Agent] → [Format for Platform]
 ```
 
-#### Creating a Conversation
-
-```typescript
-const { data: conversation, error } = await supabase
-  .from('conversations')
-  .insert({
-    user_id: userId,
-    title: 'New Chat',
-    agent_id: selectedAgentId
-  })
-  .select()
-  .single();
+**Data Processing**
 ```
-
-#### Adding a Message
-
-```typescript
-const { data: message, error } = await supabase
-  .from('messages')
-  .insert({
-    conversation_id: conversationId,
-    role: 'user',
-    content: messageText,
-    attachments: {
-      images: [...],
-      files: [...]
-    }
-  })
-  .select()
-  .single();
+[Raw Data] → [Clean Data Function] → [Analysis Agent] → [Visualization Function] → [Report Generator]
 ```
 
 ---
 
-## Hooks Reference
+## Canvas Workflow Builder
 
-### `useAuth()`
-```typescript
-const { user, session, loading } = useAuth();
+### What is Canvas?
+
+Canvas is an advanced workflow builder for complex, non-linear workflows. Unlike Stage's sequential pipelines, Canvas allows:
+- Parallel processing
+- Conditional branching
+- Loops and iterations
+- Complex data flows
+- Free-form positioning
+
+### When to Use Canvas vs Stage
+
+**Use Canvas for**:
+- ✅ Complex decision trees
+- ✅ Parallel processing needs
+- ✅ Workflows with multiple branches
+- ✅ Iterative refinement loops
+- ✅ Advanced automation
+
+**Use Stage for**:
+- ✅ Simple sequential tasks
+- ✅ Linear pipelines
+- ✅ Quick prototyping
+- ✅ Learning workflows
+
+### Canvas Interface
+
+**Toolbar**
+- Add Agent: Insert AI agent nodes
+- Add Function: Insert function nodes
+- Save: Save workflow
+- Load: Open saved workflow
+- Export: Download as JSON
+- Run: Execute workflow
+
+**Canvas Area**
+- Drag nodes to position them
+- Zoom: Mouse wheel or pinch gesture
+- Pan: Click and drag background
+- Select: Click nodes to configure
+
+**Properties Panel**
+- Shows selected node details
+- Configure inputs/outputs
+- Set node-specific parameters
+
+**Output Log**
+- Shows execution results
+- Real-time updates
+- Error messages
+
+### Building Complex Workflows
+
+**Example: Multi-Language Content Pipeline**
+
+1. **Create Parallel Branches**
+   ```
+   [Content Input]
+        ├─→ [Spanish Translator] → [Spanish QA]
+        ├─→ [French Translator] → [French QA]
+        └─→ [German Translator] → [German QA]
+   ```
+
+2. **Add Conditional Logic**
+   ```
+   [Customer Query] → [Intent Classifier]
+        ├─→ [If Sales] → [Sales Agent]
+        ├─→ [If Support] → [Support Agent]
+        └─→ [If Complaint] → [Escalation Agent]
+   ```
+
+3. **Create Feedback Loops**
+   ```
+   [Draft Content] → [Review Agent] → Decision
+        ├─→ [Approved] → [Publish]
+        └─→ [Needs Work] → [Editor Agent] → [Back to Review]
+   ```
+
+### Loop Configuration
+
+When Canvas detects a loop, you can configure:
+
+**Max Iterations**
+- How many times the loop can run
+- Prevents infinite processing
+- Default: 10 iterations
+
+**Convergence Detection**
+- Stop when output stabilizes
+- Useful for iterative refinement
+- Measures output similarity
+
+**Break Conditions**
+- Custom rules to exit loop
+- Example: "Stop when confidence > 0.95"
+- Example: "Stop when word count > 500"
+
+**Loop Presets**
+- **Basic**: Simple iteration count
+- **Convergence**: Stop when output stabilizes
+- **Limited**: Quick testing with few iterations
+
+### Canvas Features
+
+**Visual Loop Indicators**
+- Dashed lines show loop connections
+- Loop badge on nodes in loops
+- Run count displayed
+- Color coding for loop edges
+
+**Node Status**
+- 🟡 Waiting: Not started
+- 🔵 Running: Currently processing
+- 🟢 Complete: Successfully finished
+- 🔴 Error: Failed execution
+
+**Zoom Controls**
+- ➕ Zoom in
+- ➖ Zoom out
+- 1:1 Reset to 100%
+- Mobile: Floating controls
+
+**Connection Management**
+- Click connection to see options
+- Delete connection: Right-click
+- Reconfigure: Drag to new port
+- Mobile: Touch delete button
+
+### Advanced Canvas Patterns
+
+**Map-Reduce Pattern**
+```
+[Large Dataset]
+  ├─→ [Process Chunk 1] ┐
+  ├─→ [Process Chunk 2] ├→ [Combine Results]
+  └─→ [Process Chunk 3] ┘
 ```
 
-### `useChat()`
-```typescript
-const {
-  messages,
-  loading,
-  isLoadingHistory,
-  sendMessage,
-  clearChat,
-  deleteMessage
-} = useChat();
+**Quality Assurance Loop**
+```
+[Generate] → [Review] → [Pass?]
+              ↑          ├─→ Yes → [Output]
+              └─ No ─────┘
 ```
 
-### `useAgents()`
-```typescript
-const {
-  agents,
-  loading,
-  createAgent,
-  updateAgent,
-  deleteAgent,
-  shareAgent,
-  cloneAgent,
-  submitToMarketplace,
-  fetchMarketplaceAgents
-} = useAgents();
+**Multi-Agent Debate**
+```
+[Topic] → [Agent A Opinion] ┐
+          [Agent B Opinion] ├→ [Synthesize] → [Consensus]
+          [Agent C Opinion] ┘
 ```
 
-### `useWorkflows()`
-```typescript
-const {
-  workflows,
-  loading,
-  saveWorkflow,
-  loadWorkflow,
-  deleteWorkflow,
-  shareWorkflow
-} = useWorkflows();
-```
+### Canvas Best Practices
 
-### `usePrompts()`
-```typescript
-const {
-  prompts,
-  loading,
-  createPrompt,
-  updatePrompt,
-  deletePrompt
-} = usePrompts();
-```
-
-### `useFrameworks()`
-```typescript
-const {
-  frameworks,
-  loading,
-  createFramework,
-  updateFramework,
-  deleteFramework
-} = useFrameworks();
-```
+1. **Layout Matters**: Organize nodes logically (left-to-right flow)
+2. **Label Everything**: Name nodes clearly
+3. **Test Sections**: Test parts before connecting everything
+4. **Version Control**: Save iterations as you build
+5. **Start Small**: Begin with simple flows, add complexity gradually
 
 ---
 
-## Utility Functions
+## Workflow Marketplace
 
-### File Processing (`src/utils/`)
+### What is the Workflow Marketplace?
 
-#### `parsePdf.ts`
-- Extract text from PDFs
-- Extract images from PDFs
-- Page-by-page extraction
+Similar to the Agent Marketplace, but for complete workflows. Browse, clone, and share multi-step processes built by the community.
 
-#### `parseExcel.ts`
-- Read Excel files
-- Extract data from sheets
-- Convert to JSON
+### Finding Workflows
 
-#### `parseText.ts`
-- Detect text files
-- Read file contents
-- Encoding detection
+1. Navigate to "Workflow Marketplace"
+2. Browse featured workflows
+3. Search by keyword or category
+4. Preview workflow structure before cloning
 
-#### `parseVTT.ts`
-- Parse VTT subtitle files
-- Extract timestamps
-- Convert to plain text
+### Workflow Categories
 
-#### `fileTextExtraction.ts`
-- Unified file extraction API
-- Supports: PDF, Excel, DOCX, TXT, VTT
-- Returns structured data
+- **Content Creation**: Writing, editing, publishing pipelines
+- **Data Processing**: ETL, analysis, reporting
+- **Customer Service**: Support ticket handling, routing
+- **Research**: Information gathering, summarization
+- **Translation**: Multi-language content
+- **Quality Assurance**: Review and validation processes
 
-#### `markdownProcessor.ts`
-- Markdown to HTML conversion
-- Syntax highlighting
-- Custom renderers
+### Using Marketplace Workflows
 
-### Workflow Processing (`src/utils/`)
+**To Import a Workflow**:
+1. Find a workflow you like
+2. Click "Import to Canvas" or "Import to Stage"
+3. Workflow opens in the appropriate builder
+4. Customize to your needs
+5. Save your version
 
-#### `parseWorkflowSuggestion.ts`
-```typescript
-export function parseWorkflowSuggestion(content: string): {
-  actionType: 'canvas' | 'stage' | 'prompt-library';
-  workflowData: any;
-  description: string;
-} | null
-```
+**To Share Your Workflow**:
+1. Build and test your workflow
+2. Click "Share" in the workflow builder
+3. Add title and description
+4. Choose visibility (public/private)
+5. Publish to marketplace
 
-Parses AI responses for workflow suggestions in format:
-```
-[WORKFLOW_SUGGESTION:canvas:{...}]
-Description text here
-```
+### Workflow Quality Indicators
+
+- ⭐ **Rating**: User feedback
+- 📥 **Imports**: Popularity measure
+- 🏷️ **Tags**: Categorization
+- 📝 **Description**: What it does
+- 👤 **Author**: Who created it
+- 📅 **Updated**: Freshness indicator
 
 ---
 
-## Design System
+## Image Analysis
 
-### Color Tokens (`src/index.css`)
+### What is Image Analysis?
 
-```css
-:root {
-  /* Base colors */
-  --background: 0 0% 3.9%;
-  --foreground: 0 0% 98%;
-  
-  /* Primary colors */
-  --primary: 220 90% 56%;
-  --primary-foreground: 0 0% 100%;
-  
-  /* Accent colors */
-  --accent: 280 65% 60%;
-  --accent-foreground: 0 0% 100%;
-  
-  /* UI colors */
-  --card: 0 0% 7%;
-  --border: 0 0% 14.9%;
-  --muted: 240 5% 26%;
-  --destructive: 0 84.2% 60.2%;
-}
+A specialized tool for processing images and documents with AI vision. Batch process multiple files and extract insights using custom prompts.
+
+### Capabilities
+
+**Image Understanding**
+- Describe image content
+- Identify objects and people
+- Read text (OCR)
+- Analyze composition
+- Detect emotions and sentiment
+- Extract data from charts/graphs
+
+**Document Processing**
+- PDF analysis (page-by-page)
+- Form data extraction
+- Invoice/receipt processing
+- Table extraction
+- Diagram interpretation
+
+### Using Image Analysis
+
+**Basic Workflow**:
+
+1. **Upload Images**
+   - Click "Upload" or drag & drop
+   - Supported: JPG, PNG, WebP, PDF
+   - Multiple files supported
+   - Preview thumbnails appear
+
+2. **Select PDF Pages** (if applicable)
+   - Choose which pages to analyze
+   - Single page or ranges (e.g., "1-5, 10")
+   - Preview pages before processing
+
+3. **Choose Analysis Type**
+   - **Quick Analysis**: Fast, standard image description
+   - **Custom Prompt**: Write your own instructions
+   - **Template**: Use predefined analysis prompts
+
+4. **Enter Your Prompt**
+   Example prompts:
+   - "Extract all text from this document"
+   - "Identify products in this image and estimate prices"
+   - "Analyze this chart and summarize key trends"
+   - "What safety concerns are visible in this photo?"
+
+5. **Process Images**
+   - Click "Analyze"
+   - Progress indicator shows status
+   - Results appear in real-time
+
+6. **Review Results**
+   - Click any image to see full analysis
+   - Export results as JSON or text
+   - Download processed data
+
+### Image Analysis Examples
+
+**Invoice Processing**
+```
+Prompt: "Extract the following from this invoice: company name, invoice number, date, total amount, line items with quantities and prices. Format as structured data."
+
+Result: Structured JSON with all invoice data extracted
 ```
 
-### Using Semantic Tokens
+**Product Catalog**
+```
+Prompt: "For each product shown: name, color, material, estimated price range, target audience."
 
-```tsx
-// ✅ Correct
-<div className="bg-background text-foreground">
-<Button className="bg-primary text-primary-foreground">
-
-// ❌ Wrong
-<div className="bg-black text-white">
-<Button className="bg-blue-500 text-white">
+Result: Detailed product information for each item
 ```
 
-### Component Variants
-
-```tsx
-// Button variants
-<Button variant="default">Default</Button>
-<Button variant="outline">Outline</Button>
-<Button variant="ghost">Ghost</Button>
-<Button variant="destructive">Delete</Button>
-
-// Button sizes
-<Button size="sm">Small</Button>
-<Button size="default">Default</Button>
-<Button size="lg">Large</Button>
+**Medical Chart Analysis** (Non-diagnostic)
 ```
+Prompt: "Describe all visible data points in this medical chart without making diagnostic conclusions."
+
+Result: Factual description of chart contents
+```
+
+**Real Estate**
+```
+Prompt: "Analyze this property image: room type, size estimate, condition, notable features, suggested improvements."
+
+Result: Detailed property assessment
+```
+
+### Batch Processing
+
+**Why Batch Process?**
+- Process dozens of images at once
+- Consistent analysis across files
+- Time-saving for repetitive tasks
+- Bulk data extraction
+
+**Best Practices**:
+1. **Similar Images**: Batch similar content together
+2. **Clear Prompts**: Be specific about what you want
+3. **Test First**: Try one image before batching
+4. **Organize**: Name files clearly before uploading
+5. **Export**: Save results for later use
+
+### Image Analysis Limitations
+
+❌ **Cannot**:
+- Make medical diagnoses
+- Identify private individuals
+- Process extremely large files (>10MB)
+- Guarantee 100% OCR accuracy
+- Edit or modify images
+
+✅ **Can**:
+- Describe and analyze images
+- Extract text and data
+- Identify general objects/concepts
+- Process multiple images
+- Work with various formats
 
 ---
 
-## Development Workflow
+## Voice Analysis
 
-### Local Setup
+### What is Voice Analysis?
 
-```bash
-# Clone repository
-git clone <YOUR_GIT_URL>
-cd <PROJECT_NAME>
+Convert between speech and text using advanced AI models. Two main capabilities:
+1. **Speech-to-Text**: Transcribe audio recordings
+2. **Text-to-Speech**: Generate natural-sounding speech
 
-# Install dependencies
-npm install
+### Speech-to-Text
 
-# Start dev server
-npm run dev
+**Use Cases**:
+- Transcribe meetings
+- Convert voice notes to text
+- Accessibility
+- Content creation
+- Documentation
 
-# Build for production
-npm run build
+**How to Use**:
 
-# Preview production build
-npm run preview
-```
+1. **Navigate to Voice**
+   - Click "Voice" in navigation
+   - Select "Speech-to-Text" tab
 
-### Environment Variables
+2. **Upload Audio**
+   - Supported formats: MP3, WAV, M4A, OGG
+   - Max file size: 100MB
+   - Drag & drop or click to browse
 
-Required in `.env`:
-```
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_PUBLISHABLE_KEY=your-key
-VITE_SUPABASE_PROJECT_ID=your-project-id
-```
+3. **Select Language** (optional)
+   - Auto-detect (default)
+   - Or specify: English, Spanish, French, etc.
 
-### Adding New Features
+4. **Transcribe**
+   - Click "Transcribe"
+   - Processing time varies with file length
+   - Progress indicator shows status
 
-1. **New Page**:
-   - Create page in `src/pages/NewPage.tsx`
-   - Add route in `src/App.tsx`
-   - Add navigation link where needed
+5. **Review & Export**
+   - Edit transcript if needed
+   - Copy to clipboard
+   - Download as text file
+   - Use in other workflows
 
-2. **New Component**:
-   - Create component in appropriate directory
-   - Add JSDoc comments
-   - Export from index if needed
+### Text-to-Speech
 
-3. **New Hook**:
-   - Create hook in `src/hooks/useNewHook.tsx`
-   - Add TypeScript types
-   - Document with JSDoc comments
+**Use Cases**:
+- Create audio content
+- Accessibility features
+- Voiceovers
+- Audiobook generation
+- Podcasts and videos
 
-4. **New Edge Function**:
-   - Create directory in `supabase/functions/new-function/`
-   - Add `index.ts` with handler
-   - Update `supabase/config.toml`:
-     ```toml
-     [functions.new-function]
-     verify_jwt = true  # or false for public
-     ```
-   - Deploy automatically on next push
+**How to Use**:
 
-### Testing
+1. **Navigate to Voice**
+   - Click "Voice" in navigation
+   - Select "Text-to-Speech" tab
 
-```bash
-# Run type checking
-npm run type-check
+2. **Enter Text**
+   - Type or paste content
+   - Max length: 5,000 characters per request
+   - Supports multiple paragraphs
 
-# Run linter
-npm run lint
+3. **Choose Voice**
+   - Preview available voices
+   - Listen to samples
+   - Select gender and accent
+   - Voice characteristics:
+     - Age range
+     - Speaking style
+     - Accent region
 
-# Fix linting issues
-npm run lint:fix
-```
+4. **Select Model** (optional)
+   - **Multilingual v2**: Best quality, supports many languages
+   - **Monolingual v1**: Faster, English only
+   - **Turbo**: Fastest, good quality
+
+5. **Generate Speech**
+   - Click "Generate"
+   - Audio generates in seconds
+   - Preview playback
+   - Download MP3
+
+### Voice Features
+
+**Popular Voices**:
+- **Rachel**: Clear, professional female voice
+- **Josh**: Warm, friendly male voice
+- **Bella**: Young, energetic female voice
+- **Adam**: Deep, authoritative male voice
+
+**Voice Settings**:
+- **Stability**: How consistent the voice sounds
+- **Clarity**: Balance between naturalness and precision
+- **Style**: Emotional tone (neutral, excited, serious)
+
+### Voice Best Practices
+
+**For Transcription**:
+- ✅ Use clear audio
+- ✅ Minimize background noise
+- ✅ Specify language if accent is strong
+- ✅ Break long files into chunks
+
+**For Speech Generation**:
+- ✅ Use proper punctuation (affects pacing)
+- ✅ Test different voices
+- ✅ Add pauses with ellipses (...)
+- ✅ Break long text into sections
+- ✅ Use SSML tags for advanced control (if supported)
 
 ---
 
-## Deployment Guide
+## Meeting Transcripts
 
-### Lovable Platform
+### What are Meeting Transcripts?
 
-1. Push changes to GitHub
-2. Changes auto-deploy to Lovable
-3. Click "Publish" in Lovable UI
-4. App is live at `yoursite.lovable.app`
+A specialized tool for analyzing meeting recordings and video call transcripts. Automatically extract:
+- Executive summaries
+- Action items
+- Key decisions
+- Important topics
+- Participant contributions
 
-### Custom Deployment
+### Supported Formats
 
-**Vercel**:
-```bash
-npm install -g vercel
-vercel --prod
+- **VTT files** (WebVTT): Video subtitle format
+- **SRT files**: SubRip subtitle format
+- **Plain text transcripts**: Any text format
+
+### Using Meeting Transcripts
+
+1. **Upload Transcript**
+   - Click "Meeting Transcripts" in navigation
+   - Drag & drop your VTT/SRT file
+   - Or paste text directly
+
+2. **Automatic Analysis**
+   - AI processes the transcript
+   - Identifies key elements
+   - Structures findings
+
+3. **Review Results**
+
+   **Executive Summary**
+   - High-level overview
+   - Main discussion points
+   - Outcomes and conclusions
+
+   **Action Items**
+   - Tasks assigned
+   - Deadlines mentioned
+   - Responsible parties
+   - Format: "Person needs to do X by Y"
+
+   **Key Decisions**
+   - Agreements reached
+   - Choices made
+   - Direction set
+   - Stakeholder approvals
+
+   **Important Topics**
+   - Main discussion themes
+   - Time spent on each
+   - Related subtopics
+
+4. **Export Results**
+   - Copy to clipboard
+   - Download as document
+   - Share with team
+   - Add to project management tools
+
+### Meeting Transcript Examples
+
+**Sales Call Analysis**
+```
+Input: 45-minute sales call transcript
+Output:
+- Summary: Prospect interested in enterprise plan
+- Action Items: 
+  * Send proposal by Friday (Sarah)
+  * Schedule technical demo (John)
+  * Prepare ROI analysis (Mike)
+- Key Decisions: Agreed to 30-day trial
+- Topics: Pricing (15m), Features (20m), Integration (10m)
 ```
 
-**Netlify**:
-```bash
-npm install -g netlify-cli
-netlify deploy --prod
+**Team Standup**
+```
+Input: 15-minute daily standup
+Output:
+- Summary: Team on track, one blocker identified
+- Action Items:
+  * Fix API issue (Dev team)
+  * Review design mockups (Jane)
+- Blockers: Waiting for client feedback
 ```
 
-**Docker**:
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-CMD ["npm", "run", "preview"]
+### Best Practices
+
+1. **Clean Transcripts**: Remove unnecessary filler words for better analysis
+2. **Speaker Labels**: Include names if available ("John: Hi everyone...")
+3. **Regular Use**: Analyze meetings consistently for trends
+4. **Follow Up**: Actually complete the action items!
+5. **Share**: Distribute summaries to participants
+
+---
+
+## Prompt Library
+
+### What is the Prompt Library?
+
+A repository for storing, organizing, and reusing effective prompts. Instead of recreating prompts each time, save your best ones for quick access.
+
+### Why Use Prompt Library?
+
+**Benefits**:
+- ⏱️ Save time on repetitive tasks
+- 📊 Maintain consistency
+- 🎯 Refine prompts over time
+- 🤝 Share with team members
+- 📈 Track usage and effectiveness
+
+### Creating Prompts
+
+1. **Navigate to Prompt Library**
+   - Click the Library icon (📚) or go to Prompt Library
+
+2. **Click "New Prompt"**
+
+3. **Fill in Details**:
+   - **Name**: Short, descriptive title
+   - **Description**: What this prompt does
+   - **Prompt Text**: The actual prompt
+   - **Category**: Organize by type (Writing, Analysis, Code, etc.)
+   - **Tags**: Keywords for searching
+
+4. **Use Variables** (optional)
+   Add placeholders that can be filled in later:
+   ```
+   Write a {{length}} blog post about {{topic}} targeting {{audience}}
+   ```
+   When you use this prompt, you'll be asked to fill in:
+   - length (e.g., "1000-word")
+   - topic (e.g., "AI in healthcare")
+   - audience (e.g., "hospital administrators")
+
+5. **Set Options**:
+   - **Public**: Share with community
+   - **Template**: Mark as reusable template
+   - **Private**: Keep to yourself
+
+6. **Save Prompt**
+
+### Using Saved Prompts
+
+**Execute Directly**:
+1. Select a prompt from library
+2. Click "Execute"
+3. Fill in variables (if any)
+4. Opens new chat with prompt pre-filled
+
+**Copy to Clipboard**:
+1. Find your prompt
+2. Click "Copy"
+3. Paste anywhere (Chat, workflows, etc.)
+
+### Organizing Prompts
+
+**Categories** (suggested):
+- 📝 Writing (blogs, emails, reports)
+- 💻 Code (review, generation, debugging)
+- 📊 Analysis (data, text, sentiment)
+- 🔍 Research (summaries, fact-finding)
+- 🎨 Creative (brainstorming, ideation)
+- ✅ Review (proofreading, fact-checking)
+
+**Tags**: Add multiple tags for flexibility
+- Industry: "healthcare", "finance", "tech"
+- Format: "email", "report", "summary"
+- Audience: "executive", "technical", "casual"
+
+### Example Prompts
+
+**Meeting Notes to Action Items**
+```
+Category: Analysis
+Prompt: Analyze these meeting notes and extract:
+1. All action items with assigned person
+2. Decisions that were made
+3. Topics that need follow-up
+Format as a bulleted list.
+
+Notes:
+{{meeting_notes}}
 ```
 
-### Environment Configuration
+**Code Review**
+```
+Category: Code
+Prompt: Review this {{language}} code for:
+- Security vulnerabilities
+- Performance issues
+- Best practice violations
+- Potential bugs
 
-For production, set these in your hosting platform:
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
-- `VITE_SUPABASE_PROJECT_ID`
+Code:
+{{code}}
 
-Edge function secrets (set in Supabase dashboard):
-- `GEMINI_API_KEY`
-- `ELEVENLABS_API_KEY`
-- `GOOGLE_SEARCH_API_KEY`
-- `LOVABLE_API_KEY` (auto-provided)
+Provide specific line-by-line feedback with severity ratings.
+```
+
+**Blog Post Outline**
+```
+Category: Writing
+Prompt: Create a detailed blog post outline about {{topic}} for {{audience}}.
+
+Include:
+- Attention-grabbing headline
+- 5-7 main sections
+- Key points for each section
+- Suggested word count
+- SEO keywords
+- Call-to-action ideas
+
+Tone: {{tone}}
+```
+
+### Prompt Library Best Practices
+
+1. **Test First**: Make sure prompts work before saving
+2. **Refine**: Update prompts as you learn what works
+3. **Describe Clearly**: Future you will thank present you
+4. **Use Variables**: Make prompts flexible
+5. **Track Usage**: Note which prompts are most effective
+6. **Share Good Ones**: Help the community
+7. **Organize**: Use categories and tags religiously
+
+---
+
+## Framework Library
+
+### What is the Framework Library?
+
+A collection of proven methodologies and frameworks for AI interactions. Learn how to structure prompts and conversations for better results.
+
+### Available Frameworks
+
+**1. SMART Goals Framework**
+- Specific
+- Measurable
+- Achievable
+- Relevant
+- Time-bound
+
+**Application**: Use when setting objectives with AI assistance.
+
+**2. STAR Method (Situation, Task, Action, Result)**
+- Useful for case studies
+- Interview preparation
+- Success story documentation
+
+**3. 5W1H (Who, What, When, Where, Why, How)**
+- Comprehensive information gathering
+- Research planning
+- Problem analysis
+
+**4. SWOT Analysis**
+- Strengths
+- Weaknesses
+- Opportunities
+- Threats
+
+**Application**: Strategic planning, decision-making
+
+**5. Socratic Method**
+- Ask probing questions
+- Challenge assumptions
+- Explore reasoning
+- Develop critical thinking
+
+**Application**: Deep analysis, learning, philosophy
+
+### Using Frameworks
+
+**In Chat**:
+"Use the STAR method to help me write a case study about [situation]"
+
+**In Prompts**:
+```
+Analyze this business opportunity using SWOT framework:
+Strengths: [what we're good at]
+Weaknesses: [what we lack]
+Opportunities: [market conditions]
+Threats: [competition, risks]
+```
+
+**In Agent Instructions**:
+```
+When answering questions, use the Socratic method:
+1. Ask clarifying questions
+2. Challenge assumptions
+3. Guide user to their own conclusions
+4. Don't just give answers
+```
+
+### Creating Custom Frameworks
+
+You can add your own frameworks:
+1. Document your methodology
+2. Explain when to use it
+3. Provide examples
+4. Share with team
 
 ---
 
 ## Best Practices
 
-### Code Organization
+### General AI Interaction
 
-1. **Components**: One component per file
-2. **Hooks**: Custom hooks in `src/hooks/`
-3. **Types**: Shared types in `src/types/`
-4. **Utils**: Helper functions in `src/utils/`
-5. **Edge Functions**: One function per directory
+**1. Be Specific**
+❌ "Write something about AI"
+✅ "Write a 500-word blog post explaining how AI improves healthcare diagnostics, targeting hospital administrators"
 
-### TypeScript
+**2. Provide Context**
+❌ "Analyze this"
+✅ "Analyze this customer feedback survey data from our Q4 2024 product launch. Focus on feature requests and pain points."
 
-```typescript
-// ✅ Use interfaces for objects
-interface User {
-  id: string;
-  email: string;
-}
+**3. Iterate**
+- Start with a basic prompt
+- Refine based on results
+- Save successful variations
 
-// ✅ Use type for unions
-type Status = 'pending' | 'complete' | 'error';
+**4. Use Examples**
+Show the AI what you want:
+```
+Convert these items to JSON format.
 
-// ✅ Use generics when appropriate
-function fetchData<T>(url: string): Promise<T>
+Example:
+Input: "John Doe, 30, Engineer"
+Output: {"name": "John Doe", "age": 30, "role": "Engineer"}
+
+Now convert: [your data]
 ```
 
-### React Patterns
+### Security & Privacy
 
-```tsx
-// ✅ Custom hooks for logic
-const { data, loading } = useData();
+**Do**:
+- ✅ Review AI outputs before sharing
+- ✅ Remove sensitive data before uploading
+- ✅ Use generic examples instead of real data
+- ✅ Check terms of service for your use case
 
-// ✅ Memoization for expensive operations
-const filtered = useMemo(() => filter(data), [data]);
+**Don't**:
+- ❌ Share passwords or API keys
+- ❌ Upload confidential documents
+- ❌ Include personal identifying information
+- ❌ Trust AI output without verification
 
-// ✅ useCallback for function props
-const handleClick = useCallback(() => {}, []);
-```
+### Workflow Design
 
-### Error Handling
+**1. Start Simple**
+- Build basic version first
+- Test thoroughly
+- Add complexity gradually
 
-```typescript
-try {
-  const { data, error } = await supabase
-    .from('table')
-    .select();
-    
-  if (error) throw error;
-  
-  return data;
-} catch (error) {
-  console.error('Error:', error);
-  toast.error('Failed to load data');
-}
-```
+**2. Modular Design**
+- Break complex tasks into steps
+- Each step should do one thing well
+- Easier to debug and modify
+
+**3. Error Handling**
+- What if an agent returns unexpected output?
+- What if an API call fails?
+- Build in fallbacks
+
+**4. Testing**
+- Test with various inputs
+- Try edge cases
+- Verify outputs are consistent
+
+### Performance Tips
+
+**1. Model Selection**
+- Fast tasks → gemini-2.5-flash
+- Complex reasoning → gemini-2.5-pro or gpt-5
+- Cost-sensitive → gpt-5-mini
+- Cutting-edge → claude-sonnet-4-5
+
+**2. Prompt Length**
+- Longer prompts ≠ better results
+- Be clear and concise
+- Remove unnecessary details
+
+**3. Batch Processing**
+- Group similar tasks
+- Process multiple items at once
+- Use Image Analysis for batches
 
 ---
 
-## Troubleshooting
+## Tips & Tricks
 
-### Common Issues
+### Chat Shortcuts
 
-**Build errors**:
-- Clear node_modules: `rm -rf node_modules && npm install`
-- Clear cache: `npm run build --force`
+**Quick Commands**:
+- `/help`: Opens this documentation
+- `@agent-name`: Mention a specific agent
+- `/new`: Start new conversation
+- `/clear`: Clear current chat
 
-**Auth issues**:
-- Check Supabase project settings
-- Verify RLS policies
-- Check CORS configuration
+### Keyboard Shortcuts
 
-**Edge function errors**:
-- Check function logs in Supabase dashboard
-- Verify environment variables
-- Test with curl/Postman
+- `Ctrl/Cmd + Enter`: Send message
+- `Ctrl/Cmd + K`: Search conversations
+- `Ctrl/Cmd + N`: New conversation
+- `Esc`: Close dialogs
 
-**Styling issues**:
-- Check Tailwind config
-- Verify design tokens in index.css
-- Inspect with browser DevTools
+### Workflow Hacks
+
+**1. Template Workflows**
+Save partially-built workflows as templates:
+- Leave empty nodes for customization
+- Add instruction nodes
+- Share with team
+
+**2. Testing Workflows**
+Use mock inputs to test without API calls:
+- "Test input: [sample data]"
+- Verify logic before running at scale
+
+**3. Workflow Documentation**
+Add notes directly in workflows:
+- Use function nodes with no operation
+- Title: "NOTE: [your explanation]"
+- Helps future you and collaborators
+
+### Prompt Engineering
+
+**1. Role-Playing**
+```
+You are a [role] with [expertise].
+Your task is to [objective].
+Consider [constraints].
+```
+
+**2. Chain of Thought**
+```
+Let's solve this step by step:
+1. First, analyze [aspect]
+2. Then, consider [factors]
+3. Finally, conclude [result]
+```
+
+**3. Few-Shot Learning**
+Provide 2-3 examples of desired output format
+
+**4. Constraints**
+```
+Requirements:
+- Output must be under 200 words
+- Use bullet points
+- Cite sources
+- Professional tone
+```
+
+### Troubleshooting
+
+**Problem**: AI gives irrelevant answers
+- **Solution**: Add more context, be more specific
+
+**Problem**: Workflow fails partway through
+- **Solution**: Check connections, verify agent configs
+
+**Problem**: Output is inconsistent
+- **Solution**: Lower temperature, add constraints
+
+**Problem**: Too slow
+- **Solution**: Use faster model, reduce context length
+
+**Problem**: Confusing results
+- **Solution**: Simplify prompt, break into smaller steps
+
+### Hidden Features
+
+**1. Image in Chat**
+Paste images directly into chat (Ctrl+V)
+
+**2. File Analysis**
+Upload files while chatting for immediate analysis
+
+**3. Conversation Sharing**
+Share conversations with collaborators (Share icon)
+
+**4. Agent Cloning**
+Quickly duplicate and modify existing agents
+
+**5. Workflow Templates**
+Load marketplace workflows and customize
 
 ---
 
-## Additional Resources
+## Getting Help
 
-- [Lovable Documentation](https://docs.lovable.dev)
-- [Supabase Documentation](https://supabase.com/docs)
-- [React Documentation](https://react.dev)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com)
+### In-App Help
+
+**Helper Agent** (🤔 icon in header):
+- Click anytime for AI assistance
+- Knows how to use Albert
+- Context-aware help
+- Available on every page
+
+**Documentation**: This manual (📖 icon)
+
+### Community
+
+- User forums (link in app)
+- Video tutorials (Help menu)
+- Example workflows (Marketplace)
+- Community templates
+
+### Support
+
+For technical issues:
+- Report bugs: [support email/link]
+- Feature requests: [feedback form]
+- Urgent issues: [support channels]
 
 ---
 
-**Last Updated**: 2025-01-27
+## Conclusion
+
+Albert is a powerful platform with many tools. You don't need to master everything at once:
+
+**Week 1**: Get comfortable with Chat and creating basic Agents
+**Week 2**: Explore Image Analysis and Voice tools
+**Week 3**: Build simple workflows in Stage
+**Week 4**: Try Canvas for complex automation
+**Week 5**: Share your best work in Marketplaces
+
+Remember: The best way to learn is by doing. Start with a real task you need to accomplish, and explore features as needed.
+
+Welcome to Albert! 🚀
+
+---
+
+*Manual Version 1.0 - Last Updated: 2024*
