@@ -153,7 +153,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Chat
+              {t('navigation.chat')}
             </button>
             <button
               onClick={() => navigate('/agents')}
@@ -163,7 +163,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Agents
+              {t('navigation.agents')}
             </button>
             <button
               onClick={() => navigate('/stage')}
@@ -173,7 +173,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Stage
+              {t('navigation.stage')}
             </button>
             <button
               onClick={() => navigate('/canvas')}
@@ -183,7 +183,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Canvas
+              {t('navigation.canvas')}
             </button>
             <button
               onClick={() => navigate('/image')}
@@ -193,7 +193,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Image
+              {t('navigation.imageAnalysis')}
             </button>
             <button
               onClick={() => navigate('/voice')}
@@ -203,7 +203,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Voice
+              {t('navigation.voiceAnalysis')}
             </button>
             <button
               onClick={() => navigate('/transcripts')}
@@ -213,7 +213,7 @@ export function ChatHeader() {
                   : 'text-foreground hover:bg-accent'
               }`}
             >
-              Transcripts
+              {t('navigation.transcripts')}
             </button>
           </div>
           
