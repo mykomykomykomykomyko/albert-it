@@ -244,7 +244,7 @@ export const useAgents = () => {
     loadAgents();
 
     // Subscribe to realtime agent_shares updates
-    const channel = supabase
+    const sharesChannel = supabase
       .channel('agent-shares-changes')
       .on(
         'postgres_changes',
@@ -260,8 +260,26 @@ export const useAgents = () => {
       )
       .subscribe();
 
+    // Subscribe to realtime agents updates
+    const agentsChannel = supabase
+      .channel('agent-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'agents'
+        },
+        () => {
+          // Reload agents when any agent is created, updated, or deleted
+          loadAgents();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(sharesChannel);
+      supabase.removeChannel(agentsChannel);
     };
   }, []);
 
