@@ -1,12 +1,23 @@
 {
   "placeholder": "Tapez votre message...",
+  "placeholderEmpty": "Demandez-moi n'importe quoi...",
+  "pressEnterToSend": "Appuyez sur Entrée pour envoyer",
   "send": "Envoyer",
+  "startChatting": "Commencer à clavarder",
   "newChat": "Nouveau clavardage",
+  "collapse": "Réduire",
   "conversations": "Conversations",
   "noConversations": "Aucune conversation pour le moment",
   "deleteConversation": "Supprimer la conversation",
   "shareConversation": "Partager la conversation",
   "copyLink": "Copier le lien",
   "thinking": "Réflexion en cours...",
-  "error": "Une erreur s'est produite. Veuillez réessayer."
+  "error": "Une erreur s'est produite. Veuillez réessayer.",
+  "welcome": {
+    "title": "Bienvenue à Albert",
+    "subtitle": "Votre assistant IA du gouvernement de l'Alberta",
+    "startMessage": "Commencez une nouvelle conversation pour débuter."
+  },
+  "message": "message",
+  "messages": "messages"
 }

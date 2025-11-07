@@ -1,12 +1,23 @@
 {
   "placeholder": "Type your message...",
+  "placeholderEmpty": "Ask me anything...",
+  "pressEnterToSend": "Press Enter to send",
   "send": "Send",
+  "startChatting": "Start Chatting",
   "newChat": "New Chat",
+  "collapse": "Collapse",
   "conversations": "Conversations",
   "noConversations": "No conversations yet",
   "deleteConversation": "Delete conversation",
   "shareConversation": "Share conversation",
   "copyLink": "Copy link",
   "thinking": "Thinking...",
-  "error": "An error occurred. Please try again."
+  "error": "An error occurred. Please try again.",
+  "welcome": {
+    "title": "Welcome to Albert",
+    "subtitle": "Your AI assistant from the Government of Alberta",
+    "startMessage": "Start a new conversation to begin."
+  },
+  "message": "message",
+  "messages": "messages"
 }

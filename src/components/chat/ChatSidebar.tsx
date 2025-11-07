@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil, Share2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +58,7 @@ const ChatSidebar = ({
   isCollapsed = false,
   onToggleCollapse,
 }: ChatSidebarProps) => {
+  const { t } = useTranslation('chat');
   const navigate = useNavigate();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -70,7 +72,7 @@ const ChatSidebar = ({
         {!isCollapsed && (
           <Button onClick={onNewConversation} className="w-full" size="sm">
             <Plus className="w-4 h-4 mr-2" />
-            New Chat
+            {t('newChat')}
           </Button>
         )}
         {isCollapsed && (
@@ -264,7 +266,7 @@ const ChatSidebar = ({
             ) : (
               <>
                 <ChevronLeft className="w-4 w-4 mr-2" />
-                Collapse
+                {t('collapse')}
               </>
             )}
           </Button>
@@ -294,7 +296,7 @@ const ChatSidebar = ({
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <SheetContent side="left" className="w-64 p-0 flex flex-col">
           <SheetHeader className="p-4 border-b">
-            <SheetTitle>Conversations</SheetTitle>
+            <SheetTitle>{t('conversations')}</SheetTitle>
           </SheetHeader>
           <div className="flex-1 flex flex-col overflow-hidden">
             {sidebarContent}

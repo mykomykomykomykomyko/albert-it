@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface ChatInterfaceProps {
   conversation: Conversation | null;
@@ -28,6 +29,7 @@ const ChatInterface = ({
   onMessagesUpdate,
   onConversationUpdate,
 }: ChatInterfaceProps) => {
+  const { t } = useTranslation('chat');
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState(conversation?.model || "google/gemini-2.5-flash");
@@ -212,9 +214,9 @@ const ChatInterface = ({
           <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6 glow-effect">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-3xl font-bold mb-4 text-gradient">Welcome to Albert</h2>
+          <h2 className="text-3xl font-bold mb-4 text-gradient">{t('welcome.title')}</h2>
           <p className="text-muted-foreground mb-6">
-            Your AI assistant from the Government of Alberta. Start a new conversation to begin.
+            {t('welcome.subtitle')}. {t('welcome.startMessage')}
           </p>
         </div>
       </div>
@@ -227,7 +229,7 @@ const ChatInterface = ({
         <div>
           <h2 className="font-semibold">{conversation.title}</h2>
           <p className="text-xs text-muted-foreground">
-            {messages.length} {messages.length === 1 ? "message" : "messages"}
+            {messages.length} {messages.length === 1 ? t('message') : t('messages')}
           </p>
         </div>
         <Select value={model} onValueChange={handleModelChange}>
@@ -295,7 +297,7 @@ const ChatInterface = ({
                 handleSend();
               }
             }}
-            placeholder="Type your message..."
+            placeholder={t('placeholder')}
             className="min-h-[60px] max-h-[200px] resize-none"
             disabled={isLoading}
           />
