@@ -1,5 +1,6 @@
 import { Moon, Sun, Home, LogOut, Menu, HelpCircle, BookOpen, Library, Layers, User, ChevronDown, Share2 } from 'lucide-react';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -106,7 +107,15 @@ export function ChatHeader() {
             <div className="w-10 h-10 flex-shrink-0 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <span className="text-xl font-bold text-white">A</span>
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap overflow-hidden text-ellipsis">Albert</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent whitespace-nowrap">Albert</h1>
+              <Badge 
+                variant="secondary" 
+                className="text-[10px] px-1.5 py-0 h-4 font-medium bg-muted/50 text-muted-foreground border-0"
+              >
+                BETA
+              </Badge>
+            </div>
           </button>
           <Button
             variant="ghost"
