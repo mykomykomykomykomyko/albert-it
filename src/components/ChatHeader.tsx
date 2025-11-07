@@ -68,9 +68,9 @@ export function ChatHeader() {
   };
 
   const navItems = [
+    { name: 'Chat', path: '/chat', value: 'chat' },
     { name: 'Agents', path: '/agents', value: 'agents' },
     { name: 'Agent Marketplace', path: '/marketplace', value: 'marketplace' },
-    { name: 'Chat', path: '/chat', value: 'chat' },
     { name: 'Stage', path: '/stage', value: 'stage' },
     { name: 'Canvas', path: '/canvas', value: 'canvas' },
     { name: 'Workflow Marketplace', path: '/workflow-marketplace', value: 'workflow-marketplace' },
@@ -123,16 +123,6 @@ export function ChatHeader() {
         <div className="hidden lg:flex items-center gap-2 ml-auto">
           <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary flex-shrink-0">
             <button
-              onClick={() => navigate('/agents')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
-                currentTab === 'agents'
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              Agents
-            </button>
-            <button
               onClick={() => navigate('/chat')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'chat'
@@ -141,6 +131,16 @@ export function ChatHeader() {
               }`}
             >
               Chat
+            </button>
+            <button
+              onClick={() => navigate('/agents')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                currentTab === 'agents'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-foreground hover:bg-accent'
+              }`}
+            >
+              Agents
             </button>
             <button
               onClick={() => navigate('/stage')}
