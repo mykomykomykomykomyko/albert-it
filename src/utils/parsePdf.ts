@@ -445,10 +445,9 @@ export interface ProcessedPDFFile {
 /**
  * Process a PDF file and return both metadata and thumbnails
  * @param file - PDF file object
- * @param maxThumbnails - Maximum number of thumbnails to create (default: 20)
- * @returns Object containing file info, PDF metadata, and thumbnails
+ * @returns Object containing file info, PDF metadata, and thumbnails for all pages
  */
-export const processPDFFile = async (file: File, maxThumbnails = 20): Promise<ProcessedPDFFile> => {
+export const processPDFFile = async (file: File): Promise<ProcessedPDFFile> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
@@ -465,8 +464,9 @@ export const processPDFFile = async (file: File, maxThumbnails = 20): Promise<Pr
         // Get PDF info
         const pdfInfo = await getPDFInfo(arrayBuffer);
         
-        // Create thumbnails
-        const thumbnails = await createPDFThumbnails(arrayBuffer, maxThumbnails);
+        // Create thumbnails for ALL pages (not just first 20)
+        console.log(`Creating thumbnails for all ${pdfInfo.numPages} pages`);
+        const thumbnails = await createPDFThumbnails(arrayBuffer, pdfInfo.numPages);
 
         resolve({
           file: {
