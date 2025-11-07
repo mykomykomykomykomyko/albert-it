@@ -130,9 +130,14 @@ export default function ImageAnalysis() {
 
   const handleResizeToggle = (imageId: string) => {
     setImages(prev =>
-      prev.map(img =>
-        img.id === imageId ? { ...img, resizeEnabled: !img.resizeEnabled } : img
-      )
+      prev.map(img => {
+        if (img.id === imageId) {
+          const newResizeState = !img.resizeEnabled;
+          toast.success(newResizeState ? 'Resize enabled (1000px width)' : 'Resize disabled');
+          return { ...img, resizeEnabled: newResizeState };
+        }
+        return img;
+      })
     );
   };
 

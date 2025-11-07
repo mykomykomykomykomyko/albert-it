@@ -81,11 +81,11 @@ export function PromptManager({
               onClick={() => setIsCreating(!isCreating)}
               variant="outline"
               size="sm"
-              disabled={disabled}
+              disabled={disabled || isCreating}
               className="flex-1"
             >
               <Plus className="w-4 h-4 mr-2" />
-              {isCreating ? 'Cancel' : 'Custom'}
+              Custom
             </Button>
           </div>
         </div>
@@ -96,6 +96,23 @@ export function PromptManager({
       <div className="p-4">
         {isCreating && (
           <div className="mb-4 p-4 border rounded-lg bg-muted/30 space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Create Custom Prompt</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsCreating(false);
+                  setNewPromptName('');
+                  setNewPromptContent('');
+                }}
+                disabled={disabled}
+                className="h-7 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Cancel
+              </Button>
+            </div>
             <Input
               value={newPromptName}
               onChange={(e) => setNewPromptName(e.target.value)}
