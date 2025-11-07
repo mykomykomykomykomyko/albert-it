@@ -18,7 +18,9 @@
     "marketplace": "Marché",
     "downloadAll": "Tout télécharger",
     "importAgents": "Importer des agents",
-    "exportAll": "Tout exporter"
+    "exportAll": "Tout exporter",
+    "statistics": "Statistiques",
+    "totalAgents": "Total des agents"
   },
   "form": {
     "name": "Nom de l'agent",

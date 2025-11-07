@@ -601,11 +601,11 @@ const Agents = () => {
             </div>
           </PageSidebarSection>
 
-          <PageSidebarSection title="Statistics">
+          <PageSidebarSection title={t('sidebar.statistics')}>
             <Card>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">{agents.length}</div>
-                <div className="text-sm text-muted-foreground">Total Agents</div>
+                <div className="text-sm text-muted-foreground">{t('sidebar.totalAgents')}</div>
               </CardContent>
             </Card>
           </PageSidebarSection>

@@ -18,7 +18,9 @@
     "marketplace": "Marketplace",
     "downloadAll": "Download All",
     "importAgents": "Import Agents",
-    "exportAll": "Export All"
+    "exportAll": "Export All",
+    "statistics": "Statistics",
+    "totalAgents": "Total Agents"
   },
   "form": {
     "name": "Agent Name",
