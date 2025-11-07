@@ -22,6 +22,7 @@ const Auth = () => {
   const [resetEmail, setResetEmail] = useState("");
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -61,6 +62,28 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate access code first
+      if (!accessCode.trim()) {
+        toast.error("Access code is required");
+        setLoading(false);
+        return;
+      }
+
+      const { data: isValid, error: validationError } = await supabase.rpc('validate_access_code', {
+        code_input: accessCode.trim().toUpperCase()
+      });
+
+      if (validationError) {
+        throw new Error("Failed to validate access code");
+      }
+
+      if (!isValid) {
+        toast.error("Invalid or expired access code. Please contact Alberta AI Academy.");
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with signup
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -74,10 +97,16 @@ const Auth = () => {
 
       if (error) throw error;
 
+      // Increment the usage count for the access code
+      await supabase.rpc('increment_access_code_usage', {
+        code_input: accessCode.trim().toUpperCase()
+      });
+
       toast.success("Account created successfully! You can now sign in.");
       setEmail("");
       setPassword("");
       setFullName("");
+      setAccessCode("");
     } catch (error: any) {
       toast.error(error.message || "An error occurred during sign up");
     } finally {
@@ -298,6 +327,24 @@ const Auth = () => {
                         )}
                       </Button>
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="access-code" className="text-foreground">
+                      Access Code <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="access-code"
+                      type="text"
+                      placeholder="Enter your access code"
+                      value={accessCode}
+                      onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                      required
+                      className="bg-background text-foreground border-input"
+                      maxLength={20}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Access code is required for Alberta AI Academy participants
+                    </p>
                   </div>
                   <Alert className="bg-muted/50 border-border">
                     <Info className="h-4 w-4" />

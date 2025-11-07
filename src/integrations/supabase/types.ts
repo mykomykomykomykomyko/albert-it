@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+        }
+        Relationships: []
+      }
       agent_shares: {
         Row: {
           agent_id: string | null
@@ -964,6 +997,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_access_code_usage: {
+        Args: { code_input: string }
+        Returns: undefined
+      }
+      validate_access_code: { Args: { code_input: string }; Returns: boolean }
     }
     Enums: {
       agent_type: "Text" | "Voice" | "Image" | "Audio" | "Multimodal"
