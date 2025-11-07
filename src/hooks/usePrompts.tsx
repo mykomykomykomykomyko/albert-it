@@ -290,6 +290,52 @@ export const usePrompts = () => {
     }
   };
 
+  const copyToPersonalLibrary = async (marketplacePrompt: Prompt): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
+      // Check if user already has this prompt
+      const existingPrompt = prompts.find(
+        p => p.user_id === user.id && 
+        p.name === marketplacePrompt.name && 
+        p.prompt_text === marketplacePrompt.prompt_text
+      );
+
+      if (existingPrompt) {
+        toast.error('You already have this prompt in your library');
+        return false;
+      }
+
+      // Create a copy in personal library
+      const { data, error } = await supabase
+        .from('prompts')
+        .insert({
+          user_id: user.id,
+          name: marketplacePrompt.name,
+          description: marketplacePrompt.description,
+          prompt_text: marketplacePrompt.prompt_text,
+          category: marketplacePrompt.category,
+          tags: marketplacePrompt.tags,
+          is_public: false,
+          is_template: false,
+          is_marketplace: false,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setPrompts(prev => [data, ...prev]);
+      toast.success('Added to your personal library');
+      return true;
+    } catch (error) {
+      console.error('Error copying to personal library:', error);
+      toast.error('Failed to add to library');
+      return false;
+    }
+  };
+
   useEffect(() => {
     checkAdminStatus();
     loadPrompts();
@@ -307,6 +353,7 @@ export const usePrompts = () => {
     publishToMarketplace,
     unpublishFromMarketplace,
     loadMarketplacePrompts,
+    copyToPersonalLibrary,
     refreshPrompts: loadPrompts,
   };
 };

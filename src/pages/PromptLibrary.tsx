@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Trash2, Edit, Play, Copy, Search, FileText, Share2, Upload, Store } from 'lucide-react';
+import { Plus, Trash2, Edit, Play, Copy, Search, FileText, Share2, Upload, Store, Download } from 'lucide-react';
 import { usePrompts, Prompt } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,7 +29,8 @@ export default function PromptLibrary() {
     sharePrompt,
     publishToMarketplace,
     unpublishFromMarketplace,
-    loadMarketplacePrompts
+    loadMarketplacePrompts,
+    copyToPersonalLibrary
   } = usePrompts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -362,7 +363,7 @@ export default function PromptLibrary() {
                 <div className="flex items-start justify-between mb-2">
                   <CardTitle>{selectedPromptData.name}</CardTitle>
                   <div className="flex gap-1">
-                    {activeTab === 'personal' && (
+                    {activeTab === 'personal' ? (
                       <>
                         <Button
                           variant="ghost"
@@ -397,6 +398,16 @@ export default function PromptLibrary() {
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </>
+                    ) : (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => copyToPersonalLibrary(selectedPromptData)}
+                        title="Add to your personal library"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Add to Library
+                      </Button>
                     )}
                   </div>
                 </div>
