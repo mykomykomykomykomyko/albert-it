@@ -74,7 +74,7 @@ export const useWorkflows = () => {
     }
   };
 
-  const updateWorkflow = async (id: string, updates: Partial<Workflow>): Promise<boolean> => {
+  const updateWorkflow = async (id: string, updates: Partial<Workflow>, showToast = true): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('workflows')
@@ -86,11 +86,17 @@ export const useWorkflows = () => {
       setWorkflows(prev => prev.map(wf =>
         wf.id === id ? { ...wf, ...updates } : wf
       ));
-      toast.success('Workflow updated successfully');
+      
+      // Only show toast if explicitly requested (for manual user actions)
+      if (showToast) {
+        toast.success('Workflow updated successfully');
+      }
       return true;
     } catch (error) {
       console.error('Error updating workflow:', error);
-      toast.error('Failed to update workflow');
+      if (showToast) {
+        toast.error('Failed to update workflow');
+      }
       return false;
     }
   };
@@ -141,8 +147,8 @@ export const useWorkflows = () => {
 
       if (error) throw error;
 
-      // Update workflow visibility
-      await updateWorkflow(workflowId, { visibility: 'shared' });
+      // Update workflow visibility (without showing toast to avoid spam)
+      await updateWorkflow(workflowId, { visibility: 'shared' }, false);
 
       toast.success('Workflow shared successfully');
       return true;
