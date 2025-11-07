@@ -1,0 +1,48 @@
+{
+  "title": "AI Agents",
+  "subtitle": "Create and manage custom AI agents for specialized tasks",
+  "createAgent": "Create Agent",
+  "searchPlaceholder": "Search agents...",
+  "noAgents": "No agents yet",
+  "noAgentsDesc": "Create your first agent to get started",
+  "myAgents": "My Agents",
+  "allAgents": "All Agents",
+  "form": {
+    "name": "Agent Name",
+    "description": "Description",
+    "systemPrompt": "System Prompt",
+    "category": "Category",
+    "tags": "Tags",
+    "profilePicture": "Profile Picture",
+    "tools": "Available Tools",
+    "modelSelection": "AI Model",
+    "cancel": "Cancel",
+    "save": "Save Agent",
+    "update": "Update Agent"
+  },
+  "categories": {
+    "general": "General",
+    "research": "Research",
+    "writing": "Writing",
+    "coding": "Coding",
+    "analysis": "Analysis",
+    "creative": "Creative"
+  },
+  "actions": {
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "share": "Share",
+    "export": "Export"
+  },
+  "marketplace": {
+    "title": "Agent Marketplace",
+    "subtitle": "Discover and use community-created agents",
+    "featured": "Featured Agents",
+    "trending": "Trending",
+    "new": "New Arrivals",
+    "install": "Install",
+    "installed": "Installed",
+    "preview": "Preview"
+  }
+}

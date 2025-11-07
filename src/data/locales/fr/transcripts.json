@@ -1,0 +1,38 @@
+{
+  "title": "Transcriptions de réunions",
+  "subtitle": "Analysez et gérez les transcriptions de réunions",
+  "uploadTranscript": "Télécharger une transcription",
+  "newTranscript": "Nouvelle transcription",
+  "searchPlaceholder": "Rechercher des transcriptions...",
+  "noTranscripts": "Aucune transcription pour le moment",
+  "noTranscriptsDesc": "Téléchargez ou créez votre première transcription pour commencer",
+  "list": {
+    "date": "Date",
+    "duration": "Durée",
+    "participants": "Participants",
+    "actions": "Actions"
+  },
+  "actions": {
+    "view": "Voir",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "download": "Télécharger",
+    "share": "Partager",
+    "analyze": "Analyser"
+  },
+  "analysis": {
+    "title": "Analyse de la transcription",
+    "summary": "Résumé",
+    "keyPoints": "Points clés",
+    "actionItems": "Éléments d'action",
+    "sentiment": "Analyse des sentiments",
+    "topics": "Sujets discutés",
+    "speakers": "Analyse des intervenants"
+  },
+  "upload": {
+    "title": "Télécharger une transcription",
+    "dragDrop": "Glissez-déposez le fichier de transcription ici",
+    "supported": "Formats pris en charge: TXT, VTT, SRT, PDF",
+    "processing": "Traitement de la transcription..."
+  }
+}

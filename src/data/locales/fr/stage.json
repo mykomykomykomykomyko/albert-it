@@ -1,0 +1,41 @@
+{
+  "title": "Flux de travail scéniques",
+  "subtitle": "Créez des flux de travail IA en plusieurs étapes visuellement",
+  "newWorkflow": "Nouveau flux",
+  "saveWorkflow": "Enregistrer le flux",
+  "loadWorkflow": "Charger le flux",
+  "runWorkflow": "Exécuter le flux",
+  "stopWorkflow": "Arrêter le flux",
+  "clearCanvas": "Effacer le canevas",
+  "nodes": {
+    "agent": "Nœud agent",
+    "function": "Nœud fonction",
+    "input": "Entrée",
+    "output": "Sortie",
+    "condition": "Condition",
+    "loop": "Boucle"
+  },
+  "sidebar": {
+    "agents": "Agents",
+    "functions": "Fonctions",
+    "properties": "Propriétés"
+  },
+  "properties": {
+    "nodeName": "Nom du nœud",
+    "nodeType": "Type de nœud",
+    "configuration": "Configuration",
+    "connections": "Connexions"
+  },
+  "output": {
+    "title": "Journal de sortie",
+    "clear": "Effacer",
+    "noOutput": "Aucune sortie pour le moment. Exécutez votre flux pour voir les résultats."
+  },
+  "messages": {
+    "workflowSaved": "Flux enregistré avec succès",
+    "workflowLoaded": "Flux chargé avec succès",
+    "executionStarted": "Exécution du flux démarrée",
+    "executionComplete": "Exécution du flux terminée",
+    "executionError": "Échec de l'exécution du flux"
+  }
+}

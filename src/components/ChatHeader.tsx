@@ -72,15 +72,15 @@ export function ChatHeader() {
   };
 
   const navItems = [
-    { name: 'Chat', path: '/chat', value: 'chat' },
-    { name: 'Agents', path: '/agents', value: 'agents' },
-    { name: 'Agent Marketplace', path: '/marketplace', value: 'marketplace' },
-    { name: 'Stage', path: '/stage', value: 'stage' },
-    { name: 'Canvas', path: '/canvas', value: 'canvas' },
-    { name: 'Workflow Marketplace', path: '/workflow-marketplace', value: 'workflow-marketplace' },
-    { name: 'Meeting Transcripts', path: '/transcripts', value: 'transcripts' },
-    { name: 'Image', path: '/image', value: 'image' },
-    { name: 'Voice', path: '/voice', value: 'voice' },
+    { name: t('navigation.chat'), path: '/chat', value: 'chat' },
+    { name: t('navigation.agents'), path: '/agents', value: 'agents' },
+    { name: t('navigation.marketplace'), path: '/marketplace', value: 'marketplace' },
+    { name: t('navigation.stage'), path: '/stage', value: 'stage' },
+    { name: t('navigation.canvas'), path: '/canvas', value: 'canvas' },
+    { name: t('navigation.workflowMarketplace'), path: '/workflow-marketplace', value: 'workflow-marketplace' },
+    { name: t('navigation.transcripts'), path: '/transcripts', value: 'transcripts' },
+    { name: t('navigation.imageAnalysis'), path: '/image', value: 'image' },
+    { name: t('navigation.voiceAnalysis'), path: '/voice', value: 'voice' },
   ];
 
   const handleNavClick = (path: string) => {

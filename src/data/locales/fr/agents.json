@@ -1,0 +1,48 @@
+{
+  "title": "Agents IA",
+  "subtitle": "Créez et gérez des agents IA personnalisés pour des tâches spécialisées",
+  "createAgent": "Créer un agent",
+  "searchPlaceholder": "Rechercher des agents...",
+  "noAgents": "Aucun agent pour le moment",
+  "noAgentsDesc": "Créez votre premier agent pour commencer",
+  "myAgents": "Mes agents",
+  "allAgents": "Tous les agents",
+  "form": {
+    "name": "Nom de l'agent",
+    "description": "Description",
+    "systemPrompt": "Instruction système",
+    "category": "Catégorie",
+    "tags": "Étiquettes",
+    "profilePicture": "Photo de profil",
+    "tools": "Outils disponibles",
+    "modelSelection": "Modèle IA",
+    "cancel": "Annuler",
+    "save": "Enregistrer l'agent",
+    "update": "Mettre à jour l'agent"
+  },
+  "categories": {
+    "general": "Général",
+    "research": "Recherche",
+    "writing": "Rédaction",
+    "coding": "Programmation",
+    "analysis": "Analyse",
+    "creative": "Créatif"
+  },
+  "actions": {
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "share": "Partager",
+    "export": "Exporter"
+  },
+  "marketplace": {
+    "title": "Marché des agents",
+    "subtitle": "Découvrez et utilisez des agents créés par la communauté",
+    "featured": "Agents en vedette",
+    "trending": "Tendances",
+    "new": "Nouveautés",
+    "install": "Installer",
+    "installed": "Installé",
+    "preview": "Aperçu"
+  }
+}

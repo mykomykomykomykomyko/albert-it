@@ -1,0 +1,33 @@
+{
+  "title": "Analyse d'images",
+  "subtitle": "Téléchargez et analysez des images avec l'IA",
+  "uploadImage": "Télécharger une image",
+  "uploadPDF": "Télécharger un PDF",
+  "dragDrop": "Glissez-déposez des images ici",
+  "or": "ou",
+  "browse": "Parcourir les fichiers",
+  "analyzing": "Analyse en cours...",
+  "analyze": "Analyser",
+  "prompt": {
+    "placeholder": "Posez une question sur l'image ou décrivez ce que vous souhaitez analyser...",
+    "examples": "Exemples d'invites",
+    "extractText": "Extraire tout le texte de cette image",
+    "detectObjects": "Détecter et lister tous les objets dans cette image",
+    "describe": "Décrire cette image en détail",
+    "compare": "Comparer ces images et mettre en évidence les différences"
+  },
+  "results": {
+    "title": "Résultats de l'analyse",
+    "noResults": "Aucun résultat pour le moment. Téléchargez une image et analysez-la.",
+    "confidence": "Confiance",
+    "detectedObjects": "Objets détectés",
+    "extractedText": "Texte extrait",
+    "download": "Télécharger les résultats"
+  },
+  "gallery": {
+    "title": "Galerie d'images",
+    "empty": "Aucune image téléchargée pour le moment",
+    "selected": "{{count}} sélectionné(s)",
+    "clearSelection": "Effacer la sélection"
+  }
+}

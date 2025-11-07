@@ -23,7 +23,7 @@ export const TranslationManager = () => {
     try {
       // Get current translations from i18n
       const languages = ['en', 'fr'];
-      const namespaces = ['common', 'landing'];
+      const namespaces = ['common', 'landing', 'auth', 'chat', 'agents', 'stage', 'image', 'voice', 'transcripts'];
       
       const translations: TranslationFile[] = [];
       

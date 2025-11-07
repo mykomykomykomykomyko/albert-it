@@ -1,0 +1,33 @@
+{
+  "title": "Image Analysis",
+  "subtitle": "Upload and analyze images with AI",
+  "uploadImage": "Upload Image",
+  "uploadPDF": "Upload PDF",
+  "dragDrop": "Drag and drop images here",
+  "or": "or",
+  "browse": "Browse files",
+  "analyzing": "Analyzing...",
+  "analyze": "Analyze",
+  "prompt": {
+    "placeholder": "Ask a question about the image or describe what you want to analyze...",
+    "examples": "Example prompts",
+    "extractText": "Extract all text from this image",
+    "detectObjects": "Detect and list all objects in this image",
+    "describe": "Describe this image in detail",
+    "compare": "Compare these images and highlight differences"
+  },
+  "results": {
+    "title": "Analysis Results",
+    "noResults": "No results yet. Upload an image and analyze it.",
+    "confidence": "Confidence",
+    "detectedObjects": "Detected Objects",
+    "extractedText": "Extracted Text",
+    "download": "Download Results"
+  },
+  "gallery": {
+    "title": "Image Gallery",
+    "empty": "No images uploaded yet",
+    "selected": "{{count}} selected",
+    "clearSelection": "Clear selection"
+  }
+}

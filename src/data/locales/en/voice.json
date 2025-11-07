@@ -1,0 +1,47 @@
+{
+  "title": "Voice Processing",
+  "subtitle": "Convert speech to text and text to speech",
+  "tabs": {
+    "speechToText": "Speech to Text",
+    "textToSpeech": "Text to Speech"
+  },
+  "speechToText": {
+    "title": "Speech to Text",
+    "uploadAudio": "Upload Audio",
+    "recordAudio": "Record Audio",
+    "recording": "Recording...",
+    "stopRecording": "Stop Recording",
+    "startRecording": "Start Recording",
+    "transcribing": "Transcribing...",
+    "transcribe": "Transcribe",
+    "results": "Transcription Results",
+    "noResults": "No transcription yet. Upload or record audio to transcribe.",
+    "copyText": "Copy Text",
+    "downloadText": "Download Text"
+  },
+  "textToSpeech": {
+    "title": "Text to Speech",
+    "inputPlaceholder": "Enter text to convert to speech...",
+    "selectVoice": "Select Voice",
+    "selectModel": "Select Model",
+    "generate": "Generate Speech",
+    "generating": "Generating...",
+    "play": "Play",
+    "pause": "Pause",
+    "download": "Download Audio",
+    "voices": {
+      "alloy": "Alloy",
+      "echo": "Echo",
+      "fable": "Fable",
+      "onyx": "Onyx",
+      "nova": "Nova",
+      "shimmer": "Shimmer"
+    }
+  },
+  "messages": {
+    "uploadSuccess": "File uploaded successfully",
+    "transcriptionComplete": "Transcription complete",
+    "generationComplete": "Speech generated successfully",
+    "error": "An error occurred. Please try again."
+  }
+}

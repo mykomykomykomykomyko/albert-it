@@ -1,0 +1,41 @@
+{
+  "title": "Stage Workflows",
+  "subtitle": "Build multi-step AI workflows visually",
+  "newWorkflow": "New Workflow",
+  "saveWorkflow": "Save Workflow",
+  "loadWorkflow": "Load Workflow",
+  "runWorkflow": "Run Workflow",
+  "stopWorkflow": "Stop Workflow",
+  "clearCanvas": "Clear Canvas",
+  "nodes": {
+    "agent": "Agent Node",
+    "function": "Function Node",
+    "input": "Input",
+    "output": "Output",
+    "condition": "Condition",
+    "loop": "Loop"
+  },
+  "sidebar": {
+    "agents": "Agents",
+    "functions": "Functions",
+    "properties": "Properties"
+  },
+  "properties": {
+    "nodeName": "Node Name",
+    "nodeType": "Node Type",
+    "configuration": "Configuration",
+    "connections": "Connections"
+  },
+  "output": {
+    "title": "Output Log",
+    "clear": "Clear",
+    "noOutput": "No output yet. Run your workflow to see results."
+  },
+  "messages": {
+    "workflowSaved": "Workflow saved successfully",
+    "workflowLoaded": "Workflow loaded successfully",
+    "executionStarted": "Workflow execution started",
+    "executionComplete": "Workflow execution complete",
+    "executionError": "Workflow execution failed"
+  }
+}

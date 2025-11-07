@@ -7,10 +7,20 @@ import enCommon from '@/data/locales/en/common.json';
 import enLanding from '@/data/locales/en/landing.json';
 import enAuth from '@/data/locales/en/auth.json';
 import enChat from '@/data/locales/en/chat.json';
+import enAgents from '@/data/locales/en/agents.json';
+import enStage from '@/data/locales/en/stage.json';
+import enImage from '@/data/locales/en/image.json';
+import enVoice from '@/data/locales/en/voice.json';
+import enTranscripts from '@/data/locales/en/transcripts.json';
 import frCommon from '@/data/locales/fr/common.json';
 import frLanding from '@/data/locales/fr/landing.json';
 import frAuth from '@/data/locales/fr/auth.json';
 import frChat from '@/data/locales/fr/chat.json';
+import frAgents from '@/data/locales/fr/agents.json';
+import frStage from '@/data/locales/fr/stage.json';
+import frImage from '@/data/locales/fr/image.json';
+import frVoice from '@/data/locales/fr/voice.json';
+import frTranscripts from '@/data/locales/fr/transcripts.json';
 
 // Define resources
 const resources = {
@@ -19,12 +29,22 @@ const resources = {
     landing: enLanding,
     auth: enAuth,
     chat: enChat,
+    agents: enAgents,
+    stage: enStage,
+    image: enImage,
+    voice: enVoice,
+    transcripts: enTranscripts,
   },
   fr: {
     common: frCommon,
     landing: frLanding,
     auth: frAuth,
     chat: frChat,
+    agents: frAgents,
+    stage: frStage,
+    image: frImage,
+    voice: frVoice,
+    transcripts: frTranscripts,
   },
 };
 
@@ -35,7 +55,7 @@ i18n
     resources,
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'landing', 'auth', 'chat'],
+    ns: ['common', 'landing', 'auth', 'chat', 'agents', 'stage', 'image', 'voice', 'transcripts'],
     
     interpolation: {
       escapeValue: false, // React already escapes values

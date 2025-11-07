@@ -1,0 +1,38 @@
+{
+  "title": "Meeting Transcripts",
+  "subtitle": "Analyze and manage meeting transcriptions",
+  "uploadTranscript": "Upload Transcript",
+  "newTranscript": "New Transcript",
+  "searchPlaceholder": "Search transcripts...",
+  "noTranscripts": "No transcripts yet",
+  "noTranscriptsDesc": "Upload or create your first transcript to get started",
+  "list": {
+    "date": "Date",
+    "duration": "Duration",
+    "participants": "Participants",
+    "actions": "Actions"
+  },
+  "actions": {
+    "view": "View",
+    "edit": "Edit",
+    "delete": "Delete",
+    "download": "Download",
+    "share": "Share",
+    "analyze": "Analyze"
+  },
+  "analysis": {
+    "title": "Transcript Analysis",
+    "summary": "Summary",
+    "keyPoints": "Key Points",
+    "actionItems": "Action Items",
+    "sentiment": "Sentiment Analysis",
+    "topics": "Topics Discussed",
+    "speakers": "Speaker Analysis"
+  },
+  "upload": {
+    "title": "Upload Transcript",
+    "dragDrop": "Drag and drop transcript file here",
+    "supported": "Supported formats: TXT, VTT, SRT, PDF",
+    "processing": "Processing transcript..."
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "title": "Traitement vocal",
+  "subtitle": "Convertir la parole en texte et le texte en parole",
+  "tabs": {
+    "speechToText": "Parole vers texte",
+    "textToSpeech": "Texte vers parole"
+  },
+  "speechToText": {
+    "title": "Parole vers texte",
+    "uploadAudio": "Télécharger de l'audio",
+    "recordAudio": "Enregistrer de l'audio",
+    "recording": "Enregistrement en cours...",
+    "stopRecording": "Arrêter l'enregistrement",
+    "startRecording": "Démarrer l'enregistrement",
+    "transcribing": "Transcription en cours...",
+    "transcribe": "Transcrire",
+    "results": "Résultats de la transcription",
+    "noResults": "Aucune transcription pour le moment. Téléchargez ou enregistrez de l'audio pour transcrire.",
+    "copyText": "Copier le texte",
+    "downloadText": "Télécharger le texte"
+  },
+  "textToSpeech": {
+    "title": "Texte vers parole",
+    "inputPlaceholder": "Entrez le texte à convertir en parole...",
+    "selectVoice": "Sélectionner une voix",
+    "selectModel": "Sélectionner un modèle",
+    "generate": "Générer la parole",
+    "generating": "Génération en cours...",
+    "play": "Lire",
+    "pause": "Pause",
+    "download": "Télécharger l'audio",
+    "voices": {
+      "alloy": "Alloy",
+      "echo": "Echo",
+      "fable": "Fable",
+      "onyx": "Onyx",
+      "nova": "Nova",
+      "shimmer": "Shimmer"
+    }
+  },
+  "messages": {
+    "uploadSuccess": "Fichier téléchargé avec succès",
+    "transcriptionComplete": "Transcription terminée",
+    "generationComplete": "Parole générée avec succès",
+    "error": "Une erreur s'est produite. Veuillez réessayer."
+  }
+}

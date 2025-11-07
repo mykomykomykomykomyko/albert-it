@@ -7,9 +7,11 @@ import { TextToSpeechTabContent } from "./TextToSpeechTab";
 import { Voice, Model } from "./VoiceSidebar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
 
 const VoiceProcessor = () => {
   const { toast } = useToast();
+  const { t } = useTranslation('voice');
   const [activeTab, setActiveTab] = useState<"speech-to-text" | "text-to-speech">(() => {
     const saved = localStorage.getItem('voice_activeTab');
     return (saved as "speech-to-text" | "text-to-speech") || "speech-to-text";
@@ -143,14 +145,14 @@ const VoiceProcessor = () => {
                 className="flex items-center gap-3 py-4 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-smooth"
               >
                 <Mic className="w-5 h-5" />
-                <span className="font-medium">Speech-to-Text</span>
+                <span className="font-medium">{t('tabs.speechToText')}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="text-to-speech"
                 className="flex items-center gap-3 py-4 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/5 transition-smooth"
               >
                 <Volume2 className="w-5 h-5" />
-                <span className="font-medium">Text-to-Speech</span>
+                <span className="font-medium">{t('tabs.textToSpeech')}</span>
               </TabsTrigger>
             </TabsList>
           </div>
