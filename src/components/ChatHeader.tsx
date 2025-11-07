@@ -248,16 +248,6 @@ export function ChatHeader() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/files')}
-            title="File Manager"
-            aria-label="File Manager"
-            className="hover:bg-accent text-foreground"
-          >
-            <FolderOpen className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
             onClick={openDocs}
             title="Documentation & Training"
             aria-label="Documentation & Training"
@@ -397,14 +387,6 @@ export function ChatHeader() {
               >
                 <Layers className="h-4 w-4 mr-2" />
                 Framework Library
-              </Button>
-              <Button
-                variant="ghost"
-                className="justify-start"
-                onClick={() => handleNavClick('/files')}
-              >
-                <FolderOpen className="h-4 w-4 mr-2" />
-                File Manager
               </Button>
               <Button
                 variant="ghost"

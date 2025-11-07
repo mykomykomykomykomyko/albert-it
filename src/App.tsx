@@ -107,7 +107,6 @@ const App = () => (
             <Route path="/framework/*" element={<PersistentPages />} />
             <Route path="/workflow-marketplace/*" element={<PersistentPages />} />
             <Route path="/saved-work/*" element={<PersistentPages />} />
-            <Route path="/files/*" element={<PersistentPages />} />
             <Route path="/docs/*" element={<PersistentPages />} />
             
             {/* Catch-all route for 404 errors */}
