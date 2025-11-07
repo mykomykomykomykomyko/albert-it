@@ -178,7 +178,11 @@ export default function PromptLibrary() {
                       )}
                     </div>
                     {prompt.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                      <p className={`text-xs line-clamp-2 mt-1 ${
+                        selectedPrompt === prompt.id 
+                          ? "text-foreground/80" 
+                          : "text-muted-foreground"
+                      }`}>
                         {prompt.description}
                       </p>
                     )}

@@ -68,7 +68,11 @@ export default function Framework() {
                       {framework.name}
                     </h3>
                     {framework.description && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      <p className={`text-xs mt-1 line-clamp-2 ${
+                        selectedFramework === framework.id 
+                          ? "text-foreground/80" 
+                          : "text-muted-foreground"
+                      }`}>
                         {framework.description}
                       </p>
                     )}
