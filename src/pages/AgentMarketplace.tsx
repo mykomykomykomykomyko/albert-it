@@ -104,12 +104,20 @@ export default function AgentMarketplace() {
   });
 
   const handleCloneAgent = async (agent: Agent) => {
+    console.log('🔄 Attempting to clone agent:', agent.name, 'ID:', agent.id);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('❌ No user found when trying to clone agent');
         toast.error('Please sign in to clone agents');
         return;
       }
+
+      console.log('✅ User authenticated:', user.id);
+      console.log('📝 Creating agent with data:', {
+        name: agent.is_template ? agent.name : `${agent.name} (Copy)`,
+        type: agent.type,
+      });
 
       const newAgent = await createAgent({
         name: agent.is_template ? agent.name : `${agent.name} (Copy)`,
@@ -123,18 +131,31 @@ export default function AgentMarketplace() {
       });
 
       if (newAgent) {
-        // Increment usage count
-        await supabase
-          .from('agents')
-          .update({ usage_count: (agent.usage_count || 0) + 1 })
-          .eq('id', agent.id);
+        console.log('✅ Agent created successfully:', newAgent.id);
+        
+        // Only increment usage count for real agents (not fake template placeholders)
+        if (!agent.id.startsWith('template-')) {
+          console.log('📊 Incrementing usage count for agent:', agent.id);
+          const { error: updateError } = await supabase
+            .from('agents')
+            .update({ usage_count: (agent.usage_count || 0) + 1 })
+            .eq('id', agent.id);
+          
+          if (updateError) {
+            console.error('⚠️ Failed to increment usage count:', updateError);
+          }
+        }
 
         const actionText = agent.is_template ? 'added' : 'cloned';
         toast.success(`Agent ${actionText} successfully`);
+        console.log('🎉 Navigating to /agents');
         navigate('/agents');
+      } else {
+        console.error('❌ createAgent returned null');
+        toast.error('Failed to create agent');
       }
     } catch (error) {
-      console.error('Error cloning agent:', error);
+      console.error('❌ Error cloning agent:', error);
       toast.error('Failed to clone agent');
     }
   };
