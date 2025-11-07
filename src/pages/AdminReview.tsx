@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { Agent } from '@/hooks/useAgents';
 import { toast } from 'sonner';
+import { TranslationManager } from '@/components/admin/TranslationManager';
 
 export default function AdminReview() {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ export default function AdminReview() {
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
+  const [activeTab, setActiveTab] = useState('agents');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -137,73 +140,86 @@ export default function AdminReview() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Agents
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Agent Review</h1>
-          <p className="text-muted-foreground">Review and approve agents for the marketplace</p>
+          <h1 className="text-4xl font-bold mb-2">Admin Panel</h1>
+          <p className="text-muted-foreground">Manage agents and translations</p>
         </div>
 
-        {agents.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No agents pending review</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {agents.map((agent) => (
-              <Card key={agent.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between mb-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={agent.profile_picture_url} />
-                      <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <Badge variant="secondary">Pending</Badge>
-                  </div>
-                  <CardTitle className="line-clamp-1">{agent.name}</CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {agent.description || 'No description available'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {agent.category && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Category</p>
-                        <Badge variant="outline">{agent.category}</Badge>
-                      </div>
-                    )}
-                    {agent.metadata_tags && agent.metadata_tags.length > 0 && (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-1">Tags</p>
-                        <div className="flex flex-wrap gap-1">
-                          {agent.metadata_tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {agent.submitted_at && (
-                      <p className="text-xs text-muted-foreground">
-                        Submitted: {new Date(agent.submitted_at).toLocaleDateString()}
-                      </p>
-                    )}
-                    <div className="flex gap-2 pt-3">
-                      <Button
-                        onClick={() => setSelectedAgent(agent)}
-                        className="flex-1"
-                        variant="outline"
-                      >
-                        Review
-                      </Button>
-                    </div>
-                  </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="agents">Agent Review</TabsTrigger>
+            <TabsTrigger value="translations">Translation Management</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="agents">
+            {agents.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">No agents pending review</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {agents.map((agent) => (
+                  <Card key={agent.id} className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-3">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={agent.profile_picture_url} />
+                          <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <CardTitle className="line-clamp-1">{agent.name}</CardTitle>
+                      <CardDescription className="line-clamp-2">
+                        {agent.description || 'No description available'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {agent.category && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Category</p>
+                            <Badge variant="outline">{agent.category}</Badge>
+                          </div>
+                        )}
+                        {agent.metadata_tags && agent.metadata_tags.length > 0 && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Tags</p>
+                            <div className="flex flex-wrap gap-1">
+                              {agent.metadata_tags.slice(0, 3).map((tag) => (
+                                <Badge key={tag} variant="outline" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {agent.submitted_at && (
+                          <p className="text-xs text-muted-foreground">
+                            Submitted: {new Date(agent.submitted_at).toLocaleDateString()}
+                          </p>
+                        )}
+                        <div className="flex gap-2 pt-3">
+                          <Button
+                            onClick={() => setSelectedAgent(agent)}
+                            className="flex-1"
+                            variant="outline"
+                          >
+                            Review
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="translations">
+            <TranslationManager />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Dialog open={selectedAgent !== null} onOpenChange={() => setSelectedAgent(null)}>

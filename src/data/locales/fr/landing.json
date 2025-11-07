@@ -1,0 +1,45 @@
+{
+  "hero": {
+    "badge": "Toujours open source (licence MIT)",
+    "title": "Votre assistant IA du",
+    "titleHighlight": "Gouvernement de l'Alberta",
+    "subtitle": "Découvrez les capacités d'IA de nouvelle génération avec Albert. Gratuit, sécurisé et conçu spécifiquement pour les Albertains.",
+    "cta": "Commencer gratuitement",
+    "learnMore": "En savoir plus"
+  },
+  "features": {
+    "title": "Fonctionnalités puissantes pour tous les besoins",
+    "chat": {
+      "title": "Clavardage",
+      "description": "Engagez des conversations naturelles avec des modèles d'IA avancés. Obtenez des réponses instantanées, des idées créatives et des explications détaillées."
+    },
+    "agents": {
+      "title": "Agents",
+      "description": "Créez et déployez des agents IA spécialisés pour des tâches spécifiques. Automatisez les flux de travail et améliorez la productivité avec une intelligence personnalisée."
+    },
+    "stage": {
+      "title": "Flux de travail scéniques",
+      "description": "Concevez des flux de travail complexes en plusieurs étapes avec notre canevas visuel. Enchaînez agents et fonctions pour une automatisation puissante."
+    },
+    "imageAnalysis": {
+      "title": "Analyse d'images",
+      "description": "Téléchargez et analysez des images avec l'IA. Extrayez du texte, détectez des objets et obtenez des informations à partir de contenu visuel."
+    },
+    "voiceProcessing": {
+      "title": "Traitement vocal",
+      "description": "Convertissez la parole en texte et le texte en parole. Traitez des fichiers audio et transcrivez des réunions avec une grande précision."
+    },
+    "securePrivate": {
+      "title": "Sécurisé et privé",
+      "description": "Vos données restent protégées avec une sécurité de niveau entreprise. Conçu avec des principes axés sur la confidentialité pour le gouvernement de l'Alberta."
+    }
+  },
+  "cta": {
+    "title": "Prêt à commencer?",
+    "subtitle": "Créez votre compte gratuit dès aujourd'hui et découvrez l'avenir de l'assistance IA.",
+    "button": "Créer un compte gratuit"
+  },
+  "footer": {
+    "copyright": "© 2024 Gouvernement de l'Alberta. Tous droits réservés."
+  }
+}

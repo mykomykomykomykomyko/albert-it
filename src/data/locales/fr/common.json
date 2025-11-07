@@ -1,0 +1,60 @@
+{
+  "navigation": {
+    "chat": "Clavardage",
+    "agents": "Agents",
+    "stage": "Scène",
+    "canvas": "Canevas",
+    "imageAnalysis": "Analyse d'images",
+    "voiceAnalysis": "Analyse vocale",
+    "transcripts": "Transcriptions de réunions",
+    "marketplace": "Marché des agents",
+    "workflowMarketplace": "Marché des flux de travail",
+    "prompts": "Bibliothèque d'invites",
+    "framework": "Cadre",
+    "savedWork": "Travail enregistré",
+    "docs": "Documentation",
+    "home": "Accueil",
+    "libraries": "Bibliothèques"
+  },
+  "buttons": {
+    "signIn": "Se connecter",
+    "signOut": "Se déconnecter",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "getStarted": "Commencer gratuitement",
+    "learnMore": "En savoir plus",
+    "viewBackend": "Voir le backend"
+  },
+  "aria": {
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "switchTheme": "Passer en mode {{mode}}",
+    "userMenu": "Menu utilisateur",
+    "mainNavigation": "Navigation principale",
+    "openHelperAgent": "Ouvrir l'agent d'aide IA",
+    "sendFeedback": "Envoyer des commentaires",
+    "languageSelector": "Sélectionner la langue"
+  },
+  "theme": {
+    "light": "clair",
+    "dark": "sombre"
+  },
+  "language": {
+    "en": "English",
+    "fr": "Français",
+    "switchTo": "Passer à {{language}}"
+  },
+  "user": {
+    "profile": "Profil",
+    "settings": "Paramètres",
+    "accessibilityPreferences": "Préférences d'accessibilité"
+  },
+  "feedback": {
+    "title": "Commentaires",
+    "button": "Commentaires"
+  },
+  "helper": {
+    "title": "Assistant IA",
+    "button": "Assistant IA"
+  }
+}

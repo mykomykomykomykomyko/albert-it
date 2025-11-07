@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Brain, MessageSquare, Zap, Shield, Moon, Sun, Bot, Workflow, Image as ImageIcon, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "react-i18next";
+import { LanguageToggle } from "@/components/LanguageToggle";
 const Landing = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['landing', 'common']);
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   useEffect(() => {
     // Check if user is already logged in
@@ -41,11 +44,19 @@ const Landing = () => {
             <span className="text-lg sm:text-xl font-bold text-gradient">Albert</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} className="h-8 w-8 sm:h-10 sm:w-10">
+            <LanguageToggle />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme} 
+              title={t('common:aria.switchTheme', { mode: t(`common:theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
+              aria-label={t('common:aria.switchTheme', { mode: t(`common:theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
+              className="h-8 w-8 sm:h-10 sm:w-10"
+            >
               {theme === 'dark' ? <Sun className="h-4 w-4 sm:h-5 sm:w-5" /> : <Moon className="h-4 w-4 sm:h-5 sm:w-5" />}
             </Button>
             <Button onClick={() => navigate("/auth")} variant="outline" size="sm" className="text-xs sm:text-sm">
-              Sign In
+              {t('common:buttons.signIn')}
             </Button>
           </div>
         </div>
@@ -56,22 +67,21 @@ const Landing = () => {
           <div className="max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 border border-primary/20 mb-6 sm:mb-8">
               <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
-              <span className="text-xs sm:text-sm text-primary">Always Open Source (MIT License)</span>
+              <span className="text-xs sm:text-sm text-primary">{t('landing:hero.badge')}</span>
             </div>
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6">
-              Your AI Assistant from the{" "}
-              <span className="text-gradient">Government of Alberta</span>
+              {t('landing:hero.title')}{" "}
+              <span className="text-gradient">{t('landing:hero.titleHighlight')}</span>
             </h1>
             <p className="text-base sm:text-xl text-muted-foreground mb-8 sm:mb-12 max-w-2xl mx-auto">
-              Experience next-generation AI capabilities with Albert. Free, secure, and designed
-              specifically for Albertans.
+              {t('landing:hero.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Button size="lg" onClick={() => navigate("/auth")} className="glow-effect text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8 w-full sm:w-auto">
-                Get Started Free
+                {t('landing:hero.cta')}
               </Button>
               <Button size="lg" variant="outline" className="text-base sm:text-lg h-12 sm:h-14 px-6 sm:px-8 w-full sm:w-auto">
-                Learn More
+                {t('landing:hero.learnMore')}
               </Button>
             </div>
           </div>
@@ -79,17 +89,16 @@ const Landing = () => {
 
         <section className="container mx-auto px-4 py-12 sm:py-20">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12">
-            Powerful Features for Every Need
+            {t('landing:features.title')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
             <div className="bg-card backdrop-blur-sm border border-border rounded-2xl p-8 hover:shadow-glow transition-all">
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Chat</h3>
+              <h3 className="text-xl font-semibold mb-3">{t('landing:features.chat.title')}</h3>
               <p className="text-muted-foreground">
-                Engage in natural conversations with advanced AI models. Upload files, share images, 
-                and get instant, context-aware responses powered by Google's latest Gemini technology.
+                {t('landing:features.chat.description')}
               </p>
             </div>
 
@@ -97,10 +106,9 @@ const Landing = () => {
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                 <Bot className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Agents</h3>
+              <h3 className="text-xl font-semibold mb-3">{t('landing:features.agents.title')}</h3>
               <p className="text-muted-foreground">
-                Create and manage custom AI agents tailored to your specific needs. Define personalities, 
-                system prompts, and tools to build specialized assistants for any task.
+                {t('landing:features.agents.description')}
               </p>
             </div>
 
@@ -108,10 +116,9 @@ const Landing = () => {
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Workflow className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Stage Workflows</h3>
+              <h3 className="text-xl font-semibold mb-3">{t('landing:features.stage.title')}</h3>
               <p className="text-muted-foreground">
-                Build multi-stage AI workflows by connecting agents and functions. Automate complex 
-                processes, chain reasoning steps, and create sophisticated AI pipelines visually.
+                {t('landing:features.stage.description')}
               </p>
             </div>
 
@@ -119,10 +126,9 @@ const Landing = () => {
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                 <ImageIcon className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Image Analysis</h3>
+              <h3 className="text-xl font-semibold mb-3">{t('landing:features.imageAnalysis.title')}</h3>
               <p className="text-muted-foreground">
-                Upload images and PDFs for AI-powered visual analysis. Extract text, detect objects, 
-                analyze content, and get intelligent insights from visual data.
+                {t('landing:features.imageAnalysis.description')}
               </p>
             </div>
 
@@ -130,10 +136,9 @@ const Landing = () => {
               <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
                 <Mic className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Voice Processing</h3>
+              <h3 className="text-xl font-semibold mb-3">{t('landing:features.voiceProcessing.title')}</h3>
               <p className="text-muted-foreground">
-                Convert speech to text and text to speech with advanced voice models. Support for 
-                multiple languages, natural-sounding voices, and real-time transcription.
+                {t('landing:features.voiceProcessing.description')}
               </p>
             </div>
 
@@ -141,10 +146,9 @@ const Landing = () => {
               <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center mb-4">
                 <Shield className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Secure & Private</h3>
+              <h3 className="text-xl font-semibold mb-3">{t('landing:features.securePrivate.title')}</h3>
               <p className="text-muted-foreground">
-                Your data is encrypted and private. Built with security and compliance in mind, 
-                ensuring your conversations and information remain confidential.
+                {t('landing:features.securePrivate.description')}
               </p>
             </div>
           </div>
@@ -152,12 +156,12 @@ const Landing = () => {
 
         <section className="container mx-auto px-4 py-20 text-center">
           <div className="max-w-3xl mx-auto bg-primary/10 border border-primary/20 rounded-3xl p-12">
-            <h2 className="text-4xl font-bold mb-6">Ready to get started?</h2>
+            <h2 className="text-4xl font-bold mb-6">{t('landing:cta.title')}</h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Start using Albert to enhance your productivity.
+              {t('landing:cta.subtitle')}
             </p>
             <Button size="lg" onClick={() => navigate("/auth")} className="glow-effect text-lg h-14 px-8">
-              Create Your Free Account
+              {t('landing:cta.button')}
             </Button>
           </div>
         </section>
@@ -165,7 +169,7 @@ const Landing = () => {
 
       <footer className="border-t border-border mt-20 bg-card/30">
         <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>© 2025 Government of Alberta. All rights reserved.</p>
+          <p>{t('landing:footer.copyright')}</p>
         </div>
       </footer>
     </div>;

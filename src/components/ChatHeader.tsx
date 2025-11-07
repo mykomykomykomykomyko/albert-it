@@ -23,10 +23,13 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AccessibilityPreferences } from '@/components/AccessibilityPreferences';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import { LanguageToggle } from '@/components/LanguageToggle';
 
 export function ChatHeader() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('common');
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user } = useAuth();
@@ -256,12 +259,13 @@ export function ChatHeader() {
             <BookOpen className="h-5 w-5" />
           </Button>
           <AccessibilityPreferences />
+          <LanguageToggle />
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            title={t('aria.switchTheme', { mode: t(`theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
+            aria-label={t('aria.switchTheme', { mode: t(`theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
             className="hover:bg-accent text-foreground"
           >
             {theme === 'dark' ? (
@@ -307,11 +311,18 @@ export function ChatHeader() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
+                className="cursor-pointer flex items-center justify-between"
+              >
+                <span>{t('language.en')} / {t('language.fr')}</span>
+                <LanguageToggle variant="ghost" showIcon={false} showFullText={false} />
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
                 onClick={handleSignOut}
                 className="text-destructive focus:text-destructive cursor-pointer"
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Sign Out</span>
+                <span>{t('buttons.signOut')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -370,7 +381,7 @@ export function ChatHeader() {
                 onClick={() => handleNavClick('/')}
               >
                 <Home className="h-4 w-4 mr-2" />
-                Home
+                {t('navigation.home')}
               </Button>
               <Button
                 variant="ghost"
@@ -378,7 +389,7 @@ export function ChatHeader() {
                 onClick={() => handleNavClick('/prompts')}
               >
                 <Library className="h-4 w-4 mr-2" />
-                Prompt Library
+                {t('navigation.prompts')}
               </Button>
               <Button
                 variant="ghost"
@@ -386,7 +397,7 @@ export function ChatHeader() {
                 onClick={() => handleNavClick('/framework')}
               >
                 <Layers className="h-4 w-4 mr-2" />
-                Framework Library
+                {t('navigation.framework')}
               </Button>
               <Button
                 variant="ghost"
@@ -394,7 +405,7 @@ export function ChatHeader() {
                 onClick={openDocs}
               >
                 <BookOpen className="h-4 w-4 mr-2" />
-                Documentation
+                {t('navigation.docs')}
               </Button>
               <Button
                 variant="ghost"
@@ -407,15 +418,19 @@ export function ChatHeader() {
                 {theme === 'dark' ? (
                   <>
                     <Sun className="h-4 w-4 mr-2" />
-                    Light Mode
+                    {t('theme.light')}
                   </>
                 ) : (
                   <>
                     <Moon className="h-4 w-4 mr-2" />
-                    Dark Mode
+                    {t('theme.dark')}
                   </>
                 )}
               </Button>
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm">{t('language.en')} / {t('language.fr')}</span>
+                <LanguageToggle variant="ghost" showIcon={false} showFullText={false} />
+              </div>
               <Button
                 variant="ghost"
                 className="justify-start text-destructive hover:text-destructive"
@@ -425,7 +440,7 @@ export function ChatHeader() {
                 }}
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                {t('buttons.signOut')}
               </Button>
             </div>
           </SheetContent>

@@ -1,0 +1,45 @@
+{
+  "hero": {
+    "badge": "Always Open Source (MIT License)",
+    "title": "Your AI Assistant from the",
+    "titleHighlight": "Government of Alberta",
+    "subtitle": "Experience next-generation AI capabilities with Albert. Free, secure, and designed specifically for Albertans.",
+    "cta": "Get Started Free",
+    "learnMore": "Learn More"
+  },
+  "features": {
+    "title": "Powerful Features for Every Need",
+    "chat": {
+      "title": "Chat",
+      "description": "Engage in natural conversations with advanced AI models. Get instant answers, creative ideas, and detailed explanations."
+    },
+    "agents": {
+      "title": "Agents",
+      "description": "Create and deploy specialized AI agents for specific tasks. Automate workflows and enhance productivity with custom intelligence."
+    },
+    "stage": {
+      "title": "Stage Workflows",
+      "description": "Design complex multi-step workflows with our visual canvas. Chain agents and functions together for powerful automation."
+    },
+    "imageAnalysis": {
+      "title": "Image Analysis",
+      "description": "Upload and analyze images with AI. Extract text, detect objects, and gain insights from visual content."
+    },
+    "voiceProcessing": {
+      "title": "Voice Processing",
+      "description": "Convert speech to text and text to speech. Process audio files and transcribe meetings with high accuracy."
+    },
+    "securePrivate": {
+      "title": "Secure & Private",
+      "description": "Your data stays protected with enterprise-grade security. Built with privacy-first principles for Alberta's government."
+    }
+  },
+  "cta": {
+    "title": "Ready to get started?",
+    "subtitle": "Create your free account today and experience the future of AI assistance.",
+    "button": "Create Free Account"
+  },
+  "footer": {
+    "copyright": "© 2024 Government of Alberta. All rights reserved."
+  }
+}

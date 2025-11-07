@@ -1,0 +1,60 @@
+{
+  "navigation": {
+    "chat": "Chat",
+    "agents": "Agents",
+    "stage": "Stage",
+    "canvas": "Canvas",
+    "imageAnalysis": "Image Analysis",
+    "voiceAnalysis": "Voice Analysis",
+    "transcripts": "Meeting Transcripts",
+    "marketplace": "Agent Marketplace",
+    "workflowMarketplace": "Workflow Marketplace",
+    "prompts": "Prompt Library",
+    "framework": "Framework",
+    "savedWork": "Saved Work",
+    "docs": "Docs",
+    "home": "Home",
+    "libraries": "Libraries"
+  },
+  "buttons": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "save": "Save",
+    "cancel": "Cancel",
+    "getStarted": "Get Started Free",
+    "learnMore": "Learn More",
+    "viewBackend": "View Backend"
+  },
+  "aria": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "switchTheme": "Switch to {{mode}} mode",
+    "userMenu": "User menu",
+    "mainNavigation": "Main navigation",
+    "openHelperAgent": "Open AI Helper Agent",
+    "sendFeedback": "Send feedback",
+    "languageSelector": "Select language"
+  },
+  "theme": {
+    "light": "light",
+    "dark": "dark"
+  },
+  "language": {
+    "en": "English",
+    "fr": "Français",
+    "switchTo": "Switch to {{language}}"
+  },
+  "user": {
+    "profile": "Profile",
+    "settings": "Settings",
+    "accessibilityPreferences": "Accessibility Preferences"
+  },
+  "feedback": {
+    "title": "Feedback",
+    "button": "Feedback"
+  },
+  "helper": {
+    "title": "AI Helper",
+    "button": "AI Helper"
+  }
+}
