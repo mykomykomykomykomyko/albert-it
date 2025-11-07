@@ -26,6 +26,7 @@ const Auth = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [accessCode, setAccessCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -63,11 +64,12 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       // Validate access code first
       if (!accessCode.trim()) {
-        toast.error("Access code is required");
+        setError("Access code is required");
         setLoading(false);
         return;
       }
@@ -81,7 +83,7 @@ const Auth = () => {
       }
 
       if (!isValid) {
-        toast.error("Invalid or expired access code. Please contact Alberta AI Academy.");
+        setError("Invalid or expired access code. Please contact Alberta AI Academy.");
         setLoading(false);
         return;
       }
@@ -110,8 +112,9 @@ const Auth = () => {
       setPassword("");
       setFullName("");
       setAccessCode("");
+      setError(null);
     } catch (error: any) {
-      toast.error(error.message || "An error occurred during sign up");
+      setError(error.message || "An error occurred during sign up");
     } finally {
       setLoading(false);
     }
@@ -120,6 +123,7 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -130,7 +134,7 @@ const Auth = () => {
       if (error) throw error;
       toast.success("Signed in successfully!");
     } catch (error: any) {
-      toast.error(error.message || "An error occurred during sign in");
+      setError(error.message || "An error occurred during sign in");
     } finally {
       setLoading(false);
     }
@@ -195,6 +199,11 @@ const Auth = () => {
             <CardDescription className="text-muted-foreground">{t('auth:signIn.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted">
                 <TabsTrigger value="signin">{t('common:buttons.signIn')}</TabsTrigger>
