@@ -1088,10 +1088,10 @@ const Chat = () => {
               </div>
               
               <h2 className="text-4xl font-bold mb-3 bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text text-transparent">
-                Welcome to Albert
+                {t('chat:welcome.title')}
               </h2>
               <p className="text-muted-foreground mb-12 text-lg">
-                Your AI assistant from the Government of Alberta
+                {t('chat:welcome.subtitle')}
               </p>
               
               {/* Drag and drop hint */}
