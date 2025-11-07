@@ -1,0 +1,12 @@
+{
+  "placeholder": "Type your message...",
+  "send": "Send",
+  "newChat": "New Chat",
+  "conversations": "Conversations",
+  "noConversations": "No conversations yet",
+  "deleteConversation": "Delete conversation",
+  "shareConversation": "Share conversation",
+  "copyLink": "Copy link",
+  "thinking": "Thinking...",
+  "error": "An error occurred. Please try again."
+}

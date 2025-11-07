@@ -1,0 +1,12 @@
+{
+  "placeholder": "Tapez votre message...",
+  "send": "Envoyer",
+  "newChat": "Nouveau clavardage",
+  "conversations": "Conversations",
+  "noConversations": "Aucune conversation pour le moment",
+  "deleteConversation": "Supprimer la conversation",
+  "shareConversation": "Partager la conversation",
+  "copyLink": "Copier le lien",
+  "thinking": "Réflexion en cours...",
+  "error": "Une erreur s'est produite. Veuillez réessayer."
+}

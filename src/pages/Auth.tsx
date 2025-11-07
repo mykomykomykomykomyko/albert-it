@@ -10,9 +10,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Brain, Eye, EyeOff, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(['auth', 'common']);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -174,6 +177,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="absolute top-4 right-4">
+        <LanguageToggle />
+      </div>
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4 glow-effect">
@@ -185,20 +191,20 @@ const Auth = () => {
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Welcome</CardTitle>
-            <CardDescription className="text-muted-foreground">Sign in or create an account to continue</CardDescription>
+            <CardTitle className="text-foreground">{t('auth:signIn.title')}</CardTitle>
+            <CardDescription className="text-muted-foreground">{t('auth:signIn.subtitle')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted">
-                <TabsTrigger value="signin">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">{t('common:buttons.signIn')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth:signUp.button')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email" className="text-foreground">Email</Label>
+                    <Label htmlFor="signin-email" className="text-foreground">{t('auth:signIn.email')}</Label>
                     <Input
                       id="signin-email"
                       type="email"
@@ -210,7 +216,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-foreground">Password</Label>
+                    <Label htmlFor="signin-password" className="text-foreground">{t('auth:signIn.password')}</Label>
                     <div className="relative">
                       <Input
                         id="signin-password"
@@ -237,24 +243,24 @@ const Auth = () => {
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Signing in..." : "Sign In"}
+                    {loading ? "Signing in..." : t('auth:signIn.button')}
                   </Button>
                   <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                     <DialogTrigger asChild>
                       <Button type="button" variant="link" className="w-full text-sm text-muted-foreground hover:text-primary">
-                        Forgot Password?
+                        {t('auth:signIn.forgotPassword')}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="bg-card border-border">
                       <DialogHeader>
-                        <DialogTitle className="text-foreground">Reset Password</DialogTitle>
+                        <DialogTitle className="text-foreground">{t('auth:resetPassword.title')}</DialogTitle>
                         <DialogDescription className="text-muted-foreground">
-                          Enter your email address and we'll send you a 6-digit verification code.
+                          {t('auth:resetPassword.subtitle')}
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleResetPassword} className="space-y-4">
                         <div className="space-y-2">
-                          <Label htmlFor="reset-email" className="text-foreground">Email</Label>
+                          <Label htmlFor="reset-email" className="text-foreground">{t('auth:resetPassword.email')}</Label>
                           <Input
                             id="reset-email"
                             type="email"
@@ -266,7 +272,7 @@ const Auth = () => {
                           />
                         </div>
                         <Button type="submit" className="w-full" disabled={resetLoading}>
-                          {resetLoading ? "Sending..." : "Send Verification Code"}
+                          {resetLoading ? "Sending..." : t('auth:resetPassword.button')}
                         </Button>
                       </form>
                     </DialogContent>
@@ -289,7 +295,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-foreground">Email</Label>
+                    <Label htmlFor="signup-email" className="text-foreground">{t('auth:signUp.email')}</Label>
                     <Input
                       id="signup-email"
                       type="email"
@@ -301,7 +307,7 @@ const Auth = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-foreground">Password</Label>
+                    <Label htmlFor="signup-password" className="text-foreground">{t('auth:signUp.password')}</Label>
                     <div className="relative">
                       <Input
                         id="signup-password"
@@ -353,7 +359,7 @@ const Auth = () => {
                     </AlertDescription>
                   </Alert>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : "Create Account"}
+                    {loading ? "Creating account..." : t('auth:signUp.button')}
                   </Button>
                 </form>
               </TabsContent>
