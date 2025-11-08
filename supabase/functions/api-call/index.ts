@@ -40,6 +40,16 @@ function filterHeaders(headers: Record<string, string>): Record<string, string> 
   return filtered;
 }
 
+// Get standard request headers
+function getStandardHeaders(): Record<string, string> {
+  return {
+    'Accept': 'application/json, text/plain, */*',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'User-Agent': 'Albert-Server/1.0',
+  };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -54,7 +64,8 @@ serve(async (req) => {
 
     console.log(`Making ${method} request to:`, url);
 
-    // Filter headers to remove browser-specific ones
+    // Start with standard headers, then add filtered custom headers
+    const standardHeaders = getStandardHeaders();
     const filteredHeaders = filterHeaders(headers);
     
     console.log('Filtered headers:', Object.keys(filteredHeaders));
@@ -62,9 +73,10 @@ serve(async (req) => {
     const fetchOptions: RequestInit = {
       method,
       headers: {
-        'User-Agent': 'Albert-Server/1.0',
+        ...standardHeaders,
         ...filteredHeaders,
       },
+      redirect: 'follow',
     };
 
     if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
