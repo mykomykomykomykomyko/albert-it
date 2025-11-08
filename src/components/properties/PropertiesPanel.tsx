@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Plus, Settings, Play, Database, Download, Eye, Save, Upload, Loader2, Trash2 } from "lucide-react";
+import { X, Plus, Settings, Play, Database, Download, Eye, EyeOff, Save, Upload, Loader2, Trash2 } from "lucide-react";
 import { ToolOutputDisplay } from "@/components/chat/ToolOutputDisplay";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
@@ -84,6 +84,7 @@ export const PropertiesPanel = ({
   const [isViewContentOpen, setIsViewContentOpen] = useState(false);
   const [editedContent, setEditedContent] = useState("");
   const [outputTab, setOutputTab] = useState("edit");
+  const [showBearerToken, setShowBearerToken] = useState(false);
 
   // Use selectedNode if provided, otherwise fall back to selectedAgent
   const activeNode = selectedNode || selectedAgent;
@@ -480,6 +481,33 @@ export const PropertiesPanel = ({
                   }}
                   className="min-h-[120px] text-sm resize-y bg-background border-input focus-visible:ring-1 focus-visible:ring-ring"
                 />
+              ) : key === "bearerToken" ? (
+                <div className="relative">
+                  <Input
+                    id={key}
+                    type={showBearerToken ? "text" : "password"}
+                    placeholder={schema.placeholder}
+                    value={node.config[key] ?? schema.default ?? ""}
+                    onChange={(e) => {
+                      const baseConfig = node.config ?? {};
+                      updateNodeConfig({ ...baseConfig, [key]: e.target.value });
+                    }}
+                    className="h-9 text-sm bg-background border-input pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-9 w-9 px-0 hover:bg-transparent"
+                    onClick={() => setShowBearerToken(!showBearerToken)}
+                  >
+                    {showBearerToken ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
               ) : (
                 <Input
                   id={key}
