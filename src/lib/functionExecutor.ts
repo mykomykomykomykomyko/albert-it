@@ -800,9 +800,7 @@ export class FunctionExecutor {
       const bearerToken = node.config.bearerToken as string;
       const headersConfig = node.config.headers as string;
       
-      let headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
+      let headers: Record<string, string> = {};
 
       // Add Bearer token if provided
       if (bearerToken) {
@@ -819,28 +817,37 @@ export class FunctionExecutor {
         }
       }
 
-      const fetchOptions: RequestInit = {
-        method,
-        headers,
-      };
-
-      if (method !== "GET" && method !== "HEAD") {
-        fetchOptions.body = input;
-      }
-
-      const response = await fetch(url, fetchOptions);
-      const contentType = response.headers.get("content-type");
-      
-      let responseData;
-      if (contentType?.includes("application/json")) {
-        responseData = await response.json();
-        responseData = JSON.stringify(responseData, null, 2);
-      } else {
-        responseData = await response.text();
-      }
+      // Use the api-call edge function to avoid CORS issues
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/api-call`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          url,
+          method,
+          headers,
+          body: input,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`API call failed: ${response.status} ${response.statusText}\n${responseData}`);
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(errorData.error || `API call failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // The edge function returns { status, statusText, data }
+      if (result.status && result.status >= 400) {
+        throw new Error(`API returned ${result.status}: ${result.statusText}\n${JSON.stringify(result.data)}`);
+      }
+
+      // Format the response data
+      let responseData = result.data;
+      if (typeof responseData === 'object') {
+        responseData = JSON.stringify(responseData, null, 2);
       }
 
       return {
