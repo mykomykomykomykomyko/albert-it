@@ -5,6 +5,41 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Filter out browser-specific headers that trigger CORS
+function filterHeaders(headers: Record<string, string>): Record<string, string> {
+  const blockedHeaders = [
+    'origin',
+    'referer',
+    'host',
+    'cookie',
+    'connection',
+    'cache-control',
+    'pragma',
+    'sec-fetch-site',
+    'sec-fetch-mode',
+    'sec-fetch-dest',
+    'sec-ch-ua',
+    'sec-ch-ua-mobile',
+    'sec-ch-ua-platform',
+  ];
+
+  const filtered: Record<string, string> = {};
+  
+  for (const [key, value] of Object.entries(headers)) {
+    const lowerKey = key.toLowerCase();
+    
+    // Block specific headers and any Sec-* headers
+    if (blockedHeaders.includes(lowerKey) || lowerKey.startsWith('sec-')) {
+      continue;
+    }
+    
+    // Allow safe headers and custom API keys
+    filtered[key] = value;
+  }
+  
+  return filtered;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -19,11 +54,16 @@ serve(async (req) => {
 
     console.log(`Making ${method} request to:`, url);
 
+    // Filter headers to remove browser-specific ones
+    const filteredHeaders = filterHeaders(headers);
+    
+    console.log('Filtered headers:', Object.keys(filteredHeaders));
+
     const fetchOptions: RequestInit = {
       method,
       headers: {
-        'Content-Type': 'application/json',
-        ...headers,
+        'User-Agent': 'Albert-Server/1.0',
+        ...filteredHeaders,
       },
     };
 
