@@ -10,43 +10,39 @@
  * This ensures users always land on the correct page based on their auth status.
  */
 
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+
+const Landing = lazy(() => import('@/pages/Landing'));
 
 const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
     /**
-     * Check authentication status and redirect accordingly
+     * Check authentication status and redirect if logged in
      * 
-     * Uses Supabase auth to check if user has an active session.
-     * This runs once when the component mounts.
+     * Shows landing page immediately, only redirects if user is authenticated
      */
     const checkAuthAndRedirect = async () => {
-      // Get current session from Supabase
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
         // User is logged in -> go to chat
         navigate('/chat');
-      } else {
-        // User is not logged in -> show landing page
-        navigate('/landing');
       }
+      // If no session, stay on landing (already showing)
     };
 
     checkAuthAndRedirect();
   }, [navigate]);
 
-  // Show loading state while checking authentication
+  // Show landing page immediately
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    </div>
+    <Suspense fallback={null}>
+      <Landing />
+    </Suspense>
   );
 };
 
