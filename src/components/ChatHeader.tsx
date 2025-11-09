@@ -166,6 +166,16 @@ export function ChatHeader() {
               {t('navigation.agents')}
             </button>
             <button
+              onClick={() => navigate('/marketplace')}
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                location.pathname.startsWith('/marketplace')
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-foreground hover:bg-accent'
+              }`}
+            >
+              {t('navigation.marketplace')}
+            </button>
+            <button
               onClick={() => navigate('/stage')}
               className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'stage'
@@ -186,6 +196,26 @@ export function ChatHeader() {
               {t('navigation.canvas')}
             </button>
             <button
+              onClick={() => navigate('/workflow-marketplace')}
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                location.pathname.startsWith('/workflow-marketplace')
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-foreground hover:bg-accent'
+              }`}
+            >
+              {t('navigation.workflowMarketplace')}
+            </button>
+            <button
+              onClick={() => navigate('/transcripts')}
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
+                currentTab === 'transcripts'
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'text-foreground hover:bg-accent'
+              }`}
+            >
+              {t('navigation.transcripts')}
+            </button>
+            <button
               onClick={() => navigate('/image')}
               className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'image'
@@ -204,16 +234,6 @@ export function ChatHeader() {
               }`}
             >
               {t('navigation.voiceAnalysis')}
-            </button>
-            <button
-              onClick={() => navigate('/transcripts')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                currentTab === 'transcripts'
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              {t('navigation.transcripts')}
             </button>
           </div>
           
@@ -341,13 +361,13 @@ export function ChatHeader() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-64">
+          <SheetContent side="right" className="w-64 flex flex-col">
             <SheetHeader>
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
             
             {/* User Profile Section in Mobile */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary mt-6">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-secondary mt-6 flex-shrink-0">
               <Avatar className="h-10 w-10 border-2 border-primary">
                 <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
                   {user?.email?.charAt(0).toUpperCase() || 'U'}
@@ -363,7 +383,7 @@ export function ChatHeader() {
               </div>
             </div>
             
-            <div className="flex flex-col gap-2 mt-4">
+            <div className="flex flex-col gap-2 mt-4 overflow-y-auto flex-1">
               {navItems.map((item) => (
                 <Button
                   key={item.value}
