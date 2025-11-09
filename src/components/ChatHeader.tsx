@@ -100,8 +100,8 @@ export function ChatHeader() {
   };
 
   return (
-    <header className="flex-shrink-0 bg-card border-b border-border px-4 sm:px-6 py-3">
-      <div className="flex items-center justify-between gap-8 max-w-full min-w-0">
+    <header className="flex-shrink-0 bg-card border-b border-border px-3 sm:px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 sm:gap-4 max-w-full min-w-0 overflow-hidden">
         <div className="flex items-center gap-3 flex-shrink-0">
           <button
             onClick={() => navigate('/')}
@@ -143,11 +143,11 @@ export function ChatHeader() {
         </div>
         
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-2 ml-auto">
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-secondary flex-shrink-0">
+        <div className="hidden lg:flex items-center gap-1.5 ml-auto overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-0.5 p-0.5 rounded-lg bg-secondary flex-shrink-0">
             <button
               onClick={() => navigate('/chat')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'chat'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -157,7 +157,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/agents')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'agents'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -167,7 +167,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/stage')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'stage'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -177,7 +177,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/canvas')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'canvas'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -187,7 +187,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/image')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'image'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -197,7 +197,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/voice')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'voice'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -207,7 +207,7 @@ export function ChatHeader() {
             </button>
             <button
               onClick={() => navigate('/transcripts')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
                 currentTab === 'transcripts'
                   ? 'bg-primary text-primary-foreground' 
                   : 'text-foreground hover:bg-accent'
@@ -217,16 +217,16 @@ export function ChatHeader() {
             </button>
           </div>
           
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/')}
             title="Go to Home"
             aria-label="Go to Home"
-            className="hover:bg-accent text-foreground"
+            className="hover:bg-accent text-foreground h-8 w-8"
           >
-            <Home className="h-5 w-5" />
+            <Home className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -234,9 +234,9 @@ export function ChatHeader() {
             onClick={() => navigate('/prompts')}
             title="Prompt Library"
             aria-label="Prompt Library"
-            className="hover:bg-accent text-foreground"
+            className="hover:bg-accent text-foreground h-8 w-8"
           >
-            <Library className="h-5 w-5" />
+            <Library className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -244,9 +244,9 @@ export function ChatHeader() {
             onClick={() => navigate('/framework')}
             title="Framework Library"
             aria-label="Framework Library"
-            className="hover:bg-accent text-foreground"
+            className="hover:bg-accent text-foreground h-8 w-8"
           >
-            <Layers className="h-5 w-5" />
+            <Layers className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -254,9 +254,9 @@ export function ChatHeader() {
             onClick={openDocs}
             title="Documentation & Training"
             aria-label="Documentation & Training"
-            className="hover:bg-accent text-foreground"
+            className="hover:bg-accent text-foreground h-8 w-8"
           >
-            <BookOpen className="h-5 w-5" />
+            <BookOpen className="h-4 w-4" />
           </Button>
           <AccessibilityPreferences />
           <LanguageToggle />
@@ -266,12 +266,12 @@ export function ChatHeader() {
             onClick={toggleTheme}
             title={t('aria.switchTheme', { mode: t(`theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
             aria-label={t('aria.switchTheme', { mode: t(`theme.${theme === 'dark' ? 'light' : 'dark'}`) })}
-            className="hover:bg-accent text-foreground"
+            className="hover:bg-accent text-foreground h-8 w-8"
           >
             {theme === 'dark' ? (
-              <Sun className="h-5 w-5" />
+              <Sun className="h-4 w-4" />
             ) : (
-              <Moon className="h-5 w-5" />
+              <Moon className="h-4 w-4" />
             )}
           </Button>
           
@@ -280,22 +280,22 @@ export function ChatHeader() {
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="flex items-center gap-2 hover:bg-accent px-2"
+                className="flex items-center gap-1.5 hover:bg-accent px-1.5 h-8 min-w-0"
               >
-                <Avatar className="h-8 w-8 border-2 border-primary">
-                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold">
+                <Avatar className="h-7 w-7 border-2 border-primary flex-shrink-0">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-semibold text-xs">
                     {user?.email?.charAt(0).toUpperCase() || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="hidden xl:flex flex-col items-start min-w-0 max-w-[150px]">
-                  <span className="text-sm font-medium truncate w-full text-foreground">
+                <div className="hidden 2xl:flex flex-col items-start min-w-0 max-w-[120px]">
+                  <span className="text-xs font-medium truncate w-full text-foreground">
                     {user?.email?.split('@')[0] || 'User'}
                   </span>
-                  <span className="text-xs text-muted-foreground truncate w-full">
+                  <span className="text-[10px] text-muted-foreground truncate w-full">
                     {user?.email || 'No email'}
                   </span>
                 </div>
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-popover">
