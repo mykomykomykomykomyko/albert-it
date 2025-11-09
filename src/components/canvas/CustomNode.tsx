@@ -3,6 +3,7 @@ import { Handle, Position, NodeProps } from 'reactflow';
 import { Settings, Play, CheckCircle2, XCircle, Loader2, Sparkles, FileInput, FileOutput, GitMerge, Repeat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 export interface CustomNodeData {
   label: string;
@@ -18,6 +19,8 @@ export interface CustomNodeData {
 }
 
 export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) => {
+  const { t } = useTranslation('canvas');
+  
   const getIcon = () => {
     switch (data.nodeType) {
       case 'input':
@@ -125,7 +128,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
       {/* Node Body */}
       {data.output && (
         <div className="px-4 py-3 border-b bg-muted/10">
-          <div className="text-xs font-medium text-muted-foreground mb-1.5">Latest Output</div>
+          <div className="text-xs font-medium text-muted-foreground mb-1.5">{t('customNode.latestOutput')}</div>
           <div className="text-xs bg-background rounded-md p-2.5 max-h-24 overflow-y-auto overflow-x-hidden font-mono text-foreground border break-all whitespace-normal">
             {data.output.substring(0, 200)}
             {data.output.length > 200 && '...'}
@@ -150,7 +153,7 @@ export const CustomNode = memo(({ data, selected }: NodeProps<CustomNodeData>) =
             disabled={data.status === 'running'}
           >
             <Play className="h-3 w-3" />
-            Test
+            {t('customNode.test')}
           </Button>
         )}
       </div>

@@ -6,6 +6,7 @@ import { SaveCanvasDialog } from "@/components/canvas/SaveCanvasDialog";
 import { LoadCanvasDialog } from "@/components/canvas/LoadCanvasDialog";
 import { LoopConfigDialog } from "@/components/workflow/LoopConfigDialog";
 import { LoopMonitor } from "@/components/workflow/LoopMonitor";
+import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Node,
   Edge,
@@ -480,6 +481,7 @@ const TEMPLATES = {
 };
 
 const Canvas = () => {
+  const { t } = useTranslation('canvas');
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1498,8 +1500,8 @@ const Canvas = () => {
           <Card className="h-full m-4 mr-0 flex flex-col shadow-md">
             <div className="p-4 border-b bg-muted/20 flex items-center justify-between">
               <div>
-                <h3 className="font-semibold text-base">Add Nodes</h3>
-                <p className="text-xs text-muted-foreground mt-1">Click to add to canvas</p>
+                <h3 className="font-semibold text-base">{t('sidebar.addNodes')}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{t('sidebar.clickToAdd')}</p>
               </div>
               <Button
                 variant="ghost"
@@ -1726,9 +1728,9 @@ const Canvas = () => {
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <div className="text-center space-y-3 p-8 bg-card/80 backdrop-blur-sm rounded-lg border shadow-sm max-w-md">
                 <Sparkles className="h-12 w-12 mx-auto text-primary/50" />
-                <h3 className="text-lg font-semibold">Start Building Your Workflow</h3>
+                <h3 className="text-lg font-semibold">{t('sidebar.emptyState')}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Add nodes from the sidebar to create your automated workflow. Connect them to define the execution flow.
+                  {t('sidebar.emptyStateDescription')}
                 </p>
               </div>
             </div>

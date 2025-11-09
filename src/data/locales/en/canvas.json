@@ -83,5 +83,48 @@
     "executionFailed": "Workflow execution failed",
     "clearConfirm": "Are you sure you want to clear the canvas?",
     "deleteConfirm": "Are you sure you want to delete this workflow?"
+  },
+  "sidebar": {
+    "addNodes": "Add Nodes",
+    "clickToAdd": "Click to add to canvas",
+    "emptyState": "Start Building Your Workflow",
+    "emptyStateDescription": "Add nodes from the sidebar to create your automated workflow. Connect them to define the execution flow."
+  },
+  "nodeLibrary": {
+    "basicNodes": "Basic Nodes",
+    "inputNode": "Input Node",
+    "inputNodeDesc": "Start of your workflow",
+    "outputNode": "Output Node",
+    "outputNodeDesc": "Final result output",
+    "aiAgents": "AI Agents",
+    "agentNode": "Agent Node",
+    "agentNodeDesc": "AI-powered processing",
+    "utilities": "Utilities",
+    "joinNode": "Join Node",
+    "joinNodeDesc": "Merge multiple inputs",
+    "transformNode": "Transform Node",
+    "transformNodeDesc": "Process and modify data"
+  },
+  "customNode": {
+    "latestOutput": "Latest Output",
+    "test": "Test"
+  },
+  "saveDialog": {
+    "title": "Save Canvas",
+    "description": "Save your workflow to load it later",
+    "nameLabel": "Name *",
+    "namePlaceholder": "My Workflow",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "What does this canvas do?",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "saveButton": "Save Canvas"
+  },
+  "loadDialog": {
+    "title": "Load Canvas",
+    "noCanvases": "No saved canvases found",
+    "updated": "Updated:",
+    "load": "Load",
+    "deleteConfirm": "Are you sure you want to delete this canvas?"
   }
 }

@@ -83,5 +83,48 @@
     "executionFailed": "Échec de l'exécution du flux de travail",
     "clearConfirm": "Êtes-vous sûr de vouloir effacer le canevas?",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce flux de travail?"
+  },
+  "sidebar": {
+    "addNodes": "Ajouter des nœuds",
+    "clickToAdd": "Cliquez pour ajouter au canevas",
+    "emptyState": "Commencez à construire votre flux de travail",
+    "emptyStateDescription": "Ajoutez des nœuds depuis la barre latérale pour créer votre flux de travail automatisé. Connectez-les pour définir le flux d'exécution."
+  },
+  "nodeLibrary": {
+    "basicNodes": "Nœuds de base",
+    "inputNode": "Nœud d'entrée",
+    "inputNodeDesc": "Début de votre flux de travail",
+    "outputNode": "Nœud de sortie",
+    "outputNodeDesc": "Sortie du résultat final",
+    "aiAgents": "Agents IA",
+    "agentNode": "Nœud d'agent",
+    "agentNodeDesc": "Traitement propulsé par l'IA",
+    "utilities": "Utilitaires",
+    "joinNode": "Nœud de jonction",
+    "joinNodeDesc": "Fusionner plusieurs entrées",
+    "transformNode": "Nœud de transformation",
+    "transformNodeDesc": "Traiter et modifier les données"
+  },
+  "customNode": {
+    "latestOutput": "Dernière sortie",
+    "test": "Tester"
+  },
+  "saveDialog": {
+    "title": "Enregistrer le canevas",
+    "description": "Enregistrez votre flux de travail pour le charger plus tard",
+    "nameLabel": "Nom *",
+    "namePlaceholder": "Mon flux de travail",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Que fait ce canevas?",
+    "cancel": "Annuler",
+    "saving": "Enregistrement...",
+    "saveButton": "Enregistrer le canevas"
+  },
+  "loadDialog": {
+    "title": "Charger le canevas",
+    "noCanvases": "Aucun canevas enregistré trouvé",
+    "updated": "Mis à jour:",
+    "load": "Charger",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce canevas?"
   }
 }

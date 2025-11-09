@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 interface SavedCanvas {
   id: string;
@@ -22,6 +23,7 @@ interface LoadCanvasDialogProps {
 }
 
 export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialogProps) => {
+  const { t } = useTranslation('canvas');
   const [canvases, setCanvases] = useState<SavedCanvas[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialo
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this canvas?')) return;
+    if (!confirm(t('loadDialog.deleteConfirm'))) return;
     
     setDeleting(id);
     try {
@@ -93,7 +95,7 @@ export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Load Canvas</DialogTitle>
+          <DialogTitle>{t('loadDialog.title')}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           {loading ? (
@@ -102,7 +104,7 @@ export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialo
             </div>
           ) : canvases.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
-              No saved canvases found
+              {t('loadDialog.noCanvases')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -117,7 +119,7 @@ export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialo
                       <p className="text-sm text-muted-foreground">{canvas.description}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      Updated: {format(new Date(canvas.updated_at), 'MMM d, yyyy h:mm a')}
+                      {t('loadDialog.updated')} {format(new Date(canvas.updated_at), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -126,7 +128,7 @@ export const LoadCanvasDialog = ({ open, onOpenChange, onLoad }: LoadCanvasDialo
                       size="sm"
                       onClick={() => handleLoad(canvas.id)}
                     >
-                      Load
+                      {t('loadDialog.load')}
                     </Button>
                     <Button
                       variant="ghost"

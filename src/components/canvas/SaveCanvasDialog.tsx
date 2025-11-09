@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useSavedCanvases } from '@/hooks/useSavedCanvases';
+import { useTranslation } from 'react-i18next';
 
 interface SaveCanvasDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface SaveCanvasDialogProps {
 }
 
 export const SaveCanvasDialog = ({ open, onOpenChange, workflowData }: SaveCanvasDialogProps) => {
+  const { t } = useTranslation('canvas');
   const { saveCanvas } = useSavedCanvases();
   const [name, setName] = useState(workflowData.name || 'Untitled Canvas');
   const [description, setDescription] = useState('');
@@ -41,38 +43,38 @@ export const SaveCanvasDialog = ({ open, onOpenChange, workflowData }: SaveCanva
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Save Canvas</DialogTitle>
+          <DialogTitle>{t('saveDialog.title')}</DialogTitle>
           <DialogDescription>
-            Save your workflow to load it later
+            {t('saveDialog.description')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="canvas-name">Name *</Label>
+            <Label htmlFor="canvas-name">{t('saveDialog.nameLabel')}</Label>
             <Input
               id="canvas-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="My Workflow"
+              placeholder={t('saveDialog.namePlaceholder')}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="canvas-description">Description</Label>
+            <Label htmlFor="canvas-description">{t('saveDialog.descriptionLabel')}</Label>
             <Textarea
               id="canvas-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What does this canvas do?"
+              placeholder={t('saveDialog.descriptionPlaceholder')}
               className="min-h-[100px]"
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('saveDialog.cancel')}
           </Button>
           <Button onClick={handleSave} disabled={!name.trim() || saving}>
-            {saving ? 'Saving...' : 'Save Canvas'}
+            {saving ? t('saveDialog.saving') : t('saveDialog.saveButton')}
           </Button>
         </DialogFooter>
       </DialogContent>
