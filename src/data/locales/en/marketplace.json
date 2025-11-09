@@ -1,0 +1,24 @@
+{
+  "title": "Agent Marketplace",
+  "subtitle": "Discover and clone agents created by the community",
+  "backToAgents": "Back to My Agents",
+  "searchPlaceholder": "Search agents...",
+  "loading": "Loading marketplace...",
+  "noAgentsFound": "No agents found",
+  "categories": {
+    "all": "All"
+  },
+  "badges": {
+    "template": "Template"
+  },
+  "buttons": {
+    "addAgent": "Add Agent",
+    "cloneAgent": "Clone Agent"
+  },
+  "messages": {
+    "signInRequired": "Please sign in to clone agents",
+    "agentAdded": "Agent added successfully",
+    "agentCloned": "Agent cloned successfully",
+    "failedToCreate": "Failed to create agent"
+  }
+}

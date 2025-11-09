@@ -1,0 +1,87 @@
+{
+  "title": "Flux de travail IA visuels",
+  "subtitle": "Créez des flux de travail IA complexes avec une interface visuelle par glisser-déposer",
+  "toolbar": {
+    "addNode": "Ajouter un nœud",
+    "addAgent": "Ajouter un agent",
+    "addFunction": "Ajouter une fonction",
+    "clear": "Effacer",
+    "save": "Enregistrer",
+    "load": "Charger",
+    "run": "Exécuter",
+    "stop": "Arrêter",
+    "templates": "Modèles",
+    "export": "Exporter",
+    "import": "Importer"
+  },
+  "templates": {
+    "title": "Modèles de flux de travail",
+    "subtitle": "Commencez avec un modèle pré-construit",
+    "categories": {
+      "all": "Tous les modèles",
+      "basics": "Bases",
+      "aiWorkflows": "Flux de travail IA",
+      "business": "Entreprise",
+      "marketing": "Marketing",
+      "productivity": "Productivité"
+    },
+    "simpleChat": "Chat IA simple",
+    "researchReport": "Générateur de recherche et rapport",
+    "customerSupport": "Automatisation du support client",
+    "contentCreation": "Pipeline de création de contenu",
+    "meetingActionItems": "Procès-verbaux et éléments d'action de réunion",
+    "competitiveAnalysis": "Cadre d'analyse concurrentielle",
+    "productDescription": "Suite de description de produit",
+    "useTemplate": "Utiliser le modèle",
+    "preview": "Aperçu"
+  },
+  "nodes": {
+    "input": "Entrée",
+    "output": "Sortie",
+    "agent": "Agent",
+    "function": "Fonction",
+    "condition": "Condition",
+    "loop": "Boucle"
+  },
+  "properties": {
+    "title": "Propriétés du nœud",
+    "selectNode": "Sélectionnez un nœud pour afficher et modifier ses propriétés",
+    "nodeName": "Nom du nœud",
+    "nodeType": "Type de nœud",
+    "label": "Étiquette",
+    "systemPrompt": "Instruction système",
+    "userPrompt": "Instruction utilisateur",
+    "inputType": "Type d'entrée",
+    "tools": "Outils disponibles",
+    "addTool": "Ajouter un outil",
+    "removeTool": "Retirer",
+    "testNode": "Tester le nœud",
+    "testInput": "Entrée de test",
+    "output": "Sortie",
+    "noOutput": "Aucune sortie pour le moment"
+  },
+  "save": {
+    "title": "Enregistrer le flux de travail",
+    "name": "Nom du flux de travail",
+    "description": "Description",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  "load": {
+    "title": "Charger le flux de travail",
+    "noWorkflows": "Aucun flux de travail enregistré",
+    "load": "Charger",
+    "delete": "Supprimer",
+    "cancel": "Annuler"
+  },
+  "messages": {
+    "workflowSaved": "Flux de travail enregistré avec succès",
+    "workflowLoaded": "Flux de travail chargé avec succès",
+    "workflowDeleted": "Flux de travail supprimé avec succès",
+    "executionStarted": "Exécution du flux de travail commencée",
+    "executionComplete": "Exécution du flux de travail terminée",
+    "executionFailed": "Échec de l'exécution du flux de travail",
+    "clearConfirm": "Êtes-vous sûr de vouloir effacer le canevas?",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce flux de travail?"
+  }
+}

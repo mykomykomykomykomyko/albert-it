@@ -10,9 +10,11 @@ import { Search, Star, Download, ArrowLeft, TrendingUp } from 'lucide-react';
 import { Agent, useAgents } from '@/hooks/useAgents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export default function AgentMarketplace() {
   const navigate = useNavigate();
+  const { t } = useTranslation('marketplace');
   const { createAgent, loadMarketplaceAgents } = useAgents();
   const [marketplaceAgents, setMarketplaceAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,7 @@ export default function AgentMarketplace() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         console.error('❌ No user found when trying to clone agent');
-        toast.error('Please sign in to clone agents');
+        toast.error(t('messages.signInRequired'));
         return;
       }
 
@@ -146,17 +148,17 @@ export default function AgentMarketplace() {
           }
         }
 
-        const actionText = agent.is_template ? 'added' : 'cloned';
-        toast.success(`Agent ${actionText} successfully`);
+        const actionText = agent.is_template ? t('messages.agentAdded') : t('messages.agentCloned');
+        toast.success(actionText);
         console.log('🎉 Navigating to /agents');
         navigate('/agents');
       } else {
         console.error('❌ createAgent returned null');
-        toast.error('Failed to create agent');
+        toast.error(t('messages.failedToCreate'));
       }
     } catch (error) {
       console.error('❌ Error cloning agent:', error);
-      toast.error('Failed to clone agent');
+      toast.error(t('messages.failedToCreate'));
     }
   };
 
@@ -172,17 +174,17 @@ export default function AgentMarketplace() {
             size="sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to My Agents
+            {t('backToAgents')}
           </Button>
-          <h1 className="text-2xl sm:text-4xl font-bold mb-2">Agent Marketplace</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Discover and clone agents created by the community</p>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{t('subtitle')}</p>
         </div>
 
         <div className="mb-6 flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search agents..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -207,12 +209,12 @@ export default function AgentMarketplace() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading marketplace...</p>
+            <p className="text-muted-foreground">{t('loading')}</p>
           </div>
         ) : filteredAgents.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No agents found</p>
+              <p className="text-muted-foreground">{t('noAgentsFound')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -227,7 +229,7 @@ export default function AgentMarketplace() {
                       </Avatar>
                       <div className="flex items-center gap-2">
                         {agent.is_template && (
-                          <Badge variant="secondary" className="text-xs">Template</Badge>
+                          <Badge variant="secondary" className="text-xs">{t('badges.template')}</Badge>
                         )}
                         <div className="flex items-center gap-1 text-sm">
                           <TrendingUp className="w-4 h-4 text-muted-foreground" />
@@ -260,7 +262,7 @@ export default function AgentMarketplace() {
                     className="w-full"
                   >
                     <Download className="w-4 h-4 mr-2" />
-                    {agent.is_template ? 'Add Agent' : 'Clone Agent'}
+                    {agent.is_template ? t('buttons.addAgent') : t('buttons.cloneAgent')}
                   </Button>
                 </CardContent>
               </Card>

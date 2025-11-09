@@ -1,0 +1,24 @@
+{
+  "title": "Marché des agents",
+  "subtitle": "Découvrez et clonez des agents créés par la communauté",
+  "backToAgents": "Retour à mes agents",
+  "searchPlaceholder": "Rechercher des agents...",
+  "loading": "Chargement du marché...",
+  "noAgentsFound": "Aucun agent trouvé",
+  "categories": {
+    "all": "Tous"
+  },
+  "badges": {
+    "template": "Modèle"
+  },
+  "buttons": {
+    "addAgent": "Ajouter un agent",
+    "cloneAgent": "Cloner l'agent"
+  },
+  "messages": {
+    "signInRequired": "Veuillez vous connecter pour cloner des agents",
+    "agentAdded": "Agent ajouté avec succès",
+    "agentCloned": "Agent cloné avec succès",
+    "failedToCreate": "Échec de la création de l'agent"
+  }
+}

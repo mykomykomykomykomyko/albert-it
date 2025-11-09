@@ -1,0 +1,87 @@
+{
+  "title": "Visual AI Workflows",
+  "subtitle": "Build complex AI workflows with a visual drag-and-drop interface",
+  "toolbar": {
+    "addNode": "Add Node",
+    "addAgent": "Add Agent",
+    "addFunction": "Add Function",
+    "clear": "Clear",
+    "save": "Save",
+    "load": "Load",
+    "run": "Run",
+    "stop": "Stop",
+    "templates": "Templates",
+    "export": "Export",
+    "import": "Import"
+  },
+  "templates": {
+    "title": "Workflow Templates",
+    "subtitle": "Start with a pre-built template",
+    "categories": {
+      "all": "All Templates",
+      "basics": "Basics",
+      "aiWorkflows": "AI Workflows",
+      "business": "Business",
+      "marketing": "Marketing",
+      "productivity": "Productivity"
+    },
+    "simpleChat": "Simple AI Chat",
+    "researchReport": "Research & Report Generator",
+    "customerSupport": "Customer Support Automation",
+    "contentCreation": "Content Creation Pipeline",
+    "meetingActionItems": "Meeting Minutes & Action Items",
+    "competitiveAnalysis": "Competitive Analysis Framework",
+    "productDescription": "Product Description Suite",
+    "useTemplate": "Use Template",
+    "preview": "Preview"
+  },
+  "nodes": {
+    "input": "Input",
+    "output": "Output",
+    "agent": "Agent",
+    "function": "Function",
+    "condition": "Condition",
+    "loop": "Loop"
+  },
+  "properties": {
+    "title": "Node Properties",
+    "selectNode": "Select a node to view and edit its properties",
+    "nodeName": "Node Name",
+    "nodeType": "Node Type",
+    "label": "Label",
+    "systemPrompt": "System Prompt",
+    "userPrompt": "User Prompt",
+    "inputType": "Input Type",
+    "tools": "Available Tools",
+    "addTool": "Add Tool",
+    "removeTool": "Remove",
+    "testNode": "Test Node",
+    "testInput": "Test Input",
+    "output": "Output",
+    "noOutput": "No output yet"
+  },
+  "save": {
+    "title": "Save Workflow",
+    "name": "Workflow Name",
+    "description": "Description",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "load": {
+    "title": "Load Workflow",
+    "noWorkflows": "No saved workflows",
+    "load": "Load",
+    "delete": "Delete",
+    "cancel": "Cancel"
+  },
+  "messages": {
+    "workflowSaved": "Workflow saved successfully",
+    "workflowLoaded": "Workflow loaded successfully",
+    "workflowDeleted": "Workflow deleted successfully",
+    "executionStarted": "Workflow execution started",
+    "executionComplete": "Workflow execution complete",
+    "executionFailed": "Workflow execution failed",
+    "clearConfirm": "Are you sure you want to clear the canvas?",
+    "deleteConfirm": "Are you sure you want to delete this workflow?"
+  }
+}
