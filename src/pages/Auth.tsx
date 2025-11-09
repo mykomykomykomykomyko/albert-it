@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Brain, Eye, EyeOff, Info } from "lucide-react";
+import { Brain, Eye, EyeOff, Info, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 // import { LanguageToggle } from "@/components/LanguageToggle";
+
+// Retry utility with exponential backoff
+const retryWithBackoff = async <T,>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  initialDelay: number = 1000
+): Promise<T> => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Don't retry on certain errors
+      if (error.message?.includes('already registered') || 
+          error.message?.includes('Invalid') ||
+          error.message?.includes('expired')) {
+        throw error;
+      }
+      
+      // Wait with exponential backoff before retrying
+      if (attempt < maxRetries - 1) {
+        const delay = initialDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError || new Error('Operation failed after retries');
+};
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -27,6 +59,7 @@ const Auth = () => {
   const [resetLoading, setResetLoading] = useState(false);
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const isSubmitting = useRef(false);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -63,6 +96,13 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting.current || loading) {
+      return;
+    }
+    
+    isSubmitting.current = true;
     setLoading(true);
     setError(null);
 
@@ -70,42 +110,62 @@ const Auth = () => {
       // Validate access code first
       if (!accessCode.trim()) {
         setError("Access code is required");
+        isSubmitting.current = false;
         setLoading(false);
         return;
       }
 
-      const { data: isValid, error: validationError } = await supabase.rpc('validate_access_code', {
-        code_input: accessCode.trim().toUpperCase()
-      });
+      // Use retry logic for access code validation
+      const isValid = await retryWithBackoff(async () => {
+        const { data, error: validationError } = await supabase.rpc('validate_access_code', {
+          code_input: accessCode.trim().toUpperCase()
+        });
 
-      if (validationError) {
-        throw new Error("Failed to validate access code");
-      }
+        if (validationError) {
+          throw new Error("Failed to validate access code. Please try again.");
+        }
+
+        return data;
+      }, 3, 500);
 
       if (!isValid) {
         setError("Invalid or expired access code. Please contact Alberta AI Academy.");
+        isSubmitting.current = false;
         setLoading(false);
         return;
       }
 
-      // Proceed with signup
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/chat`,
-          data: {
-            full_name: fullName,
+      // Use retry logic for signup with exponential backoff
+      await retryWithBackoff(async () => {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/chat`,
+            data: {
+              full_name: fullName,
+            },
           },
-        },
-      });
+        });
 
-      if (error) throw error;
+        if (error) {
+          // Check for specific error types
+          if (error.message.includes('already registered')) {
+            throw new Error("This email is already registered. Please sign in instead.");
+          }
+          throw error;
+        }
+      }, 3, 1000);
 
-      // Increment the usage count for the access code
-      await supabase.rpc('increment_access_code_usage', {
-        code_input: accessCode.trim().toUpperCase()
-      });
+      // Increment usage count (don't retry if this fails, it's not critical)
+      try {
+        await supabase.rpc('increment_access_code_usage', {
+          code_input: accessCode.trim().toUpperCase()
+        });
+      } catch (usageError) {
+        console.error('Failed to increment usage count:', usageError);
+        // Continue anyway - user is registered
+      }
 
       toast.success("Account created successfully! You can now sign in.");
       setEmail("");
@@ -114,28 +174,60 @@ const Auth = () => {
       setAccessCode("");
       setError(null);
     } catch (error: any) {
-      setError(error.message || "An error occurred during sign up");
+      const errorMessage = error.message || "An error occurred during sign up";
+      setError(errorMessage);
+      
+      // Show helpful error messages based on error type
+      if (errorMessage.includes('rate limit')) {
+        toast.error("Too many signup attempts. Please wait a moment and try again.");
+      } else if (errorMessage.includes('network')) {
+        toast.error("Network error. Please check your connection and try again.");
+      }
     } finally {
+      isSubmitting.current = false;
       setLoading(false);
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting.current || loading) {
+      return;
+    }
+    
+    isSubmitting.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Use retry logic for sign in
+      await retryWithBackoff(async () => {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-      if (error) throw error;
+        if (error) {
+          // Don't retry for invalid credentials
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error("Invalid email or password");
+          }
+          throw error;
+        }
+      }, 3, 1000);
+
       toast.success("Signed in successfully!");
     } catch (error: any) {
-      setError(error.message || "An error occurred during sign in");
+      const errorMessage = error.message || "An error occurred during sign in";
+      setError(errorMessage);
+      
+      if (errorMessage.includes('rate limit')) {
+        toast.error("Too many login attempts. Please wait a moment and try again.");
+      }
     } finally {
+      isSubmitting.current = false;
       setLoading(false);
     }
   };
@@ -252,7 +344,14 @@ const Auth = () => {
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Signing in..." : t('auth:signIn.button')}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      t('auth:signIn.button')
+                    )}
                   </Button>
                   <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                     <DialogTrigger asChild>
@@ -368,7 +467,14 @@ const Auth = () => {
                     </AlertDescription>
                   </Alert>
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : t('auth:signUp.button')}
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      t('auth:signUp.button')
+                    )}
                   </Button>
                 </form>
               </TabsContent>
