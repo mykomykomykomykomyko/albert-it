@@ -757,6 +757,7 @@ const Canvas = () => {
 
   const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
     const id = generateId(); // Use guaranteed-unique ID
+    
     // Deep clone template data to ensure each node is independent
     const clonedTemplateData = deepClone({
       label: template.name,
@@ -769,6 +770,13 @@ const Canvas = () => {
       config: template.config || {},
       functionType: template.functionType,
       toolType: template.toolType,
+    });
+    
+    console.log('[Canvas] addNode creating node', { 
+      id, 
+      type, 
+      label: clonedTemplateData.label,
+      systemPrompt: clonedTemplateData.systemPrompt?.substring(0, 50)
     });
     
     const newNode: Node = {
@@ -811,6 +819,8 @@ const Canvas = () => {
   };
 
   const handleSelectAgent = (agent: any) => {
+    console.log('[Canvas] handleSelectAgent called', { agent: { name: agent.name, system_prompt: agent.system_prompt?.substring(0, 50) } });
+    
     if (agent.type === 'tool') {
       // It's a tool definition
       addNode('tool', {
@@ -820,11 +830,11 @@ const Canvas = () => {
         config: {},
       });
     } else {
-      // It's an agent
+      // It's an agent - deep clone all data to ensure no shared references
       addNode('agent', {
-        name: agent.name,
-        description: agent.description || 'AI Agent',
-        systemPrompt: agent.system_prompt || agent.systemPrompt || '',
+        name: String(agent.name), // Force new string
+        description: String(agent.description || 'AI Agent'),
+        systemPrompt: String(agent.system_prompt || agent.systemPrompt || ''), // Force new string
       });
     }
     setIsAgentSelectorOpen(false);
@@ -1145,13 +1155,14 @@ const Canvas = () => {
     const data = node.data as any;
     
     if (data.nodeType === 'agent') {
+      // Deep clone to prevent any shared references
       return {
         id: node.id,
         nodeType: 'agent',
         name: data.label,
         type: 'custom',
-        systemPrompt: data.systemPrompt || '',
-        userPrompt: data.userPrompt || '',
+        systemPrompt: String(data.systemPrompt || ''), // Force new string
+        userPrompt: String(data.userPrompt || ''), // Force new string
         tools: [],
         status: data.status || 'idle',
         output: data.output,
@@ -1163,25 +1174,37 @@ const Canvas = () => {
 
   // Handle node updates from PropertiesPanel
   const handleUpdateNode = (nodeId: string, updates: Partial<WorkflowNode>) => {
+    console.log('[Canvas] handleUpdateNode called', { nodeId, updates });
+    
     setNodes(nds => nds.map(n => {
       if (n.id === nodeId) {
+        console.log('[Canvas] Updating node', { id: n.id, currentLabel: (n.data as any).label });
         const currentData = n.data as any;
+        
+        // Create completely new data object with deep cloning for nested objects
         const updatedNode = {
           ...n,
           data: {
-            ...currentData,
+            ...deepClone(currentData), // Deep clone current data first
             label: updates.name !== undefined ? updates.name : currentData.label,
-            systemPrompt: (updates as any).systemPrompt !== undefined ? (updates as any).systemPrompt : currentData.systemPrompt,
-            userPrompt: (updates as any).userPrompt !== undefined ? (updates as any).userPrompt : currentData.userPrompt,
-            config: updates.config !== undefined ? updates.config : currentData.config,
+            systemPrompt: (updates as any).systemPrompt !== undefined ? String((updates as any).systemPrompt) : currentData.systemPrompt,
+            userPrompt: (updates as any).userPrompt !== undefined ? String((updates as any).userPrompt) : currentData.userPrompt,
+            config: updates.config !== undefined ? deepClone(updates.config) : currentData.config,
             output: updates.output !== undefined ? updates.output : currentData.output,
             status: updates.status !== undefined ? updates.status : currentData.status,
+            // Preserve callbacks without deep cloning
+            onEdit: currentData.onEdit,
+            onRun: currentData.onRun,
+            orientation: currentData.orientation,
           }
         };
+        console.log('[Canvas] Updated node data', { id: n.id, newSystemPrompt: updatedNode.data.systemPrompt });
         return updatedNode;
       }
       return n;
     }));
+    
+    console.log('[Canvas] All nodes after update:', nodes.map(n => ({ id: n.id, label: (n.data as any).label, systemPrompt: (n.data as any).systemPrompt?.substring(0, 50) })));
     
     // Update selectedNode separately to keep it in sync with latest edits
     if (selectedNode && selectedNode.id === nodeId) {
@@ -1191,15 +1214,16 @@ const Canvas = () => {
         return {
           ...prevNode,
           data: {
-            ...currentData,
+            ...deepClone(currentData), // Deep clone to prevent references
             label: updates.name !== undefined ? updates.name : currentData.label,
-            systemPrompt: (updates as any).systemPrompt !== undefined ? (updates as any).systemPrompt : currentData.systemPrompt,
-            userPrompt: (updates as any).userPrompt !== undefined ? (updates as any).userPrompt : currentData.userPrompt,
-            config: updates.config !== undefined ? updates.config : currentData.config,
+            systemPrompt: (updates as any).systemPrompt !== undefined ? String((updates as any).systemPrompt) : currentData.systemPrompt,
+            userPrompt: (updates as any).userPrompt !== undefined ? String((updates as any).userPrompt) : currentData.userPrompt,
+            config: updates.config !== undefined ? deepClone(updates.config) : currentData.config,
             output: updates.output !== undefined ? updates.output : currentData.output,
             status: updates.status !== undefined ? updates.status : currentData.status,
             onEdit: currentData?.onEdit,
             onRun: currentData?.onRun,
+            orientation: currentData.orientation,
           }
         } as any;
       });

@@ -22,40 +22,40 @@ interface AgentSelectorDialogProps {
   onSelectAgent: (agent: Agent) => void;
 }
 
-const defaultTemplates: AgentTemplate[] = [
-  {
+const defaultTemplates: AgentTemplate[] = Object.freeze([
+  Object.freeze({
     name: "Researcher",
     type: "Text",
     description: "Gather and analyze information from various sources",
     system_prompt: "You are a research assistant specializing in gathering and analyzing information from various sources.",
     user_prompt: "Research the following topic and provide detailed findings: {input}",
     icon_name: "Search",
-  },
-  {
+  }),
+  Object.freeze({
     name: "Summarizer",
     type: "Text",
     description: "Condense long content into concise summaries",
     system_prompt: "You are a summarization expert who creates concise, accurate summaries of long content.",
     user_prompt: "Summarize the following content: {input}",
     icon_name: "FileText",
-  },
-  {
+  }),
+  Object.freeze({
     name: "Analyst",
     type: "Text",
     description: "Deep data analysis and pattern identification",
     system_prompt: "You are a data analyst who provides insightful analysis and identifies patterns in data.",
     user_prompt: "Analyze the following data and provide insights: {input}",
     icon_name: "Bot",
-  },
-  {
+  }),
+  Object.freeze({
     name: "Writer",
     type: "Text",
     description: "Create engaging written content",
     system_prompt: "You are a professional writer who creates compelling, well-structured content.",
     user_prompt: "Write content based on the following: {input}",
     icon_name: "FileText",
-  },
-];
+  }),
+]) as AgentTemplate[];
 
 const iconMap: Record<string, any> = {
   Search,
