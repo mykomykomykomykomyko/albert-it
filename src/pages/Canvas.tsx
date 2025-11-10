@@ -795,6 +795,7 @@ const Canvas = () => {
       },
     };
     
+    console.log('[Canvas] addNode', { id, type, label: clonedTemplateData.label });
     setNodes((nds) => [...nds, newNode]);
     toast.success(`${template.name} added`);
   };
