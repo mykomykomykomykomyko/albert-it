@@ -145,7 +145,7 @@ const ChatInterface = ({
 
       // Update conversation title if it's the first message
       if (messages.length === 0) {
-        const title = userMessage.slice(0, 50) + (userMessage.length > 50 ? "..." : "");
+        const title = userMessage.slice(0, 100) + (userMessage.length > 100 ? "..." : "");
         await supabase
           .from("conversations")
           .update({ title, updated_at: new Date().toISOString() })

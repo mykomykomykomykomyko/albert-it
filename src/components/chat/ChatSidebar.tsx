@@ -148,34 +148,46 @@ const ChatSidebar = ({
                       </TooltipContent>
                     </Tooltip>
                     <div className="flex gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-100 lg:opacity-30 lg:group-hover:opacity-100 transition-all duration-150 hover:bg-accent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setRenamingConversation(conversation);
-                      setNewTitle(conversation.title);
-                    }}
-                    title="Rename conversation"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-100 lg:opacity-30 lg:group-hover:opacity-100 transition-all duration-150 hover:bg-destructive/10 hover:text-destructive"
+                        className="h-6 w-6 opacity-100 lg:opacity-30 lg:group-hover:opacity-100 transition-all duration-150 hover:bg-accent"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setDeletingId(conversation.id);
+                          setRenamingConversation(conversation);
+                          setNewTitle(conversation.title);
                         }}
-                        title="Delete conversation"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Pencil className="w-3 h-3" />
                       </Button>
-                    </AlertDialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>Rename</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <AlertDialog>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-100 lg:opacity-30 lg:group-hover:opacity-100 transition-all duration-150 hover:bg-destructive/10 hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingId(conversation.id);
+                            }}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                        <p>Delete</p>
+                      </TooltipContent>
+                    </Tooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
@@ -215,19 +227,23 @@ const ChatSidebar = ({
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">Title (max 100 characters)</Label>
               <Input
                 id="title"
                 value={newTitle}
+                maxLength={100}
                 onChange={(e) => setNewTitle(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newTitle.trim()) {
-                    onRenameConversation(renamingConversation!.id, newTitle.trim());
+                    onRenameConversation(renamingConversation!.id, newTitle.trim().slice(0, 100));
                     setRenamingConversation(null);
                   }
                 }}
                 placeholder="Enter conversation title"
               />
+              <p className="text-xs text-muted-foreground">
+                {newTitle.length}/100 characters
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -237,7 +253,7 @@ const ChatSidebar = ({
             <Button
               onClick={() => {
                 if (newTitle.trim()) {
-                  onRenameConversation(renamingConversation!.id, newTitle.trim());
+                  onRenameConversation(renamingConversation!.id, newTitle.trim().slice(0, 100));
                   setRenamingConversation(null);
                 }
               }}
