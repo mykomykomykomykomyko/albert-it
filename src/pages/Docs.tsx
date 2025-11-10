@@ -54,7 +54,7 @@ const Docs = () => {
       <ChatHeader />
       
       <div className="flex-1 overflow-hidden">
-        <div className="h-full max-w-5xl mx-auto px-4">
+        <div className="h-full max-w-5xl mx-auto">
           {/* Header */}
           <div className="border-b border-border bg-card/50 backdrop-blur-sm px-4 sm:px-6 py-4">
             <div className="flex items-center gap-4">
@@ -89,8 +89,8 @@ const Docs = () => {
                   </div>
                 </div>
               ) : (
-                <div className="prose prose-slate dark:prose-invert max-w-none break-words overflow-hidden">
-                  <ReactMarkdown 
+                <div className="prose prose-slate dark:prose-invert max-w-none">
+                  <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
                       // Style headings with proper IDs for navigation
@@ -112,18 +112,18 @@ const Docs = () => {
                       },
                       // Style paragraphs
                       p: ({ node, ...props }) => (
-                        <p className="my-4 break-words overflow-wrap-anywhere" {...props} />
+                        <p className="my-4 break-words overflow-wrap-anywhere whitespace-pre-wrap" {...props} />
                       ),
                       // Style code blocks
                       code: ({ node, inline, ...props }: any) => 
                         inline ? (
                           <code className="bg-secondary px-1.5 py-0.5 rounded text-sm font-mono break-words" {...props} />
                         ) : (
-                          <code className="block bg-secondary p-4 rounded-lg overflow-x-auto text-sm font-mono" {...props} />
+                          <code className="block bg-secondary p-4 rounded-lg overflow-x-auto text-sm font-mono whitespace-pre-wrap break-words" {...props} />
                         ),
                       // Style links
                       a: ({ node, ...props }) => (
-                        <a className="text-primary hover:underline break-words" {...props} />
+                        <a className="text-primary hover:underline break-all" {...props} />
                       ),
                       // Style lists
                       ul: ({ node, ...props }) => (
