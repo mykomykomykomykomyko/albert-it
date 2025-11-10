@@ -145,8 +145,21 @@ const ChatInterface = ({
 
       // Update conversation title if it's the first message
       if (messages.length === 0) {
-        // Generate simple title from first message
-        const title = userMessage.slice(0, 60) + (userMessage.length > 60 ? "..." : "");
+        // Generate AI title using Gemini
+        let title = userMessage.slice(0, 60) + (userMessage.length > 60 ? "..." : "");
+        try {
+          const { data: titleData, error: titleError } = await supabase.functions.invoke(
+            'generate-conversation-title',
+            { body: { message: userMessage } }
+          );
+          
+          if (!titleError && titleData?.title) {
+            title = titleData.title;
+          }
+        } catch (e) {
+          console.error("Failed to generate AI title:", e);
+          // Use fallback title on error
+        }
         
         await supabase
           .from("conversations")

@@ -51,6 +51,9 @@ verify_jwt = true
 [functions.analyze-transcript]
 verify_jwt = true
 
+[functions.generate-conversation-title]
+verify_jwt = true
+
 [functions.get-shared-conversation]
 verify_jwt = false
 
