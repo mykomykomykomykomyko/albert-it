@@ -6,6 +6,28 @@
   "searchPlaceholder": "Search transcripts...",
   "noTranscripts": "No transcripts yet",
   "noTranscriptsDesc": "Upload or create your first transcript to get started",
+  "page": {
+    "title": "Meeting Transcripts",
+    "subtitle": "Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI",
+    "uploadTitle": "Upload Transcripts",
+    "uploadDescription": "Support for VTT, DOCX, and TXT files from Microsoft Teams",
+    "dragDrop": "Drag & drop transcripts",
+    "dragDropActive": "Drop files here",
+    "clickBrowse": "or click to browse files",
+    "supportsFormats": "Supports VTT, DOCX, and TXT files",
+    "processInCanvas": "Process in Canvas",
+    "aiAnalyze": "AI Analyze",
+    "analyzing": "Analyzing...",
+    "participants": "participants",
+    "deleteConfirm": "Are you sure you want to delete",
+    "unsupportedFormat": "Unsupported Format",
+    "unsupportedFormatDesc": "is not a supported format. Use VTT, DOCX, or TXT files."
+  },
+  "tabs": {
+    "transcript": "Transcript",
+    "summary": "Summary",
+    "actionItems": "Action Items"
+  },
   "list": {
     "date": "Date",
     "duration": "Duration",
@@ -27,12 +49,34 @@
     "actionItems": "Action Items",
     "sentiment": "Sentiment Analysis",
     "topics": "Topics Discussed",
-    "speakers": "Speaker Analysis"
+    "speakers": "Speaker Analysis",
+    "noSummary": "No summary yet",
+    "noSummaryDesc": "Click \"AI Analyze\" to generate insights",
+    "noActionItems": "No action items yet",
+    "noActionItemsDesc": "Click \"AI Analyze\" to extract action items"
   },
   "upload": {
     "title": "Upload Transcript",
     "dragDrop": "Drag and drop transcript file here",
     "supported": "Supported formats: TXT, VTT, SRT, PDF",
     "processing": "Processing transcript..."
+  },
+  "messages": {
+    "error": "Error",
+    "errorLoadTranscripts": "Failed to load transcripts",
+    "success": "Success",
+    "uploadSuccess": "uploaded successfully",
+    "uploadFailed": "Upload Failed",
+    "analysisComplete": "Analysis Complete",
+    "analysisCompleteDesc": "Transcript has been analyzed successfully",
+    "analysisFailed": "Analysis Failed",
+    "deleted": "Deleted",
+    "deletedDesc": "Transcript deleted successfully",
+    "deleteFailed": "Delete Failed",
+    "notAuthenticated": "Not authenticated"
+  },
+  "emptyState": {
+    "selectTranscript": "Select a transcript to view details",
+    "uploadToStart": "or upload a new meeting transcript to get started"
   }
 }

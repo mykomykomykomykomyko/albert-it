@@ -6,6 +6,28 @@
   "searchPlaceholder": "Rechercher des transcriptions...",
   "noTranscripts": "Aucune transcription pour le moment",
   "noTranscriptsDesc": "Téléchargez ou créez votre première transcription pour commencer",
+  "page": {
+    "title": "Transcriptions de réunions",
+    "subtitle": "Téléchargez, organisez et analysez vos transcriptions de réunions Microsoft Teams avec l'IA",
+    "uploadTitle": "Télécharger des transcriptions",
+    "uploadDescription": "Support pour les fichiers VTT, DOCX et TXT de Microsoft Teams",
+    "dragDrop": "Glissez-déposez les transcriptions",
+    "dragDropActive": "Déposez les fichiers ici",
+    "clickBrowse": "ou cliquez pour parcourir les fichiers",
+    "supportsFormats": "Prend en charge les fichiers VTT, DOCX et TXT",
+    "processInCanvas": "Traiter dans Canvas",
+    "aiAnalyze": "Analyser avec l'IA",
+    "analyzing": "Analyse en cours...",
+    "participants": "participants",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer",
+    "unsupportedFormat": "Format non pris en charge",
+    "unsupportedFormatDesc": "n'est pas un format pris en charge. Utilisez des fichiers VTT, DOCX ou TXT."
+  },
+  "tabs": {
+    "transcript": "Transcription",
+    "summary": "Résumé",
+    "actionItems": "Éléments d'action"
+  },
   "list": {
     "date": "Date",
     "duration": "Durée",
@@ -27,12 +49,34 @@
     "actionItems": "Éléments d'action",
     "sentiment": "Analyse des sentiments",
     "topics": "Sujets discutés",
-    "speakers": "Analyse des intervenants"
+    "speakers": "Analyse des intervenants",
+    "noSummary": "Aucun résumé pour le moment",
+    "noSummaryDesc": "Cliquez sur \"Analyser avec l'IA\" pour générer des informations",
+    "noActionItems": "Aucun élément d'action pour le moment",
+    "noActionItemsDesc": "Cliquez sur \"Analyser avec l'IA\" pour extraire les éléments d'action"
   },
   "upload": {
     "title": "Télécharger une transcription",
     "dragDrop": "Glissez-déposez le fichier de transcription ici",
     "supported": "Formats pris en charge: TXT, VTT, SRT, PDF",
     "processing": "Traitement de la transcription..."
+  },
+  "messages": {
+    "error": "Erreur",
+    "errorLoadTranscripts": "Échec du chargement des transcriptions",
+    "success": "Succès",
+    "uploadSuccess": "téléchargé avec succès",
+    "uploadFailed": "Échec du téléchargement",
+    "analysisComplete": "Analyse terminée",
+    "analysisCompleteDesc": "La transcription a été analysée avec succès",
+    "analysisFailed": "Échec de l'analyse",
+    "deleted": "Supprimé",
+    "deletedDesc": "Transcription supprimée avec succès",
+    "deleteFailed": "Échec de la suppression",
+    "notAuthenticated": "Non authentifié"
+  },
+  "emptyState": {
+    "selectTranscript": "Sélectionnez une transcription pour voir les détails",
+    "uploadToStart": "ou téléchargez une nouvelle transcription de réunion pour commencer"
   }
 }

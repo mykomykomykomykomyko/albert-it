@@ -53,8 +53,8 @@ export default function MeetingTranscripts() {
 
     if (error) {
       toast({
-        title: "Error",
-        description: "Failed to load transcripts",
+        title: t('messages.error'),
+        description: t('messages.errorLoadTranscripts'),
         variant: "destructive",
       });
       return;
@@ -94,8 +94,8 @@ export default function MeetingTranscripts() {
           fileFormat = "txt";
         } else {
           toast({
-            title: "Unsupported Format",
-            description: `${file.name} is not a supported format. Use VTT, DOCX, or TXT files.`,
+            title: t('page.unsupportedFormat'),
+            description: `${file.name} ${t('page.unsupportedFormatDesc')}`,
             variant: "destructive",
           });
           continue;
@@ -103,7 +103,7 @@ export default function MeetingTranscripts() {
 
         // Get user
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("Not authenticated");
+        if (!user) throw new Error(t('messages.notAuthenticated'));
 
         // Insert transcript
         const { error } = await supabase.from("meeting_transcripts").insert({
@@ -119,12 +119,12 @@ export default function MeetingTranscripts() {
         if (error) throw error;
 
         toast({
-          title: "Success",
-          description: `${file.name} uploaded successfully`,
+          title: t('messages.success'),
+          description: `${file.name} ${t('messages.uploadSuccess')}`,
         });
       } catch (error: any) {
         toast({
-          title: "Upload Failed",
+          title: t('messages.uploadFailed'),
           description: error.message,
           variant: "destructive",
         });
@@ -193,8 +193,8 @@ export default function MeetingTranscripts() {
       if (updateError) throw updateError;
 
       toast({
-        title: "Analysis Complete",
-        description: "Transcript has been analyzed successfully",
+        title: t('messages.analysisComplete'),
+        description: t('messages.analysisCompleteDesc'),
       });
 
       fetchTranscripts();
@@ -210,7 +210,7 @@ export default function MeetingTranscripts() {
       }
     } catch (error: any) {
       toast({
-        title: "Analysis Failed",
+        title: t('messages.analysisFailed'),
         description: error.message,
         variant: "destructive",
       });
@@ -227,7 +227,7 @@ export default function MeetingTranscripts() {
   const handleDeleteTranscript = async (transcript: MeetingTranscript, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (!confirm(`Are you sure you want to delete "${transcript.title}"?`)) {
+    if (!confirm(`${t('page.deleteConfirm')} "${transcript.title}"?`)) {
       return;
     }
 
@@ -240,8 +240,8 @@ export default function MeetingTranscripts() {
       if (error) throw error;
 
       toast({
-        title: "Deleted",
-        description: "Transcript deleted successfully",
+        title: t('messages.deleted'),
+        description: t('messages.deletedDesc'),
       });
 
       if (selectedTranscript?.id === transcript.id) {
@@ -251,7 +251,7 @@ export default function MeetingTranscripts() {
       fetchTranscripts();
     } catch (error: any) {
       toast({
-        title: "Delete Failed",
+        title: t('messages.deleteFailed'),
         description: error.message,
         variant: "destructive",
       });
@@ -339,9 +339,9 @@ export default function MeetingTranscripts() {
           <div className="p-6 space-y-6">
             {/* Page Header */}
             <div>
-              <h1 className="text-3xl font-bold mb-2">Meeting Transcripts</h1>
+              <h1 className="text-3xl font-bold mb-2">{t('page.title')}</h1>
               <p className="text-muted-foreground">
-                Upload, organize, and analyze your Microsoft Teams meeting transcripts with AI
+                {t('page.subtitle')}
               </p>
             </div>
 
@@ -350,10 +350,10 @@ export default function MeetingTranscripts() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Upload className="h-5 w-5" />
-                  Upload Transcripts
+                  {t('page.uploadTitle')}
                 </CardTitle>
                 <CardDescription>
-                  Support for VTT, DOCX, and TXT files from Microsoft Teams
+                  {t('page.uploadDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -368,13 +368,13 @@ export default function MeetingTranscripts() {
                   <input {...getInputProps()} />
                   <Upload className={`h-12 w-12 mx-auto mb-4 ${isDragActive ? 'text-primary animate-bounce' : 'text-muted-foreground'}`} />
                   <h3 className="text-lg font-medium mb-2">
-                    {isDragActive ? 'Drop files here' : 'Drag & drop transcripts'}
+                    {isDragActive ? t('page.dragDropActive') : t('page.dragDrop')}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    or click to browse files
+                    {t('page.clickBrowse')}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Supports VTT, DOCX, and TXT files
+                    {t('page.supportsFormats')}
                   </p>
                   {selectedTranscript && (
                     <div className="mt-6 flex gap-3 justify-center">
@@ -383,7 +383,7 @@ export default function MeetingTranscripts() {
                         variant="outline"
                         size="sm"
                       >
-                        Process in Canvas
+                        {t('page.processInCanvas')}
                         <ChevronRight className="ml-2 h-4 w-4" />
                       </Button>
                     </div>
@@ -406,7 +406,7 @@ export default function MeetingTranscripts() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" />
-                          {selectedTranscript.participants.length} participants
+                          {selectedTranscript.participants.length} {t('page.participants')}
                         </span>
                       </CardDescription>
                     </div>
@@ -416,16 +416,16 @@ export default function MeetingTranscripts() {
                       size="sm"
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
-                      {isAnalyzing ? "Analyzing..." : "AI Analyze"}
+                      {isAnalyzing ? t('page.analyzing') : t('page.aiAnalyze')}
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="transcript">
                     <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="transcript">Transcript</TabsTrigger>
-                      <TabsTrigger value="summary">Summary</TabsTrigger>
-                      <TabsTrigger value="actions">Action Items</TabsTrigger>
+                      <TabsTrigger value="transcript">{t('tabs.transcript')}</TabsTrigger>
+                      <TabsTrigger value="summary">{t('tabs.summary')}</TabsTrigger>
+                      <TabsTrigger value="actions">{t('tabs.actionItems')}</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="transcript" className="mt-4">
@@ -444,8 +444,8 @@ export default function MeetingTranscripts() {
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">
                           <Sparkles className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No summary yet</p>
-                          <p className="text-sm">Click "AI Analyze" to generate insights</p>
+                          <p>{t('analysis.noSummary')}</p>
+                          <p className="text-sm">{t('analysis.noSummaryDesc')}</p>
                         </div>
                       )}
                     </TabsContent>
@@ -481,8 +481,8 @@ export default function MeetingTranscripts() {
                       ) : (
                         <div className="text-center py-8 text-muted-foreground">
                           <Tag className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>No action items extracted</p>
-                          <p className="text-sm">AI analysis will identify tasks and assignments</p>
+                          <p>{t('analysis.noActionItems')}</p>
+                          <p className="text-sm">{t('analysis.noActionItemsDesc')}</p>
                         </div>
                       )}
                     </TabsContent>
@@ -493,8 +493,8 @@ export default function MeetingTranscripts() {
               <Card className="h-[600px] flex items-center justify-center">
                 <CardContent className="text-center text-muted-foreground">
                   <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">Select a transcript to view details</p>
-                  <p className="text-sm">or upload a new meeting transcript to get started</p>
+                  <p className="text-lg font-medium">{t('emptyState.selectTranscript')}</p>
+                  <p className="text-sm">{t('emptyState.uploadToStart')}</p>
                 </CardContent>
               </Card>
             )}
