@@ -17,6 +17,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
+import { AgentDocumentManager, AgentDocument } from "@/components/agents/AgentDocumentManager";
 
 const agentTypes = ['Text', 'Voice', 'Image', 'Audio', 'Multimodal'] as const;
 
@@ -41,7 +42,7 @@ const Agents = () => {
   const agentImportInputRef = useRef<HTMLInputElement>(null);
   
   // Form state
-  const [formData, setFormData] = useState<Partial<Agent & { metadata_tags_input: string }>>({
+  const [formData, setFormData] = useState<Partial<Agent & { metadata_tags_input: string; knowledge_documents: AgentDocument[] }>>({
     name: "",
     type: "Text",
     description: "",
@@ -50,6 +51,7 @@ const Agents = () => {
     icon_name: "Bot",
     metadata_tags_input: "",
     profile_picture_url: "",
+    knowledge_documents: [],
   });
 
   useEffect(() => {
@@ -114,6 +116,7 @@ const Agents = () => {
       icon_name: formData.icon_name || "Bot",
       metadata_tags: formData.metadata_tags_input?.split(',').map(t => t.trim()).filter(Boolean) || [],
       profile_picture_url: formData.profile_picture_url,
+      knowledge_documents: formData.knowledge_documents || [],
     };
 
     if (editingAgent) {
@@ -142,6 +145,7 @@ const Agents = () => {
       icon_name: "Bot",
       metadata_tags_input: "",
       profile_picture_url: "",
+      knowledge_documents: [],
     });
   };
 
@@ -150,6 +154,7 @@ const Agents = () => {
     setFormData({
       ...agent,
       metadata_tags_input: (agent as any).metadata_tags?.join(', ') || "",
+      knowledge_documents: (agent as any).knowledge_documents || [],
     });
     setIsCreateOpen(true);
   };
@@ -521,9 +526,10 @@ const Agents = () => {
                     </div>
 
                     <Tabs defaultValue="system">
-                      <TabsList className="grid w-full grid-cols-2">
+                      <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="system">{t('form.systemPrompt')}</TabsTrigger>
                         <TabsTrigger value="user">{t('form.userPrompt')}</TabsTrigger>
+                        <TabsTrigger value="documents">Documents</TabsTrigger>
                       </TabsList>
                       <TabsContent value="system" className="mt-4">
                         <Textarea
@@ -541,6 +547,13 @@ const Agents = () => {
                           placeholder="Default user prompt template..."
                           rows={10}
                           required
+                        />
+                      </TabsContent>
+                      <TabsContent value="documents" className="mt-4">
+                        <AgentDocumentManager
+                          documents={formData.knowledge_documents || []}
+                          onDocumentsChange={(docs) => setFormData({ ...formData, knowledge_documents: docs })}
+                          agentId={editingAgent?.id}
                         />
                       </TabsContent>
                     </Tabs>
@@ -638,9 +651,16 @@ const Agents = () => {
                         <AvatarImage src={agent.profile_picture_url} />
                         <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
+                       <div className="flex-1 min-w-0">
                         <CardTitle className="text-lg truncate">{agent.name}</CardTitle>
-                        <Badge variant="secondary" className="mt-1 text-xs">{agent.type}</Badge>
+                        <div className="flex gap-2 mt-1">
+                          <Badge variant="secondary" className="text-xs">{agent.type}</Badge>
+                          {(agent as any).knowledge_documents?.length > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              📄 {(agent as any).knowledge_documents.length}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <CardDescription className="line-clamp-2 mt-3">

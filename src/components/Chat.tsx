@@ -897,6 +897,14 @@ const Chat = () => {
         requestPayload.systemPrompt = currentAgent.system_prompt;
         // Wrap the current message with agent's user prompt template
         requestPayload.message = currentAgent.user_prompt.replace('{input}', enhancedContentForAI);
+        
+        // Include knowledge documents if available
+        if ((currentAgent as any).knowledge_documents?.length > 0) {
+          requestPayload.knowledgeDocuments = (currentAgent as any).knowledge_documents.map((doc: any) => ({
+            filename: doc.filename,
+            content: doc.content
+          }));
+        }
       }
 
       // Check if user is asking about a recent image

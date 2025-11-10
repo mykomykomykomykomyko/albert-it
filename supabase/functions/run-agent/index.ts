@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { systemPrompt, userPrompt, tools = [] } = await req.json();
+    const { systemPrompt, userPrompt, tools = [], knowledgeDocuments = [] } = await req.json();
     
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) {
@@ -20,6 +20,29 @@ serve(async (req) => {
 
     console.log("Running agent with system prompt:", systemPrompt.substring(0, 50));
     console.log("Tool instances:", tools);
+    console.log("Knowledge documents:", knowledgeDocuments.length);
+
+    // Build knowledge base section if documents are provided
+    let knowledgeBaseSection = "";
+    if (knowledgeDocuments.length > 0) {
+      knowledgeBaseSection = "\n\n=== KNOWLEDGE BASE ===\n";
+      knowledgeBaseSection += "You have access to the following documents for context:\n\n";
+      
+      for (const doc of knowledgeDocuments) {
+        knowledgeBaseSection += `--- ${doc.filename} ---\n`;
+        // Truncate very long documents to avoid token limits (keep first 10000 chars)
+        const content = doc.content.length > 10000 
+          ? doc.content.substring(0, 10000) + "\n\n[Document truncated due to length...]"
+          : doc.content;
+        knowledgeBaseSection += content + "\n\n";
+      }
+      
+      knowledgeBaseSection += "Please use this information when responding to user queries.\n";
+      knowledgeBaseSection += "=== END OF KNOWLEDGE BASE ===\n";
+    }
+
+    // Combine system prompt with knowledge base
+    const enhancedSystemPrompt = systemPrompt + knowledgeBaseSection;
 
     // Execute tools if any
     let toolResults = "";
@@ -148,7 +171,7 @@ serve(async (req) => {
               role: "user",
               parts: [
                 {
-                  text: systemPrompt
+                  text: enhancedSystemPrompt
                 }
               ]
             },

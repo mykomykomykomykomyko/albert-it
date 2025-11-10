@@ -73,6 +73,7 @@ export interface Agent {
   shared_by_name?: string; // Name of user who shared with me
   shared_by_email?: string; // Email of user who shared with me
   is_shared_with_me?: boolean; // Whether this agent was shared with me
+  knowledge_documents?: any[]; // Attached documents for context
 }
 
 /**
@@ -101,6 +102,7 @@ export interface AgentTemplate {
   icon_name: string;
   metadata_tags?: string[];
   profile_picture_url?: string;
+  knowledge_documents?: any[];
 }
 
 export const useAgents = () => {

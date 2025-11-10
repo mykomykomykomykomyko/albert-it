@@ -12,12 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { message, messageHistory = [], systemPrompt = '' } = await req.json()
+    const { message, messageHistory = [], systemPrompt = '', knowledgeDocuments = [] } = await req.json()
 
     console.log('gemini-chat REQUEST:', { 
       message: message?.substring(0, 100) + '...', 
       historyLength: messageHistory.length,
-      systemPrompt: systemPrompt?.substring(0, 100) + '...'
+      systemPrompt: systemPrompt?.substring(0, 100) + '...',
+      knowledgeDocumentsCount: knowledgeDocuments.length
     });
 
     if (!message) {
@@ -36,7 +37,26 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
-    const enhancedSystemPrompt = systemPrompt || `You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.
+    // Build knowledge base section if documents are provided
+    let knowledgeBaseSection = "";
+    if (knowledgeDocuments.length > 0) {
+      knowledgeBaseSection = "\n\n=== KNOWLEDGE BASE ===\n";
+      knowledgeBaseSection += "You have access to the following documents for context:\n\n";
+      
+      for (const doc of knowledgeDocuments) {
+        knowledgeBaseSection += `--- ${doc.filename} ---\n`;
+        // Truncate very long documents to avoid token limits (keep first 10000 chars)
+        const content = doc.content.length > 10000 
+          ? doc.content.substring(0, 10000) + "\n\n[Document truncated due to length...]"
+          : doc.content;
+        knowledgeBaseSection += content + "\n\n";
+      }
+      
+      knowledgeBaseSection += "Please use this information when responding to user queries.\n";
+      knowledgeBaseSection += "=== END OF KNOWLEDGE BASE ===\n";
+    }
+
+    const baseSystemPrompt = systemPrompt || `You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.
 
 When users discuss complex workflows, automation, or multi-step processes, you can offer to create a visual workflow for them. You have access to two workflow types:
 
@@ -94,6 +114,9 @@ type: prompt-library
 description: Check out our prompt library for pre-made prompts
 
 Only suggest workflows when it genuinely makes sense. Continue providing regular text responses otherwise.`;
+
+    // Combine base system prompt with knowledge base
+    const enhancedSystemPrompt = baseSystemPrompt + knowledgeBaseSection;
 
     // Prepare contents for Gemini API
     const contents = [];

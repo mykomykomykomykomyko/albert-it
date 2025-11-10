@@ -90,6 +90,7 @@ export type Database = {
           icon_name: string
           id: string
           is_template: boolean | null
+          knowledge_documents: Json | null
           metadata_tags: string[] | null
           name: string
           profile_picture_url: string | null
@@ -112,6 +113,7 @@ export type Database = {
           icon_name?: string
           id?: string
           is_template?: boolean | null
+          knowledge_documents?: Json | null
           metadata_tags?: string[] | null
           name: string
           profile_picture_url?: string | null
@@ -134,6 +136,7 @@ export type Database = {
           icon_name?: string
           id?: string
           is_template?: boolean | null
+          knowledge_documents?: Json | null
           metadata_tags?: string[] | null
           name?: string
           profile_picture_url?: string | null

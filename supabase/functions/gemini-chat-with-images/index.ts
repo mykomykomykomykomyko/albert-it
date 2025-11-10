@@ -95,9 +95,10 @@ serve(async (req) => {
     const { 
       message, 
       images = [], 
-      userEmail, 
-      messageHistory = [], 
-      systemPrompt = '' 
+      userEmail,
+      messageHistory = [],
+      systemPrompt = '',
+      knowledgeDocuments = []
     } = await req.json()
 
     console.log('gemini-chat-with-images REQUEST:', { 
@@ -105,7 +106,8 @@ serve(async (req) => {
       userEmail, 
       imagesCount: images.length,
       historyLength: messageHistory.length,
-      systemPrompt: systemPrompt?.substring(0, 100) + '...'
+      systemPrompt: systemPrompt?.substring(0, 100) + '...',
+      knowledgeDocumentsCount: knowledgeDocuments.length
     });
 
     if (!message && (!images || images.length === 0)) {
@@ -130,6 +132,28 @@ serve(async (req) => {
 
     const client = createGeminiClient();
     const model = client.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    // Build knowledge base section if documents are provided
+    let knowledgeBaseSection = "";
+    if (knowledgeDocuments.length > 0) {
+      knowledgeBaseSection = "\n\n=== KNOWLEDGE BASE ===\n";
+      knowledgeBaseSection += "You have access to the following documents for context:\n\n";
+      
+      for (const doc of knowledgeDocuments) {
+        knowledgeBaseSection += `--- ${doc.filename} ---\n`;
+        // Truncate very long documents to avoid token limits (keep first 10000 chars)
+        const content = doc.content.length > 10000 
+          ? doc.content.substring(0, 10000) + "\n\n[Document truncated due to length...]"
+          : doc.content;
+        knowledgeBaseSection += content + "\n\n";
+      }
+      
+      knowledgeBaseSection += "Please use this information when responding to user queries.\n";
+      knowledgeBaseSection += "=== END OF KNOWLEDGE BASE ===\n";
+    }
+
+    // Combine system prompt with knowledge base
+    const enhancedSystemPrompt = (systemPrompt || 'You are a helpful AI assistant analyzing images.') + knowledgeBaseSection;
 
     // Prepare conversation history
     const contents = messageHistory.map((msg: any) => ({
@@ -164,7 +188,7 @@ serve(async (req) => {
 
     const result = await model.generateContentStream({
       contents,
-      systemInstruction: systemPrompt || 'You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses. You can analyze images and answer questions about them.',
+      systemInstruction: enhancedSystemPrompt,
       safetySettings: getSafetySettings(),
     });
 

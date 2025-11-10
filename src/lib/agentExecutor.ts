@@ -8,6 +8,10 @@ export interface AgentExecutionOptions {
     config: Record<string, any>;
   }>;
   images?: string[];
+  knowledgeDocuments?: Array<{
+    filename: string;
+    content: string;
+  }>;
 }
 
 export interface AgentExecutionResult {
@@ -42,6 +46,7 @@ export class AgentExecutor {
             userPrompt: options.userPrompt,
             tools: options.tools,
             images: options.images,
+            knowledgeDocuments: options.knowledgeDocuments,
           }),
         }
       );
