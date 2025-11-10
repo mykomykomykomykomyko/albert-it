@@ -1,5 +1,7 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useAuth } from "@/hooks/useAuth";
+import { useSessionTimeout } from "@/hooks/useSessionTimeout";
 
 interface AccessibilityProviderProps {
   children: ReactNode;
@@ -7,7 +9,15 @@ interface AccessibilityProviderProps {
 
 export const AccessibilityProvider = ({ children }: AccessibilityProviderProps) => {
   const { preferences, isLoading } = useUserPreferences();
+  const { user } = useAuth();
   const [isPreviewActive, setIsPreviewActive] = useState(false);
+
+  // Enable session timeout for security (only for authenticated users who have it enabled)
+  useSessionTimeout({
+    timeoutMs: 30 * 60 * 1000, // 30 minutes
+    warningMs: 2 * 60 * 1000, // 2 minutes warning
+    enabled: preferences.enable_session_timeout && !!user,
+  });
 
   // Listen for preview state changes
   useEffect(() => {
