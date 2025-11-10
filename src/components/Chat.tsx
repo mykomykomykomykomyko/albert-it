@@ -1361,9 +1361,9 @@ const Chat = () => {
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
                      )}
-                     <div className={`flex flex-col gap-3 max-w-[80%]`}>
+                     <div className={`flex flex-col gap-3 max-w-[80%] min-w-0`}>
                          <div
-                           className={`rounded-2xl px-4 py-3 relative group ${
+                           className={`rounded-2xl px-4 py-3 relative group overflow-hidden ${
                              message.role === "user"
                                ? "bg-primary text-primary-foreground"
                                : "bg-card border border-border"
@@ -1385,22 +1385,23 @@ const Chat = () => {
                               
                               return (
                                 <>
-                                  {textContent ? (
-                                    <div className={`prose prose-sm max-w-none ${
+                                   {textContent ? (
+                                    <div className={`prose prose-sm max-w-none break-words ${
                                       message.role === "user" 
                                         ? "prose-invert" 
                                         : "dark:prose-invert"
                                     } 
-                                    prose-p:leading-relaxed prose-p:my-3 prose-p:text-base
-                                    prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-semibold
+                                    prose-p:leading-relaxed prose-p:my-3 prose-p:text-base prose-p:break-words
+                                    prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-semibold prose-headings:break-words
                                     prose-ul:my-3 prose-ul:space-y-2 prose-ul:list-disc prose-ul:pl-6
                                     prose-ol:my-3 prose-ol:space-y-2 prose-ol:list-decimal prose-ol:pl-6
-                                    prose-li:my-1.5 prose-li:leading-relaxed prose-li:text-base
+                                    prose-li:my-1.5 prose-li:leading-relaxed prose-li:text-base prose-li:break-words
                                     prose-strong:font-bold prose-strong:text-foreground
-                                    prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 
-                                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm
-                                    prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4
-                                    prose-blockquote:border-l-accent prose-blockquote:my-4`}>
+                                    prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-a:break-all
+                                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:break-words
+                                    prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4 prose-pre:overflow-x-auto prose-pre:max-w-full
+                                    prose-blockquote:border-l-accent prose-blockquote:my-4 prose-blockquote:break-words
+                                    [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-words [&_pre_code]:whitespace-pre-wrap`}>
                                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {(() => {
                                           const { cleanContent } = parseWorkflowSuggestion(textContent);
@@ -1408,7 +1409,7 @@ const Chat = () => {
                                         })()}
                                       </ReactMarkdown>
                                     </div>
-                                  ) : !imageUrl ? (
+                                   ) : !imageUrl ? (
                                     <div className="text-muted-foreground italic text-sm">
                                       [Empty message]
                                     </div>

@@ -193,5 +193,33 @@ All colors MUST be HSL.
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Ensure markdown content wraps properly */
+  .prose pre {
+    @apply overflow-x-auto max-w-full;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+  }
+  
+  .prose code {
+    @apply break-words;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .prose pre code {
+    @apply whitespace-pre-wrap;
+  }
+  
+  .prose p, .prose li {
+    @apply break-words;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+  
+  .prose a {
+    @apply break-all;
+    word-break: break-all;
+  }
 }
 
