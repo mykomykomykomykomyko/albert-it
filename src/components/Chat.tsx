@@ -9,7 +9,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon, Search } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -32,6 +32,7 @@ import { useConversationPresence } from '@/hooks/useConversationPresence';
 import { useAuth } from '@/hooks/useAuth';
 import { useRef } from 'react';
 import { FilePreviewCard } from './chat/FilePreviewCard';
+import { Toggle } from './ui/toggle';
 
 interface ImageAttachment {
   name: string;
@@ -76,6 +77,7 @@ const Chat = () => {
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [braveSearchEnabled, setBraveSearchEnabled] = useState(false);
   
   // Ref for auto-scrolling to bottom
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -754,6 +756,34 @@ const Chat = () => {
     try {
       // Prepare file content
       let fullContent = userContent;
+      
+      // If Brave search is enabled, fetch search results first
+      if (braveSearchEnabled) {
+        try {
+          const { data: searchData, error: searchError } = await supabase.functions.invoke(
+            "brave-search",
+            {
+              body: { query: userContent, numResults: 5 },
+            }
+          );
+
+          if (searchError) throw searchError;
+
+          if (searchData?.results && searchData.results.length > 0) {
+            const searchContext = searchData.results
+              .map((r: any, i: number) => `${i + 1}. ${r.title}\n${r.description}\nSource: ${r.url}`)
+              .join("\n\n");
+            
+            fullContent = `[User Question]: ${userContent}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
+            
+            toast.success(`Found ${searchData.results.length} search results`);
+          }
+        } catch (searchErr) {
+          console.error("Brave search error:", searchErr);
+          toast.error("Search failed, continuing without search results");
+        }
+      }
+      
       if (files.length > 0) {
         const fileContent = files.map(file => {
           let content = `\n\n=== ${file.filename} ===\n\n${file.content}`;
@@ -1558,6 +1588,16 @@ const Chat = () => {
                   
                   {/* Buttons row below on mobile, inline on desktop */}
                   <div className="flex gap-2 flex-wrap">
+                    <Toggle
+                      pressed={braveSearchEnabled}
+                      onPressedChange={setBraveSearchEnabled}
+                      aria-label="Toggle Brave search for real-time information"
+                      size="sm"
+                      className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      {braveSearchEnabled ? "Search: ON" : "Search: OFF"}
+                    </Toggle>
                     <AgentSwitcher
                       selectedAgent={currentAgent}
                       onAgentChange={(agent) => setCurrentAgent(agent)}
