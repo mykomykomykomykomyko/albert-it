@@ -70,8 +70,8 @@ export function AgentSwitcher({ selectedAgent, onAgentChange }: AgentSwitcherPro
               className="pl-9 border-border focus-visible:ring-primary"
             />
           </div>
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-1">
+          <ScrollArea className="h-[400px]">
+            <div className="space-y-1 pr-4">
               <button
                 onClick={() => handleSelectAgent(null)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-left ${
