@@ -8,8 +8,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Download, ArrowLeft, TrendingUp } from 'lucide-react';
 import { useWorkflows, Workflow } from '@/hooks/useWorkflows';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 export default function WorkflowMarketplace() {
+  const { t } = useTranslation('marketplace');
   const navigate = useNavigate();
   const location = useLocation();
   const { cloneWorkflow, loadPublicWorkflows } = useWorkflows();
@@ -52,16 +54,22 @@ export default function WorkflowMarketplace() {
       // Navigate to appropriate page based on format
       if (isCanvasFormat && !isStageFormat) {
         navigate(`/canvas?workflowId=${result.id}`);
-        toast.success('Loading cloned workflow in Canvas...');
+        toast.success(t('workflow.loadingCanvasCloned'));
       } else if (isStageFormat && !isCanvasFormat) {
         navigate(`/stage?workflowId=${result.id}`);
-        toast.success('Loading cloned workflow in Stage...');
+        toast.success(t('workflow.loadingStageCloned'));
       } else {
         // Default to returnPath if format is unclear
         navigate(`${returnPath}?workflowId=${result.id}`);
-        toast.success('Loading cloned workflow...');
+        toast.success(t('workflow.loadingCloned'));
       }
     }
+  };
+
+  // Get translated category name
+  const getCategoryName = (category: string) => {
+    const categoryKey = `workflow.categories.${category}` as any;
+    return t(categoryKey, category.charAt(0).toUpperCase() + category.slice(1));
   };
 
   return (
@@ -75,17 +83,17 @@ export default function WorkflowMarketplace() {
             size="sm"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            {t('workflow.back')}
           </Button>
-          <h1 className="text-2xl sm:text-4xl font-bold mb-2">Workflow Marketplace</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Discover and clone workflows created by the community</p>
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">{t('workflow.title')}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{t('workflow.subtitle')}</p>
         </div>
 
         <div className="mb-6 flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search workflows..."
+              placeholder={t('workflow.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -101,7 +109,7 @@ export default function WorkflowMarketplace() {
                   onClick={() => setSelectedCategory(category)}
                   className="whitespace-nowrap"
                 >
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                  {getCategoryName(category)}
                 </Button>
               ))}
             </div>
@@ -110,12 +118,12 @@ export default function WorkflowMarketplace() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading marketplace...</p>
+            <p className="text-muted-foreground">{t('workflow.loading')}</p>
           </div>
         ) : filteredWorkflows.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No workflows found</p>
+              <p className="text-muted-foreground">{t('workflow.noWorkflowsFound')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -124,11 +132,11 @@ export default function WorkflowMarketplace() {
               <Card key={workflow.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between mb-3">
-                    <Badge variant="secondary">{workflow.category || 'General'}</Badge>
+                    <Badge variant="secondary">{workflow.category || t('workflow.general')}</Badge>
                   </div>
                   <CardTitle className="line-clamp-1">{workflow.name}</CardTitle>
                   <CardDescription className="line-clamp-2">
-                    {workflow.description || 'No description available'}
+                    {workflow.description || t('workflow.noDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -144,7 +152,7 @@ export default function WorkflowMarketplace() {
                     )}
                     {workflow.version && (
                       <p className="text-xs text-muted-foreground">
-                        Version {workflow.version}
+                        {t('workflow.version')} {workflow.version}
                       </p>
                     )}
                     <Button
@@ -152,7 +160,7 @@ export default function WorkflowMarketplace() {
                       className="w-full"
                     >
                       <Download className="w-4 h-4 mr-2" />
-                      Clone Workflow
+                      {t('workflow.cloneWorkflow')}
                     </Button>
                   </div>
                 </CardContent>

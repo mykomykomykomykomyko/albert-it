@@ -20,5 +20,27 @@
     "agentAdded": "Agent added successfully",
     "agentCloned": "Agent cloned successfully",
     "failedToCreate": "Failed to create agent"
+  },
+  "workflow": {
+    "title": "Workflow Marketplace",
+    "subtitle": "Discover and clone workflows created by the community",
+    "back": "Back",
+    "searchPlaceholder": "Search workflows...",
+    "loading": "Loading marketplace...",
+    "noWorkflowsFound": "No workflows found",
+    "categories": {
+      "all": "All",
+      "productivity": "Productivity",
+      "analytics": "Analytics",
+      "marketing": "Marketing",
+      "developer": "Developer"
+    },
+    "general": "General",
+    "noDescription": "No description available",
+    "version": "Version",
+    "cloneWorkflow": "Clone Workflow",
+    "loadingCloned": "Loading cloned workflow...",
+    "loadingCanvasCloned": "Loading cloned workflow in Canvas...",
+    "loadingStageCloned": "Loading cloned workflow in Stage..."
   }
 }
