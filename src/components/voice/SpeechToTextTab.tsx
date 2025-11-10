@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, FileAudio, Download, Users, Clock, Trash2, Play, Mic, Square, Copy, FolderInput } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface SpeechToTextTabProps {
   // API key no longer needed - handled by edge function
@@ -33,6 +34,7 @@ interface Model {
 }
 
 export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [files, setFiles] = useState<AudioFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -98,8 +100,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
     if (audioFiles.length === 0) {
       toast({
-        title: "Invalid Files",
-        description: "Please select valid audio files (WAV, MP3, FLAC, etc.)",
+        title: t("voice.speechToText.invalidFiles"),
+        description: t("voice.speechToText.invalidFilesDesc"),
         variant: "destructive",
       });
       return;
@@ -120,8 +122,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   const processFile = async (fileId: string) => {
     if (!selectedModel) {
       toast({
-        title: "Configuration Required", 
-        description: "Please select a model.",
+        title: t("voice.speechToText.configRequired"), 
+        description: t("voice.speechToText.selectModel"),
         variant: "destructive",
       });
       return;
@@ -179,8 +181,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       setSelectedFile(fileId);
 
       toast({
-        title: "Success",
-        description: `Transcription completed for ${file.name}`,
+        title: t("voice.speechToText.success"),
+        description: `${t("voice.speechToText.transcriptionComplete")} ${file.name}`,
       });
 
     } catch (error) {
@@ -189,8 +191,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       ));
       
       toast({
-        title: "Transcription Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
+        title: t("voice.speechToText.transcriptionFailed"),
+        description: error instanceof Error ? error.message : t("voice.messages.error"),
         variant: "destructive",
       });
     }
@@ -289,7 +291,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
           .join('\n\n');
       } else {
-        content = file.transcription.text || "No transcription available";
+        content = file.transcription.text || t("voice.speechToText.noTranscription");
       }
       filename = `${file.name}_transcription.txt`;
       mimeType = "text/plain";
@@ -343,19 +345,19 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
         .join('\n\n');
     } else {
-      textContent = file.transcription.text || "No transcription available";
+      textContent = file.transcription.text || t("voice.speechToText.noTranscription");
     }
 
     try {
       await navigator.clipboard.writeText(textContent);
       toast({
-        title: "Copied to Clipboard",
-        description: "Transcription text has been copied to your clipboard",
+        title: t("voice.speechToText.copied"),
+        description: t("voice.speechToText.copiedDesc"),
       });
     } catch (error) {
       toast({
-        title: "Copy Failed",
-        description: "Failed to copy text to clipboard",
+        title: t("voice.speechToText.copyFailed"),
+        description: t("voice.speechToText.copyFailedDesc"),
         variant: "destructive",
       });
     }
@@ -368,8 +370,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast({
-          title: "Error",
-          description: "You must be logged in to save transcriptions",
+          title: t("common.error"),
+          description: t("voice.speechToText.loginRequired"),
           variant: "destructive",
         });
         return;
@@ -409,7 +411,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           total_speakers: uniqueSpeakers.length
         };
       } else {
-        formattedContent = file.transcription.text || "No transcription available";
+        formattedContent = file.transcription.text || t("voice.speechToText.noTranscription");
       }
 
       // Save to meeting_transcripts table
@@ -428,14 +430,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       if (error) throw error;
 
       toast({
-        title: "Saved to Transcripts",
-        description: "Voice transcription has been saved to your transcripts library",
+        title: t("voice.speechToText.savedToTranscripts"),
+        description: t("voice.speechToText.savedDesc"),
       });
     } catch (error) {
       console.error('Error saving to transcripts:', error);
       toast({
-        title: "Save Failed",
-        description: "Failed to save transcription to library",
+        title: t("voice.speechToText.saveFailed"),
+        description: t("voice.speechToText.saveFailedDesc"),
         variant: "destructive",
       });
     }
@@ -485,8 +487,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         stream.getTracks().forEach(track => track.stop());
         
         toast({
-          title: "Recording Complete",
-          description: `Audio recorded and added to files: ${fileName}`,
+          title: t("voice.speechToText.recordingComplete"),
+          description: `${t("voice.speechToText.recordingCompleteDesc")} ${fileName}`,
         });
       };
       
@@ -502,14 +504,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       setRecordingInterval(interval);
       
       toast({
-        title: "Recording Started",
-        description: "Speak into your microphone...",
+        title: t("voice.speechToText.startRecording"),
+        description: t("voice.speechToText.recording"),
       });
       
     } catch (error) {
       toast({
-        title: "Recording Error",
-        description: "Unable to access microphone. Please check permissions.",
+        title: t("common.error"),
+        description: t("voice.messages.error"),
         variant: "destructive",
       });
     }
@@ -551,7 +553,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5" />
-              Audio Files
+              {t("voice.speechToText.uploadAudio")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -568,9 +570,9 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               )}
             >
               <FileAudio className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Drop audio files here</h3>
+              <h3 className="text-lg font-medium mb-2">{t("voice.speechToText.uploadAudio")}</h3>
               <p className="text-muted-foreground mb-4">
-                Or click to select files (WAV, MP3, FLAC, M4A)
+                {t("voice.speechToText.uploadAudio")}
               </p>
               <input
                 type="file"
@@ -583,7 +585,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               <div className="flex gap-3 justify-center">
                 <Button asChild variant="outline">
                   <label htmlFor="audio-upload" className="cursor-pointer">
-                    Choose Files
+                    {t("voice.speechToText.uploadAudio")}
                   </label>
                 </Button>
                 
@@ -595,12 +597,12 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                   {isRecording ? (
                     <>
                       <Square className="w-4 h-4 mr-2" />
-                      Stop ({formatRecordingTime(recordingTime)})
+                      {t("voice.speechToText.stopRecording")} ({formatRecordingTime(recordingTime)})
                     </>
                   ) : (
                     <>
                       <Mic className="w-4 h-4 mr-2" />
-                      Record Audio
+                      {t("voice.speechToText.recordAudio")}
                     </>
                   )}
                 </Button>
@@ -685,15 +687,15 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         {/* Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>Configuration</CardTitle>
+            <CardTitle>{t("voice.textToSpeech.configuration")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Model Selection */}
             <div className="space-y-2">
-              <Label>Transcription Model</Label>
+              <Label>{t("voice.speechToText.model")}</Label>
               <Select value={selectedModel} onValueChange={setSelectedModel}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select model..." />
+                  <SelectValue placeholder={t("voice.speechToText.selectModelPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {models.map((model) => (
@@ -708,7 +710,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             {/* Speaker Detection */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="auto-detect">Auto-detect Speakers</Label>
+                <Label htmlFor="auto-detect">{t("voice.speechToText.autoDetectSpeakers")}</Label>
                 <Switch
                   id="auto-detect"
                   checked={autoDetectSpeakers}
@@ -718,7 +720,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               
               {!autoDetectSpeakers && (
                 <div className="space-y-2">
-                  <Label>Number of Speakers</Label>
+                  <Label>{t("voice.speechToText.manualSpeakerCount")}</Label>
                   <Input
                     type="number"
                     min="1"
@@ -742,7 +744,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Speaker Names ({selectedFileData.transcription.total_speakers || getUniqueSpeakers(selectedFileData.transcription).length} speakers)
+                {t("voice.speechToText.autoDetectSpeakers")} ({selectedFileData.transcription.total_speakers || getUniqueSpeakers(selectedFileData.transcription).length} {t("voice.speechToText.speakers")})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -785,7 +787,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               <div className="space-y-4">
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
-                  Transcription Results
+                  {t("voice.speechToText.results")}
                 </CardTitle>
                 <div className="flex gap-2 flex-wrap">
                   <Button
@@ -794,7 +796,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                     onClick={() => saveToTranscripts(selectedFileData)}
                   >
                     <FolderInput className="w-4 h-4 mr-2" />
-                    Save to Transcripts
+                    {t("voice.speechToText.saveToLibrary")}
                   </Button>
                   <Button
                     size="sm"
@@ -802,7 +804,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                     onClick={() => copyTranscriptionToClipboard(selectedFileData)}
                   >
                     <Copy className="w-4 h-4 mr-2" />
-                    Copy
+                    {t("voice.speechToText.copyText")}
                   </Button>
                   <Button
                     size="sm"
