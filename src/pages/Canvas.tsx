@@ -1423,33 +1423,33 @@ const Canvas = () => {
               value={workflowName}
               onChange={(e) => setWorkflowName(e.target.value)}
               className="w-full sm:w-52 h-9 font-medium"
-              placeholder="Untitled Workflow"
+              placeholder={t('toolbar.untitledWorkflow')}
             />
             <div className="hidden sm:block w-px h-7 bg-border" />
             <div className="flex flex-wrap gap-1.5 sm:gap-2 flex-1">
               <Button variant="outline" size="sm" onClick={() => setIsTemplatesOpen(true)} className="h-8 text-xs">
                 <Layout className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">Templates</span>
+                <span className="hidden sm:inline">{t('toolbar.templates')}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleLoad} className="h-8 text-xs">
                 <Upload className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">Load</span>
+                <span className="hidden sm:inline">{t('toolbar.load')}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleSave} className="h-8 text-xs">
                 <Save className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">Save</span>
+                <span className="hidden sm:inline">{t('toolbar.save')}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/saved-work')} className="h-8 text-xs">
                 <FileText className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">My Work</span>
+                <span className="hidden sm:inline">{t('toolbar.myWork')}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate('/workflow-marketplace', { state: { from: '/canvas' } })} className="h-8 text-xs">
                 <Store className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">Marketplace</span>
+                <span className="hidden sm:inline">{t('toolbar.marketplace')}</span>
               </Button>
               <Button variant="outline" size="sm" onClick={handleClear} className="h-8 text-xs">
                 <Trash2 className="h-3.5 w-3.5 sm:mr-2" />
-                <span className="hidden sm:inline">Clear</span>
+                <span className="hidden sm:inline">{t('toolbar.clear')}</span>
               </Button>
               <Button 
                 variant="outline" 
@@ -1464,7 +1464,7 @@ const Canvas = () => {
                   <ArrowLeftRight className="h-3.5 w-3.5 sm:mr-2" />
                 )}
                 <span className="hidden sm:inline">
-                  {connectionOrientation === 'vertical' ? 'Vertical' : 'Horizontal'}
+                  {connectionOrientation === 'vertical' ? t('toolbar.vertical') : t('toolbar.horizontal')}
                 </span>
               </Button>
               {selectedNode && (
@@ -1475,7 +1475,7 @@ const Canvas = () => {
                   className="h-8 text-xs"
                 >
                   <Trash2 className="h-3.5 w-3.5 sm:mr-2" />
-                  <span className="hidden sm:inline">Delete Node</span>
+                  <span className="hidden sm:inline">{t('toolbar.deleteNode')}</span>
                 </Button>
               )}
             </div>
@@ -1487,7 +1487,7 @@ const Canvas = () => {
             disabled={nodes.length === 0}
           >
             <Play className="h-3.5 w-3.5" />
-            Run Workflow
+            {t('toolbar.runWorkflow')}
           </Button>
         </div>
       </header>
@@ -1520,7 +1520,7 @@ const Canvas = () => {
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
                       <FileInput className="h-4 w-4 text-blue-500" />
-                      <span className="font-medium">Input Nodes</span>
+                      <span className="font-medium">{t('nodeLibrary.inputNodes')}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -1528,19 +1528,19 @@ const Canvas = () => {
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('input', { name: 'Text Input', description: 'Enter text data', config: { inputType: 'text' } })}
+                      onClick={() => addNode('input', { name: t('nodeLibrary.textInput'), description: t('nodeLibrary.textInputDesc'), config: { inputType: 'text' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Text Input</span>
+                      <span className="text-sm">{t('nodeLibrary.textInput')}</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('input', { name: 'File Input', description: 'Upload files', config: { inputType: 'file' } })}
+                      onClick={() => addNode('input', { name: t('nodeLibrary.fileInput'), description: t('nodeLibrary.fileInputDesc'), config: { inputType: 'file' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">File Input</span>
+                      <span className="text-sm">{t('nodeLibrary.fileInput')}</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
@@ -1549,12 +1549,12 @@ const Canvas = () => {
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
                       <Sparkles className="h-4 w-4 text-primary" />
-                      <span className="font-medium">AI Agents</span>
+                      <span className="font-medium">{t('nodeLibrary.aiAgents')}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
                     {savedAgents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground px-2 py-3">No agents available. Create one first.</p>
+                      <p className="text-xs text-muted-foreground px-2 py-3">{t('nodeLibrary.noAgents')}</p>
                     ) : (
                       savedAgents.slice(0, 8).map((agent) => (
                         <Button
@@ -1580,7 +1580,7 @@ const Canvas = () => {
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
                       <Repeat className="h-4 w-4 text-orange-500" />
-                      <span className="font-medium">Processing</span>
+                      <span className="font-medium">{t('nodeLibrary.processing')}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -1588,19 +1588,19 @@ const Canvas = () => {
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('transform', { name: 'Transform', description: 'Transform text data', config: { operation: 'lowercase' } })}
+                      onClick={() => addNode('transform', { name: t('nodeLibrary.transform'), description: t('nodeLibrary.transformDesc'), config: { operation: 'lowercase' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Transform</span>
+                      <span className="text-sm">{t('nodeLibrary.transform')}</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted"
-                      onClick={() => addNode('join', { name: 'Join', description: 'Combine multiple inputs' })}
+                      onClick={() => addNode('join', { name: t('nodeLibrary.join'), description: t('nodeLibrary.joinDesc') })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Join</span>
+                      <span className="text-sm">{t('nodeLibrary.join')}</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
@@ -1609,7 +1609,7 @@ const Canvas = () => {
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
                       <FileOutput className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">Output Nodes</span>
+                      <span className="font-medium">{t('nodeLibrary.outputNodes')}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -1617,19 +1617,19 @@ const Canvas = () => {
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted text-foreground"
-                      onClick={() => addNode('output', { name: 'Text Output', description: 'Display results', config: { format: 'text' } })}
+                      onClick={() => addNode('output', { name: t('nodeLibrary.textOutput'), description: t('nodeLibrary.textOutputDesc'), config: { format: 'text' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Text Output</span>
+                      <span className="text-sm">{t('nodeLibrary.textOutput')}</span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="w-full justify-start h-9 hover:bg-muted text-foreground"
-                      onClick={() => addNode('output', { name: 'JSON Output', description: 'Display as JSON', config: { format: 'json' } })}
+                      onClick={() => addNode('output', { name: t('nodeLibrary.jsonOutput'), description: t('nodeLibrary.jsonOutputDesc'), config: { format: 'json' } })}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">JSON Output</span>
+                      <span className="text-sm">{t('nodeLibrary.jsonOutput')}</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
@@ -1638,7 +1638,7 @@ const Canvas = () => {
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
                       <Zap className="h-4 w-4 text-yellow-500" />
-                      <span className="font-medium">Functions</span>
+                      <span className="font-medium">{t('nodeLibrary.functions')}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -1649,10 +1649,10 @@ const Canvas = () => {
                       onClick={() => setIsFunctionSelectorOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Browse All Functions</span>
+                      <span className="text-sm">{t('nodeLibrary.browseFunctions')}</span>
                     </Button>
                     <p className="text-xs text-muted-foreground px-2 mt-1">
-                      Search, Web Scrape, Export, String Operations, and more
+                      {t('nodeLibrary.functionsDesc')}
                     </p>
                   </AccordionContent>
                 </AccordionItem>
@@ -1661,7 +1661,7 @@ const Canvas = () => {
                   <AccordionTrigger className="text-sm py-3 hover:no-underline">
                     <div className="flex items-center gap-2.5">
                       <Settings className="h-4 w-4 text-indigo-500" />
-                      <span className="font-medium">Tools</span>
+                      <span className="font-medium">{t('nodeLibrary.tools')}</span>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="space-y-1.5 pt-2 pb-3">
@@ -1689,21 +1689,21 @@ const Canvas = () => {
                       onClick={() => setIsToolSelectorOpen(true)}
                     >
                       <Plus className="h-4 w-4 mr-2.5" />
-                      <span className="text-sm">Browse All Tools...</span>
+                      <span className="text-sm">{t('nodeLibrary.browseTools')}</span>
                     </Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
               <div className="mt-5 pt-5 border-t">
-                <Label className="text-sm font-medium mb-2.5 block">Global Input</Label>
+                <Label className="text-sm font-medium mb-2.5 block">{t('globalInput.label')}</Label>
                 <Textarea
                   value={globalInput}
                   onChange={(e) => setGlobalInput(e.target.value)}
-                  placeholder="Enter initial workflow input (optional)..."
+                  placeholder={t('globalInput.placeholder')}
                   className="min-h-[100px] text-sm"
                 />
-                <p className="text-xs text-muted-foreground mt-2">This input will be available to all trigger nodes</p>
+                <p className="text-xs text-muted-foreground mt-2">{t('globalInput.description')}</p>
               </div>
             </div>
           </ScrollArea>
@@ -1820,17 +1820,17 @@ const Canvas = () => {
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
               <Card className="p-3 bg-card shadow-lg border-warning/50 pointer-events-auto">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">Connection selected</span>
+                  <span className="text-sm text-muted-foreground">{t('edgeControls.connectionSelected')}</span>
                   <Button size="sm" variant="outline" onClick={() => {
                     setConfiguringEdge(selectedEdge);
                     setIsLoopConfigOpen(true);
                   }}>
                     <Repeat className="h-3 w-3 mr-1" />
-                    Loop Config
+                    {t('edgeControls.loopConfig')}
                   </Button>
                   <div className="flex items-center gap-2">
                     <kbd className="px-2 py-1 text-xs font-semibold bg-muted rounded">Delete</kbd>
-                    <span className="text-xs text-muted-foreground">to remove</span>
+                    <span className="text-xs text-muted-foreground">{t('edgeControls.deleteKey')}</span>
                   </div>
                   <button
                     onClick={() => setSelectedEdge(null)}

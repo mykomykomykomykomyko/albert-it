@@ -126,5 +126,52 @@
     "updated": "Updated:",
     "load": "Load",
     "deleteConfirm": "Are you sure you want to delete this canvas?"
+  },
+  "toolbar": {
+    "untitledWorkflow": "Untitled Workflow",
+    "templates": "Templates",
+    "load": "Load",
+    "save": "Save",
+    "myWork": "My Work",
+    "marketplace": "Marketplace",
+    "clear": "Clear",
+    "vertical": "Vertical",
+    "horizontal": "Horizontal",
+    "deleteNode": "Delete Node",
+    "runWorkflow": "Run Workflow"
+  },
+  "nodeLibrary": {
+    "inputNodes": "Input Nodes",
+    "textInput": "Text Input",
+    "fileInput": "File Input",
+    "textInputDesc": "Enter text data",
+    "fileInputDesc": "Upload files",
+    "aiAgents": "AI Agents",
+    "noAgents": "No agents available. Create one first.",
+    "processing": "Processing",
+    "transform": "Transform",
+    "transformDesc": "Transform text data",
+    "join": "Join",
+    "joinDesc": "Combine multiple inputs",
+    "outputNodes": "Output Nodes",
+    "textOutput": "Text Output",
+    "jsonOutput": "JSON Output",
+    "textOutputDesc": "Display results",
+    "jsonOutputDesc": "Display as JSON",
+    "functions": "Functions",
+    "browseFunctions": "Browse All Functions",
+    "functionsDesc": "Search, Web Scrape, Export, String Operations, and more",
+    "tools": "Tools",
+    "browseTools": "Browse All Tools..."
+  },
+  "globalInput": {
+    "label": "Global Input",
+    "placeholder": "Enter initial workflow input (optional)...",
+    "description": "This input will be available to all trigger nodes"
+  },
+  "edgeControls": {
+    "connectionSelected": "Connection selected",
+    "loopConfig": "Loop Config",
+    "deleteKey": "to remove"
   }
 }

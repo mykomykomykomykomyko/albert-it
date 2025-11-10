@@ -126,5 +126,52 @@
     "updated": "Mis à jour:",
     "load": "Charger",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer ce canevas?"
+  },
+  "toolbar": {
+    "untitledWorkflow": "Flux de travail sans titre",
+    "templates": "Modèles",
+    "load": "Charger",
+    "save": "Enregistrer",
+    "myWork": "Mon travail",
+    "marketplace": "Place de marché",
+    "clear": "Effacer",
+    "vertical": "Vertical",
+    "horizontal": "Horizontal",
+    "deleteNode": "Supprimer le nœud",
+    "runWorkflow": "Exécuter le flux de travail"
+  },
+  "nodeLibrary": {
+    "inputNodes": "Nœuds d'entrée",
+    "textInput": "Entrée de texte",
+    "fileInput": "Entrée de fichier",
+    "textInputDesc": "Saisir des données texte",
+    "fileInputDesc": "Télécharger des fichiers",
+    "aiAgents": "Agents IA",
+    "noAgents": "Aucun agent disponible. Créez-en un d'abord.",
+    "processing": "Traitement",
+    "transform": "Transformation",
+    "transformDesc": "Transformer des données texte",
+    "join": "Jonction",
+    "joinDesc": "Combiner plusieurs entrées",
+    "outputNodes": "Nœuds de sortie",
+    "textOutput": "Sortie de texte",
+    "jsonOutput": "Sortie JSON",
+    "textOutputDesc": "Afficher les résultats",
+    "jsonOutputDesc": "Afficher en JSON",
+    "functions": "Fonctions",
+    "browseFunctions": "Parcourir toutes les fonctions",
+    "functionsDesc": "Recherche, extraction web, export, opérations sur les chaînes, et plus",
+    "tools": "Outils",
+    "browseTools": "Parcourir tous les outils..."
+  },
+  "globalInput": {
+    "label": "Entrée globale",
+    "placeholder": "Saisir l'entrée initiale du flux de travail (optionnel)...",
+    "description": "Cette entrée sera disponible pour tous les nœuds de déclenchement"
+  },
+  "edgeControls": {
+    "connectionSelected": "Connexion sélectionnée",
+    "loopConfig": "Configuration de boucle",
+    "deleteKey": "pour supprimer"
   }
 }
