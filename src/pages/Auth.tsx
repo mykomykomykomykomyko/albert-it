@@ -74,15 +74,37 @@ const Auth = () => {
     }
 
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        navigate("/chat");
+        // Check if user needs to change password
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('must_change_password')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.must_change_password) {
+          navigate("/force-password-change");
+        } else {
+          navigate("/chat");
+        }
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session && event === 'SIGNED_IN') {
-        navigate("/chat");
+        // Check if user needs to change password
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('must_change_password')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.must_change_password) {
+          navigate("/force-password-change");
+        } else {
+          navigate("/chat");
+        }
       } else if (event === 'SIGNED_OUT') {
         // Ensure we stay on auth page when signed out
         if (window.location.pathname !== '/auth') {
@@ -220,21 +242,8 @@ const Auth = () => {
         return data;
       }, 3, 1000);
 
-      // Check if user needs to change password
-      if (result?.session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('must_change_password')
-          .eq('id', result.session.user.id)
-          .single();
-
-        if (profile?.must_change_password) {
-          navigate('/force-password-change');
-          return;
-        }
-      }
-
       toast.success("Signed in successfully!");
+      // Note: onAuthStateChange will handle navigation and password check
     } catch (error: any) {
       const errorMessage = error.message || "An error occurred during sign in";
       setError(errorMessage);
