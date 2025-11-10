@@ -33,7 +33,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ChatSidebarProps {
   conversations: Conversation[];
@@ -64,7 +63,6 @@ const ChatSidebar = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [renamingConversation, setRenamingConversation] = useState<Conversation | null>(null);
   const [newTitle, setNewTitle] = useState("");
-  const [newRetentionDays, setNewRetentionDays] = useState<string>("never");
 
   const sidebarContent = (
     <>
@@ -124,7 +122,6 @@ const ChatSidebar = ({
                       e.stopPropagation();
                       setRenamingConversation(conversation);
                       setNewTitle(conversation.title);
-                      setNewRetentionDays(conversation.retention_days?.toString() || "never");
                     }}
                     title="Rename conversation"
                   >
@@ -175,9 +172,9 @@ const ChatSidebar = ({
       <Dialog open={!!renamingConversation} onOpenChange={() => setRenamingConversation(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Conversation Settings</DialogTitle>
+            <DialogTitle>Rename Conversation</DialogTitle>
             <DialogDescription>
-              Update the conversation name and retention policy.
+              Update the conversation name.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -190,41 +187,11 @@ const ChatSidebar = ({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && newTitle.trim()) {
                     onRenameConversation(renamingConversation!.id, newTitle.trim());
-                    if (onUpdateRetention) {
-                      onUpdateRetention(
-                        renamingConversation!.id,
-                        newRetentionDays === 'never' ? null : parseInt(newRetentionDays)
-                      );
-                    }
                     setRenamingConversation(null);
                   }
                 }}
                 placeholder="Enter conversation title"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="retention">Auto-Delete After</Label>
-              <Select
-                value={newRetentionDays}
-                onValueChange={setNewRetentionDays}
-              >
-                <SelectTrigger id="retention">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="never">Never (Use Account Default)</SelectItem>
-                  <SelectItem value="7">7 days</SelectItem>
-                  <SelectItem value="14">14 days</SelectItem>
-                  <SelectItem value="30">30 days</SelectItem>
-                  <SelectItem value="60">60 days</SelectItem>
-                  <SelectItem value="90">90 days</SelectItem>
-                  <SelectItem value="180">180 days</SelectItem>
-                  <SelectItem value="365">365 days</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                This conversation will be automatically deleted after the specified period (ATIA/FOIP compliance).
-              </p>
             </div>
           </div>
           <DialogFooter>
@@ -235,12 +202,6 @@ const ChatSidebar = ({
               onClick={() => {
                 if (newTitle.trim()) {
                   onRenameConversation(renamingConversation!.id, newTitle.trim());
-                  if (onUpdateRetention) {
-                    onUpdateRetention(
-                      renamingConversation!.id,
-                      newRetentionDays === 'never' ? null : parseInt(newRetentionDays)
-                    );
-                  }
                   setRenamingConversation(null);
                 }
               }}
