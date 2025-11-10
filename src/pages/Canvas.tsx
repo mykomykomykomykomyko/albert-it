@@ -1112,7 +1112,20 @@ const Canvas = () => {
   const convertNodeToWorkflowNode = (node: Node): WorkflowNode | undefined => {
     const data = node.data as any;
     
-    if (data.nodeType === 'function') {
+    // Handle agent nodes - return full AgentNode shape
+    if (data.nodeType === 'agent') {
+      return {
+        id: node.id,
+        nodeType: 'agent',
+        name: data.label,
+        type: data.type || 'custom',
+        systemPrompt: String(data.systemPrompt || ''),
+        userPrompt: String(data.userPrompt || ''),
+        tools: [],
+        status: data.status || 'idle',
+        output: data.output,
+      } as AgentNode;
+    } else if (data.nodeType === 'function') {
       return {
         id: node.id,
         nodeType: 'function',

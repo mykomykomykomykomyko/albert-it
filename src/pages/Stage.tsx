@@ -26,6 +26,7 @@ export type { ToolInstance, LogEntry } from "@/types/workflow";
 export type Agent = AgentNode;
 
 import { useTranslation } from "react-i18next";
+import { generateId } from "@/lib/utils";
 
 const Stage = () => {
   const { t } = useTranslation('stage');
@@ -87,7 +88,7 @@ const Stage = () => {
 
   const addStage = () => {
     const newStage: StageType = {
-      id: `stage-${Date.now()}`,
+      id: `stage-${generateId()}`,
       name: `Stage ${workflow.stages.length + 1}`,
       nodes: [],
     };
@@ -147,7 +148,7 @@ const Stage = () => {
 
     if (nodeType === "agent") {
       newNode = {
-        id: `agent-${Date.now()}`,
+        id: `agent-${generateId()}`,
         nodeType: "agent",
         name: template.name,
         type: template.id,
@@ -158,7 +159,7 @@ const Stage = () => {
       } as AgentNode;
     } else if (nodeType === "function") {
       newNode = {
-        id: `function-${Date.now()}`,
+        id: `function-${generateId()}`,
         nodeType: "function",
         name: template.name,
         functionType: template.id,
@@ -168,7 +169,7 @@ const Stage = () => {
       } as FunctionNode;
     } else {
       newNode = {
-        id: `tool-${Date.now()}`,
+        id: `tool-${generateId()}`,
         nodeType: "tool",
         name: template.name,
         toolType: template.id,
@@ -263,7 +264,7 @@ const Stage = () => {
 
   const addToolInstance = (nodeId: string, toolId: string) => {
     const newToolInstance: ToolInstance = {
-      id: `tool-${Date.now()}`,
+      id: `tool-${generateId()}`,
       toolId,
       config: {},
     };
@@ -400,7 +401,7 @@ const Stage = () => {
 
   const addConnection = (fromNodeId: string, toNodeId: string, fromOutputPort?: string) => {
     const newConnection: Connection = {
-      id: `conn-${Date.now()}`,
+      id: `conn-${generateId()}`,
       fromNodeId,
       toNodeId,
       fromOutputPort,

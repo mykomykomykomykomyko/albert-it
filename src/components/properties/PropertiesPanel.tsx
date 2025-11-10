@@ -86,8 +86,10 @@ export const PropertiesPanel = ({
   const [outputTab, setOutputTab] = useState("edit");
   const [showBearerToken, setShowBearerToken] = useState(false);
 
-  // Use selectedNode if provided, otherwise fall back to selectedAgent
-  const activeNode = selectedNode || selectedAgent;
+  // Prioritize selectedAgent for agent nodes, otherwise use selectedNode
+  const activeNode = (selectedNode?.nodeType === "agent" && selectedAgent) 
+    ? selectedAgent 
+    : (selectedNode ?? selectedAgent);
 
   if (!activeNode) {
     return (
@@ -690,8 +692,8 @@ export const PropertiesPanel = ({
         )}
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-6">
+    <ScrollArea className="flex-1">
+      <div key={activeNode.id} className="p-4 space-y-6">
           {/* Common: Name */}
           <div className="space-y-2">
             <Label htmlFor="node-name" className="text-sm font-medium">
@@ -723,7 +725,7 @@ export const PropertiesPanel = ({
                   id="system-prompt"
                   placeholder="You are a helpful assistant..."
                   className="min-h-[100px] resize-none"
-                  value={(activeNode as AgentNode).systemPrompt}
+                  value={(activeNode as AgentNode).systemPrompt ?? ''}
                   onChange={(e) =>
                     onUpdateAgent(activeNode.id, { systemPrompt: e.target.value })
                   }
@@ -741,7 +743,7 @@ export const PropertiesPanel = ({
                   id="user-prompt"
                   placeholder="Analyze the following: {input}"
                   className="min-h-[80px] resize-none"
-                  value={(activeNode as AgentNode).userPrompt}
+                  value={(activeNode as AgentNode).userPrompt ?? ''}
                   onChange={(e) =>
                     onUpdateAgent(activeNode.id, { userPrompt: e.target.value })
                   }
