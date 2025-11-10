@@ -35,17 +35,19 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { useSessionTimeout } from './useSessionTimeout';
+import { useUserPreferences } from './useUserPreferences';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { preferences } = useUserPreferences();
 
-  // Enable session timeout for security (only for authenticated users)
+  // Enable session timeout for security (only for authenticated users who have it enabled)
   useSessionTimeout({
     timeoutMs: 30 * 60 * 1000, // 30 minutes
     warningMs: 2 * 60 * 1000, // 2 minutes warning
-    enabled: !!user, // Only enable when user is logged in
+    enabled: preferences.enable_session_timeout && !!user,
   });
 
   useEffect(() => {

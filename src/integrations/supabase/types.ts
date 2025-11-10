@@ -808,6 +808,7 @@ export type Database = {
           contrast_theme: string
           created_at: string
           default_retention_days: number | null
+          enable_session_timeout: boolean
           enhance_inputs: boolean
           font_family: string
           id: string
@@ -820,6 +821,7 @@ export type Database = {
           contrast_theme?: string
           created_at?: string
           default_retention_days?: number | null
+          enable_session_timeout?: boolean
           enhance_inputs?: boolean
           font_family?: string
           id?: string
@@ -832,6 +834,7 @@ export type Database = {
           contrast_theme?: string
           created_at?: string
           default_retention_days?: number | null
+          enable_session_timeout?: boolean
           enhance_inputs?: boolean
           font_family?: string
           id?: string

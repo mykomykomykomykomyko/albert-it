@@ -47,7 +47,11 @@
   "user": {
     "profile": "Profil",
     "settings": "Paramètres",
-    "accessibilityPreferences": "Préférences d'accessibilité"
+    "accessibilityPreferences": "Préférences d'accessibilité",
+    "sessionTimeout": {
+      "title": "Déconnexion automatique en cas d'inactivité",
+      "description": "Se déconnecter automatiquement après 30 minutes d'inactivité pour la sécurité"
+    }
   },
   "feedback": {
     "title": "Commentaires",

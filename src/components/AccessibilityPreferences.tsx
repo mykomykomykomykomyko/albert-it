@@ -413,6 +413,22 @@ export const AccessibilityPreferences = () => {
           </div>
         </Card>
 
+        {/* Session Timeout */}
+        <Card className="p-4 mt-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <Label className="text-base font-medium">Auto-Logout on Inactivity</Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Automatically log out after 30 minutes of inactivity for security
+              </p>
+            </div>
+            <Switch
+              checked={tempPreferences.enable_session_timeout}
+              onCheckedChange={(checked) => handlePreferenceChange({ enable_session_timeout: checked })}
+            />
+          </div>
+        </Card>
+
         {/* Save Button */}
         <div className="mt-6 flex justify-end">
           <Button

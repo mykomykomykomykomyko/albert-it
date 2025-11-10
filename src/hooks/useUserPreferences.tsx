@@ -9,6 +9,7 @@ export interface UserPreferences {
   contrast_theme: 'default' | 'high-contrast' | 'yellow-black' | 'black-yellow' | 'white-black' | 'black-white';
   enhance_inputs: boolean;
   default_retention_days: number | null;
+  enable_session_timeout: boolean;
 }
 
 const defaultPreferences: UserPreferences = {
@@ -18,6 +19,7 @@ const defaultPreferences: UserPreferences = {
   contrast_theme: 'default',
   enhance_inputs: false,
   default_retention_days: null,
+  enable_session_timeout: true,
 };
 
 export const useUserPreferences = () => {
@@ -45,6 +47,7 @@ export const useUserPreferences = () => {
           contrast_theme: data.contrast_theme as UserPreferences['contrast_theme'],
           enhance_inputs: data.enhance_inputs,
           default_retention_days: data.default_retention_days,
+          enable_session_timeout: data.enable_session_timeout,
         };
       }
 

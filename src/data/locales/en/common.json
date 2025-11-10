@@ -47,7 +47,11 @@
   "user": {
     "profile": "Profile",
     "settings": "Settings",
-    "accessibilityPreferences": "Accessibility Preferences"
+    "accessibilityPreferences": "Accessibility Preferences",
+    "sessionTimeout": {
+      "title": "Auto-Logout on Inactivity",
+      "description": "Automatically log out after 30 minutes of inactivity for security"
+    }
   },
   "feedback": {
     "title": "Feedback",
