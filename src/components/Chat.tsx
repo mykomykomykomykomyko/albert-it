@@ -77,7 +77,7 @@ const Chat = () => {
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [perplexitySearchEnabled, setPerplexitySearchEnabled] = useState(false);
+  const [realTimeSearchEnabled, setRealTimeSearchEnabled] = useState(false);
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -772,16 +772,16 @@ const Chat = () => {
       let fullContent = userContent;
       let enhancedContentForAI = userContent; // Separate variable for AI that includes search results
       
-      // Auto-enable Perplexity for real-time questions
-      const shouldUsePerplexity = perplexitySearchEnabled || needsRealTimeData(userContent);
+      // Auto-enable real-time search for questions needing current data
+      const shouldUseRealTimeSearch = realTimeSearchEnabled || needsRealTimeData(userContent);
 
-      // Notify user if Perplexity was auto-activated
-      if (!perplexitySearchEnabled && shouldUsePerplexity) {
-        toast.info("Auto-enabled Perplexity for real-time data");
+      // Notify user if real-time search was auto-activated
+      if (!realTimeSearchEnabled && shouldUseRealTimeSearch) {
+        toast.info("Auto-enabled Real-Time Search");
       }
 
-      // If Perplexity search is enabled or auto-detected, fetch search results first
-      if (shouldUsePerplexity) {
+      // If real-time search is enabled or auto-detected, fetch search results first
+      if (shouldUseRealTimeSearch) {
         try {
           const { data: searchData, error: searchError } = await supabase.functions.invoke(
             "perplexity-search",
@@ -793,13 +793,13 @@ const Chat = () => {
           if (searchError) throw searchError;
 
           if (searchData?.answer) {
-            // Perplexity returns a direct answer, not results array
-            enhancedContentForAI = `[User Question]: ${userContent}\n\n[Perplexity AI Search Result]:\n${searchData.answer}\n\nPlease answer the user's question using the search result above as context. This is real-time information from Perplexity AI.`;
+            // Real-time search returns a direct answer
+            enhancedContentForAI = `[User Question]: ${userContent}\n\n[Real-Time Search Result]:\n${searchData.answer}\n\nPlease answer the user's question using the search result above as context. This is current, real-time information.`;
             
-            toast.success(`Found current information from Perplexity AI`);
+            toast.success(`Found current information`);
           }
         } catch (searchErr) {
-          console.error("Perplexity search error:", searchErr);
+          console.error("Real-time search error:", searchErr);
           toast.error("Search failed, continuing without search results");
         }
       }
@@ -1618,14 +1618,14 @@ const Chat = () => {
                   {/* Buttons row below on mobile, inline on desktop */}
                   <div className="flex gap-2 flex-wrap">
                     <Toggle
-                      pressed={perplexitySearchEnabled}
-                      onPressedChange={setPerplexitySearchEnabled}
-                      aria-label="Toggle Perplexity search for real-time information"
+                      pressed={realTimeSearchEnabled}
+                      onPressedChange={setRealTimeSearchEnabled}
+                      aria-label="Toggle real-time search for current information"
                       size="sm"
                       className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                     >
                       <Search className="h-4 w-4 mr-2" />
-                      {perplexitySearchEnabled ? "Perplexity: ON" : "Perplexity: OFF"}
+                      {realTimeSearchEnabled ? "Real-Time Search: ON" : "Real-Time Search: OFF"}
                     </Toggle>
                     <AgentSwitcher
                       selectedAgent={currentAgent}

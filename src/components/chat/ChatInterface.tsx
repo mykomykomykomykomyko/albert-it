@@ -34,7 +34,7 @@ const ChatInterface = ({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState(conversation?.model || "google/gemini-2.5-flash");
-  const [perplexitySearchEnabled, setPerplexitySearchEnabled] = useState(false);
+  const [realTimeSearchEnabled, setRealTimeSearchEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Detect if a question needs real-time data
@@ -95,16 +95,16 @@ const ChatInterface = ({
     try {
       let enhancedMessage = userMessage;
 
-      // Auto-enable Perplexity for real-time questions
-      const shouldUsePerplexity = perplexitySearchEnabled || needsRealTimeData(userMessage);
+      // Auto-enable real-time search for questions needing current data
+      const shouldUseRealTimeSearch = realTimeSearchEnabled || needsRealTimeData(userMessage);
 
-      // Notify user if Perplexity was auto-activated
-      if (!perplexitySearchEnabled && shouldUsePerplexity) {
-        toast.info("Auto-enabled Perplexity for real-time data");
+      // Notify user if real-time search was auto-activated
+      if (!realTimeSearchEnabled && shouldUseRealTimeSearch) {
+        toast.info("Auto-enabled Real-Time Search");
       }
 
-      // If Perplexity search is enabled or auto-detected, fetch search results first
-      if (shouldUsePerplexity) {
+      // If real-time search is enabled or auto-detected, fetch search results first
+      if (shouldUseRealTimeSearch) {
         try {
           const { data: searchData, error: searchError } = await supabase.functions.invoke(
             "perplexity-search",
@@ -116,13 +116,13 @@ const ChatInterface = ({
           if (searchError) throw searchError;
 
           if (searchData?.answer) {
-            // Perplexity returns a direct answer, not results array
-            enhancedMessage = `[User Question]: ${userMessage}\n\n[Perplexity AI Search Result]:\n${searchData.answer}\n\nPlease answer the user's question using the search result above as context. This is real-time information from Perplexity AI.`;
+            // Real-time search returns a direct answer
+            enhancedMessage = `[User Question]: ${userMessage}\n\n[Real-Time Search Result]:\n${searchData.answer}\n\nPlease answer the user's question using the search result above as context. This is current, real-time information.`;
             
-            toast.success(`Found current information from Perplexity AI`);
+            toast.success(`Found current information`);
           }
         } catch (searchErr) {
-          console.error("Perplexity search error:", searchErr);
+          console.error("Real-time search error:", searchErr);
           toast.error("Search failed, continuing without search results");
         }
       }
@@ -156,7 +156,7 @@ const ChatInterface = ({
       // Prepare messages for API (use enhanced message for last user message if search was used)
       const chatMessages: ChatMessage[] = updatedMessages.map((msg, idx) => ({
         role: msg.role,
-        content: idx === updatedMessages.length - 1 && perplexitySearchEnabled ? enhancedMessage : msg.content,
+        content: idx === updatedMessages.length - 1 && realTimeSearchEnabled ? enhancedMessage : msg.content,
       }));
 
       // Stream response
@@ -340,18 +340,18 @@ const ChatInterface = ({
         <div className="max-w-3xl mx-auto space-y-2">
           <div className="flex items-center gap-2">
             <Toggle
-              pressed={perplexitySearchEnabled}
-              onPressedChange={setPerplexitySearchEnabled}
-              aria-label="Toggle Perplexity search for real-time information"
+              pressed={realTimeSearchEnabled}
+              onPressedChange={setRealTimeSearchEnabled}
+              aria-label="Toggle real-time search for current information"
               size="sm"
               className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             >
               <Search className="h-4 w-4 mr-2" />
-              {perplexitySearchEnabled ? "Perplexity: ON" : "Perplexity: OFF"}
+              {realTimeSearchEnabled ? "Real-Time Search: ON" : "Real-Time Search: OFF"}
             </Toggle>
-            {perplexitySearchEnabled && (
+            {realTimeSearchEnabled && (
               <span className="text-xs text-muted-foreground">
-                Searches the web with Perplexity AI
+                Searches for current web information
               </span>
             )}
           </div>
