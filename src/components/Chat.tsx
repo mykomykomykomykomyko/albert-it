@@ -1297,6 +1297,15 @@ const Chat = () => {
                         >
                           <Mic className="h-4 w-4" />
                         </Button>
+                        <Toggle
+                          pressed={realTimeSearchEnabled}
+                          onPressedChange={setRealTimeSearchEnabled}
+                          size="sm"
+                          className="h-10 w-10 rounded-xl data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
+                          title={realTimeSearchEnabled ? "Real-time search enabled" : "Enable real-time search"}
+                        >
+                          <Search className="h-4 w-4" />
+                        </Toggle>
                       </div>
                       
                       <Button
