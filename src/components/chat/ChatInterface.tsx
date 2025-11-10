@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Send, Sparkles, Search } from "lucide-react";
 import { Conversation, Message, ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
+import { Toggle } from "@/components/ui/toggle";
 
 interface ChatInterfaceProps {
   conversation: Conversation | null;
@@ -33,6 +34,7 @@ const ChatInterface = ({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState(conversation?.model || "google/gemini-2.5-flash");
+  const [braveSearchEnabled, setBraveSearchEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,7 +79,36 @@ const ChatInterface = ({
     setIsLoading(true);
 
     try {
-      // Save user message
+      let enhancedMessage = userMessage;
+
+      // If Brave search is enabled, fetch search results first
+      if (braveSearchEnabled) {
+        try {
+          const { data: searchData, error: searchError } = await supabase.functions.invoke(
+            "brave-search",
+            {
+              body: { query: userMessage, numResults: 5 },
+            }
+          );
+
+          if (searchError) throw searchError;
+
+          if (searchData?.results && searchData.results.length > 0) {
+            const searchContext = searchData.results
+              .map((r: any, i: number) => `${i + 1}. ${r.title}\n${r.description}\nSource: ${r.url}`)
+              .join("\n\n");
+            
+            enhancedMessage = `[User Question]: ${userMessage}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
+            
+            toast.success(`Found ${searchData.results.length} search results`);
+          }
+        } catch (searchErr) {
+          console.error("Brave search error:", searchErr);
+          toast.error("Search failed, continuing without search results");
+        }
+      }
+
+      // Save user message (original message, not enhanced)
       const { data: savedUserMessage, error: userError } = await supabase
         .from("messages")
         .insert({
@@ -103,10 +134,10 @@ const ChatInterface = ({
         onConversationUpdate({ ...conversation, title });
       }
 
-      // Prepare messages for API
-      const chatMessages: ChatMessage[] = updatedMessages.map((msg) => ({
+      // Prepare messages for API (use enhanced message for last user message if search was used)
+      const chatMessages: ChatMessage[] = updatedMessages.map((msg, idx) => ({
         role: msg.role,
-        content: msg.content,
+        content: idx === updatedMessages.length - 1 && braveSearchEnabled ? enhancedMessage : msg.content,
       }));
 
       // Stream response
@@ -232,15 +263,26 @@ const ChatInterface = ({
             {messages.length} {messages.length === 1 ? t('message') : t('messages')}
           </p>
         </div>
-        <Select value={model} onValueChange={handleModelChange}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-            <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Toggle
+            pressed={braveSearchEnabled}
+            onPressedChange={setBraveSearchEnabled}
+            aria-label="Toggle Brave search"
+            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            {braveSearchEnabled ? "Search On" : "Search Off"}
+          </Toggle>
+          <Select value={model} onValueChange={handleModelChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+              <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <ScrollArea className="flex-1 p-4">
