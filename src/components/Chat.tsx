@@ -268,9 +268,13 @@ const Chat = () => {
       await cleanupEmptyConversations();
     }
     
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    
     const { data, error } = await supabase
       .from("conversations")
       .select("*")
+      .eq("user_id", session.user.id)
       .order("updated_at", { ascending: false });
 
     if (error) {
