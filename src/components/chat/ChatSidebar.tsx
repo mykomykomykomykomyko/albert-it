@@ -112,7 +112,7 @@ const ChatSidebar = ({
                     role="button"
                     tabIndex={0}
                     aria-label={`Select conversation: ${conversation.title}`}
-                    className={`group relative flex items-center gap-1.5 p-3 border-b border-border cursor-pointer transition-colors ${
+                    className={`group relative flex items-start gap-2 p-3 border-b border-border cursor-pointer transition-colors ${
                       currentConversationId === conversation.id
                         ? "bg-accent text-accent-foreground"
                         : "hover:bg-accent/50 text-foreground"
@@ -129,26 +129,30 @@ const ChatSidebar = ({
                       }
                     }}
                   >
-                    <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    <div className="flex-1 flex items-center gap-1.5 min-w-0">
-                      <span className="truncate text-sm">{conversation.title}</span>
-                      {conversation.is_shared && (
-                        <span title="Shared conversation">
-                          <Share2 className="w-3 h-3 shrink-0 text-primary" />
-                        </span>
-                      )}
+                    <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground mt-0.5" />
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <div className="flex items-start gap-1.5">
+                        <span className="flex-1 text-sm leading-snug break-words">{conversation.title}</span>
+                        {conversation.is_shared && (
+                          <span title="Shared conversation">
+                            <Share2 className="w-3 h-3 shrink-0 text-primary" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info 
+                              className="w-3 h-3 shrink-0 text-muted-foreground lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-help" 
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <p className="text-xs">{retentionInfo.text}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </div>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info 
-                          className="w-3 h-3 shrink-0 text-muted-foreground lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-help" 
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="max-w-xs">
-                        <p className="text-xs">{retentionInfo.text}</p>
-                      </TooltipContent>
-                    </Tooltip>
                     <div className="flex gap-1 shrink-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
