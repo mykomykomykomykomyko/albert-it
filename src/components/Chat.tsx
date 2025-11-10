@@ -77,7 +77,7 @@ const Chat = () => {
   const [showAudioUploader, setShowAudioUploader] = useState(false);
   const [showGettingStarted, setShowGettingStarted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [braveSearchEnabled, setBraveSearchEnabled] = useState(false);
+  const [perplexitySearchEnabled, setPerplexitySearchEnabled] = useState(false);
   
   // Ref for auto-scrolling to bottom
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -758,13 +758,13 @@ const Chat = () => {
       let fullContent = userContent;
       let enhancedContentForAI = userContent; // Separate variable for AI that includes search results
       
-      // If Brave search is enabled, fetch search results first
-      if (braveSearchEnabled) {
+      // If Perplexity search is enabled, fetch search results first
+      if (perplexitySearchEnabled) {
         try {
           const { data: searchData, error: searchError } = await supabase.functions.invoke(
-            "brave-search",
+            "perplexity-search",
             {
-              body: { query: userContent, numResults: 5 },
+              body: { query: userContent },
             }
           );
 
@@ -778,10 +778,10 @@ const Chat = () => {
             // Only enhance the AI message, keep user message clean
             enhancedContentForAI = `[User Question]: ${userContent}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
             
-            toast.success(`Found ${searchData.results.length} search results`);
+            toast.success(`Found search results from Perplexity`);
           }
         } catch (searchErr) {
-          console.error("Brave search error:", searchErr);
+          console.error("Perplexity search error:", searchErr);
           toast.error("Search failed, continuing without search results");
         }
       }
@@ -1600,14 +1600,14 @@ const Chat = () => {
                   {/* Buttons row below on mobile, inline on desktop */}
                   <div className="flex gap-2 flex-wrap">
                     <Toggle
-                      pressed={braveSearchEnabled}
-                      onPressedChange={setBraveSearchEnabled}
-                      aria-label="Toggle Brave search for real-time information"
+                      pressed={perplexitySearchEnabled}
+                      onPressedChange={setPerplexitySearchEnabled}
+                      aria-label="Toggle Perplexity search for real-time information"
                       size="sm"
                       className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
                     >
                       <Search className="h-4 w-4 mr-2" />
-                      {braveSearchEnabled ? "Search: ON" : "Search: OFF"}
+                      {perplexitySearchEnabled ? "Perplexity: ON" : "Perplexity: OFF"}
                     </Toggle>
                     <AgentSwitcher
                       selectedAgent={currentAgent}

@@ -34,7 +34,7 @@ const ChatInterface = ({
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState(conversation?.model || "google/gemini-2.5-flash");
-  const [braveSearchEnabled, setBraveSearchEnabled] = useState(false);
+  const [perplexitySearchEnabled, setPerplexitySearchEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -81,13 +81,13 @@ const ChatInterface = ({
     try {
       let enhancedMessage = userMessage;
 
-      // If Brave search is enabled, fetch search results first
-      if (braveSearchEnabled) {
+      // If Perplexity search is enabled, fetch search results first
+      if (perplexitySearchEnabled) {
         try {
           const { data: searchData, error: searchError } = await supabase.functions.invoke(
-            "brave-search",
+            "perplexity-search",
             {
-              body: { query: userMessage, numResults: 5 },
+              body: { query: userMessage },
             }
           );
 
@@ -100,10 +100,10 @@ const ChatInterface = ({
             
             enhancedMessage = `[User Question]: ${userMessage}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
             
-            toast.success(`Found ${searchData.results.length} search results`);
+            toast.success(`Found search results from Perplexity`);
           }
         } catch (searchErr) {
-          console.error("Brave search error:", searchErr);
+          console.error("Perplexity search error:", searchErr);
           toast.error("Search failed, continuing without search results");
         }
       }
@@ -137,7 +137,7 @@ const ChatInterface = ({
       // Prepare messages for API (use enhanced message for last user message if search was used)
       const chatMessages: ChatMessage[] = updatedMessages.map((msg, idx) => ({
         role: msg.role,
-        content: idx === updatedMessages.length - 1 && braveSearchEnabled ? enhancedMessage : msg.content,
+        content: idx === updatedMessages.length - 1 && perplexitySearchEnabled ? enhancedMessage : msg.content,
       }));
 
       // Stream response
@@ -321,18 +321,18 @@ const ChatInterface = ({
         <div className="max-w-3xl mx-auto space-y-2">
           <div className="flex items-center gap-2">
             <Toggle
-              pressed={braveSearchEnabled}
-              onPressedChange={setBraveSearchEnabled}
-              aria-label="Toggle Brave search for real-time information"
+              pressed={perplexitySearchEnabled}
+              onPressedChange={setPerplexitySearchEnabled}
+              aria-label="Toggle Perplexity search for real-time information"
               size="sm"
               className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
             >
               <Search className="h-4 w-4 mr-2" />
-              {braveSearchEnabled ? "Real-time Search: ON" : "Real-time Search: OFF"}
+              {perplexitySearchEnabled ? "Perplexity: ON" : "Perplexity: OFF"}
             </Toggle>
-            {braveSearchEnabled && (
+            {perplexitySearchEnabled && (
               <span className="text-xs text-muted-foreground">
-                Searches the web for current information
+                Searches the web with Perplexity AI
               </span>
             )}
           </div>
