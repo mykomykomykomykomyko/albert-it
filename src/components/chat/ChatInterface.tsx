@@ -263,26 +263,15 @@ const ChatInterface = ({
             {messages.length} {messages.length === 1 ? t('message') : t('messages')}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Toggle
-            pressed={braveSearchEnabled}
-            onPressedChange={setBraveSearchEnabled}
-            aria-label="Toggle Brave search"
-            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-          >
-            <Search className="h-4 w-4 mr-2" />
-            {braveSearchEnabled ? "Search On" : "Search Off"}
-          </Toggle>
-          <Select value={model} onValueChange={handleModelChange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-              <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select value={model} onValueChange={handleModelChange}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+            <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <ScrollArea className="flex-1 p-4">
@@ -329,28 +318,47 @@ const ChatInterface = ({
       </ScrollArea>
 
       <div className="p-4 border-t border-border bg-card/30 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto flex gap-2">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={t('placeholder')}
-            className="min-h-[60px] max-h-[200px] resize-none"
-            disabled={isLoading}
-          />
-          <Button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            size="icon"
-            className="h-[60px] w-[60px] shrink-0"
-          >
-            <Send className="w-5 h-5" />
-          </Button>
+        <div className="max-w-3xl mx-auto space-y-2">
+          <div className="flex items-center gap-2">
+            <Toggle
+              pressed={braveSearchEnabled}
+              onPressedChange={setBraveSearchEnabled}
+              aria-label="Toggle Brave search for real-time information"
+              size="sm"
+              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            >
+              <Search className="h-4 w-4 mr-2" />
+              {braveSearchEnabled ? "Real-time Search: ON" : "Real-time Search: OFF"}
+            </Toggle>
+            {braveSearchEnabled && (
+              <span className="text-xs text-muted-foreground">
+                Searches the web for current information
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={t('placeholder')}
+              className="min-h-[60px] max-h-[200px] resize-none"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              size="icon"
+              className="h-[60px] w-[60px] shrink-0"
+            >
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>
