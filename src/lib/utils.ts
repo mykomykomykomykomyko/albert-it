@@ -53,3 +53,12 @@ export async function resizeAndCompressImage(file: File): Promise<File> {
     reader.readAsDataURL(file);
   });
 }
+
+/**
+ * Deep clone an object to ensure complete data independence
+ * This prevents shared references between nodes
+ */
+export function deepClone<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') return obj;
+  return JSON.parse(JSON.stringify(obj));
+}

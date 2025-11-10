@@ -2,6 +2,7 @@ import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { deepClone } from "@/lib/utils";
 import { SaveCanvasDialog } from "@/components/canvas/SaveCanvasDialog";
 import { LoadCanvasDialog } from "@/components/canvas/LoadCanvasDialog";
 import { LoopConfigDialog } from "@/components/workflow/LoopConfigDialog";
@@ -521,20 +522,25 @@ const Canvas = () => {
         // Transform AI-generated nodes to React Flow format
         const transformedNodes = imported.nodes.map((node: any) => {
           const nodeId = node.id;
+          // Deep clone node data to ensure independence
+          const clonedNodeData = deepClone({
+            label: node.name || node.label || 'Node',
+            nodeType: node.type || node.nodeType || 'agent',
+            status: 'idle',
+            description: node.description || '',
+            systemPrompt: node.systemPrompt || '',
+            userPrompt: node.userPrompt || '',
+            files: [],
+            config: node.config || {},
+          });
+          
           // Create the node object that callbacks will reference
           const newNode: Node = {
             id: nodeId,
             type: 'custom',
             position: node.position || { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
             data: {
-              label: node.name || node.label || 'Node',
-              nodeType: node.type || node.nodeType || 'agent',
-              status: 'idle',
-              description: node.description || '',
-              systemPrompt: node.systemPrompt || '',
-              userPrompt: node.userPrompt || '',
-              files: [],
-              config: node.config || {},
+              ...clonedNodeData,
               orientation: connectionOrientation,
               onEdit: () => {
                 setNodes((currentNodes) => {
@@ -581,8 +587,8 @@ const Canvas = () => {
         const templateNodes = template.nodes.map((node: any) => {
           const nodeId = node.id;
           
-          // Populate the input node with transcript content
-          let nodeData = { ...node.data };
+          // Deep clone node data to ensure independence
+          let nodeData = deepClone(node.data);
           if (node.data.nodeType === 'input') {
             nodeData.userPrompt = transcript.content || 'No transcript content available';
             nodeData.label = `Transcript: ${transcript.title}`;
@@ -727,6 +733,20 @@ const Canvas = () => {
 
   const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
     const id = `${type}-${Date.now()}`;
+    // Deep clone template data to ensure each node is independent
+    const clonedTemplateData = deepClone({
+      label: template.name,
+      nodeType: type,
+      status: 'idle',
+      description: template.description,
+      systemPrompt: template.systemPrompt || '',
+      userPrompt: '',
+      files: [],
+      config: template.config || {},
+      functionType: template.functionType,
+      toolType: template.toolType,
+    });
+    
     const newNode: Node = {
       id,
       type: 'custom',
@@ -735,16 +755,7 @@ const Canvas = () => {
         y: Math.random() * 300 + 100 
       },
       data: {
-        label: template.name,
-        nodeType: type,
-        status: 'idle',
-        description: template.description,
-        systemPrompt: template.systemPrompt || '',
-        userPrompt: '',
-        files: [],
-        config: template.config || {},
-        functionType: template.functionType,
-        toolType: template.toolType,
+        ...clonedTemplateData,
         orientation: connectionOrientation,
          onEdit: () => {
            setNodes((currentNodes) => {
@@ -1187,7 +1198,7 @@ const Canvas = () => {
       return {
         ...node,
         data: {
-          ...node.data,
+          ...deepClone(node.data), // Deep clone to prevent shared references
           orientation: connectionOrientation,
           onEdit: () => {
             // Find the current node from state to avoid stale closures
@@ -1250,24 +1261,27 @@ const Canvas = () => {
             setWorkflowName(data.name);
             
             // Restore nodes with callbacks
-            const restoredNodes = (workflowData.nodes || []).map((node: any) => ({
-              ...node,
-              data: {
-                ...node.data,
-                orientation: connectionOrientation,
-                onEdit: () => {
-                  setNodes((currentNodes) => {
-                    const currentNode = currentNodes.find(n => n.id === node.id);
-                    if (currentNode) {
-                      setSelectedNode(currentNode);
-                      setIsRightSidebarOpen(true);
-                    }
-                    return currentNodes;
-                  });
-                },
-                onRun: () => handleRunNode(node.id),
-              }
-            }));
+            const restoredNodes = (workflowData.nodes || []).map((node: any) => {
+              const nodeId = node.id;
+              return {
+                ...node,
+                data: {
+                  ...deepClone(node.data), // Deep clone to prevent shared references
+                  orientation: connectionOrientation,
+                  onEdit: () => {
+                    setNodes((currentNodes) => {
+                      const currentNode = currentNodes.find(n => n.id === nodeId);
+                      if (currentNode) {
+                        setSelectedNode(currentNode);
+                        setIsRightSidebarOpen(true);
+                      }
+                      return currentNodes;
+                    });
+                  },
+                  onRun: () => handleRunNode(nodeId),
+                }
+              };
+            });
             
             setNodes(restoredNodes);
             setEdges((workflowData.edges || []).map((edge: any) => ({
@@ -1307,24 +1321,27 @@ const Canvas = () => {
   const loadTemplate = (templateKey: string) => {
     const template = TEMPLATES[templateKey as keyof typeof TEMPLATES];
     if (template) {
-      const restoredNodes = template.nodes.map((node: any) => ({
-        ...node,
-        data: {
-          ...node.data,
-          orientation: connectionOrientation,
-          onEdit: () => {
-            setNodes((currentNodes) => {
-              const currentNode = currentNodes.find(n => n.id === node.id);
-              if (currentNode) {
-                setSelectedNode(currentNode);
-                setIsRightSidebarOpen(true);
-              }
-              return currentNodes;
-            });
-          },
-          onRun: () => handleRunNode(node.id),
-        }
-      }));
+      const restoredNodes = template.nodes.map((node: any) => {
+        const nodeId = node.id;
+        return {
+          ...node,
+          data: {
+            ...deepClone(node.data), // Deep clone to prevent shared references
+            orientation: connectionOrientation,
+            onEdit: () => {
+              setNodes((currentNodes) => {
+                const currentNode = currentNodes.find(n => n.id === nodeId);
+                if (currentNode) {
+                  setSelectedNode(currentNode);
+                  setIsRightSidebarOpen(true);
+                }
+                return currentNodes;
+              });
+            },
+            onRun: () => handleRunNode(nodeId),
+          }
+        };
+      });
       setNodes(restoredNodes);
       setEdges(template.edges.map((edge: any) => ({
         ...edge,
