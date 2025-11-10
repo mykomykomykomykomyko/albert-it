@@ -22,12 +22,16 @@
     "confidence": "Confidence",
     "detectedObjects": "Detected Objects",
     "extractedText": "Extracted Text",
-    "download": "Download Results"
+    "download": "Download Results",
+    "resultsGenerated": "{{count}} result generated",
+    "resultsGenerated_plural": "{{count}} results generated"
   },
   "gallery": {
     "title": "Image Gallery",
     "empty": "No images uploaded yet",
     "selected": "{{count}} selected",
-    "clearSelection": "Clear selection"
+    "clearSelection": "Clear selection",
+    "imagesUploaded": "{{count}} image uploaded",
+    "imagesUploaded_plural": "{{count}} images uploaded"
   }
 }

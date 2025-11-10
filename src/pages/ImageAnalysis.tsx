@@ -539,9 +539,9 @@ export default function ImageAnalysis() {
           {/* Image Gallery */}
           <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0">
             <div className="p-6 border-b border-border flex-shrink-0">
-              <h3 className="text-xl font-semibold">Image Gallery</h3>
+              <h3 className="text-xl font-semibold">{t('gallery.title')}</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+                {t('gallery.imagesUploaded', { count: images.length })}
               </p>
             </div>
             <ScrollArea className="flex-1">
@@ -563,9 +563,9 @@ export default function ImageAnalysis() {
           {/* Results Panel */}
           <div className="w-full lg:w-1/2 flex flex-col min-h-0 overflow-hidden flex-1">
           <div className="p-6 border-b border-border flex-shrink-0">
-            <h3 className="text-xl font-semibold">Analysis Results</h3>
+            <h3 className="text-xl font-semibold">{t('results.title')}</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {results.filter(r => images.some(img => img.id === r.imageId)).length} result{results.filter(r => images.some(img => img.id === r.imageId)).length !== 1 ? 's' : ''} generated
+              {t('results.resultsGenerated', { count: results.filter(r => images.some(img => img.id === r.imageId)).length })}
             </p>
           </div>
 

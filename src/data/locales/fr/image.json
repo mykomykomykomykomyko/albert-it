@@ -22,12 +22,16 @@
     "confidence": "Confiance",
     "detectedObjects": "Objets détectés",
     "extractedText": "Texte extrait",
-    "download": "Télécharger les résultats"
+    "download": "Télécharger les résultats",
+    "resultsGenerated": "{{count}} résultat généré",
+    "resultsGenerated_plural": "{{count}} résultats générés"
   },
   "gallery": {
     "title": "Galerie d'images",
     "empty": "Aucune image téléchargée pour le moment",
     "selected": "{{count}} sélectionné(s)",
-    "clearSelection": "Effacer la sélection"
+    "clearSelection": "Effacer la sélection",
+    "imagesUploaded": "{{count}} image téléchargée",
+    "imagesUploaded_plural": "{{count}} images téléchargées"
   }
 }
