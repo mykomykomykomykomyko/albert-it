@@ -610,9 +610,37 @@ const Chat = () => {
 
       // Update conversation title if first message
       if (messages.length === 0) {
-        const title = sourceImageUrl 
+        // Generate AI title based on image prompt context
+        let title = sourceImageUrl 
           ? `Edit: ${prompt.slice(0, 40)}${prompt.length > 40 ? '...' : ''}`
           : `Image: ${prompt.slice(0, 40)}${prompt.length > 40 ? '...' : ''}`;
+        
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const titleResponse = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-conversation-title`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ 
+                  message: sourceImageUrl ? `Edit this image: ${prompt}` : `Generate image: ${prompt}`
+                }),
+              }
+            );
+            if (titleResponse.ok) {
+              const { title: generatedTitle } = await titleResponse.json();
+              if (generatedTitle) title = generatedTitle;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to generate AI title:", e);
+          // Use fallback title on error
+        }
+        
         await supabase
           .from("conversations")
           .update({ title, updated_at: new Date().toISOString() })
@@ -879,7 +907,32 @@ const Chat = () => {
 
       // Update conversation title if first message
       if (messages.length === 0) {
-        const title = userContent.slice(0, 100) + (userContent.length > 100 ? "..." : "");
+        // Generate AI title based on message context
+        let title = userContent.slice(0, 100) + (userContent.length > 100 ? "..." : "");
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const titleResponse = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-conversation-title`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({ message: userContent }),
+              }
+            );
+            if (titleResponse.ok) {
+              const { title: generatedTitle } = await titleResponse.json();
+              if (generatedTitle) title = generatedTitle;
+            }
+          }
+        } catch (e) {
+          console.error("Failed to generate AI title:", e);
+          // Use fallback title on error
+        }
+        
         await supabase
           .from("conversations")
           .update({ title, updated_at: new Date().toISOString() })
