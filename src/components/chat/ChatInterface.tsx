@@ -37,6 +37,20 @@ const ChatInterface = ({
   const [perplexitySearchEnabled, setPerplexitySearchEnabled] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Detect if a question needs real-time data
+  const needsRealTimeData = (text: string): boolean => {
+    const lowerText = text.toLowerCase();
+    const realTimeKeywords = [
+      'current', 'latest', 'today', 'now', 'recent', 'recently',
+      'this year', 'this month', 'this week', '2025', '2026',
+      'who is the', "what's the current", 'what is the current',
+      'how many', 'what happened', 'when did', 'price of',
+      'stock', 'weather', 'news about', 'update on'
+    ];
+    
+    return realTimeKeywords.some(keyword => lowerText.includes(keyword));
+  };
+
   useEffect(() => {
     if (conversation) {
       setModel(conversation.model);
@@ -81,8 +95,16 @@ const ChatInterface = ({
     try {
       let enhancedMessage = userMessage;
 
-      // If Perplexity search is enabled, fetch search results first
-      if (perplexitySearchEnabled) {
+      // Auto-enable Perplexity for real-time questions
+      const shouldUsePerplexity = perplexitySearchEnabled || needsRealTimeData(userMessage);
+
+      // Notify user if Perplexity was auto-activated
+      if (!perplexitySearchEnabled && shouldUsePerplexity) {
+        toast.info("Auto-enabled Perplexity for real-time data");
+      }
+
+      // If Perplexity search is enabled or auto-detected, fetch search results first
+      if (shouldUsePerplexity) {
         try {
           const { data: searchData, error: searchError } = await supabase.functions.invoke(
             "perplexity-search",
