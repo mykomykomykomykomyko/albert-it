@@ -602,6 +602,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          last_password_change: string | null
+          must_change_password: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -610,6 +612,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          last_password_change?: string | null
+          must_change_password?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -618,6 +622,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          last_password_change?: string | null
+          must_change_password?: boolean | null
           updated_at?: string | null
         }
         Relationships: []
@@ -862,6 +868,39 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_temp_passwords: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          temp_password_hash: string
+          used: boolean | null
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          temp_password_hash: string
+          used?: boolean | null
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          temp_password_hash?: string
+          used?: boolean | null
+          used_at?: string | null
           user_id?: string
         }
         Relationships: []

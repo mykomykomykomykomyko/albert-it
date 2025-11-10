@@ -203,8 +203,8 @@ const Auth = () => {
 
     try {
       // Use retry logic for sign in
-      await retryWithBackoff(async () => {
-        const { error } = await supabase.auth.signInWithPassword({
+      const result = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -216,7 +216,23 @@ const Auth = () => {
           }
           throw error;
         }
+        
+        return data;
       }, 3, 1000);
+
+      // Check if user needs to change password
+      if (result?.session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('must_change_password')
+          .eq('id', result.session.user.id)
+          .single();
+
+        if (profile?.must_change_password) {
+          navigate('/force-password-change');
+          return;
+        }
+      }
 
       toast.success("Signed in successfully!");
     } catch (error: any) {

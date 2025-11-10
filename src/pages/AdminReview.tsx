@@ -13,6 +13,7 @@ import { useUserRoles } from '@/hooks/useUserRoles';
 import { Agent } from '@/hooks/useAgents';
 import { toast } from 'sonner';
 import { TranslationManager } from '@/components/admin/TranslationManager';
+import { UserManagementTab } from '@/components/admin/UserManagementTab';
 
 export default function AdminReview() {
   const navigate = useNavigate();
@@ -148,6 +149,7 @@ export default function AdminReview() {
           <TabsList className="mb-6">
             <TabsTrigger value="agents">Agent Review</TabsTrigger>
             <TabsTrigger value="translations">Translation Management</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="agents">
@@ -218,6 +220,10 @@ export default function AdminReview() {
 
           <TabsContent value="translations">
             <TranslationManager />
+          </TabsContent>
+
+          <TabsContent value="users">
+            <UserManagementTab />
           </TabsContent>
         </Tabs>
       </div>

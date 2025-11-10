@@ -60,5 +60,30 @@
   "helper": {
     "title": "AI Helper",
     "button": "AI Helper"
+  },
+  "admin": {
+    "userManagement": {
+      "title": "User Management",
+      "totalUsers": "Total Users",
+      "admins": "Admins",
+      "facilitators": "Facilitators",
+      "activeUsers": "Active",
+      "searchPlaceholder": "Search users...",
+      "resetPassword": "Reset Password",
+      "tempPasswordGenerated": "Temporary password generated",
+      "copyPassword": "Copy Password",
+      "passwordExpiry": "Expires",
+      "confirmReset": "Reset password for this user?",
+      "showOnce": "This password will be shown only once. Make sure to copy it."
+    }
+  },
+  "forcePasswordChange": {
+    "title": "Password Reset Required",
+    "subtitle": "Please create a new password to continue",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "requirements": "Password Requirements",
+    "changeButton": "Change Password",
+    "success": "Password changed successfully"
   }
 }

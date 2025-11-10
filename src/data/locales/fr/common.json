@@ -60,5 +60,30 @@
   "helper": {
     "title": "Assistant IA",
     "button": "Assistant IA"
+  },
+  "admin": {
+    "userManagement": {
+      "title": "Gestion des utilisateurs",
+      "totalUsers": "Nombre total d'utilisateurs",
+      "admins": "Administrateurs",
+      "facilitators": "Facilitateurs",
+      "activeUsers": "Actifs",
+      "searchPlaceholder": "Rechercher des utilisateurs...",
+      "resetPassword": "Réinitialiser le mot de passe",
+      "tempPasswordGenerated": "Mot de passe temporaire généré",
+      "copyPassword": "Copier le mot de passe",
+      "passwordExpiry": "Expire",
+      "confirmReset": "Réinitialiser le mot de passe pour cet utilisateur ?",
+      "showOnce": "Ce mot de passe ne sera affiché qu'une seule fois. Assurez-vous de le copier."
+    }
+  },
+  "forcePasswordChange": {
+    "title": "Réinitialisation du mot de passe requise",
+    "subtitle": "Veuillez créer un nouveau mot de passe pour continuer",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "requirements": "Exigences du mot de passe",
+    "changeButton": "Changer le mot de passe",
+    "success": "Mot de passe modifié avec succès"
   }
 }

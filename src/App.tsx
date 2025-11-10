@@ -47,6 +47,7 @@ const Landing = lazy(() => import("./pages/Landing"));
 const Auth = lazy(() => import("./pages/Auth"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const ResetPasswordOTP = lazy(() => import("./pages/ResetPasswordOTP"));
+const ForcePasswordChange = lazy(() => import("./pages/ForcePasswordChange"));
 const AdminReview = lazy(() => import("./pages/AdminReview"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SharedConversation = lazy(() => import("./pages/SharedConversation"));
@@ -87,6 +88,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
+            <Route path="/force-password-change" element={<ForcePasswordChange />} />
             
             {/* Admin routes - can unmount */}
             <Route path="/admin/review" element={<AdminReview />} />
