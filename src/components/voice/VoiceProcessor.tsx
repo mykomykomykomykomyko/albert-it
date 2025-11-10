@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mic, Volume2 } from "lucide-react";
 import { SpeechToTextTab } from "./SpeechToTextTab";
 import { TextToSpeechTabContent } from "./TextToSpeechTab";
@@ -135,10 +136,10 @@ const VoiceProcessor = () => {
   }, []);
 
   return (
-    <div className="container mx-auto px-6 py-6">
-      <Card className="shadow-sm">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "speech-to-text" | "text-to-speech")} className="w-full">
-          <div className="border-b border-border/50">
+    <div className="container mx-auto px-6 py-6 h-[calc(100vh-8rem)]">
+      <Card className="shadow-sm h-full flex flex-col">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "speech-to-text" | "text-to-speech")} className="w-full h-full flex flex-col">
+          <div className="border-b border-border/50 flex-shrink-0">
             <TabsList className="grid w-full grid-cols-2 bg-transparent h-auto p-0">
               <TabsTrigger
                 value="speech-to-text"
@@ -157,26 +158,28 @@ const VoiceProcessor = () => {
             </TabsList>
           </div>
 
-          <div className="p-6">
-            <TabsContent value="speech-to-text" className="mt-0">
-              <SpeechToTextTab />
-            </TabsContent>
-            
-            <TabsContent value="text-to-speech" className="mt-0">
-              <TextToSpeechTabContent
-                selectedVoice={selectedVoice}
-                selectedModel={selectedModel}
-                useStreaming={useStreaming}
-                voices={voices}
-                models={models}
-                loadingVoices={loadingVoices}
-                loadingModels={loadingModels}
-                onVoiceChange={setSelectedVoice}
-                onModelChange={setSelectedModel}
-                onStreamingChange={setUseStreaming}
-              />
-            </TabsContent>
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-6">
+              <TabsContent value="speech-to-text" className="mt-0">
+                <SpeechToTextTab />
+              </TabsContent>
+              
+              <TabsContent value="text-to-speech" className="mt-0">
+                <TextToSpeechTabContent
+                  selectedVoice={selectedVoice}
+                  selectedModel={selectedModel}
+                  useStreaming={useStreaming}
+                  voices={voices}
+                  models={models}
+                  loadingVoices={loadingVoices}
+                  loadingModels={loadingModels}
+                  onVoiceChange={setSelectedVoice}
+                  onModelChange={setSelectedModel}
+                  onStreamingChange={setUseStreaming}
+                />
+              </TabsContent>
+            </div>
+          </ScrollArea>
         </Tabs>
       </Card>
     </div>
