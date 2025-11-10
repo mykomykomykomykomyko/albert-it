@@ -2,7 +2,7 @@ import { ChatHeader } from "@/components/ChatHeader";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { deepClone } from "@/lib/utils";
+import { deepClone, generateId } from "@/lib/utils";
 import { SaveCanvasDialog } from "@/components/canvas/SaveCanvasDialog";
 import { LoadCanvasDialog } from "@/components/canvas/LoadCanvasDialog";
 import { LoopConfigDialog } from "@/components/workflow/LoopConfigDialog";
@@ -519,8 +519,20 @@ const Canvas = () => {
     if (location.state?.importedWorkflow) {
       const imported = location.state.importedWorkflow;
       if (imported.nodes && imported.edges) {
+        // De-duplicate node IDs to prevent shared edits
+        const seenIds = new Set<string>();
+        const dedupedNodes = (imported.nodes || []).map((node: any) => {
+          let nodeId = node.id;
+          if (seenIds.has(nodeId)) {
+            nodeId = generateId();
+            console.warn(`Duplicate node ID detected in imported workflow, reassigned to ${nodeId}`);
+          }
+          seenIds.add(nodeId);
+          return { ...node, id: nodeId };
+        });
+        
         // Transform AI-generated nodes to React Flow format
-        const transformedNodes = imported.nodes.map((node: any) => {
+        const transformedNodes = dedupedNodes.map((node: any) => {
           const nodeId = node.id;
           // Deep clone node data to ensure independence
           const clonedNodeData = deepClone({
@@ -583,8 +595,20 @@ const Canvas = () => {
       const template = TEMPLATES['transcript-summary-email'];
       
       if (template) {
+        // De-duplicate node IDs to prevent shared edits
+        const seenIds = new Set<string>();
+        const dedupedTemplateNodes = template.nodes.map((node: any) => {
+          let nodeId = node.id;
+          if (seenIds.has(nodeId)) {
+            nodeId = generateId();
+            console.warn(`Duplicate node ID detected in transcript template, reassigned to ${nodeId}`);
+          }
+          seenIds.add(nodeId);
+          return { ...node, id: nodeId };
+        });
+        
         // Load template nodes and edges
-        const templateNodes = template.nodes.map((node: any) => {
+        const templateNodes = dedupedTemplateNodes.map((node: any) => {
           const nodeId = node.id;
           
           // Deep clone node data to ensure independence
@@ -732,7 +756,7 @@ const Canvas = () => {
   );
 
   const addNode = (type: 'input' | 'agent' | 'output' | 'join' | 'transform' | 'function' | 'tool', template: any) => {
-    const id = `${type}-${Date.now()}`;
+    const id = generateId(); // Use guaranteed-unique ID
     // Deep clone template data to ensure each node is independent
     const clonedTemplateData = deepClone({
       label: template.name,
@@ -1192,8 +1216,20 @@ const Canvas = () => {
   const loadCanvasData = (canvasData: any) => {
     setWorkflowName(canvasData.name || "Untitled Workflow");
     
+    // De-duplicate node IDs to prevent shared edits
+    const seenIds = new Set<string>();
+    const dedupedNodes = (canvasData.nodes || []).map((node: any) => {
+      let nodeId = node.id;
+      if (seenIds.has(nodeId)) {
+        nodeId = generateId(); // Assign new unique ID for duplicates
+        console.warn(`Duplicate node ID detected, reassigned to ${nodeId}`);
+      }
+      seenIds.add(nodeId);
+      return { ...node, id: nodeId };
+    });
+    
     // Restore nodes with callbacks - use nodeId to avoid closure issues
-    const restoredNodes = (canvasData.nodes || []).map((node: any) => {
+    const restoredNodes = dedupedNodes.map((node: any) => {
       const nodeId = node.id;
       return {
         ...node,
@@ -1260,8 +1296,20 @@ const Canvas = () => {
             // Load Canvas format workflow
             setWorkflowName(data.name);
             
+            // De-duplicate node IDs to prevent shared edits
+            const seenIds = new Set<string>();
+            const dedupedNodes = (workflowData.nodes || []).map((node: any) => {
+              let nodeId = node.id;
+              if (seenIds.has(nodeId)) {
+                nodeId = generateId();
+                console.warn(`Duplicate node ID detected, reassigned to ${nodeId}`);
+              }
+              seenIds.add(nodeId);
+              return { ...node, id: nodeId };
+            });
+            
             // Restore nodes with callbacks
-            const restoredNodes = (workflowData.nodes || []).map((node: any) => {
+            const restoredNodes = dedupedNodes.map((node: any) => {
               const nodeId = node.id;
               return {
                 ...node,
@@ -1321,7 +1369,19 @@ const Canvas = () => {
   const loadTemplate = (templateKey: string) => {
     const template = TEMPLATES[templateKey as keyof typeof TEMPLATES];
     if (template) {
-      const restoredNodes = template.nodes.map((node: any) => {
+      // De-duplicate node IDs to prevent shared edits
+      const seenIds = new Set<string>();
+      const dedupedNodes = template.nodes.map((node: any) => {
+        let nodeId = node.id;
+        if (seenIds.has(nodeId)) {
+          nodeId = generateId();
+          console.warn(`Duplicate node ID detected in template, reassigned to ${nodeId}`);
+        }
+        seenIds.add(nodeId);
+        return { ...node, id: nodeId };
+      });
+      
+      const restoredNodes = dedupedNodes.map((node: any) => {
         const nodeId = node.id;
         return {
           ...node,
