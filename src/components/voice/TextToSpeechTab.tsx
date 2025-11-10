@@ -39,7 +39,7 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
   onModelChange,
   onStreamingChange,
 }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('voice');
   const { toast } = useToast();
   const [text, setText] = useState("");
   const [customMaxChars, setCustomMaxChars] = useState(3000);
@@ -74,13 +74,13 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
       setCustomMaxChars(numValue);
       setShowCharLimitInput(false);
       toast({
-        title: t("voice.textToSpeech.characterLimit"),
-        description: `${t("voice.textToSpeech.characterLimitDesc")} ${numValue}`,
+        title: t("textToSpeech.characterLimit"),
+        description: `${t("textToSpeech.characterLimitDesc")} ${numValue}`,
       });
     } else {
       toast({
-        title: t("voice.textToSpeech.invalidLimit"),
-        description: t("voice.textToSpeech.invalidLimitDesc"),
+        title: t("textToSpeech.invalidLimit"),
+        description: t("textToSpeech.invalidLimitDesc"),
         variant: "destructive",
       });
     }
@@ -89,8 +89,8 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
   const generateSpeech = async () => {
     if (!selectedVoice || !selectedModel || !isTextValid) {
       toast({
-        title: t("voice.textToSpeech.configRequired"),
-        description: t("voice.textToSpeech.configRequiredDesc"),
+        title: t("textToSpeech.configRequired"),
+        description: t("textToSpeech.configRequiredDesc"),
         variant: "destructive",
       });
       return;
@@ -105,8 +105,8 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
   const playVoicePreview = async () => {
     if (!selectedVoice || !selectedModel) {
       toast({
-        title: t("voice.textToSpeech.configRequired"),
-        description: t("voice.textToSpeech.configRequiredVoiceModel"),
+        title: t("textToSpeech.configRequired"),
+        description: t("textToSpeech.configRequiredVoiceModel"),
         variant: "destructive",
       });
       return;
@@ -170,14 +170,14 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
       }, 100);
 
       toast({
-        title: t("voice.textToSpeech.previewReady"),
-        description: t("voice.textToSpeech.previewReadyDesc"),
+        title: t("textToSpeech.previewReady"),
+        description: t("textToSpeech.previewReadyDesc"),
       });
     } catch (error) {
       console.error('Preview error:', error);
       toast({
-        title: t("voice.textToSpeech.previewFailed"),
-        description: error instanceof Error ? error.message : t("voice.messages.error"),
+        title: t("textToSpeech.previewFailed"),
+        description: error instanceof Error ? error.message : t("messages.error"),
         variant: "destructive",
       });
     } finally {
@@ -195,16 +195,16 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Mic className="w-5 h-5" />
-            {t("voice.textToSpeech.configuration")}
+            {t("textToSpeech.configuration")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Voice Selection */}
           <div className="space-y-2">
-            <Label htmlFor="voice-select">{t("voice.textToSpeech.voice")}</Label>
+            <Label htmlFor="voice-select">{t("textToSpeech.voice")}</Label>
             <Select value={selectedVoice} onValueChange={onVoiceChange} disabled={loadingVoices}>
               <SelectTrigger id="voice-select">
-                <SelectValue placeholder={loadingVoices ? t("voice.textToSpeech.loadingVoices") : t("voice.textToSpeech.selectVoice")} />
+                <SelectValue placeholder={loadingVoices ? t("textToSpeech.loadingVoices") : t("textToSpeech.selectVoice")} />
               </SelectTrigger>
               <SelectContent>
                 {voices.map((voice) => (
@@ -218,10 +218,10 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
 
           {/* Model Selection */}
           <div className="space-y-2">
-            <Label htmlFor="model-select">{t("voice.textToSpeech.model")}</Label>
+            <Label htmlFor="model-select">{t("textToSpeech.model")}</Label>
             <Select value={selectedModel} onValueChange={onModelChange} disabled={loadingModels}>
               <SelectTrigger id="model-select">
-                <SelectValue placeholder={loadingModels ? t("voice.textToSpeech.loadingModels") : t("voice.textToSpeech.selectModel")} />
+                <SelectValue placeholder={loadingModels ? t("textToSpeech.loadingModels") : t("textToSpeech.selectModel")} />
               </SelectTrigger>
               <SelectContent>
                 {models.filter(m => m.can_do_text_to_speech).map((model) => (
@@ -260,12 +260,12 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
                   {isPreviewLoading ? (
                     <>
                       <Waves className="w-4 h-4 mr-2 animate-bounce" />
-                      {t("voice.textToSpeech.loading")}
+                      {t("textToSpeech.loading")}
                     </>
                   ) : (
                     <>
                       <Play className="w-4 h-4 mr-2" />
-                      {t("voice.textToSpeech.playSample")}
+                      {t("textToSpeech.playSample")}
                     </>
                   )}
                 </Button>
@@ -285,9 +285,9 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
           {/* Streaming Toggle */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="streaming-toggle">{t("voice.textToSpeech.enableStreaming")}</Label>
+              <Label htmlFor="streaming-toggle">{t("textToSpeech.enableStreaming")}</Label>
               <p className="text-sm text-muted-foreground">
-                {t("voice.textToSpeech.streamingDesc")}
+                {t("textToSpeech.streamingDesc")}
               </p>
             </div>
             <Switch
@@ -304,14 +304,14 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Volume2 className="w-5 h-5" />
-            {t("voice.textToSpeech.textInput")}
+            {t("textToSpeech.textInput")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Text Area */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <Label htmlFor="text-input">{t("voice.textToSpeech.enterText")}</Label>
+              <Label htmlFor="text-input">{t("textToSpeech.enterText")}</Label>
               <div className="flex items-center gap-2">
                 {showCharLimitInput ? (
                   <div className="flex items-center gap-1">
@@ -355,7 +355,7 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
             </div>
             <Textarea
               id="text-input"
-              placeholder={t("voice.textToSpeech.inputPlaceholder")}
+              placeholder={t("textToSpeech.inputPlaceholder")}
               value={text}
               onChange={(e) => setText(e.target.value)}
               className={cn(
@@ -366,11 +366,11 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
             />
             {charCount > customMaxChars && (
               <p className="text-sm text-destructive">
-                {t("voice.textToSpeech.exceedsLimit")} {customMaxChars}
+                {t("textToSpeech.exceedsLimit")} {customMaxChars}
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              {t("voice.textToSpeech.customizeLimitDesc")}
+              {t("textToSpeech.customizeLimitDesc")}
             </p>
           </div>
 
@@ -380,7 +380,7 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
       {/* Generation Section */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("voice.textToSpeech.generateSpeech")}</CardTitle>
+          <CardTitle>{t("textToSpeech.generateSpeech")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Button
@@ -392,12 +392,12 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
             {useStreaming ? (
               <>
                 <Waves className="w-5 h-5 mr-2 animate-bounce" />
-                {t("voice.textToSpeech.generateAndStream")}
+                {t("textToSpeech.generateAndStream")}
               </>
             ) : (
               <>
                 <Volume2 className="w-5 h-5 mr-2" />
-                {t("voice.textToSpeech.generateSpeech")}
+                {t("textToSpeech.generateSpeech")}
               </>
             )}
           </Button>
@@ -417,7 +417,7 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
                   ) : (
                     <Play className="w-5 h-5" />
                   )}
-                  {isPlaying ? t("voice.textToSpeech.pause") : t("voice.textToSpeech.play")}
+                  {isPlaying ? t("textToSpeech.pause") : t("textToSpeech.play")}
                 </Button>
                 
                 <Button
@@ -428,7 +428,7 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
                   className="flex items-center gap-2"
                 >
                   <Download className="w-5 h-5" />
-                  {isFullyLoaded ? t("voice.textToSpeech.downloadMP3") : t("voice.textToSpeech.loading")}
+                  {isFullyLoaded ? t("textToSpeech.downloadMP3") : t("textToSpeech.loading")}
                 </Button>
               </div>
 
@@ -449,8 +449,8 @@ export const TextToSpeechTabContent: React.FC<TextToSpeechTabContentProps> = ({
                 <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mt-2">
                   <Waves className="w-4 h-4 animate-bounce" />
                   {useStreaming ? 
-                    t("voice.textToSpeech.streamingLive") : 
-                    t("voice.textToSpeech.streamingAudio")
+                    t("textToSpeech.streamingLive") : 
+                    t("textToSpeech.streamingAudio")
                   }
                 </div>
               )}

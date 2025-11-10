@@ -34,7 +34,7 @@ interface Model {
 }
 
 export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
-  const { t } = useTranslation();
+  const { t } = useTranslation('voice');
   const { toast } = useToast();
   const [files, setFiles] = useState<AudioFile[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -100,8 +100,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
 
     if (audioFiles.length === 0) {
       toast({
-        title: t("voice.speechToText.invalidFiles"),
-        description: t("voice.speechToText.invalidFilesDesc"),
+        title: t("speechToText.invalidFiles"),
+        description: t("speechToText.invalidFilesDesc"),
         variant: "destructive",
       });
       return;
@@ -122,8 +122,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   const processFile = async (fileId: string) => {
     if (!selectedModel) {
       toast({
-        title: t("voice.speechToText.configRequired"), 
-        description: t("voice.speechToText.selectModel"),
+        title: t("speechToText.configRequired"), 
+        description: t("speechToText.selectModel"),
         variant: "destructive",
       });
       return;
@@ -181,8 +181,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       setSelectedFile(fileId);
 
       toast({
-        title: t("voice.speechToText.success"),
-        description: `${t("voice.speechToText.transcriptionComplete")} ${file.name}`,
+        title: t("speechToText.success"),
+        description: `${t("speechToText.transcriptionComplete")} ${file.name}`,
       });
 
     } catch (error) {
@@ -191,8 +191,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       ));
       
       toast({
-        title: t("voice.speechToText.transcriptionFailed"),
-        description: error instanceof Error ? error.message : t("voice.messages.error"),
+        title: t("speechToText.transcriptionFailed"),
+        description: error instanceof Error ? error.message : t("messages.error"),
         variant: "destructive",
       });
     }
@@ -291,7 +291,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
           .join('\n\n');
       } else {
-        content = file.transcription.text || t("voice.speechToText.noTranscription");
+        content = file.transcription.text || t("speechToText.noTranscription");
       }
       filename = `${file.name}_transcription.txt`;
       mimeType = "text/plain";
@@ -345,19 +345,19 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         .map(group => `${getSpeakerDisplayName(group.speaker_id)}: ${group.text}`)
         .join('\n\n');
     } else {
-      textContent = file.transcription.text || t("voice.speechToText.noTranscription");
+      textContent = file.transcription.text || t("speechToText.noTranscription");
     }
 
     try {
       await navigator.clipboard.writeText(textContent);
       toast({
-        title: t("voice.speechToText.copied"),
-        description: t("voice.speechToText.copiedDesc"),
+        title: t("speechToText.copied"),
+        description: t("speechToText.copiedDesc"),
       });
     } catch (error) {
       toast({
-        title: t("voice.speechToText.copyFailed"),
-        description: t("voice.speechToText.copyFailedDesc"),
+        title: t("speechToText.copyFailed"),
+        description: t("speechToText.copyFailedDesc"),
         variant: "destructive",
       });
     }
@@ -371,7 +371,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       if (!session) {
         toast({
           title: t("common.error"),
-          description: t("voice.speechToText.loginRequired"),
+          description: t("speechToText.loginRequired"),
           variant: "destructive",
         });
         return;
@@ -411,7 +411,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           total_speakers: uniqueSpeakers.length
         };
       } else {
-        formattedContent = file.transcription.text || t("voice.speechToText.noTranscription");
+        formattedContent = file.transcription.text || t("speechToText.noTranscription");
       }
 
       // Save to meeting_transcripts table
@@ -430,14 +430,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       if (error) throw error;
 
       toast({
-        title: t("voice.speechToText.savedToTranscripts"),
-        description: t("voice.speechToText.savedDesc"),
+        title: t("speechToText.savedToTranscripts"),
+        description: t("speechToText.savedDesc"),
       });
     } catch (error) {
       console.error('Error saving to transcripts:', error);
       toast({
-        title: t("voice.speechToText.saveFailed"),
-        description: t("voice.speechToText.saveFailedDesc"),
+        title: t("speechToText.saveFailed"),
+        description: t("speechToText.saveFailedDesc"),
         variant: "destructive",
       });
     }
@@ -487,8 +487,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         stream.getTracks().forEach(track => track.stop());
         
         toast({
-          title: t("voice.speechToText.recordingComplete"),
-          description: `${t("voice.speechToText.recordingCompleteDesc")} ${fileName}`,
+          title: t("speechToText.recordingComplete"),
+          description: `${t("speechToText.recordingCompleteDesc")} ${fileName}`,
         });
       };
       
@@ -504,14 +504,14 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       setRecordingInterval(interval);
       
       toast({
-        title: t("voice.speechToText.startRecording"),
-        description: t("voice.speechToText.recording"),
+        title: t("speechToText.startRecording"),
+        description: t("speechToText.recording"),
       });
       
     } catch (error) {
       toast({
         title: t("common.error"),
-        description: t("voice.messages.error"),
+        description: t("messages.error"),
         variant: "destructive",
       });
     }
@@ -553,7 +553,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="w-5 h-5" />
-              {t("voice.speechToText.uploadAudio")}
+              {t("speechToText.uploadAudio")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -570,9 +570,9 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               )}
             >
               <FileAudio className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">{t("voice.speechToText.uploadAudio")}</h3>
+              <h3 className="text-lg font-medium mb-2">{t("speechToText.uploadAudio")}</h3>
               <p className="text-muted-foreground mb-4">
-                {t("voice.speechToText.uploadAudio")}
+                {t("speechToText.uploadAudio")}
               </p>
               <input
                 type="file"
@@ -585,7 +585,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               <div className="flex gap-3 justify-center">
                 <Button asChild variant="outline">
                   <label htmlFor="audio-upload" className="cursor-pointer">
-                    {t("voice.speechToText.uploadAudio")}
+                    {t("speechToText.uploadAudio")}
                   </label>
                 </Button>
                 
@@ -597,12 +597,12 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                   {isRecording ? (
                     <>
                       <Square className="w-4 h-4 mr-2" />
-                      {t("voice.speechToText.stopRecording")} ({formatRecordingTime(recordingTime)})
+                      {t("speechToText.stopRecording")} ({formatRecordingTime(recordingTime)})
                     </>
                   ) : (
                     <>
                       <Mic className="w-4 h-4 mr-2" />
-                      {t("voice.speechToText.recordAudio")}
+                      {t("speechToText.recordAudio")}
                     </>
                   )}
                 </Button>
@@ -687,15 +687,15 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
         {/* Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>{t("voice.textToSpeech.configuration")}</CardTitle>
+            <CardTitle>{t("textToSpeech.configuration")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Model Selection */}
             <div className="space-y-2">
-              <Label>{t("voice.speechToText.model")}</Label>
+              <Label>{t("speechToText.model")}</Label>
               <Select value={selectedModel} onValueChange={setSelectedModel}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("voice.speechToText.selectModelPlaceholder")} />
+                  <SelectValue placeholder={t("speechToText.selectModelPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {models.map((model) => (
@@ -710,7 +710,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             {/* Speaker Detection */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="auto-detect">{t("voice.speechToText.autoDetectSpeakers")}</Label>
+                <Label htmlFor="auto-detect">{t("speechToText.autoDetectSpeakers")}</Label>
                 <Switch
                   id="auto-detect"
                   checked={autoDetectSpeakers}
@@ -720,7 +720,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               
               {!autoDetectSpeakers && (
                 <div className="space-y-2">
-                  <Label>{t("voice.speechToText.manualSpeakerCount")}</Label>
+                  <Label>{t("speechToText.manualSpeakerCount")}</Label>
                   <Input
                     type="number"
                     min="1"
@@ -744,7 +744,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                {t("voice.speechToText.autoDetectSpeakers")} ({selectedFileData.transcription.total_speakers || getUniqueSpeakers(selectedFileData.transcription).length} {t("voice.speechToText.speakers")})
+                {t("speechToText.autoDetectSpeakers")} ({selectedFileData.transcription.total_speakers || getUniqueSpeakers(selectedFileData.transcription).length} {t("speechToText.speakers")})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -787,7 +787,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
               <div className="space-y-4">
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="w-5 h-5" />
-                  {t("voice.speechToText.results")}
+                  {t("speechToText.results")}
                 </CardTitle>
                 <div className="flex gap-2 flex-wrap">
                   <Button
@@ -796,7 +796,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                     onClick={() => saveToTranscripts(selectedFileData)}
                   >
                     <FolderInput className="w-4 h-4 mr-2" />
-                    {t("voice.speechToText.saveToLibrary")}
+                    {t("speechToText.saveToLibrary")}
                   </Button>
                   <Button
                     size="sm"
@@ -804,7 +804,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
                     onClick={() => copyTranscriptionToClipboard(selectedFileData)}
                   >
                     <Copy className="w-4 h-4 mr-2" />
-                    {t("voice.speechToText.copyText")}
+                    {t("speechToText.copyText")}
                   </Button>
                   <Button
                     size="sm"
