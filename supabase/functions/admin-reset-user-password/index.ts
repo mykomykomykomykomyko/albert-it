@@ -41,8 +41,8 @@ serve(async (req) => {
       throw new Error('Unauthorized');
     }
 
-    // Verify admin role
-    const { data: roles } = await supabaseClient
+    // Verify admin role using admin client (bypasses RLS)
+    const { data: roles } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', adminUser.id);
