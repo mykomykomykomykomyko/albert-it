@@ -8,8 +8,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Key, Search, Users, Shield, UserCheck } from "lucide-react";
+import { Key, Search, Users, Shield, UserCheck, MoreVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UserProfile {
   id: string;
@@ -125,6 +133,45 @@ export const UserManagementTab = () => {
       title: "Copied to clipboard",
       description: "Temporary password has been copied",
     });
+  };
+
+  const handleRoleChange = async (userId: string, role: 'admin' | 'moderator' | 'user', action: 'add' | 'remove') => {
+    try {
+      if (action === 'add') {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Role assigned",
+          description: `${role} role has been assigned`,
+        });
+      } else {
+        const { error } = await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', role);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Role removed",
+          description: `${role} role has been removed`,
+        });
+      }
+      
+      loadUsers(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error changing role:', error);
+      toast({
+        title: "Error changing role",
+        description: error.message || "Failed to change role",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredUsers = users.filter(user => 
@@ -251,14 +298,49 @@ export const UserManagementTab = () => {
                       {user.created_at ? formatDistanceToNow(new Date(user.created_at), { addSuffix: true }) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleResetPassword(user)}
-                      >
-                        <Key className="h-4 w-4 mr-2" />
-                        Reset Password
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleResetPassword(user)}
+                        >
+                          <Key className="h-4 w-4 mr-2" />
+                          Reset Password
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Manage Roles</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {!user.roles.includes('admin') ? (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin', 'add')}>
+                                <Shield className="h-4 w-4 mr-2" />
+                                Make Admin
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin', 'remove')}>
+                                <Shield className="h-4 w-4 mr-2" />
+                                Remove Admin
+                              </DropdownMenuItem>
+                            )}
+                            {!user.roles.includes('moderator') ? (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'moderator', 'add')}>
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Make Facilitator
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'moderator', 'remove')}>
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Remove Facilitator
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
