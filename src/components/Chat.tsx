@@ -770,15 +770,11 @@ const Chat = () => {
 
           if (searchError) throw searchError;
 
-          if (searchData?.results && searchData.results.length > 0) {
-            const searchContext = searchData.results
-              .map((r: any, i: number) => `${i + 1}. ${r.title}\n${r.description}\nSource: ${r.url}`)
-              .join("\n\n");
+          if (searchData?.answer) {
+            // Perplexity returns a direct answer, not results array
+            enhancedContentForAI = `[User Question]: ${userContent}\n\n[Perplexity AI Search Result]:\n${searchData.answer}\n\nPlease answer the user's question using the search result above as context. This is real-time information from Perplexity AI.`;
             
-            // Only enhance the AI message, keep user message clean
-            enhancedContentForAI = `[User Question]: ${userContent}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
-            
-            toast.success(`Found search results from Perplexity`);
+            toast.success(`Found current information from Perplexity AI`);
           }
         } catch (searchErr) {
           console.error("Perplexity search error:", searchErr);
