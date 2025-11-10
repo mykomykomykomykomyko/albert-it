@@ -13,7 +13,7 @@
  * - Proper layout structure: Each page has flex container for display:none
  */
 
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
 import EnhancedChat from "@/components/Chat";
 import Canvas from "@/pages/Canvas";
@@ -28,9 +28,11 @@ import Framework from "@/pages/Framework";
 import WorkflowMarketplace from "@/pages/WorkflowMarketplace";
 import SavedWork from "@/pages/SavedWork";
 import Docs from "@/pages/Docs";
+import { supabase } from "@/integrations/supabase/client";
 
 export const PersistentPages = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const path = location.pathname;
   
   // Track which pages have been visited for lazy initialization
@@ -50,6 +52,37 @@ export const PersistentPages = () => {
       setVisitedPages(prev => new Set([...prev, currentRoute]));
     }
   }, [path, visitedPages]);
+  
+  // Global guard: force password change if required
+  useEffect(() => {
+    let cancelled = false;
+
+    const check = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('must_change_password')
+        .eq('id', user.id)
+        .single();
+
+      if (!cancelled && profile?.must_change_password && path !== '/force-password-change') {
+        navigate('/force-password-change');
+      }
+    };
+
+    check();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      check();
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [path, navigate]);
   
   // Check if a page should render (visited at least once)
   const shouldRender = (route: string) => visitedPages.has(route);
