@@ -2,9 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil, Share2 } from "lucide-react";
+import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil, Share2, Info } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { useTranslation } from "react-i18next";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { format, addDays } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,10 +62,27 @@ const ChatSidebar = ({
 }: ChatSidebarProps) => {
   const { t } = useTranslation('chat');
   const navigate = useNavigate();
+  const { preferences } = useUserPreferences();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [renamingConversation, setRenamingConversation] = useState<Conversation | null>(null);
   const [newTitle, setNewTitle] = useState("");
+
+  const getRetentionInfo = (conversation: Conversation) => {
+    const retentionDays = conversation.retention_days ?? preferences.default_retention_days;
+    
+    if (retentionDays === null) {
+      return { text: "Never deleted", date: null };
+    }
+
+    const createdDate = new Date(conversation.created_at);
+    const deleteDate = addDays(createdDate, retentionDays);
+    
+    return {
+      text: `Auto-deletes on ${format(deleteDate, 'MMM d, yyyy')}`,
+      date: deleteDate
+    };
+  };
 
   const sidebarContent = (
     <>
@@ -82,38 +102,52 @@ const ChatSidebar = ({
 
       {!isCollapsed && (
         <ScrollArea className="flex-1 px-2 py-2">
-          <div className="space-y-0">
-            {conversations.map((conversation) => (
-              <div
-                key={conversation.id}
-                role="button"
-                tabIndex={0}
-                aria-label={`Select conversation: ${conversation.title}`}
-                className={`group relative flex items-center gap-2 p-3 border-b border-border cursor-pointer transition-colors ${
-                  currentConversationId === conversation.id
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50 text-foreground"
-                }`}
-                onClick={() => {
-                  onSelectConversation(conversation.id);
-                  setMobileMenuOpen(false);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onSelectConversation(conversation.id);
-                    setMobileMenuOpen(false);
-                  }
-                }}
-              >
-                <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate text-sm">{conversation.title}</span>
-                {conversation.is_shared && (
-                  <span title="Shared conversation">
-                    <Share2 className="w-3 h-3 shrink-0 text-primary" />
-                  </span>
-                )}
-                <div className="flex gap-1">
+          <TooltipProvider>
+            <div className="space-y-0">
+              {conversations.map((conversation) => {
+                const retentionInfo = getRetentionInfo(conversation);
+                return (
+                  <div
+                    key={conversation.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Select conversation: ${conversation.title}`}
+                    className={`group relative flex items-center gap-2 p-3 border-b border-border cursor-pointer transition-colors ${
+                      currentConversationId === conversation.id
+                        ? "bg-accent text-accent-foreground"
+                        : "hover:bg-accent/50 text-foreground"
+                    }`}
+                    onClick={() => {
+                      onSelectConversation(conversation.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectConversation(conversation.id);
+                        setMobileMenuOpen(false);
+                      }
+                    }}
+                  >
+                    <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
+                    <span className="flex-1 truncate text-sm">{conversation.title}</span>
+                    {conversation.is_shared && (
+                      <span title="Shared conversation">
+                        <Share2 className="w-3 h-3 shrink-0 text-primary" />
+                      </span>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info 
+                          className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-help" 
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-xs">
+                        <p className="text-xs">{retentionInfo.text}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <div className="flex gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -161,10 +195,12 @@ const ChatSidebar = ({
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              );
+            })}
+            </div>
+          </TooltipProvider>
         </ScrollArea>
       )}
 
