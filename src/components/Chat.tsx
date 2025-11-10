@@ -756,6 +756,7 @@ const Chat = () => {
     try {
       // Prepare file content
       let fullContent = userContent;
+      let enhancedContentForAI = userContent; // Separate variable for AI that includes search results
       
       // If Brave search is enabled, fetch search results first
       if (braveSearchEnabled) {
@@ -774,7 +775,8 @@ const Chat = () => {
               .map((r: any, i: number) => `${i + 1}. ${r.title}\n${r.description}\nSource: ${r.url}`)
               .join("\n\n");
             
-            fullContent = `[User Question]: ${userContent}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
+            // Only enhance the AI message, keep user message clean
+            enhancedContentForAI = `[User Question]: ${userContent}\n\n[Real-time Search Results]:\n${searchContext}\n\nPlease answer the user's question using the search results above as context. Cite sources when relevant.`;
             
             toast.success(`Found ${searchData.results.length} search results`);
           }
@@ -795,6 +797,7 @@ const Chat = () => {
           return content;
         }).join('\n\n');
         fullContent = userContent + fileContent;
+        enhancedContentForAI = enhancedContentForAI + fileContent;
       }
 
       // Prepare attachments data from image uploads
@@ -885,7 +888,7 @@ const Chat = () => {
       });
 
       const requestPayload: any = {
-        message: fullContent,
+        message: enhancedContentForAI, // Use enhanced content with search results for AI
         messageHistory: sanitizedHistory
       };
 
@@ -893,7 +896,7 @@ const Chat = () => {
       if (currentAgent) {
         requestPayload.systemPrompt = currentAgent.system_prompt;
         // Wrap the current message with agent's user prompt template
-        requestPayload.message = currentAgent.user_prompt.replace('{input}', fullContent);
+        requestPayload.message = currentAgent.user_prompt.replace('{input}', enhancedContentForAI);
       }
 
       // Check if user is asking about a recent image
