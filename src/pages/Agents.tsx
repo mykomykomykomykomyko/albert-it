@@ -440,7 +440,7 @@ const Agents = () => {
                       <label className="text-sm font-medium">Type *</label>
                       <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
                         <SelectTrigger>
-                          <SelectValue />
+                          <SelectValue placeholder="Select agent type" />
                         </SelectTrigger>
                         <SelectContent>
                           {agentTypes.map(type => (
