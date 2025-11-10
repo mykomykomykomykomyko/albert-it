@@ -53,49 +53,21 @@ export default function SharedConversation() {
       }
 
       try {
-        // Fetch conversation by share_token
-        const { data: conversationData, error: conversationError } = await supabase
-          .from('conversations')
-          .select('*')
-          .eq('share_token', shareToken)
-          .eq('is_shared', true)
-          .single();
+        // Use edge function to fetch shared conversation with service role
+        const { data, error } = await supabase.functions.invoke('get-shared-conversation', {
+          body: { shareToken }
+        });
 
-        if (conversationError || !conversationData) {
-          console.error('Error fetching conversation:', conversationError);
+        if (error || !data) {
+          console.error('Error fetching conversation:', error);
           setError('This conversation is not available or has been unshared');
           setLoading(false);
           return;
         }
 
-        setConversation(conversationData);
-
-        // Fetch owner profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('id', conversationData.user_id)
-          .maybeSingle();
-
-        if (!profileError && profileData) {
-          setOwnerProfile(profileData);
-        }
-
-        // Fetch messages for this conversation
-        const { data: messagesData, error: messagesError } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('conversation_id', conversationData.id)
-          .order('created_at', { ascending: true });
-
-        if (messagesError) {
-          console.error('Error fetching messages:', messagesError);
-          setError('Failed to load messages');
-          setLoading(false);
-          return;
-        }
-
-        setMessages(messagesData as Message[] || []);
+        setConversation(data.conversation);
+        setMessages(data.messages || []);
+        setOwnerProfile(data.ownerProfile);
       } catch (err) {
         console.error('Error:', err);
         setError('An unexpected error occurred');
