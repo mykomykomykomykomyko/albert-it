@@ -130,16 +130,18 @@ const ChatSidebar = ({
                     }}
                   >
                     <MessageSquare className="w-4 h-4 shrink-0 text-muted-foreground" />
-                    <span className="flex-1 truncate text-sm min-w-0">{conversation.title}</span>
-                    {conversation.is_shared && (
-                      <span title="Shared conversation">
-                        <Share2 className="w-3 h-3 shrink-0 text-primary" />
-                      </span>
-                    )}
+                    <div className="flex-1 flex items-center gap-1.5 min-w-0">
+                      <span className="truncate text-sm">{conversation.title}</span>
+                      {conversation.is_shared && (
+                        <span title="Shared conversation">
+                          <Share2 className="w-3 h-3 shrink-0 text-primary" />
+                        </span>
+                      )}
+                    </div>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Info 
-                          className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-help" 
+                          className="w-3 h-3 shrink-0 text-muted-foreground lg:opacity-0 lg:group-hover:opacity-100 transition-opacity cursor-help" 
                           onClick={(e) => e.stopPropagation()}
                         />
                       </TooltipTrigger>
@@ -153,7 +155,7 @@ const ChatSidebar = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-100 lg:opacity-30 lg:group-hover:opacity-100 transition-all duration-150 hover:bg-accent"
+                        className="h-7 w-7 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity hover:bg-accent"
                         onClick={(e) => {
                           e.stopPropagation();
                           setRenamingConversation(conversation);
@@ -174,7 +176,7 @@ const ChatSidebar = ({
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 opacity-100 lg:opacity-30 lg:group-hover:opacity-100 transition-all duration-150 hover:bg-destructive/10 hover:text-destructive"
+                            className="h-7 w-7 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeletingId(conversation.id);
