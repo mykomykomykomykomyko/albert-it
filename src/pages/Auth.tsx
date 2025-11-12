@@ -333,11 +333,13 @@ const Auth = () => {
                     <Label htmlFor="signin-email" className="text-foreground">{t('auth:signIn.email')}</Label>
                     <Input
                       id="signin-email"
+                      name="email"
                       type="email"
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      autoComplete="email"
                       className="bg-background text-foreground border-input"
                     />
                   </div>
@@ -346,11 +348,13 @@ const Auth = () => {
                     <div className="relative">
                       <Input
                         id="signin-password"
+                        name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        autoComplete="current-password"
                         className="bg-background text-foreground border-input pr-10"
                       />
                       <Button
@@ -419,11 +423,13 @@ const Auth = () => {
                     <Label htmlFor="signup-name" className="text-foreground">Full Name</Label>
                     <Input
                       id="signup-name"
+                      name="name"
                       type="text"
                       placeholder="John Doe"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
+                      autoComplete="name"
                       className="bg-background text-foreground border-input"
                     />
                   </div>
@@ -431,11 +437,13 @@ const Auth = () => {
                     <Label htmlFor="signup-email" className="text-foreground">{t('auth:signUp.email')}</Label>
                     <Input
                       id="signup-email"
+                      name="email"
                       type="email"
                       placeholder="you@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      autoComplete="email"
                       className="bg-background text-foreground border-input"
                     />
                   </div>
@@ -444,12 +452,14 @@ const Auth = () => {
                     <div className="relative">
                       <Input
                         id="signup-password"
+                        name="password"
                         type={showSignupPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         minLength={6}
+                        autoComplete="new-password"
                         className="bg-background text-foreground border-input pr-10"
                       />
                       <Button
