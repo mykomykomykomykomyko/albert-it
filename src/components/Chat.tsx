@@ -1416,7 +1416,31 @@ const Chat = () => {
                                     prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4 prose-pre:overflow-x-auto prose-pre:max-w-full
                                     prose-blockquote:border-l-accent prose-blockquote:my-4 prose-blockquote:break-words
                                     [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-words [&_pre_code]:whitespace-pre-wrap`}>
-                                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      <ReactMarkdown 
+                                        remarkPlugins={[remarkGfm]}
+                                        components={{
+                                          table: ({ node, ...props }) => (
+                                            <div className="w-full overflow-x-auto -mx-2 md:mx-0">
+                                              <table
+                                                className="w-full min-w-[720px] border-collapse [&_th]:text-left [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_*]:break-words [&_td]:whitespace-normal"
+                                                {...props}
+                                              >
+                                                {props.children}
+                                              </table>
+                                            </div>
+                                          ),
+                                          thead: (props) => (
+                                            <thead className="bg-muted/50">
+                                              {props.children}
+                                            </thead>
+                                          ),
+                                          tr: (props) => (
+                                            <tr className="border-b border-border">
+                                              {props.children}
+                                            </tr>
+                                          ),
+                                        }}
+                                      >
                                         {(() => {
                                           const { cleanContent } = parseWorkflowSuggestion(textContent);
                                           return cleanContent;
