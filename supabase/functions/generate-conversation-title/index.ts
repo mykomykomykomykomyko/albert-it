@@ -27,7 +27,7 @@ serve(async (req) => {
 
     // Call Gemini AI to generate a short, descriptive title
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -50,7 +50,12 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
-      throw new Error("Failed to generate title");
+      // Return a truncated message as fallback instead of throwing
+      const fallbackTitle = message.slice(0, 50) + (message.length > 50 ? "..." : "");
+      return new Response(
+        JSON.stringify({ title: fallbackTitle }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const data = await response.json();
