@@ -51,23 +51,37 @@ export default function AdminReview() {
 
   const loadPendingAgents = async () => {
     try {
-      const { data, error } = await supabase
+      // First, get the pending agents
+      const { data: agentsData, error: agentsError } = await supabase
         .from('agents')
-        .select(`
-          *,
-          profiles:user_id (
-            email
-          )
-        `)
+        .select('*')
         .eq('visibility', 'pending_review')
         .order('submitted_at', { ascending: true });
 
-      if (error) throw error;
-      
-      // Map the data to include email in a flat structure
-      const agentsWithEmail = (data || []).map((agent: any) => ({
+      if (agentsError) throw agentsError;
+
+      // Then get unique user IDs
+      const userIds = [...new Set(agentsData?.map(a => a.user_id) || [])];
+
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error loading profiles:', profilesError);
+      }
+
+      // Create a map of user_id to email
+      const emailMap = new Map(
+        (profilesData || []).map(p => [p.id, p.email || 'Unknown'])
+      );
+
+      // Map the data to include email
+      const agentsWithEmail = (agentsData || []).map((agent: any) => ({
         ...agent,
-        submitter_email: agent.profiles?.email || 'Unknown',
+        submitter_email: emailMap.get(agent.user_id) || 'Unknown',
       })) as AgentWithEmail[];
       
       setAgents(agentsWithEmail);
