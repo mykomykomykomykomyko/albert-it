@@ -35,7 +35,8 @@ const ChatInterface = ({
   const [isLoading, setIsLoading] = useState(false);
   const [model, setModel] = useState(conversation?.model || "google/gemini-2.5-flash");
   const [realTimeSearchEnabled, setRealTimeSearchEnabled] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -59,11 +60,14 @@ const ChatInterface = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth" });
+    // Get the viewport element from ScrollArea
+    const viewport = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (viewport) {
+      // Scroll to bottom smoothly
+      viewport.scrollTop = viewport.scrollHeight;
     }
   };
 
@@ -308,7 +312,7 @@ const ChatInterface = ({
         </Select>
       </div>
 
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
         <div className="max-w-3xl mx-auto space-y-6">
           {messages.map((message) => (
             <div
@@ -347,7 +351,7 @@ const ChatInterface = ({
               </div>
             </div>
           )}
-          <div ref={scrollRef} />
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
