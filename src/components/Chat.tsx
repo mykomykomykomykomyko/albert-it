@@ -95,6 +95,7 @@ const Chat = () => {
   
   // Ref for auto-scrolling to bottom
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Presence for real-time typing indicators
   const { broadcastTyping, broadcastThinking } = useConversationPresence(currentConversation?.id || null);
@@ -131,6 +132,18 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  // Auto-expand textarea based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Reset height to get proper scrollHeight
+      textarea.style.height = '60px';
+      // Set new height based on content, with min and max constraints
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 200);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [input]);
 
   // Add clipboard paste listener for images
   useEffect(() => {
@@ -1717,6 +1730,7 @@ const Chat = () => {
                   
                   {/* Textarea on its own row */}
                   <Textarea
+                    ref={textareaRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -1726,7 +1740,7 @@ const Chat = () => {
                       }
                     }}
                     placeholder="Type your message..."
-                    className="min-h-[60px] max-h-[200px] resize-none w-full"
+                    className="min-h-[60px] max-h-[200px] resize-none w-full overflow-y-auto"
                     disabled={isLoading}
                   />
                   
