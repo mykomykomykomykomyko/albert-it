@@ -592,7 +592,7 @@ const Agents = () => {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate('/admin-review')}
+                  onClick={() => navigate('/admin/review')}
                 >
                   <ShieldCheck className="h-4 w-4 mr-2" />
                   Admin Review
