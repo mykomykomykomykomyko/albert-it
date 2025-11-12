@@ -1326,10 +1326,13 @@ const Chat = () => {
                           pressed={realTimeSearchEnabled}
                           onPressedChange={setRealTimeSearchEnabled}
                           size="sm"
-                          className="h-10 w-10 rounded-xl data-[state=on]:bg-accent data-[state=on]:text-accent-foreground"
-                          title={realTimeSearchEnabled ? "Real-time search enabled" : "Enable real-time search"}
+                          className="h-10 px-4 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
+                          aria-label="Toggle real-time search for current information"
                         >
-                          <Search className="h-4 w-4" />
+                          <Search className="h-4 w-4 mr-2" />
+                          <span className="text-sm font-medium whitespace-nowrap">
+                            {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
+                          </span>
                         </Toggle>
                       </div>
                       
@@ -1723,10 +1726,12 @@ const Chat = () => {
                       onPressedChange={setRealTimeSearchEnabled}
                       aria-label="Toggle real-time search for current information"
                       size="sm"
-                      className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                      className="px-4 py-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
                     >
                       <Search className="h-4 w-4 mr-2" />
-                      {realTimeSearchEnabled ? "Real-Time Search: ON" : "Real-Time Search: OFF"}
+                      <span className="text-sm font-medium whitespace-nowrap">
+                        {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
+                      </span>
                     </Toggle>
                     {realTimeSearchEnabled && (
                       <span className="text-xs text-muted-foreground">

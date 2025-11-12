@@ -363,10 +363,12 @@ const ChatInterface = ({
               onPressedChange={setRealTimeSearchEnabled}
               aria-label="Toggle real-time search for current information"
               size="sm"
-              className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              className="px-4 py-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
             >
               <Search className="h-4 w-4 mr-2" />
-              {realTimeSearchEnabled ? "Real-Time Search: ON" : "Real-Time Search: OFF"}
+              <span className="text-sm font-medium whitespace-nowrap">
+                {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
+              </span>
             </Toggle>
             {realTimeSearchEnabled && (
               <span className="text-xs text-muted-foreground">
