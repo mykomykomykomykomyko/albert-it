@@ -1667,6 +1667,25 @@ const Chat = () => {
                 )}
                 
                 <div className="flex flex-col gap-2">
+                  {/* Real-Time Search Toggle - Always visible above textarea */}
+                  <div className="flex items-center gap-2">
+                    <Toggle
+                      pressed={realTimeSearchEnabled}
+                      onPressedChange={setRealTimeSearchEnabled}
+                      aria-label="Toggle real-time search for current information"
+                      size="sm"
+                      className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+                    >
+                      <Search className="h-4 w-4 mr-2" />
+                      {realTimeSearchEnabled ? "Real-Time Search: ON" : "Real-Time Search: OFF"}
+                    </Toggle>
+                    {realTimeSearchEnabled && (
+                      <span className="text-xs text-muted-foreground">
+                        Searches for current web information
+                      </span>
+                    )}
+                  </div>
+                  
                   {/* Textarea on its own row */}
                   <Textarea
                     value={input}
@@ -1684,16 +1703,6 @@ const Chat = () => {
                   
                   {/* Buttons row below on mobile, inline on desktop */}
                   <div className="flex gap-2 flex-wrap">
-                    <Toggle
-                      pressed={realTimeSearchEnabled}
-                      onPressedChange={setRealTimeSearchEnabled}
-                      aria-label="Toggle real-time search for current information"
-                      size="sm"
-                      className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-                    >
-                      <Search className="h-4 w-4 mr-2" />
-                      {realTimeSearchEnabled ? "Real-Time Search: ON" : "Real-Time Search: OFF"}
-                    </Toggle>
                     <AgentSwitcher
                       selectedAgent={currentAgent}
                       onAgentChange={(agent) => setCurrentAgent(agent)}
