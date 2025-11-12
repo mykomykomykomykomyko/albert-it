@@ -380,12 +380,7 @@ export const useAgents = () => {
 
       if (error) throw error;
       
-      // Filter out user's own agents
-      const filteredData = user 
-        ? (data || []).filter(agent => agent.user_id !== user.id)
-        : (data || []);
-      
-      return filteredData as Agent[];
+      return (data || []) as Agent[];
     } catch (error) {
       console.error('Error loading marketplace agents:', error);
       return [];
