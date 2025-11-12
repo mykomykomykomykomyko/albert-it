@@ -15,12 +15,14 @@ import { toast } from 'sonner';
 import { TranslationManager } from '@/components/admin/TranslationManager';
 import { UserManagementTab } from '@/components/admin/UserManagementTab';
 
+type AgentWithEmail = Agent & { submitter_email?: string };
+
 export default function AdminReview() {
   const navigate = useNavigate();
   const { isAdmin, loading: rolesLoading } = useUserRoles();
-  const [agents, setAgents] = useState<Agent[]>([]);
+  const [agents, setAgents] = useState<AgentWithEmail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [selectedAgent, setSelectedAgent] = useState<AgentWithEmail | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [activeTab, setActiveTab] = useState('agents');
 
@@ -51,12 +53,24 @@ export default function AdminReview() {
     try {
       const { data, error } = await supabase
         .from('agents')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id (
+            email
+          )
+        `)
         .eq('visibility', 'pending_review')
         .order('submitted_at', { ascending: true });
 
       if (error) throw error;
-      setAgents((data || []) as Agent[]);
+      
+      // Map the data to include email in a flat structure
+      const agentsWithEmail = (data || []).map((agent: any) => ({
+        ...agent,
+        submitter_email: agent.profiles?.email || 'Unknown',
+      })) as AgentWithEmail[];
+      
+      setAgents(agentsWithEmail);
     } catch (error) {
       console.error('Error loading pending agents:', error);
       toast.error('Failed to load pending agents');
@@ -196,6 +210,10 @@ export default function AdminReview() {
                             </div>
                           </div>
                         )}
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Submitted By</p>
+                          <p className="text-xs font-mono">{agent.submitter_email}</p>
+                        </div>
                         {agent.submitted_at && (
                           <p className="text-xs text-muted-foreground">
                             Submitted: {new Date(agent.submitted_at).toLocaleDateString()}
@@ -240,9 +258,12 @@ export default function AdminReview() {
                   <AvatarImage src={selectedAgent.profile_picture_url} />
                   <AvatarFallback>{selectedAgent.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1">
                   <h3 className="font-semibold">{selectedAgent.name}</h3>
                   <Badge variant="secondary">{selectedAgent.type}</Badge>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Submitted by: <span className="font-mono">{selectedAgent.submitter_email}</span>
+                  </p>
                 </div>
               </div>
 
