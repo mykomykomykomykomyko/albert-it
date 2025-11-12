@@ -11,13 +11,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store, LayoutGrid, Table } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, Sparkles, Download, Share2, Send, Store, LayoutGrid, Table, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageSidebar, PageSidebarSection } from "@/components/layout/PageSidebar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useTranslation } from "react-i18next";
 import { AgentDocumentManager, AgentDocument } from "@/components/agents/AgentDocumentManager";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 const agentTypes = ['Text', 'Voice', 'Image', 'Audio', 'Multimodal'] as const;
 
@@ -25,6 +26,7 @@ const Agents = () => {
   const navigate = useNavigate();
   const { t } = useTranslation('agents');
   const { agents, loading, createAgent, updateAgent, deleteAgent, refreshAgents, shareAgent, submitForReview } = useAgents();
+  const { isAdmin } = useUserRoles();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -585,6 +587,17 @@ const Agents = () => {
                 <Store className="h-4 w-4 mr-2" />
                 {t('sidebar.marketplace')}
               </Button>
+
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate('/admin-review')}
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  Admin Review
+                </Button>
+              )}
               
               <Button
                 variant="outline"
@@ -655,6 +668,16 @@ const Agents = () => {
                         <CardTitle className="text-lg truncate">{agent.name}</CardTitle>
                         <div className="flex gap-2 mt-1">
                           <Badge variant="secondary" className="text-xs">{agent.type}</Badge>
+                          {agent.visibility === 'pending_review' && (
+                            <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                              Pending Review
+                            </Badge>
+                          )}
+                          {agent.visibility === 'published' && (
+                            <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                              Published
+                            </Badge>
+                          )}
                           {(agent as any).knowledge_documents?.length > 0 && (
                             <Badge variant="outline" className="text-xs">
                               📄 {(agent as any).knowledge_documents.length}
@@ -668,7 +691,7 @@ const Agents = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
                         variant="outline"
@@ -711,6 +734,17 @@ const Agents = () => {
                         <Send className="h-3 w-3" />
                       </Button>
                     </div>
+                    {(!agent.visibility || agent.visibility === 'private') && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => handleSubmitForReview(agent)}
+                        className="w-full mt-2"
+                      >
+                        <Store className="h-3 w-3 mr-1" />
+                        Submit to Marketplace
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -748,7 +782,19 @@ const Agents = () => {
                             </div>
                           </td>
                           <td className="p-4">
-                            <Badge variant="secondary" className="text-xs">{agent.type}</Badge>
+                            <div className="flex flex-wrap gap-1">
+                              <Badge variant="secondary" className="text-xs">{agent.type}</Badge>
+                              {agent.visibility === 'pending_review' && (
+                                <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                                  Pending
+                                </Badge>
+                              )}
+                              {agent.visibility === 'published' && (
+                                <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                                  Published
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4">
                             <div className="line-clamp-2 text-sm text-muted-foreground max-w-md">
@@ -756,7 +802,7 @@ const Agents = () => {
                             </div>
                           </td>
                           <td className="p-4">
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -796,6 +842,16 @@ const Agents = () => {
                                >
                                  <Send className="h-3 w-3" />
                                </Button>
+                               {(!agent.visibility || agent.visibility === 'private') && (
+                                 <Button
+                                   size="sm"
+                                   variant="secondary"
+                                   onClick={() => handleSubmitForReview(agent)}
+                                   title="Submit to marketplace"
+                                 >
+                                   <Store className="h-3 w-3" />
+                                 </Button>
+                               )}
                             </div>
                           </td>
                         </tr>
