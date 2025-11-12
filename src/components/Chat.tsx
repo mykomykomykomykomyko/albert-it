@@ -989,7 +989,14 @@ const Chat = () => {
       if (currentAgent) {
         requestPayload.systemPrompt = currentAgent.system_prompt;
         // Wrap the current message with agent's user prompt template
-        requestPayload.message = currentAgent.user_prompt.replace('{input}', enhancedContentForAI);
+        // If user_prompt is empty or doesn't contain {input}, use the message as-is
+        if (currentAgent.user_prompt && currentAgent.user_prompt.includes('{input}')) {
+          requestPayload.message = currentAgent.user_prompt.replace('{input}', enhancedContentForAI);
+        } else if (currentAgent.user_prompt) {
+          // User prompt exists but no {input} placeholder - append the message
+          requestPayload.message = currentAgent.user_prompt + '\n\n' + enhancedContentForAI;
+        }
+        // Otherwise, keep requestPayload.message as the original enhancedContentForAI
         
         // Include knowledge documents if available
         if ((currentAgent as any).knowledge_documents?.length > 0) {
