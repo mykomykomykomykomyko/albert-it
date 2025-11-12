@@ -36,12 +36,15 @@ Albert is an advanced AI assistant platform designed to help you accomplish comp
 
 ### Key Features at a Glance
 
-- **Chat**: Conversational AI for quick questions and tasks
-- **Agents**: Specialized AI assistants with custom personalities and tools
-- **Workflows**: Automated multi-step processes combining multiple agents
-- **Image Analysis**: Process and analyze images with AI vision
-- **Voice**: Speech-to-text and text-to-speech capabilities
-- **Prompts & Frameworks**: Reusable templates and best practices
+- **Chat**: Conversational AI for quick questions and tasks with file upload support
+- **Agents**: Specialized AI assistants with custom personalities and 7+ powerful tools
+- **Workflows**: Automated multi-step processes combining multiple agents (Stage & Canvas)
+- **Image Analysis**: Process and analyze images with AI vision and batch processing
+- **Voice**: Speech-to-text and text-to-speech with multiple voice options
+- **Meeting Transcripts**: Automated analysis of meeting recordings with action item extraction
+- **Marketplaces**: Browse and share agents and workflows with the community
+- **Prompts & Frameworks**: Reusable templates and proven methodologies
+- **Admin Tools**: Review and manage community submissions (for administrators)
 
 ---
 
@@ -184,13 +187,15 @@ Instead of repeatedly telling the AI how you want it to behave, create an agent 
 
 4. **Select Tools** (Optional)
    Choose which capabilities your agent can use:
-   - 🔍 **Web Search**: Find current information online
-   - 🌐 **Web Scraping**: Extract data from websites
-   - 📊 **Data Analysis**: Process and analyze data
-   - 🧮 **Math**: Perform calculations
-   - 🌤️ **Weather**: Get weather information
-   - 🕐 **Time**: Check current time/date
-   - 🔌 **API Calls**: Connect to external services
+   - 🕐 **Time**: Get current date, time, and timezone information
+   - 🌤️ **Weather**: Fetch real-time weather data for any location worldwide
+   - 🔍 **Google Search**: Search the web using Google's search engine (requires API key)
+   - 🦁 **Brave Search**: Privacy-focused web search with comprehensive results
+   - ✨ **Perplexity Search**: AI-powered search with real-time web data and reasoning
+   - 🌐 **Web Scrape**: Extract and parse content from any web page
+   - 🔌 **API Call**: Make custom HTTP requests to external APIs and services
+   
+   **Tool Configuration**: Some tools require additional setup like API keys or parameters. The system will guide you through configuration when needed.
 
 5. **Save Your Agent**
    - Click "Create Agent"
@@ -296,6 +301,7 @@ Each agent shows:
 - ✅ It works reliably
 - ✅ You've tested it thoroughly
 - ✅ The description is clear
+- ✅ You've configured appropriate tools
 
 **How to Publish**:
 1. Go to your Agents page
@@ -303,7 +309,13 @@ Each agent shows:
 3. Click "Publish to Marketplace"
 4. Add tags for discoverability
 5. Write a clear description
-6. Submit for review (if applicable)
+6. Submit for review
+
+**Review Process**:
+- Agents are submitted with "pending_review" status
+- Administrators review submissions in the Admin Review Panel
+- Approved agents appear in the marketplace
+- You'll be notified when your agent is approved or needs changes
 
 **Publishing Tips**:
 - Use descriptive names
@@ -1192,6 +1204,343 @@ You can add your own frameworks:
 2. Explain when to use it
 3. Provide examples
 4. Share with team
+
+---
+
+## Tools Reference Guide
+
+### Overview of Available Tools
+
+Albert provides 7 powerful tools that agents can use to extend their capabilities beyond conversation. Each tool serves specific purposes and can be combined for complex workflows.
+
+### Time Tool
+
+**Purpose**: Get current date, time, and timezone information
+
+**Capabilities**:
+- Current date and time in various formats
+- Timezone conversions
+- Date calculations and comparisons
+- Schedule-aware responses
+
+**Use Cases**:
+- Scheduling and calendar management
+- Time-based reminders
+- Timezone coordination for global teams
+- Date-relative tasks ("next Monday", "in 3 days")
+
+**Configuration**: None required - works out of the box
+
+**Example Agent Prompt**:
+```
+You are a scheduling assistant. Use the Time tool to help users plan meetings, 
+set reminders, and coordinate across timezones. Always confirm dates and times 
+clearly with timezone information.
+```
+
+---
+
+### Weather Tool
+
+**Purpose**: Fetch real-time weather information for any location worldwide
+
+**Capabilities**:
+- Current weather conditions
+- Temperature, humidity, wind speed
+- Forecasts and predictions
+- Weather alerts and warnings
+
+**Use Cases**:
+- Travel planning
+- Event scheduling (outdoor activities)
+- Agricultural planning
+- Emergency preparedness
+
+**Configuration**:
+- **Location**: City name or coordinates (required)
+- **API Key**: OpenWeatherMap API key (required)
+- Get free API key at: https://openweathermap.org/api
+
+**Example Agent Prompt**:
+```
+You are a travel advisor. Use the Weather tool to provide weather forecasts 
+for destinations. Help users pack appropriately and plan outdoor activities 
+based on weather conditions.
+```
+
+---
+
+### Google Search Tool
+
+**Purpose**: Search the web using Google's search engine
+
+**Capabilities**:
+- Web search with ranking
+- Up to 100 results per query
+- Current information from the internet
+- Fact-checking and verification
+
+**Use Cases**:
+- Research and fact-finding
+- Current events and news
+- Competitor analysis
+- Content research
+
+**Configuration**:
+- **Query**: Search terms (required at runtime)
+- **Number of Results**: 1-100 (default: 10)
+- **API Key**: Google Custom Search API key (optional)
+- **Search Engine ID**: Custom search engine ID (optional)
+
+**Note**: Can work without API key using fallback methods
+
+**Example Agent Prompt**:
+```
+You are a research assistant. Use Google Search to find current, accurate 
+information. Always cite sources and verify information across multiple results. 
+Present findings in a clear, organized manner.
+```
+
+---
+
+### Brave Search Tool
+
+**Purpose**: Privacy-focused web search with comprehensive results
+
+**Capabilities**:
+- Privacy-respecting search
+- No API key required
+- Up to 100 results per query
+- Fast, reliable results
+
+**Use Cases**:
+- General web research
+- Privacy-conscious information gathering
+- Quick fact-checking
+- Alternative to Google Search
+
+**Configuration**:
+- **Query**: Search terms (required at runtime)
+- **Number of Results**: 1-100 (default: 20)
+
+**No API Key Required**: Works immediately without setup
+
+**Example Agent Prompt**:
+```
+You are a privacy-focused research assistant. Use Brave Search to find 
+information while respecting user privacy. Provide comprehensive answers 
+with multiple perspectives.
+```
+
+---
+
+### Perplexity Search Tool
+
+**Purpose**: AI-powered search combining real-time web data with advanced reasoning
+
+**Capabilities**:
+- AI-synthesized answers from web sources
+- Real-time information with reasoning
+- Multiple model options for different needs
+- Natural question answering
+
+**Models Available**:
+- **sonar**: Fast & cost-effective (default)
+- **sonar-pro**: Advanced search capabilities
+- **sonar-reasoning**: Complex reasoning tasks
+- **sonar-reasoning-pro**: DeepSeek-R1 powered
+- **sonar-deep-research**: Comprehensive analysis
+
+**Use Cases**:
+- Complex research questions
+- Comparative analysis
+- Deep-dive investigations
+- Nuanced topic exploration
+
+**Configuration**:
+- **Query**: Question or topic (required at runtime)
+- **Model**: Choose based on complexity (default: sonar)
+
+**No API Key Required**: Powered by Lovable AI
+
+**Example Agent Prompt**:
+```
+You are an advanced research analyst. Use Perplexity Search with appropriate 
+models for complex queries. Provide well-reasoned answers that synthesize 
+multiple sources and perspectives. For simple queries use sonar, for complex 
+analysis use sonar-reasoning or sonar-deep-research.
+```
+
+---
+
+### Web Scrape Tool
+
+**Purpose**: Extract and parse content from web pages
+
+**Capabilities**:
+- HTML content extraction
+- Text parsing and cleaning
+- Structured data retrieval
+- Link and media extraction
+
+**Use Cases**:
+- Competitive intelligence
+- Price monitoring
+- Content aggregation
+- Data collection
+
+**Configuration**:
+- **URL**: Web page address (required at runtime)
+
+**No API Key Required**: Works with any publicly accessible URL
+
+**Limitations**:
+- Cannot access password-protected pages
+- Respects robots.txt and rate limits
+- May not work with JavaScript-heavy sites
+- Limited to publicly available content
+
+**Example Agent Prompt**:
+```
+You are a web research specialist. Use Web Scrape to extract content from 
+websites. Clean and structure the data before presenting it. Respect website 
+terms of service and focus on publicly available information.
+```
+
+---
+
+### API Call Tool
+
+**Purpose**: Make custom HTTP requests to external APIs and services
+
+**Capabilities**:
+- GET, POST, PUT, DELETE requests
+- Custom headers and authentication
+- JSON request/response handling
+- Integration with third-party services
+
+**Use Cases**:
+- CRM integration
+- Database queries
+- Webhook triggers
+- Custom service connections
+
+**Configuration** (all set at runtime):
+- **URL**: Full API endpoint URL (required)
+- **Method**: HTTP method - GET, POST, PUT, DELETE (default: GET)
+- **Headers**: JSON object with request headers (optional)
+- **Body**: JSON request body for POST/PUT (optional)
+
+**Authentication**: Include API keys in headers as needed
+
+**Example Configuration**:
+```json
+{
+  "url": "https://api.example.com/data",
+  "method": "POST",
+  "headers": {
+    "Authorization": "Bearer YOUR_TOKEN",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "query": "example"
+  }
+}
+```
+
+**Example Agent Prompt**:
+```
+You are an API integration specialist. Use the API Call tool to connect with 
+external services. Handle authentication properly, parse responses clearly, 
+and provide helpful error messages when API calls fail.
+```
+
+---
+
+### Tool Best Practices
+
+**Choosing the Right Tools**:
+1. **Time**: Always include for scheduling-related agents
+2. **Weather**: Include for travel, events, or location-based agents
+3. **Search Tools**: Choose based on needs:
+   - Brave Search: Fast, no setup, privacy-focused
+   - Google Search: Comprehensive, may need API key
+   - Perplexity: Best for complex reasoning and synthesis
+4. **Web Scrape**: For specific website data extraction
+5. **API Call**: For custom integrations
+
+**Tool Combination Strategies**:
+- **Research Agent**: Brave Search + Web Scrape + Time
+- **Travel Agent**: Weather + Time + Google Search
+- **Data Analyst**: API Call + Web Scrape
+- **News Agent**: Perplexity Search + Time
+- **Scheduling Agent**: Time + Google Search (for location/venue research)
+
+**Performance Tips**:
+1. **Use Appropriate Models**: Match model complexity to task
+2. **Limit Results**: Request only the data you need
+3. **Cache When Possible**: Save frequently used information
+4. **Combine Tools**: Use multiple tools in sequence for complex tasks
+5. **Error Handling**: Always handle API failures gracefully
+
+---
+
+## Admin Features
+
+### Admin Review Panel
+
+**For Administrators Only**: The Admin Review Panel allows administrators to manage community-submitted agents before they appear in the marketplace.
+
+### Accessing Admin Panel
+
+1. Navigate to `/admin/review` (link appears in navigation for admins)
+2. View all agents with "pending_review" status
+3. Review agent configurations and descriptions
+
+### Review Process
+
+**What to Review**:
+- Agent name and description appropriateness
+- System prompt quality and safety
+- Tool configuration appropriateness
+- Overall usefulness to community
+
+**Review Actions**:
+1. **Approve**: Agent becomes visible in marketplace
+2. **Reject**: Agent remains private with feedback to creator
+3. **Request Changes**: Ask creator to modify before approval
+
+**Quality Guidelines**:
+✅ **Approve if**:
+- Clear, descriptive name and description
+- Appropriate system prompt
+- Tools configured correctly
+- Useful for community
+- Professional language
+
+❌ **Reject if**:
+- Inappropriate content
+- Misleading descriptions
+- Harmful instructions
+- Duplicate of existing agent
+- Poor quality or untested
+
+### Managing Approvals
+
+**Batch Actions**:
+- Review multiple agents efficiently
+- Filter by submission date
+- Sort by category or tools used
+
+**Submitter Information**:
+- View submitter email
+- Check submission history
+- Contact for clarifications
+
+**Post-Approval**:
+- Approved agents appear immediately in marketplace
+- Creators are notified of approval
+- Community can rate and download
 
 ---
 
