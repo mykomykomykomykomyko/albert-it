@@ -127,6 +127,11 @@ const Chat = () => {
     broadcastThinking(isLoading);
   }, [isLoading, currentConversation, broadcastThinking]);
 
+  // Auto-scroll when messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
   // Add clipboard paste listener for images
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
