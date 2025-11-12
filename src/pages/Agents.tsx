@@ -102,8 +102,8 @@ const Agents = () => {
       user_prompt: trimmedUserPrompt
     });
 
-    if (!trimmedName || !trimmedSystemPrompt || !trimmedUserPrompt) {
-      toast.error("Please fill in all required fields (Name, System Prompt, User Prompt)");
+    if (!trimmedName || !trimmedSystemPrompt) {
+      toast.error("Please fill in all required fields (Name, System Prompt)");
       return;
     }
 
@@ -112,7 +112,7 @@ const Agents = () => {
       type: formData.type || "Text",
       description: formData.description?.trim() || "",
       system_prompt: trimmedSystemPrompt,
-      user_prompt: trimmedUserPrompt,
+      user_prompt: trimmedUserPrompt || "",
       icon_name: formData.icon_name || "Bot",
       metadata_tags: formData.metadata_tags_input?.split(',').map(t => t.trim()).filter(Boolean) || [],
       profile_picture_url: formData.profile_picture_url,
