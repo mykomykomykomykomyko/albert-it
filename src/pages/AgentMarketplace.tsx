@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Star, Download, ArrowLeft, TrendingUp } from 'lucide-react';
+import { Search, Star, Download, ArrowLeft, TrendingUp, RefreshCw } from 'lucide-react';
 import { Agent, useAgents } from '@/hooks/useAgents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -83,6 +83,18 @@ export default function AgentMarketplace() {
 
   useEffect(() => {
     loadMarketplace();
+  }, []);
+
+  // Refresh when page becomes visible (e.g., after navigating from admin panel)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadMarketplace();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const loadMarketplace = async () => {
@@ -167,15 +179,25 @@ export default function AgentMarketplace() {
       <div className="flex-1 overflow-auto">
         <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/agents')}
-            className="mb-4"
-            size="sm"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {t('backToAgents')}
-          </Button>
+          <div className="flex items-center justify-between mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/agents')}
+              size="sm"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {t('backToAgents')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadMarketplace}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
           <h1 className="text-2xl sm:text-4xl font-bold mb-2">{t('title')}</h1>
           <p className="text-sm sm:text-base text-muted-foreground">{t('subtitle')}</p>
         </div>
