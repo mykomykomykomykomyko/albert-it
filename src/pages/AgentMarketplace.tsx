@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search, Star, Download, ArrowLeft, TrendingUp, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
+import { Search, Star, Download, ArrowLeft, TrendingUp, RefreshCw, Eye } from 'lucide-react';
 import { Agent, useAgents } from '@/hooks/useAgents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -20,6 +22,7 @@ export default function AgentMarketplace() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [viewingAgent, setViewingAgent] = useState<Agent | null>(null);
 
   // Fallback default templates when marketplace is empty
   const defaultTemplates = [
@@ -280,19 +283,100 @@ export default function AgentMarketplace() {
                     </div>
                   )}
                   <Button
-                    onClick={() => handleCloneAgent(agent)}
+                    onClick={() => setViewingAgent(agent)}
+                    variant="outline"
                     className="w-full"
                   >
-                    <Download className="w-4 h-4 mr-2" />
-                    {agent.is_template ? t('buttons.addAgent') : t('buttons.cloneAgent')}
+                    <Eye className="w-4 h-4 mr-2" />
+                    {t('buttons.viewDetails') || 'View Details'}
                   </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
-        </div>
       </div>
+      </div>
+
+      {/* Agent Details Dialog */}
+      <Dialog open={!!viewingAgent} onOpenChange={(open) => !open && setViewingAgent(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-center gap-4 mb-2">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={viewingAgent?.profile_picture_url} />
+                <AvatarFallback>{viewingAgent?.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <DialogTitle className="text-2xl">{viewingAgent?.name}</DialogTitle>
+                <DialogDescription className="mt-1">
+                  {viewingAgent?.description || 'No description available'}
+                </DialogDescription>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Badge variant="secondary">{viewingAgent?.type}</Badge>
+              {viewingAgent?.category && (
+                <Badge variant="secondary">{viewingAgent.category}</Badge>
+              )}
+              {viewingAgent?.is_template && (
+                <Badge variant="secondary">{t('badges.template')}</Badge>
+              )}
+              {viewingAgent?.metadata_tags?.map((tag) => (
+                <Badge key={tag} variant="outline">{tag}</Badge>
+              ))}
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-4">
+            {viewingAgent?.system_prompt && (
+              <div>
+                <h3 className="font-semibold text-sm mb-2">System Prompt</h3>
+                <ScrollArea className="h-32 w-full rounded-md border p-3 bg-muted/50">
+                  <p className="text-sm whitespace-pre-wrap">{viewingAgent.system_prompt}</p>
+                </ScrollArea>
+              </div>
+            )}
+
+            {viewingAgent?.user_prompt && (
+              <div>
+                <h3 className="font-semibold text-sm mb-2">User Prompt Template</h3>
+                <ScrollArea className="h-24 w-full rounded-md border p-3 bg-muted/50">
+                  <p className="text-sm whitespace-pre-wrap">{viewingAgent.user_prompt}</p>
+                </ScrollArea>
+              </div>
+            )}
+
+            <Separator />
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>{viewingAgent?.usage_count || 0} uses</span>
+                </div>
+                {viewingAgent?.rating && (
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span>{viewingAgent.rating.toFixed(1)}</span>
+                  </div>
+                )}
+              </div>
+              <Button
+                onClick={() => {
+                  if (viewingAgent) {
+                    handleCloneAgent(viewingAgent);
+                    setViewingAgent(null);
+                  }
+                }}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {viewingAgent?.is_template ? t('buttons.addAgent') : t('buttons.cloneAgent')}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
