@@ -153,7 +153,7 @@ const Stage = () => {
         name: template.name,
         type: template.id,
         systemPrompt: template.defaultSystemPrompt || `You are a ${template.name} agent.`,
-        userPrompt: template.defaultUserPrompt || "Process the following input: {input}",
+        userPrompt: template.defaultUserPrompt || undefined,
         tools: [],
         status: "idle",
       } as AgentNode;

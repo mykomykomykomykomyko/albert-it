@@ -55,6 +55,13 @@ const defaultTemplates: AgentTemplate[] = Object.freeze([
     user_prompt: "Write content based on the following: {input}",
     icon_name: "FileText",
   }),
+  Object.freeze({
+    name: "Assistant",
+    type: "Text",
+    description: "General-purpose helpful assistant with no predefined user prompt",
+    system_prompt: "You are a helpful AI assistant. You respond to user queries in a clear, concise, and friendly manner.",
+    icon_name: "Bot",
+  }),
 ]) as AgentTemplate[];
 
 const iconMap: Record<string, any> = {

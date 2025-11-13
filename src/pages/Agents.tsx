@@ -114,7 +114,7 @@ const Agents = () => {
       type: formData.type || "Text",
       description: formData.description?.trim() || "",
       system_prompt: trimmedSystemPrompt,
-      user_prompt: trimmedUserPrompt || "",
+      user_prompt: trimmedUserPrompt || undefined,
       icon_name: formData.icon_name || "Bot",
       metadata_tags: formData.metadata_tags_input?.split(',').map(t => t.trim()).filter(Boolean) || [],
       profile_picture_url: formData.profile_picture_url,
@@ -298,8 +298,8 @@ const Agents = () => {
       }
 
       for (const agent of agentsToImport) {
-        if (!agent.name || !agent.system_prompt || !agent.user_prompt) {
-          toast.error("Invalid agent data: missing required fields");
+        if (!agent.name || !agent.system_prompt) {
+          toast.error("Invalid agent data: missing required fields (name, system_prompt)");
           return;
         }
       }
@@ -311,7 +311,7 @@ const Agents = () => {
           type: agent.type || "Text",
           description: agent.description || "",
           system_prompt: agent.system_prompt,
-          user_prompt: agent.user_prompt,
+          user_prompt: agent.user_prompt || undefined,
           icon_name: agent.icon_name || "Bot",
           metadata_tags: agent.metadata_tags || [],
           profile_picture_url: agent.profile_picture_url || "",
@@ -546,9 +546,8 @@ const Agents = () => {
                         <Textarea
                           value={formData.user_prompt}
                           onChange={(e) => setFormData({ ...formData, user_prompt: e.target.value })}
-                          placeholder="Default user prompt template..."
+                          placeholder="Default user prompt template (optional)..."
                           rows={10}
-                          required
                         />
                       </TabsContent>
                       <TabsContent value="documents" className="mt-4">

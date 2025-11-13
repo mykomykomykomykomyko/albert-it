@@ -2,7 +2,7 @@ import type { AgentNode, ToolInstance } from "@/types/workflow";
 
 export interface AgentExecutionOptions {
   systemPrompt: string;
-  userPrompt: string;
+  userPrompt?: string; // Optional user prompt
   tools: Array<{
     toolId: string;
     config: Record<string, any>;
@@ -43,7 +43,7 @@ export class AgentExecutor {
           },
           body: JSON.stringify({
             systemPrompt: options.systemPrompt,
-            userPrompt: options.userPrompt,
+            userPrompt: options.userPrompt || "",
             tools: options.tools,
             images: options.images,
             knowledgeDocuments: options.knowledgeDocuments,
@@ -82,8 +82,10 @@ export class AgentExecutor {
     userInput?: string
   ): Promise<AgentExecutionResult> {
     const userPrompt = agent.userPrompt
-      .replace(/{input}/g, input)
-      .replace(/{prompt}/g, userInput || "No input provided");
+      ? agent.userPrompt
+          .replace(/{input}/g, input)
+          .replace(/{prompt}/g, userInput || "No input provided")
+      : undefined;
 
     const toolsPayload = agent.tools.map((t) => ({
       toolId: t.toolId,
