@@ -9,7 +9,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon, Search } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon, Search, Pencil, Save } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -33,6 +33,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRef } from 'react';
 import { FilePreviewCard } from './chat/FilePreviewCard';
 import { Toggle } from './ui/toggle';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 
 interface ImageAttachment {
   name: string;
@@ -78,6 +79,10 @@ const Chat = () => {
   const [showGettingStarted, setShowGettingStarted] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [realTimeSearchEnabled, setRealTimeSearchEnabled] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [messagesToDelete, setMessagesToDelete] = useState<Message[]>([]);
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -1180,6 +1185,217 @@ const Chat = () => {
     setCurrentAgent(agent);
   };
 
+  const handleStartEdit = (message: Message) => {
+    if (isLoading) {
+      toast.error("Cannot edit while AI is responding");
+      return;
+    }
+    
+    setEditingMessageId(message.id);
+    setEditingContent(message.content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent("");
+  };
+
+  const handleSaveAndResend = async () => {
+    if (!editingMessageId || !currentConversation || !editingContent.trim()) return;
+
+    const messageIndex = messages.findIndex(m => m.id === editingMessageId);
+    if (messageIndex === -1) return;
+
+    const messagesToDeleteArray = messages.slice(messageIndex + 1);
+    
+    // Show confirmation if there are messages to delete
+    if (messagesToDeleteArray.length > 0) {
+      setMessagesToDelete(messagesToDeleteArray);
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    // If no messages to delete, proceed immediately
+    await confirmSaveAndResend();
+  };
+
+  const confirmSaveAndResend = async () => {
+    if (!editingMessageId || !currentConversation || !editingContent.trim()) return;
+
+    setShowDeleteConfirm(false);
+    setIsLoading(true);
+
+    try {
+      const messageIndex = messages.findIndex(m => m.id === editingMessageId);
+      const messagesToDeleteArray = messages.slice(messageIndex + 1);
+
+      // Delete subsequent messages from database
+      if (messagesToDeleteArray.length > 0) {
+        const idsToDelete = messagesToDeleteArray.map(m => m.id);
+        const { error: deleteError } = await supabase
+          .from('messages')
+          .delete()
+          .in('id', idsToDelete);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Update edited message in database
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({ content: editingContent })
+        .eq('id', editingMessageId);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      const updatedMessages = messages.slice(0, messageIndex + 1).map(m =>
+        m.id === editingMessageId ? { ...m, content: editingContent } : m
+      );
+      setMessages(updatedMessages);
+
+      // Clear editing state
+      setEditingMessageId(null);
+      setEditingContent("");
+      setMessagesToDelete([]);
+
+      // Get session for API call
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      // Prepare conversation history for re-submission
+      const sanitizedHistory = updatedMessages.map(msg => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }));
+
+      // Prepare request payload
+      const requestPayload: any = {
+        messages: sanitizedHistory,
+      };
+
+      // Include agent prompts if available
+      if (currentAgent) {
+        requestPayload.systemPrompt = currentAgent.system_prompt;
+        if (currentAgent.user_prompt) {
+          requestPayload.userPrompt = currentAgent.user_prompt;
+        }
+        if ((currentAgent as any).knowledge_documents?.length > 0) {
+          requestPayload.knowledgeDocuments = (currentAgent as any).knowledge_documents.map((doc: any) => ({
+            filename: doc.filename,
+            content: doc.content
+          }));
+        }
+      }
+
+      // Store payload for troubleshooting
+      setLastPayload({
+        timestamp: new Date().toISOString(),
+        endpoint: 'gemini-chat',
+        model: 'gemini-2.5-flash',
+        systemPrompt: requestPayload.systemPrompt,
+        messages: sanitizedHistory,
+        fullRequest: requestPayload,
+        payload: requestPayload,
+        agent: currentAgent ? {
+          name: currentAgent.name,
+          system_prompt: currentAgent.system_prompt,
+          user_prompt: currentAgent.user_prompt
+        } : null
+      });
+
+      // Call Gemini API
+      const endpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(requestPayload),
+      });
+
+      if (!response.ok) throw new Error(`Failed to send message: ${response.status}`);
+
+      // Create assistant message
+      const { data: assistantMessage, error: assistantError } = await supabase
+        .from("messages")
+        .insert({
+          conversation_id: currentConversation.id,
+          role: "assistant" as const,
+          content: "",
+        })
+        .select()
+        .single();
+
+      if (assistantError) throw assistantError;
+
+      const finalMessages = [...updatedMessages, assistantMessage as any];
+      setMessages(finalMessages);
+
+      // Stream response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+              
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.text) {
+                  accumulatedContent += parsed.text;
+                  setMessages(prevMessages =>
+                    prevMessages.map(m =>
+                      m.id === assistantMessage.id
+                        ? { ...m, content: accumulatedContent }
+                        : m
+                    )
+                  );
+                }
+              } catch (e) {
+                console.error('Error parsing SSE:', e);
+              }
+            }
+          }
+        }
+      }
+
+      // Update assistant message in database
+      await supabase
+        .from("messages")
+        .update({ content: accumulatedContent })
+        .eq("id", assistantMessage.id);
+
+      // Update conversation timestamp
+      await supabase
+        .from("conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", currentConversation.id);
+
+      toast.success("Message edited and conversation regenerated");
+    } catch (error: any) {
+      console.error('Error editing message:', error);
+      toast.error(error.message || 'Failed to edit message');
+      // Reload conversation to ensure consistency
+      if (currentConversation) {
+        await loadConversation(currentConversation.id);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -1422,59 +1638,92 @@ const Chat = () => {
                               
                               return (
                                 <>
-                                   {textContent ? (
-                                    <div className={`prose prose-sm max-w-none break-words ${
-                                      message.role === "user" 
-                                        ? "prose-invert" 
-                                        : "dark:prose-invert"
-                                    } 
-                                    prose-p:leading-relaxed prose-p:my-3 prose-p:text-base prose-p:break-words
-                                    prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-semibold prose-headings:break-words
-                                    prose-ul:my-3 prose-ul:space-y-2 prose-ul:list-disc prose-ul:pl-6
-                                    prose-ol:my-3 prose-ol:space-y-2 prose-ol:list-decimal prose-ol:pl-6
-                                    prose-li:my-1.5 prose-li:leading-relaxed prose-li:text-base prose-li:break-words
-                                    prose-strong:font-bold prose-strong:text-foreground
-                                    prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-a:break-all
-                                    prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:break-words
-                                    prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4 prose-pre:overflow-x-auto prose-pre:max-w-full
-                                    prose-blockquote:border-l-accent prose-blockquote:my-4 prose-blockquote:break-words
-                                    [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-words [&_pre_code]:whitespace-pre-wrap`}>
-                                      <ReactMarkdown 
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                          table: ({ node, ...props }) => (
-                                            <div className="w-full overflow-x-auto -mx-2 md:mx-0">
-                                              <table
-                                                className="w-full min-w-[720px] border-collapse [&_th]:text-left [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_*]:break-words [&_td]:whitespace-normal"
-                                                {...props}
-                                              >
-                                                {props.children}
-                                              </table>
-                                            </div>
-                                          ),
-                                          thead: (props) => (
-                                            <thead className="bg-muted/50">
-                                              {props.children}
-                                            </thead>
-                                          ),
-                                          tr: (props) => (
-                                            <tr className="border-b border-border">
-                                              {props.children}
-                                            </tr>
-                                          ),
-                                        }}
-                                      >
-                                        {(() => {
-                                          const { cleanContent } = parseWorkflowSuggestion(textContent);
-                                          return cleanContent;
-                                        })()}
-                                      </ReactMarkdown>
-                                    </div>
-                                   ) : !imageUrl ? (
-                                    <div className="text-muted-foreground italic text-sm">
-                                      [Empty message]
-                                    </div>
-                                  ) : null}
+                                   {/* Edit Mode - Show textarea with action buttons */}
+                                   {editingMessageId === message.id ? (
+                                     <div className="space-y-3">
+                                       <Textarea
+                                         value={editingContent}
+                                         onChange={(e) => setEditingContent(e.target.value)}
+                                         className="min-h-[100px] bg-background/50 border-primary/30 focus:border-primary resize-none"
+                                         autoFocus
+                                       />
+                                       <div className="flex gap-2 justify-end">
+                                         <Button
+                                           variant="outline"
+                                           size="sm"
+                                           onClick={handleCancelEdit}
+                                           disabled={isLoading}
+                                         >
+                                           Cancel
+                                         </Button>
+                                         <Button
+                                           variant="default"
+                                           size="sm"
+                                           onClick={handleSaveAndResend}
+                                           disabled={isLoading || !editingContent.trim()}
+                                         >
+                                           <Save className="h-4 w-4 mr-2" />
+                                           Save & Resend
+                                         </Button>
+                                       </div>
+                                     </div>
+                                   ) : (
+                                     <>
+                                       {textContent ? (
+                                         <div className={`prose prose-sm max-w-none break-words ${
+                                           message.role === "user" 
+                                             ? "prose-invert" 
+                                             : "dark:prose-invert"
+                                         } 
+                                         prose-p:leading-relaxed prose-p:my-3 prose-p:text-base prose-p:break-words
+                                         prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-semibold prose-headings:break-words
+                                         prose-ul:my-3 prose-ul:space-y-2 prose-ul:list-disc prose-ul:pl-6
+                                         prose-ol:my-3 prose-ol:space-y-2 prose-ol:list-decimal prose-ol:pl-6
+                                         prose-li:my-1.5 prose-li:leading-relaxed prose-li:text-base prose-li:break-words
+                                         prose-strong:font-bold prose-strong:text-foreground
+                                         prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-a:break-all
+                                         prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:break-words
+                                         prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-4 prose-pre:overflow-x-auto prose-pre:max-w-full
+                                         prose-blockquote:border-l-accent prose-blockquote:my-4 prose-blockquote:break-words
+                                         [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-words [&_pre_code]:whitespace-pre-wrap`}>
+                                           <ReactMarkdown 
+                                             remarkPlugins={[remarkGfm]}
+                                              components={{
+                                                table: ({ node, ...props }) => (
+                                                  <div className="w-full overflow-x-auto -mx-2 md:mx-0">
+                                                    <table
+                                                      className="w-full min-w-[720px] border-collapse [&_th]:text-left [&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2 [&_td]:align-top [&_*]:break-words [&_td]:whitespace-normal"
+                                                      {...props}
+                                                    >
+                                                      {props.children}
+                                                    </table>
+                                                  </div>
+                                                ),
+                                                thead: (props) => (
+                                                  <thead className="bg-muted/50">
+                                                    {props.children}
+                                                  </thead>
+                                                ),
+                                                tr: (props) => (
+                                                  <tr className="border-b border-border">
+                                                    {props.children}
+                                                  </tr>
+                                                ),
+                                              }}
+                                           >
+                                             {(() => {
+                                               const { cleanContent } = parseWorkflowSuggestion(textContent);
+                                               return cleanContent;
+                                             })()}
+                                           </ReactMarkdown>
+                                         </div>
+                                        ) : !imageUrl ? (
+                                         <div className="text-muted-foreground italic text-sm">
+                                           [Empty message]
+                                         </div>
+                                       ) : null}
+                                     </>
+                                   )}
 
                                   {message.attachments && message.attachments.length > 0 && (
                                     <div className="mt-2 flex flex-wrap gap-2">
@@ -1593,41 +1842,52 @@ const Chat = () => {
                              );
                            })()}
                            
-                           {/* Message Actions - Copy and Download */}
-                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
-                               onClick={() => {
-                                 navigator.clipboard.writeText(message.content);
-                                 toast.success('Message copied to clipboard');
-                               }}
-                               title="Copy message"
-                             >
-                               <Copy className="h-3 w-3" />
-                             </Button>
-                             <Button
-                               variant="ghost"
-                               size="icon"
-                               className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
-                               onClick={() => {
-                                 const blob = new Blob([message.content], { type: 'text/markdown' });
-                                 const url = URL.createObjectURL(blob);
-                                 const link = document.createElement('a');
-                                 link.href = url;
-                                 link.download = `message-${message.role}-${Date.now()}.md`;
-                                 document.body.appendChild(link);
-                                 link.click();
-                                 document.body.removeChild(link);
-                                 URL.revokeObjectURL(url);
-                                 toast.success('Message downloaded');
-                               }}
-                               title="Download message"
-                             >
-                               <Download className="h-3 w-3" />
-                             </Button>
-                           </div>
+                            {/* Message Actions - Edit (user only), Copy and Download */}
+                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                              {message.role === 'user' && !isLoading && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
+                                  onClick={() => handleStartEdit(message)}
+                                  title="Edit message"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(message.content);
+                                  toast.success('Message copied to clipboard');
+                                }}
+                                title="Copy message"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 bg-background/80 hover:bg-background shadow-sm"
+                                onClick={() => {
+                                  const blob = new Blob([message.content], { type: 'text/markdown' });
+                                  const url = URL.createObjectURL(blob);
+                                  const link = document.createElement('a');
+                                  link.href = url;
+                                  link.download = `message-${message.role}-${Date.now()}.md`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  URL.revokeObjectURL(url);
+                                  toast.success('Message downloaded');
+                                }}
+                                title="Download message"
+                              >
+                                <Download className="h-3 w-3" />
+                              </Button>
+                            </div>
                          </div>
                        
                        {message.role === "assistant" && (() => {
@@ -1922,6 +2182,30 @@ const Chat = () => {
           open={showGettingStarted}
           onOpenChange={setShowGettingStarted}
         />
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Edit Message & Regenerate Response</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will delete {messagesToDelete.length} message{messagesToDelete.length === 1 ? '' : 's'} after your edited message 
+                and regenerate the AI response from that point. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {
+                setShowDeleteConfirm(false);
+                setMessagesToDelete([]);
+              }}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={confirmSaveAndResend}>
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
         </div>
       </div>
     </div>
