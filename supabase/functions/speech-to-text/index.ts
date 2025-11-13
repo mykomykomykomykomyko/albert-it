@@ -75,6 +75,9 @@ serve(async (req) => {
 
     let audioFile: File | null = null;
     let model: string | null = null;
+    
+    // File size limit: 50MB (in bytes)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
     if (contentType.includes('multipart/form-data')) {
       // Parse FormData from request
@@ -121,6 +124,11 @@ serve(async (req) => {
 
     if (!audioFile) {
       throw new Error('No audio file provided');
+    }
+
+    // Check file size
+    if (audioFile.size > MAX_FILE_SIZE) {
+      throw new Error(`File size (${(audioFile.size / 1024 / 1024).toFixed(2)} MB) exceeds the maximum allowed size of 50 MB. Please use a smaller file or compress the audio.`);
     }
 
     const elevenlabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
