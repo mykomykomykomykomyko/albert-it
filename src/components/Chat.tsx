@@ -1648,14 +1648,15 @@ const Chat = () => {
                                          autoFocus
                                        />
                                        <div className="flex gap-2 justify-end">
-                                         <Button
-                                           variant="outline"
-                                           size="sm"
-                                           onClick={handleCancelEdit}
-                                           disabled={isLoading}
-                                         >
-                                           Cancel
-                                         </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            disabled={isLoading}
+                            className="bg-background text-foreground border-border hover:bg-accent"
+                          >
+                            Cancel
+                          </Button>
                                          <Button
                                            variant="default"
                                            size="sm"
