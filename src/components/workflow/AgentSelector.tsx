@@ -19,7 +19,7 @@ export interface AgentTemplate {
   description: string;
   category: string;
   defaultSystemPrompt: string;
-  defaultUserPrompt: string;
+  defaultUserPrompt?: string; // Optional user prompt
 }
 
 const agentTemplates: AgentTemplate[] = [
@@ -103,6 +103,14 @@ const agentTemplates: AgentTemplate[] = [
     description: "Develop strategic plans and recommendations",
     defaultSystemPrompt: "You are a strategic advisor who develops actionable plans and recommendations.",
     defaultUserPrompt: "Develop a strategy for: {input}"
+  },
+  { 
+    id: "assistant", 
+    name: "General Assistant", 
+    icon: Bot, 
+    category: "general", 
+    description: "Helpful assistant with no predefined user prompt",
+    defaultSystemPrompt: "You are a helpful AI assistant. You respond to user queries in a clear, concise, and friendly manner.",
   },
 ];
 

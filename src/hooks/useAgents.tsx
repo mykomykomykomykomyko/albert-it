@@ -56,7 +56,7 @@ export interface Agent {
   type: string; // Agent type/category
   description?: string; // Human-readable description
   system_prompt: string; // Instructions for AI behavior
-  user_prompt: string; // Default user-facing prompt
+  user_prompt?: string; // Default user-facing prompt (optional)
   icon_name: string; // Lucide icon name
   created_at: string;
   updated_at: string;
@@ -98,7 +98,7 @@ export interface AgentTemplate {
   type: string;
   description: string;
   system_prompt: string;
-  user_prompt: string;
+  user_prompt?: string; // Optional user prompt
   icon_name: string;
   metadata_tags?: string[];
   profile_picture_url?: string;
@@ -185,7 +185,15 @@ export const useAgents = () => {
         .from('agents')
         .insert({
           user_id: user.id,
-          ...template,
+          name: template.name,
+          type: template.type,
+          description: template.description,
+          system_prompt: template.system_prompt,
+          user_prompt: template.user_prompt || null,
+          icon_name: template.icon_name,
+          metadata_tags: template.metadata_tags,
+          profile_picture_url: template.profile_picture_url,
+          knowledge_documents: template.knowledge_documents,
         })
         .select()
         .single();

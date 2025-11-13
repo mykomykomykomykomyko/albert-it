@@ -120,7 +120,7 @@ export const Sidebar = ({
     iconName: agent.icon_name || "Bot",
     description: agent.description || "",
     defaultSystemPrompt: agent.system_prompt,
-    defaultUserPrompt: agent.user_prompt,
+    defaultUserPrompt: agent.user_prompt || undefined,
     profile_picture_url: agent.profile_picture_url
   }));
   
@@ -342,7 +342,7 @@ export const Sidebar = ({
       iconName: agent.icon_name || "Bot",
       description: agent.description || "",
       defaultSystemPrompt: agent.system_prompt,
-      defaultUserPrompt: agent.user_prompt,
+      defaultUserPrompt: agent.user_prompt || undefined,
       profile_picture_url: agent.profile_picture_url
     };
     

@@ -60,6 +60,13 @@ const agentTemplates = [
     description: "Deep data analysis",
     defaultSystemPrompt: "You are a data analyst who provides insightful analysis and identifies patterns in data.",
     defaultUserPrompt: "Analyze the following data and provide insights: {input}"
+  },
+  {
+    id: "assistant",
+    name: "Assistant",
+    iconName: "Bot",
+    description: "General-purpose helper",
+    defaultSystemPrompt: "You are a helpful AI assistant. You respond to user queries in a clear, concise, and friendly manner.",
   }
 ];
 

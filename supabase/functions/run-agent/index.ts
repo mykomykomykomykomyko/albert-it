@@ -154,7 +154,9 @@ serve(async (req) => {
     }
 
     // Call Gemini AI
-    const finalPrompt = toolResults ? `${userPrompt}\n\nTool Results:${toolResults}` : userPrompt;
+    const finalPrompt = toolResults 
+      ? `${userPrompt || "Please respond to the user's request."}\n\nTool Results:${toolResults}` 
+      : (userPrompt || "Please respond to the user's request.");
     
     console.log("Using direct Gemini API");
     

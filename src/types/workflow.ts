@@ -48,7 +48,7 @@ export interface AgentNode extends WorkflowNode {
   nodeType: "agent";
   type: string;
   systemPrompt: string;
-  userPrompt: string;
+  userPrompt?: string; // Optional user prompt
   tools: ToolInstance[];
   images?: string[]; // Base64 image data URLs
 }
