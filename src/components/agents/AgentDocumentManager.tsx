@@ -125,7 +125,10 @@ export function AgentDocumentManager({
       }
     } catch (error) {
       console.error("Error uploading documents:", error);
-      toast.error("Failed to upload documents");
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Failed to upload documents";
+      toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
     }
