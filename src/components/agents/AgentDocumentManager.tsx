@@ -100,8 +100,26 @@ export function AgentDocumentManager({
           continue;
         }
 
+        // Sanitize filename - remove special characters and spaces
+        const sanitizeFilename = (filename: string) => {
+          // Get file extension
+          const lastDot = filename.lastIndexOf('.');
+          const name = lastDot > 0 ? filename.substring(0, lastDot) : filename;
+          const ext = lastDot > 0 ? filename.substring(lastDot) : '';
+          
+          // Replace special characters and spaces with underscores
+          const sanitizedName = name
+            .replace(/[^\w\s-]/g, '_')  // Replace special chars with underscore
+            .replace(/\s+/g, '_')        // Replace spaces with underscore
+            .replace(/_+/g, '_')         // Replace multiple underscores with single
+            .replace(/^_|_$/g, '');      // Remove leading/trailing underscores
+          
+          return sanitizedName + ext;
+        };
+
         // Upload to storage
-        const storagePath = `${user.id}/${Date.now()}_${file.name}`;
+        const sanitizedFilename = sanitizeFilename(file.name);
+        const storagePath = `${user.id}/${Date.now()}_${sanitizedFilename}`;
         const { error: uploadError } = await supabase.storage
           .from('agent-documents')
           .upload(storagePath, file);
