@@ -288,7 +288,7 @@ export default function AgentMarketplace() {
                     className="w-full"
                   >
                     <Eye className="w-4 h-4 mr-2" />
-                    {t('buttons.viewDetails') || 'View Details'}
+                    View Agent
                   </Button>
                 </CardContent>
               </Card>
