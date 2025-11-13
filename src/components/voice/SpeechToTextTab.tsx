@@ -91,6 +91,8 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
   }, []);
 
   const handleFiles = (fileList: File[]) => {
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes
+    
     const audioFiles = fileList.filter(file => 
       file.type.startsWith("audio/") || 
       [".wav", ".mp3", ".flac", ".m4a", ".ogg"].some(ext => 
@@ -102,6 +104,17 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       toast({
         title: t("speechToText.invalidFiles"),
         description: t("speechToText.invalidFilesDesc"),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check for files that are too large
+    const oversizedFiles = audioFiles.filter(file => file.size > MAX_FILE_SIZE);
+    if (oversizedFiles.length > 0) {
+      toast({
+        title: "File too large",
+        description: `${oversizedFiles[0].name} (${(oversizedFiles[0].size / 1024 / 1024).toFixed(2)} MB) exceeds the 50 MB limit. Please use a smaller file or compress the audio.`,
         variant: "destructive",
       });
       return;
