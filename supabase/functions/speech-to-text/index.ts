@@ -79,8 +79,34 @@ serve(async (req) => {
     if (contentType.includes('multipart/form-data')) {
       // Parse FormData from request
       const formData = await req.formData();
-      audioFile = formData.get('audio') as File | null;
+      const uploadedFile = formData.get('audio') as File | null;
       model = (formData.get('model') as string) || null;
+      
+      if (uploadedFile) {
+        // Ensure correct MIME type for common audio formats
+        let mimeType = uploadedFile.type;
+        const fileName = uploadedFile.name.toLowerCase();
+        
+        if (!mimeType || mimeType === 'application/octet-stream') {
+          if (fileName.endsWith('.wav')) {
+            mimeType = 'audio/wav';
+          } else if (fileName.endsWith('.mp3')) {
+            mimeType = 'audio/mpeg';
+          } else if (fileName.endsWith('.m4a')) {
+            mimeType = 'audio/mp4';
+          } else if (fileName.endsWith('.flac')) {
+            mimeType = 'audio/flac';
+          } else if (fileName.endsWith('.ogg')) {
+            mimeType = 'audio/ogg';
+          } else if (fileName.endsWith('.webm')) {
+            mimeType = 'audio/webm';
+          }
+        }
+        
+        // Create new File with correct MIME type
+        const blob = await uploadedFile.arrayBuffer();
+        audioFile = new File([blob], uploadedFile.name, { type: mimeType });
+      }
     } else {
       // Parse JSON with base64 audio
       const body = await req.json().catch(() => null);
