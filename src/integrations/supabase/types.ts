@@ -103,7 +103,7 @@ export type Database = {
           updated_at: string
           usage_count: number | null
           user_id: string
-          user_prompt: string
+          user_prompt: string | null
           visibility: string | null
         }
         Insert: {
@@ -126,7 +126,7 @@ export type Database = {
           updated_at?: string
           usage_count?: number | null
           user_id: string
-          user_prompt: string
+          user_prompt?: string | null
           visibility?: string | null
         }
         Update: {
@@ -149,7 +149,7 @@ export type Database = {
           updated_at?: string
           usage_count?: number | null
           user_id?: string
-          user_prompt?: string
+          user_prompt?: string | null
           visibility?: string | null
         }
         Relationships: []

@@ -46,24 +46,23 @@ serve(async (req) => {
       );
     }
 
-    console.log('Generating image with Google Imagen API...');
+    console.log('Generating image with Nano Banana (Gemini 2.5 Flash Image Preview)...');
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          instances: [{
-            prompt: prompt
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
           }],
-          parameters: {
-            sampleCount: 1,
-            aspectRatio: "1:1",
-            safetyFilterLevel: "block_some",
-            personGeneration: "allow_adult"
+          generationConfig: {
+            responseModalities: ["IMAGE"]
           }
         }),
       }
@@ -82,10 +81,10 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Imagen response received');
+    console.log('Nano Banana response received');
 
-    const predictions = data.predictions;
-    if (!predictions || predictions.length === 0) {
+    const candidates = data.candidates;
+    if (!candidates || candidates.length === 0) {
       return new Response(
         JSON.stringify({ error: 'No image generated' }),
         { 
@@ -95,8 +94,22 @@ serve(async (req) => {
       );
     }
 
-    const imageData = predictions[0];
-    if (!imageData.bytesBase64Encoded) {
+    // Find the image part in the response
+    const parts = candidates[0]?.content?.parts || [];
+    let imageData = null;
+    let mimeType = 'image/png';
+
+    for (const part of parts) {
+      // Handle both snake_case and camelCase
+      const inlineData = part.inline_data || part.inlineData;
+      if (inlineData && inlineData.data) {
+        imageData = inlineData.data;
+        mimeType = inlineData.mimeType || inlineData.mime_type || 'image/png';
+        break;
+      }
+    }
+
+    if (!imageData) {
       return new Response(
         JSON.stringify({ error: 'No image data in response' }),
         { 
@@ -106,8 +119,7 @@ serve(async (req) => {
       );
     }
 
-    const base64Data = imageData.bytesBase64Encoded;
-    const imageUrl = `data:image/png;base64,${base64Data}`;
+    const imageUrl = `data:${mimeType};base64,${imageData}`;
     const textResponse = 'Generated image';
 
     if (!imageUrl) {
