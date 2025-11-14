@@ -715,10 +715,15 @@ export type Database = {
           is_template: boolean | null
           name: string
           prompt_text: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewer_id: string | null
+          submitted_at: string | null
           tags: string[] | null
           updated_at: string | null
           usage_count: number | null
           user_id: string | null
+          visibility: string | null
         }
         Insert: {
           category?: string | null
@@ -730,10 +735,15 @@ export type Database = {
           is_template?: boolean | null
           name: string
           prompt_text: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          submitted_at?: string | null
           tags?: string[] | null
           updated_at?: string | null
           usage_count?: number | null
           user_id?: string | null
+          visibility?: string | null
         }
         Update: {
           category?: string | null
@@ -745,10 +755,15 @@ export type Database = {
           is_template?: boolean | null
           name?: string
           prompt_text?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          submitted_at?: string | null
           tags?: string[] | null
           updated_at?: string | null
           usage_count?: number | null
           user_id?: string | null
+          visibility?: string | null
         }
         Relationships: []
       }

@@ -18,19 +18,18 @@ import { supabase } from '@/integrations/supabase/client';
 
 export default function PromptLibrary() {
   const navigate = useNavigate();
-  const { 
-    prompts, 
-    loading, 
+  const {
+    prompts,
+    loading,
     isAdmin,
-    createPrompt, 
-    updatePrompt, 
-    deletePrompt, 
-    executePrompt,
+    createPrompt,
+    updatePrompt,
+    deletePrompt,
     sharePrompt,
-    publishToMarketplace,
-    unpublishFromMarketplace,
+    submitToMarketplace,
+    executePrompt,
+    copyToPersonalLibrary,
     loadMarketplacePrompts,
-    copyToPersonalLibrary
   } = usePrompts();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
@@ -125,12 +124,10 @@ export default function PromptLibrary() {
     }
   };
 
-  const handlePublishToggle = async (promptId: string, isCurrentlyMarketplace: boolean) => {
-    if (isCurrentlyMarketplace) {
-      await unpublishFromMarketplace(promptId);
-    } else {
-      await publishToMarketplace(promptId);
-    }
+  const handleSubmitToMarketplace = async () => {
+    if (!selectedPrompt) return;
+    await submitToMarketplace(selectedPrompt);
+    setSelectedPrompt(null);
   };
 
   const handleExecute = async (promptId: string) => {
@@ -376,12 +373,12 @@ export default function PromptLibrary() {
                         >
                           <Share2 className="w-4 h-4" />
                         </Button>
-                        {isAdmin && (
+                        {selectedPromptData.visibility === 'private' && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handlePublishToggle(selectedPromptData.id, selectedPromptData.is_marketplace)}
-                            title={selectedPromptData.is_marketplace ? "Unpublish from marketplace" : "Publish to marketplace"}
+                            onClick={() => handleSubmitToMarketplace()}
+                            title="Submit to marketplace"
                           >
                             <Upload className="w-4 h-4" />
                           </Button>

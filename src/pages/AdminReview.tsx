@@ -14,6 +14,7 @@ import { Agent } from '@/hooks/useAgents';
 import { toast } from 'sonner';
 import { TranslationManager } from '@/components/admin/TranslationManager';
 import { UserManagementTab } from '@/components/admin/UserManagementTab';
+import PromptReviewTab from '@/components/admin/PromptReviewTab';
 
 type AgentWithEmail = Agent & { submitter_email?: string };
 
@@ -176,6 +177,7 @@ export default function AdminReview() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="agents">Agent Review</TabsTrigger>
+            <TabsTrigger value="prompts">Prompt Review</TabsTrigger>
             <TabsTrigger value="translations">Translation Management</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
           </TabsList>
@@ -248,6 +250,10 @@ export default function AdminReview() {
                 ))}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="prompts">
+            <PromptReviewTab />
           </TabsContent>
 
           <TabsContent value="translations">

@@ -13,6 +13,11 @@ export interface Prompt {
   is_public: boolean;
   is_template: boolean;
   is_marketplace: boolean;
+  visibility?: string;
+  submitted_at?: string;
+  reviewed_at?: string;
+  reviewer_id?: string;
+  review_notes?: string;
   usage_count: number;
   created_at: string;
   updated_at: string;
@@ -82,7 +87,7 @@ export const usePrompts = () => {
       const { data, error } = await supabase
         .from('prompts')
         .select('*')
-        .eq('is_marketplace', true)
+        .eq('visibility', 'published')
         .order('usage_count', { ascending: false });
 
       if (error) throw error;
@@ -90,6 +95,24 @@ export const usePrompts = () => {
     } catch (error) {
       console.error('Error loading marketplace prompts:', error);
       toast.error('Failed to load marketplace prompts');
+      return [];
+    }
+  };
+
+  const loadPendingPrompts = async (): Promise<Prompt[]> => {
+    try {
+      if (!isAdmin) return [];
+
+      const { data, error } = await supabase
+        .from('prompts')
+        .select('*')
+        .eq('visibility', 'pending_review')
+        .order('submitted_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error loading pending prompts:', error);
       return [];
     }
   };
@@ -196,55 +219,118 @@ export const usePrompts = () => {
     }
   };
 
-  const publishToMarketplace = async (promptId: string): Promise<boolean> => {
+  const submitToMarketplace = async (promptId: string) => {
     try {
-      if (!isAdmin) {
-        toast.error('Only admins can publish to marketplace');
-        return false;
-      }
-
       const { error } = await supabase
         .from('prompts')
-        .update({ is_marketplace: true })
+        .update({ 
+          visibility: 'pending_review',
+          submitted_at: new Date().toISOString()
+        })
         .eq('id', promptId);
 
       if (error) throw error;
 
       setPrompts(prev => prev.map(prompt =>
-        prompt.id === promptId ? { ...prompt, is_marketplace: true } : prompt
+        prompt.id === promptId ? { ...prompt, visibility: 'pending_review' } : prompt
       ));
-      toast.success('Published to marketplace successfully');
-      return true;
+      toast.success("Prompt submitted for review");
     } catch (error) {
-      console.error('Error publishing to marketplace:', error);
-      toast.error('Failed to publish to marketplace');
-      return false;
+      console.error('Error submitting to marketplace:', error);
+      toast.error("Failed to submit to marketplace");
     }
   };
 
-  const unpublishFromMarketplace = async (promptId: string): Promise<boolean> => {
+  const approvePrompt = async (promptId: string) => {
     try {
       if (!isAdmin) {
-        toast.error('Only admins can unpublish from marketplace');
-        return false;
+        toast.error("Only admins can approve prompts");
+        return;
       }
+
+      const { data: { user } } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from('prompts')
-        .update({ is_marketplace: false })
+        .update({ 
+          visibility: 'published',
+          reviewed_at: new Date().toISOString(),
+          reviewer_id: user?.id,
+          review_notes: null
+        })
         .eq('id', promptId);
 
       if (error) throw error;
 
       setPrompts(prev => prev.map(prompt =>
-        prompt.id === promptId ? { ...prompt, is_marketplace: false } : prompt
+        prompt.id === promptId ? { ...prompt, visibility: 'published' } : prompt
       ));
-      toast.success('Unpublished from marketplace successfully');
-      return true;
+      toast.success("Prompt approved and published to marketplace");
     } catch (error) {
-      console.error('Error unpublishing from marketplace:', error);
-      toast.error('Failed to unpublish from marketplace');
-      return false;
+      console.error('Error approving prompt:', error);
+      toast.error("Failed to approve prompt");
+    }
+  };
+
+  const rejectPrompt = async (promptId: string, notes?: string) => {
+    try {
+      if (!isAdmin) {
+        toast.error("Only admins can reject prompts");
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from('prompts')
+        .update({ 
+          visibility: 'rejected',
+          reviewed_at: new Date().toISOString(),
+          reviewer_id: user?.id,
+          review_notes: notes
+        })
+        .eq('id', promptId);
+
+      if (error) throw error;
+
+      setPrompts(prev => prev.map(prompt =>
+        prompt.id === promptId ? { ...prompt, visibility: 'rejected' } : prompt
+      ));
+      toast.success("Prompt rejected");
+    } catch (error) {
+      console.error('Error rejecting prompt:', error);
+      toast.error("Failed to reject prompt");
+    }
+  };
+
+  const sendBackForEditing = async (promptId: string, notes: string) => {
+    try {
+      if (!isAdmin) {
+        toast.error("Only admins can send prompts back for editing");
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const { error } = await supabase
+        .from('prompts')
+        .update({ 
+          visibility: 'private',
+          reviewed_at: new Date().toISOString(),
+          reviewer_id: user?.id,
+          review_notes: notes
+        })
+        .eq('id', promptId);
+
+      if (error) throw error;
+
+      setPrompts(prev => prev.map(prompt =>
+        prompt.id === promptId ? { ...prompt, visibility: 'private', review_notes: notes } : prompt
+      ));
+      toast.success("Prompt sent back for editing");
+    } catch (error) {
+      console.error('Error sending prompt back:', error);
+      toast.error("Failed to send prompt back");
     }
   };
 
@@ -350,9 +436,12 @@ export const usePrompts = () => {
     deletePrompt,
     executePrompt,
     sharePrompt,
-    publishToMarketplace,
-    unpublishFromMarketplace,
+    submitToMarketplace,
+    approvePrompt,
+    rejectPrompt,
+    sendBackForEditing,
     loadMarketplacePrompts,
+    loadPendingPrompts,
     copyToPersonalLibrary,
     refreshPrompts: loadPrompts,
   };
