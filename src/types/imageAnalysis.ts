@@ -24,6 +24,9 @@ export interface AnalysisPrompt {
   content: string;
   isCustom: boolean;
   createdAt: Date;
+  agentId?: string;
+  agentSystemPrompt?: string;
+  agentKnowledgeDocuments?: any[];
 }
 
 export const PREDEFINED_PROMPTS: Omit<AnalysisPrompt, 'id' | 'createdAt'>[] = [
