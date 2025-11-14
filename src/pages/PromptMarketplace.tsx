@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Search, Copy, Sparkles } from 'lucide-react';
+import { ArrowLeft, Search, Copy, Sparkles, Trash2 } from 'lucide-react';
 import { usePrompts } from '@/hooks/usePrompts';
 import { toast } from 'sonner';
 import { ChatHeader } from '@/components/ChatHeader';
 
 export default function PromptMarketplace() {
   const navigate = useNavigate();
-  const { loadMarketplacePrompts, copyToPersonalLibrary } = usePrompts();
+  const { loadMarketplacePrompts, copyToPersonalLibrary, deletePrompt, isAdmin } = usePrompts();
   const [prompts, setPrompts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -30,6 +30,16 @@ export default function PromptMarketplace() {
   const handleCopyToLibrary = async (prompt: any) => {
     await copyToPersonalLibrary(prompt);
     toast.success("Prompt copied to your library");
+  };
+
+  const handleDelete = async (promptId: string) => {
+    if (!confirm('Are you sure you want to delete this prompt from the marketplace?')) return;
+    
+    const success = await deletePrompt(promptId);
+    if (success) {
+      setPrompts(prev => prev.filter(p => p.id !== promptId));
+      toast.success('Prompt deleted successfully');
+    }
   };
 
   const filteredPrompts = prompts.filter(prompt =>
@@ -126,13 +136,24 @@ export default function PromptMarketplace() {
                         <span>Uses: {prompt.usage_count || 0}</span>
                       </div>
 
-                      <Button
-                        onClick={() => handleCopyToLibrary(prompt)}
-                        className="w-full"
-                      >
-                        <Copy className="mr-2 h-4 w-4" />
-                        Copy to Library
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleCopyToLibrary(prompt)}
+                          className="flex-1"
+                        >
+                          <Copy className="mr-2 h-4 w-4" />
+                          Copy to Library
+                        </Button>
+                        {isAdmin && (
+                          <Button
+                            onClick={() => handleDelete(prompt.id)}
+                            variant="destructive"
+                            size="icon"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
