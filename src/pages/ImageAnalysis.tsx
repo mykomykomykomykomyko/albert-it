@@ -142,19 +142,22 @@ export default function ImageAnalysis() {
   };
 
   const handleSelectAgent = (agent: Agent) => {
-    // Add agent as a new prompt
+    // Add agent as a new prompt with full agent data
     const agentPrompt: AnalysisPrompt = {
       id: generateId(),
       name: agent.name,
-      content: agent.user_prompt,
+      content: agent.user_prompt || "Analyze this image",
       isCustom: true,
-      createdAt: new Date()
+      createdAt: new Date(),
+      agentId: agent.id,
+      agentSystemPrompt: agent.system_prompt,
+      agentKnowledgeDocuments: (agent as any).knowledge_documents || []
     };
     
     setPrompts(prev => [...prev, agentPrompt]);
     setSelectedPromptIds(prev => [...prev, agentPrompt.id]);
     setShowAgentSelector(false);
-    toast.success(`Agent "${agent.name}" added to prompts`);
+    toast.success(`Agent "${agent.name}" added to analysis`);
   };
 
   const handleImageClick = (imageId: string) => {
@@ -259,7 +262,7 @@ export default function ImageAnalysis() {
 
       // Process each prompt separately
       for (const prompt of selectedPrompts) {
-        console.log(`Processing prompt: ${prompt.name}`);
+        console.log(`Processing prompt: ${prompt.name}`, { isAgent: !!prompt.agentId });
 
         try {
           // Create temporary results for real-time updates
@@ -280,100 +283,150 @@ export default function ImageAnalysis() {
           // Add temporary results to show processing state
           setResults(prev => [...prev, ...tempResults]);
 
-          const systemPrompt = `You are analyzing ${selectedImages.length} image(s). Please provide a separate, detailed analysis for each image. Number your responses (Image 1:, Image 2:, etc.) and analyze each image thoroughly based on the given prompt.`;
+          let response: Response;
 
-          // Call Gemini edge function with proper streaming
-          const response = await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-process-images`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
-              },
-              body: JSON.stringify({
-                message: prompt.content,
-                images: imageDataUrls,
-                systemPrompt
-              })
-            }
-          );
+          // Use agent endpoint if this is an agent prompt
+          if (prompt.agentId && prompt.agentSystemPrompt) {
+            console.log('Using agent endpoint for:', prompt.name);
+            response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-agent`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+                },
+                body: JSON.stringify({
+                  systemPrompt: prompt.agentSystemPrompt,
+                  userPrompt: `Analyze ${selectedImages.length} image(s) with the following instructions: ${prompt.content}`,
+                  images: imageDataUrls,
+                  knowledgeDocuments: prompt.agentKnowledgeDocuments || [],
+                  tools: []
+                })
+              }
+            );
+          } else {
+            // Use standard image analysis endpoint
+            console.log('Using standard image analysis endpoint');
+            const systemPrompt = `You are analyzing ${selectedImages.length} image(s). Please provide a separate, detailed analysis for each image. Number your responses (Image 1:, Image 2:, etc.) and analyze each image thoroughly based on the given prompt.`;
+            
+            response = await fetch(
+              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-process-images`,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+                },
+                body: JSON.stringify({
+                  message: prompt.content,
+                  images: imageDataUrls,
+                  systemPrompt
+                })
+              }
+            );
+          }
 
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
           }
 
-          // Handle streaming response
-          const reader = response.body?.getReader();
-          if (!reader) {
-            throw new Error('No response stream available');
-          }
+          // Handle response based on endpoint type
+          if (prompt.agentId && prompt.agentSystemPrompt) {
+            // Agent endpoint returns JSON response
+            const result = await response.json();
+            if (result.error) {
+              throw new Error(result.error);
+            }
 
-          let fullContent = '';
+            const fullContent = result.output || '';
+            
+            // Split analysis by image
+            const imageAnalyses = splitAnalysisByImage(fullContent, selectedImages.length);
 
-          // Process the stream
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+            // Update results with final content
+            setResults(prev => {
+              const updatedResults = [...prev];
+              for (let i = 0; i < tempResults.length; i++) {
+                const resultIndex = updatedResults.findIndex(r => r.id === tempResults[i].id);
+                if (resultIndex !== -1) {
+                  const analysis = imageAnalyses[i] || fullContent;
+                  updatedResults[resultIndex] = {
+                    ...updatedResults[resultIndex],
+                    content: typeof analysis === 'string' ? analysis.trim() : String(analysis).trim(),
+                    status: 'completed',
+                    processingTime: 0
+                  };
+                }
+              }
+              return updatedResults;
+            });
 
-            const chunk = new TextDecoder().decode(value);
-            const lines = chunk.split('\n');
+          } else {
+            // Standard endpoint uses streaming
+            const reader = response.body?.getReader();
+            if (!reader) {
+              throw new Error('No response stream available');
+            }
 
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                try {
-                  const data = JSON.parse(line.slice(6));
-                  if (data.text) {
-                    fullContent += data.text;
+            let fullContent = '';
 
-                    // Split analysis by image
-                    const imageAnalyses = splitAnalysisByImage(fullContent, selectedImages.length);
+            // Process the stream
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
 
-                    // Update results in real-time
-                    setResults(prev => {
-                      const updatedResults = [...prev];
-                      for (let i = 0; i < tempResults.length; i++) {
-                        const resultIndex = updatedResults.findIndex(r => r.id === tempResults[i].id);
-                        if (resultIndex !== -1) {
-                          const analysis = imageAnalyses[i] || fullContent;
-                          updatedResults[resultIndex] = {
-                            ...updatedResults[resultIndex],
-                            content: typeof analysis === 'string' ? analysis.trim() : String(analysis).trim(),
-                            status: 'processing'
-                          };
+              const chunk = new TextDecoder().decode(value);
+              const lines = chunk.split('\n');
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+                    if (data.text) {
+                      fullContent += data.text;
+
+                      // Split analysis by image
+                      const imageAnalyses = splitAnalysisByImage(fullContent, selectedImages.length);
+
+                      // Update results in real-time
+                      setResults(prev => {
+                        const updatedResults = [...prev];
+                        for (let i = 0; i < tempResults.length; i++) {
+                          const resultIndex = updatedResults.findIndex(r => r.id === tempResults[i].id);
+                          if (resultIndex !== -1) {
+                            const analysis = imageAnalyses[i] || fullContent;
+                            updatedResults[resultIndex] = {
+                              ...updatedResults[resultIndex],
+                              content: typeof analysis === 'string' ? analysis.trim() : String(analysis).trim(),
+                              status: 'processing'
+                            };
+                          }
                         }
-                      }
-                      return updatedResults;
-                    });
+                        return updatedResults;
+                      });
+                    }
+                    if (data.error) {
+                      console.error('Streaming error:', data.error);
+                      throw new Error(`Streaming error: ${data.error}`);
+                    }
+                  } catch (e) {
+                    console.error('Error parsing SSE line:', e);
                   }
-                  if (data.error) {
-                    console.error('Streaming error:', data.error);
-                    throw new Error(data.error);
-                  }
-                } catch (e) {
-                  // Ignore JSON parse errors for streaming chunks
-                  console.log('Parse error for chunk:', e);
                 }
               }
             }
+
+            // Mark streaming results as completed
+            setResults(prev =>
+              prev.map(r =>
+                tempResults.some(tr => tr.id === r.id) && r.status === 'processing'
+                  ? { ...r, status: 'completed' }
+                  : r
+              )
+            );
           }
-
-          // Mark results as completed
-          setResults(prev => {
-            const updatedResults = [...prev];
-            for (const tempResult of tempResults) {
-              const resultIndex = updatedResults.findIndex(r => r.id === tempResult.id);
-              if (resultIndex !== -1) {
-                updatedResults[resultIndex] = {
-                  ...updatedResults[resultIndex],
-                  status: 'completed',
-                  processingTime: Math.random() * 2000 + 1000
-                };
-              }
-            }
-            return updatedResults;
-          });
-
         } catch (error) {
           console.error(`Error processing prompt "${prompt.name}":`, error);
 

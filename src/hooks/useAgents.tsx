@@ -181,6 +181,13 @@ export const useAgents = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
+      console.log('Creating agent with data:', {
+        user_id: user.id,
+        name: template.name,
+        type: template.type,
+        system_prompt: template.system_prompt?.substring(0, 50) + '...',
+      });
+
       const { data, error } = await supabase
         .from('agents')
         .insert({
@@ -198,14 +205,19 @@ export const useAgents = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error creating agent:', error);
+        throw error;
+      }
       
+      console.log('Agent created successfully:', data.id);
       setAgents(prev => [data as Agent, ...prev]);
       toast.success('Agent created successfully');
       return data as Agent;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating agent:', error);
-      toast.error('Failed to create agent');
+      const errorMessage = error?.message || 'Failed to create agent';
+      toast.error(errorMessage);
       return null;
     }
   };
