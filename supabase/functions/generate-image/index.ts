@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,12 +52,14 @@ serve(async (req) => {
       try {
         const imageResponse = await fetch(sourceImageUrl);
         if (!imageResponse.ok) {
-          throw new Error('Failed to fetch source image');
+          throw new Error(`Failed to fetch source image: ${imageResponse.status} ${imageResponse.statusText}`);
         }
         
         const imageBuffer = await imageResponse.arrayBuffer();
-        const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+        const base64Image = base64Encode(imageBuffer);
         const mimeType = imageResponse.headers.get('content-type') || 'image/png';
+        
+        console.log(`Fetched source image: ${mimeType}, size: ${imageBuffer.byteLength} bytes`);
         
         // Add image first, then prompt (order matters for editing)
         requestBody.contents[0].parts.push({
