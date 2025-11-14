@@ -101,7 +101,17 @@ export const usePrompts = () => {
 
   const loadPendingPrompts = async (): Promise<Prompt[]> => {
     try {
-      if (!isAdmin) return [];
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
+
+      if (!roleData) return [];
 
       const { data, error } = await supabase
         .from('prompts')
