@@ -63,60 +63,36 @@ export const UserManagementTab = () => {
         .from('user_roles')
         .select('user_id, role');
 
-      // Get activity stats for each user
-      const userIds = profiles?.map(p => p.id) || [];
+      // Get activity stats using secure function (only returns counts, not actual data)
+      const { data: activityStats } = await supabase
+        .rpc('get_user_activity_stats');
+
+      // Build activity map
+      const activityMap = new Map<string, {
+        conversation_count: number;
+        message_count: number;
+        last_active_at: string | null;
+      }>();
       
-      // Get conversation counts
-      const { data: conversationStats } = await supabase
-        .from('conversations')
-        .select('user_id')
-        .in('user_id', userIds);
-
-      // Get message counts and last activity
-      const { data: messageStats } = await supabase
-        .from('messages')
-        .select('conversation_id, created_at')
-        .order('created_at', { ascending: false });
-
-      // Get conversation user_ids for message mapping
-      const { data: conversations } = await supabase
-        .from('conversations')
-        .select('id, user_id');
-
-      // Build activity maps
-      const conversationCountMap = new Map<string, number>();
-      conversationStats?.forEach(c => {
-        conversationCountMap.set(c.user_id, (conversationCountMap.get(c.user_id) || 0) + 1);
-      });
-
-      const conversationUserMap = new Map<string, string>();
-      conversations?.forEach(c => {
-        conversationUserMap.set(c.id, c.user_id);
-      });
-
-      const messageCountMap = new Map<string, number>();
-      const lastActivityMap = new Map<string, string>();
-      
-      messageStats?.forEach(m => {
-        const userId = conversationUserMap.get(m.conversation_id);
-        if (userId) {
-          messageCountMap.set(userId, (messageCountMap.get(userId) || 0) + 1);
-          if (!lastActivityMap.has(userId) || new Date(m.created_at) > new Date(lastActivityMap.get(userId)!)) {
-            lastActivityMap.set(userId, m.created_at);
-          }
-        }
+      activityStats?.forEach(stat => {
+        activityMap.set(stat.user_id, {
+          conversation_count: Number(stat.conversation_count),
+          message_count: Number(stat.message_count),
+          last_active_at: stat.last_active_at,
+        });
       });
 
       // Combine data
       const usersWithRoles = profiles?.map(profile => {
         const roles = userRoles?.filter(r => r.user_id === profile.id).map(r => r.role) || [];
+        const activity = activityMap.get(profile.id);
         return {
           ...profile,
           roles,
           last_sign_in_at: null,
-          last_active_at: lastActivityMap.get(profile.id) || null,
-          conversation_count: conversationCountMap.get(profile.id) || 0,
-          message_count: messageCountMap.get(profile.id) || 0,
+          last_active_at: activity?.last_active_at || null,
+          conversation_count: activity?.conversation_count || 0,
+          message_count: activity?.message_count || 0,
         };
       }) || [];
 

@@ -1090,6 +1090,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_activity_stats: {
+        Args: never
+        Returns: {
+          conversation_count: number
+          last_active_at: string
+          message_count: number
+          user_id: string
+        }[]
+      }
       get_user_id_by_email: { Args: { _email: string }; Returns: string }
       has_role: {
         Args: {
