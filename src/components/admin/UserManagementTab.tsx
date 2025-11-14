@@ -29,6 +29,9 @@ interface UserProfile {
   created_at: string;
   last_sign_in_at: string | null;
   roles: string[];
+  last_active_at: string | null;
+  conversation_count: number;
+  message_count: number;
 }
 
 export const UserManagementTab = () => {
@@ -39,6 +42,8 @@ export const UserManagementTab = () => {
   const [tempPassword, setTempPassword] = useState("");
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [stats, setStats] = useState({ total: 0, admins: 0, facilitators: 0, active: 0 });
+  const [sortBy, setSortBy] = useState<'last_active' | 'conversations' | 'messages' | 'created'>('last_active');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const { toast } = useToast();
 
   const loadUsers = async () => {
@@ -58,8 +63,49 @@ export const UserManagementTab = () => {
         .from('user_roles')
         .select('user_id, role');
 
-      // Get auth users for last sign in
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      // Get activity stats for each user
+      const userIds = profiles?.map(p => p.id) || [];
+      
+      // Get conversation counts
+      const { data: conversationStats } = await supabase
+        .from('conversations')
+        .select('user_id')
+        .in('user_id', userIds);
+
+      // Get message counts and last activity
+      const { data: messageStats } = await supabase
+        .from('messages')
+        .select('conversation_id, created_at')
+        .order('created_at', { ascending: false });
+
+      // Get conversation user_ids for message mapping
+      const { data: conversations } = await supabase
+        .from('conversations')
+        .select('id, user_id');
+
+      // Build activity maps
+      const conversationCountMap = new Map<string, number>();
+      conversationStats?.forEach(c => {
+        conversationCountMap.set(c.user_id, (conversationCountMap.get(c.user_id) || 0) + 1);
+      });
+
+      const conversationUserMap = new Map<string, string>();
+      conversations?.forEach(c => {
+        conversationUserMap.set(c.id, c.user_id);
+      });
+
+      const messageCountMap = new Map<string, number>();
+      const lastActivityMap = new Map<string, string>();
+      
+      messageStats?.forEach(m => {
+        const userId = conversationUserMap.get(m.conversation_id);
+        if (userId) {
+          messageCountMap.set(userId, (messageCountMap.get(userId) || 0) + 1);
+          if (!lastActivityMap.has(userId) || new Date(m.created_at) > new Date(lastActivityMap.get(userId)!)) {
+            lastActivityMap.set(userId, m.created_at);
+          }
+        }
+      });
 
       // Combine data
       const usersWithRoles = profiles?.map(profile => {
@@ -67,7 +113,10 @@ export const UserManagementTab = () => {
         return {
           ...profile,
           roles,
-          last_sign_in_at: null, // We can't easily get this from client
+          last_sign_in_at: null,
+          last_active_at: lastActivityMap.get(profile.id) || null,
+          conversation_count: conversationCountMap.get(profile.id) || 0,
+          message_count: messageCountMap.get(profile.id) || 0,
         };
       }) || [];
 
@@ -78,8 +127,8 @@ export const UserManagementTab = () => {
       const admins = usersWithRoles.filter(u => u.roles.includes('admin')).length;
       const facilitators = usersWithRoles.filter(u => u.roles.includes('moderator')).length;
       const active = usersWithRoles.filter(u => 
-        u.last_sign_in_at && 
-        new Date(u.last_sign_in_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+        u.last_active_at && 
+        new Date(u.last_active_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
       ).length;
 
       setStats({ total, admins, facilitators, active });
@@ -179,6 +228,40 @@ export const UserManagementTab = () => {
     user.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    let aVal: any, bVal: any;
+    
+    switch (sortBy) {
+      case 'last_active':
+        aVal = a.last_active_at ? new Date(a.last_active_at).getTime() : 0;
+        bVal = b.last_active_at ? new Date(b.last_active_at).getTime() : 0;
+        break;
+      case 'conversations':
+        aVal = a.conversation_count;
+        bVal = b.conversation_count;
+        break;
+      case 'messages':
+        aVal = a.message_count;
+        bVal = b.message_count;
+        break;
+      case 'created':
+        aVal = new Date(a.created_at).getTime();
+        bVal = new Date(b.created_at).getTime();
+        break;
+    }
+    
+    return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+  });
+
+  const handleSort = (column: typeof sortBy) => {
+    if (sortBy === column) {
+      setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+    } else {
+      setSortBy(column);
+      setSortOrder('desc');
+    }
+  };
+
   const getRoleBadge = (roles: string[]) => {
     if (roles.includes('admin')) {
       return <Badge variant="destructive" className="bg-red-500">Admin</Badge>;
@@ -193,7 +276,20 @@ export const UserManagementTab = () => {
     if (user.must_change_password) {
       return <Badge variant="outline" className="border-yellow-500 text-yellow-600">Must Change Password</Badge>;
     }
-    return <Badge variant="outline" className="border-green-500 text-green-600">Active</Badge>;
+    
+    // Check activity level
+    if (user.last_active_at) {
+      const daysSinceActive = (Date.now() - new Date(user.last_active_at).getTime()) / (1000 * 60 * 60 * 24);
+      if (daysSinceActive <= 1) {
+        return <Badge variant="outline" className="border-green-500 text-green-600">Very Active</Badge>;
+      } else if (daysSinceActive <= 7) {
+        return <Badge variant="outline" className="border-blue-500 text-blue-600">Active</Badge>;
+      } else if (daysSinceActive <= 30) {
+        return <Badge variant="outline" className="border-orange-500 text-orange-600">Inactive</Badge>;
+      }
+    }
+    
+    return <Badge variant="outline" className="border-gray-500 text-gray-600">No Activity</Badge>;
   };
 
   return (
@@ -238,6 +334,49 @@ export const UserManagementTab = () => {
         </Card>
       </div>
 
+      {/* Most Active Users */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Most Active Users</CardTitle>
+          <CardDescription>Top users by message activity</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {users
+              .filter(u => u.message_count > 0)
+              .sort((a, b) => b.message_count - a.message_count)
+              .slice(0, 5)
+              .map((user, idx) => (
+                <div key={user.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-muted-foreground w-6">{idx + 1}</span>
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar_url || undefined} />
+                      <AvatarFallback>
+                        {user.full_name?.split(' ').map(n => n[0]).join('') || user.email?.[0].toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-medium text-sm">{user.full_name || user.email}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {user.conversation_count} conversations
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-mono">
+                    {user.message_count} msgs
+                  </Badge>
+                </div>
+              ))}
+            {users.filter(u => u.message_count > 0).length === 0 && (
+              <div className="text-sm text-muted-foreground text-center py-4">
+                No activity yet
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -262,21 +401,44 @@ export const UserManagementTab = () => {
                 <TableHead>User</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('last_active')}
+                >
+                  Last Active {sortBy === 'last_active' && (sortOrder === 'desc' ? '↓' : '↑')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('conversations')}
+                >
+                  Conversations {sortBy === 'conversations' && (sortOrder === 'desc' ? '↓' : '↑')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('messages')}
+                >
+                  Messages {sortBy === 'messages' && (sortOrder === 'desc' ? '↓' : '↑')}
+                </TableHead>
+                <TableHead 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => handleSort('created')}
+                >
+                  Created {sortBy === 'created' && (sortOrder === 'desc' ? '↓' : '↑')}
+                </TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                  <TableCell colSpan={8} className="text-center">Loading...</TableCell>
                 </TableRow>
-              ) : filteredUsers.length === 0 ? (
+              ) : sortedUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">No users found</TableCell>
+                  <TableCell colSpan={8} className="text-center">No users found</TableCell>
                 </TableRow>
               ) : (
-                filteredUsers.map((user) => (
+                sortedUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -294,6 +456,26 @@ export const UserManagementTab = () => {
                     </TableCell>
                     <TableCell>{getRoleBadge(user.roles)}</TableCell>
                     <TableCell>{getStatusBadge(user)}</TableCell>
+                    <TableCell>
+                      {user.last_active_at ? (
+                        <div>
+                          <div className="font-medium">
+                            {formatDistanceToNow(new Date(user.last_active_at), { addSuffix: true })}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(user.last_active_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">Never</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{user.conversation_count}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="secondary">{user.message_count}</Badge>
+                    </TableCell>
                     <TableCell>
                       {user.created_at ? formatDistanceToNow(new Date(user.created_at), { addSuffix: true }) : 'N/A'}
                     </TableCell>
