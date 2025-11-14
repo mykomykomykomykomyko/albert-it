@@ -45,6 +45,19 @@ const retryWithBackoff = async <T,>(
   throw lastError || new Error('Operation failed after retries');
 };
 
+// Normalize unknown auth error shapes into readable strings
+const formatAuthError = (err: any): string => {
+  if (!err) return 'Unknown error';
+  if (typeof err === 'string') return err;
+  if (err.message && typeof err.message === 'string') return err.message;
+  try {
+    const s = JSON.stringify(err);
+    return s === '{}' ? 'An unexpected error occurred. Please try again.' : s;
+  } catch {
+    return 'An unexpected error occurred. Please try again.';
+  }
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const { t } = useTranslation(['auth', 'common']);
@@ -91,25 +104,35 @@ const Auth = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session && event === 'SIGNED_IN') {
-        // Check if user needs to change password
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('must_change_password')
-          .eq('id', session.user.id)
-          .single();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Synchronous state updates only to avoid deadlocks
+      console.log('[Auth] onAuthStateChange:', event);
 
-        if (profile?.must_change_password) {
-          navigate("/force-password-change");
-        } else {
-          navigate("/chat");
-        }
-      } else if (event === 'SIGNED_OUT') {
-        // Ensure we stay on auth page when signed out
-        if (window.location.pathname !== '/auth') {
-          navigate("/auth");
-        }
+      if (event === 'SIGNED_OUT') {
+        if (window.location.pathname !== '/auth') navigate('/auth');
+        return;
+      }
+
+      if (session && event === 'SIGNED_IN') {
+        // Defer any Supabase calls to avoid blocking the auth callback
+        setTimeout(async () => {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('must_change_password')
+              .eq('id', session.user.id)
+              .single();
+
+            if (profile?.must_change_password) {
+              navigate('/force-password-change');
+            } else {
+              navigate('/chat');
+            }
+          } catch (e) {
+            console.error('[Auth] post-login profile check failed:', e);
+            navigate('/chat');
+          }
+        }, 0);
       }
     });
 
@@ -196,13 +219,13 @@ const Auth = () => {
       setAccessCode("");
       setError(null);
     } catch (error: any) {
-      const errorMessage = error.message || "An error occurred during sign up";
+      const errorMessage = formatAuthError(error);
       setError(errorMessage);
       
       // Show helpful error messages based on error type
-      if (errorMessage.includes('rate limit')) {
+      if (errorMessage.toLowerCase().includes('rate limit')) {
         toast.error("Too many signup attempts. Please wait a moment and try again.");
-      } else if (errorMessage.includes('network')) {
+      } else if (errorMessage.toLowerCase().includes('network')) {
         toast.error("Network error. Please check your connection and try again.");
       }
     } finally {
@@ -245,10 +268,10 @@ const Auth = () => {
       toast.success("Signed in successfully!");
       // Note: onAuthStateChange will handle navigation and password check
     } catch (error: any) {
-      const errorMessage = error.message || "An error occurred during sign in";
+      const errorMessage = formatAuthError(error);
       setError(errorMessage);
       
-      if (errorMessage.includes('rate limit')) {
+      if (errorMessage.toLowerCase().includes('rate limit')) {
         toast.error("Too many login attempts. Please wait a moment and try again.");
       }
     } finally {
