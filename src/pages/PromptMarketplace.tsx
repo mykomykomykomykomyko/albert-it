@@ -71,6 +71,7 @@ export default function PromptMarketplace() {
               </h1>
               <p className="text-muted-foreground mt-1">
                 Discover and use prompts created by the community
+                {isAdmin && <span className="ml-2 text-xs">(Admin Mode)</span>}
               </p>
             </div>
           </div>
