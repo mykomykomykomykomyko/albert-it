@@ -16,6 +16,7 @@ import { PromptManager } from '@/components/imageAnalysis/PromptManager';
 import { ProcessedImage, AnalysisResult, AnalysisPrompt, PREDEFINED_PROMPTS } from '@/types/imageAnalysis';
 import { generateId, resizeAndCompressImage } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
@@ -516,11 +517,12 @@ export default function ImageAnalysis() {
     <div className="flex flex-col h-screen bg-background">
       <ChatHeader />
       
-      <div className="flex-1 overflow-hidden flex min-h-0">
-        {/* Left Sidebar */}
-        <div className="w-80 border-r border-border flex-shrink-0 flex flex-col h-full">
-          <ScrollArea className="flex-1">
-            <div className="p-6 space-y-6">
+      <div className="flex-1 overflow-hidden">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Left Sidebar - Resizable */}
+          <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
+            <ScrollArea className="h-full">
+              <div className="p-6 space-y-6">
             <div>
               <h2 className="text-lg font-semibold">{t('title')}</h2>
               <p className="text-sm text-muted-foreground mt-1">
@@ -583,12 +585,15 @@ export default function ImageAnalysis() {
                 Clear All
               </Button>
             </div>
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row min-h-0">
+              </div>
+            </ScrollArea>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
+          
+          {/* Main Content Area */}
+          <ResizablePanel defaultSize={80}>
+            <div className="h-full overflow-hidden flex flex-col lg:flex-row">
           {/* Image Gallery */}
           <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0">
             <div className="p-6 border-b border-border flex-shrink-0">
@@ -615,26 +620,28 @@ export default function ImageAnalysis() {
 
           {/* Results Panel */}
           <div className="w-full lg:w-1/2 flex flex-col min-h-0 overflow-hidden flex-1">
-          <div className="p-6 border-b border-border flex-shrink-0">
-            <h3 className="text-xl font-semibold">{t('results.title')}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t('results.resultsGenerated', { count: results.filter(r => images.some(img => img.id === r.imageId)).length })}
-            </p>
-          </div>
-
-          <ScrollArea className="flex-1">
-            <div className="p-6">
-              <ResultsDisplay
-                results={results}
-                images={images}
-                prompts={prompts}
-                selectedImageId={selectedImageId || undefined}
-                onImageClick={handleImageClick}
-              />
+            <div className="p-6 border-b border-border flex-shrink-0">
+              <h3 className="text-xl font-semibold">{t('results.title')}</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {t('results.resultsGenerated', { count: results.filter(r => images.some(img => img.id === r.imageId)).length })}
+              </p>
             </div>
-          </ScrollArea>
+
+            <ScrollArea className="flex-1">
+              <div className="p-6">
+                <ResultsDisplay
+                  results={results}
+                  images={images}
+                  prompts={prompts}
+                  selectedImageId={selectedImageId || undefined}
+                  onImageClick={handleImageClick}
+                />
+              </div>
+            </ScrollArea>
           </div>
-        </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
 
       {/* Agent Selector Dialog */}
