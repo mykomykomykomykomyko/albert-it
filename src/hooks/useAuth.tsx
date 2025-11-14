@@ -45,7 +45,18 @@ export function useAuth() {
     // This ensures we catch any auth changes that happen during mount
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('[Auth] State change:', event, session?.user?.email);
+      
+      // Log token refresh failures
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('[Auth] Token refreshed successfully');
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('[Auth] User signed out');
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -53,7 +64,11 @@ export function useAuth() {
 
     // THEN get initial session
     // This handles the case where user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('[Auth] Error getting session:', error);
+      }
+      console.log('[Auth] Initial session loaded:', session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
