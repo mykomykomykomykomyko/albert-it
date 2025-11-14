@@ -41,8 +41,8 @@ interface UseSessionTimeoutOptions {
 }
 
 export const useSessionTimeout = ({
-  timeoutMs = 30 * 60 * 1000, // 30 minutes
-  warningMs = 2 * 60 * 1000, // 2 minutes warning
+  timeoutMs = 60 * 60 * 1000, // 60 minutes (increased from 30)
+  warningMs = 5 * 60 * 1000, // 5 minutes warning (increased from 2)
   enabled = true,
   onTimeout,
 }: UseSessionTimeoutOptions = {}) => {
