@@ -34,19 +34,56 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    // Note: Image editing is not supported with direct Gemini API
-    // Only generation is supported
-    if (sourceImageUrl) {
-      return new Response(
-        JSON.stringify({ error: 'Image editing is not currently supported. Only image generation is available.' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+    console.log(sourceImageUrl ? '🎨 Editing existing image with Nano Banana...' : '🎨 Generating new image with Nano Banana...');
 
-    console.log('Generating image with Nano Banana (Gemini 2.5 Flash Image Preview)...');
+    // Prepare request body
+    const requestBody: any = {
+      contents: [{
+        parts: []
+      }],
+      generationConfig: {
+        responseModalities: ["IMAGE"]
+      }
+    };
+
+    // If editing, fetch and include the source image
+    if (sourceImageUrl) {
+      try {
+        const imageResponse = await fetch(sourceImageUrl);
+        if (!imageResponse.ok) {
+          throw new Error('Failed to fetch source image');
+        }
+        
+        const imageBuffer = await imageResponse.arrayBuffer();
+        const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+        const mimeType = imageResponse.headers.get('content-type') || 'image/png';
+        
+        // Add image first, then prompt (order matters for editing)
+        requestBody.contents[0].parts.push({
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Image
+          }
+        });
+        requestBody.contents[0].parts.push({
+          text: prompt
+        });
+      } catch (error) {
+        console.error('Error fetching source image:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to fetch source image for editing' }),
+          { 
+            status: 500, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    } else {
+      // For generation, just add the prompt
+      requestBody.contents[0].parts.push({
+        text: prompt
+      });
+    }
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${GEMINI_API_KEY}`,
@@ -55,16 +92,7 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            responseModalities: ["IMAGE"]
-          }
-        }),
+        body: JSON.stringify(requestBody),
       }
     );
 
