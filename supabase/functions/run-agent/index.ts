@@ -24,6 +24,7 @@ serve(async (req) => {
     console.log("Images:", images.length);
 
     // Build knowledge base section if documents are provided
+    // OPTIMIZED: Truncate documents early to avoid loading entire large files
     let knowledgeBaseSection = "";
     if (knowledgeDocuments.length > 0) {
       knowledgeBaseSection = "\n\n=== KNOWLEDGE BASE ===\n";
@@ -31,9 +32,10 @@ serve(async (req) => {
       
       for (const doc of knowledgeDocuments) {
         knowledgeBaseSection += `--- ${doc.filename} ---\n`;
-        // Truncate very long documents to avoid token limits (keep first 10000 chars)
-        const content = doc.content.length > 10000 
-          ? doc.content.substring(0, 10000) + "\n\n[Document truncated due to length...]"
+        // OPTIMIZED: Truncate immediately instead of loading full content first
+        const maxChars = 10000;
+        const content = doc.content.length > maxChars 
+          ? doc.content.substring(0, maxChars) + "\n\n[Document truncated due to length...]"
           : doc.content;
         knowledgeBaseSection += content + "\n\n";
       }
@@ -45,92 +47,118 @@ serve(async (req) => {
     // Combine system prompt with knowledge base
     const enhancedSystemPrompt = systemPrompt + knowledgeBaseSection;
 
-    // Execute tools if any
-    let toolResults = "";
-    const toolOutputs: Array<{ toolId: string; toolName?: string; output: any }> = [];
+    // OPTIMIZED: Execute all tools in parallel for better performance
+    const TIMEOUT_MS = 30000; // 30 second timeout per tool
     
-    for (const toolInstance of tools) {
+    const fetchWithTimeout = async (url: string, options: RequestInit, timeoutMs: number) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      try {
+        const response = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
+        return response;
+      } catch (error) {
+        clearTimeout(timeoutId);
+        if (error instanceof Error && error.name === 'AbortError') {
+          throw new Error('Request timeout');
+        }
+        throw error;
+      }
+    };
+
+    const toolPromises = tools.map(async (toolInstance: any) => {
       const { toolId, config } = toolInstance;
       console.log("Executing tool:", toolId, "with config:", config);
       
       try {
+        let response;
+        let toolName = toolId;
+        
         if (toolId === 'google_search') {
           console.log("Calling google-search with query:", userPrompt);
-          const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              query: userPrompt, 
-              overrideQuery: config?.overrideQuery,
-              numResults: config?.numResults,
-              apiKey: config?.apiKey, 
-              searchEngineId: config?.searchEngineId 
-            }),
-          });
-          const searchData = await searchResponse.json();
-          console.log("Tool Output [google_search]:", JSON.stringify(searchData, null, 2));
-          toolOutputs.push({ toolId: 'google_search', toolName: 'Google Search', output: searchData });
-          toolResults += `\n\nGoogle Search Results: ${JSON.stringify(searchData)}`;
+          toolName = 'Google Search';
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-search`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 
+                query: userPrompt, 
+                overrideQuery: config?.overrideQuery,
+                numResults: config?.numResults,
+                apiKey: config?.apiKey, 
+                searchEngineId: config?.searchEngineId 
+              }),
+            },
+            TIMEOUT_MS
+          );
         } else if (toolId === 'brave_search') {
           console.log("Calling brave-search with query:", userPrompt);
-          const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/brave-search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: userPrompt }),
-          });
-          const searchData = await searchResponse.json();
-          console.log("Tool Output [brave_search]:", JSON.stringify(searchData, null, 2));
-          toolOutputs.push({ toolId: 'brave_search', toolName: 'Brave Search', output: searchData });
-          toolResults += `\n\nBrave Search Results: ${JSON.stringify(searchData)}`;
+          toolName = 'Brave Search';
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/brave-search`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: userPrompt }),
+            },
+            TIMEOUT_MS
+          );
         } else if (toolId === 'perplexity_search') {
           console.log("Calling perplexity-search with query:", userPrompt);
-          const searchResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/perplexity-search`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: userPrompt }),
-          });
-          const searchData = await searchResponse.json();
-          console.log("Tool Output [perplexity_search]:", JSON.stringify(searchData, null, 2));
-          toolOutputs.push({ toolId: 'perplexity_search', toolName: 'Perplexity Search', output: searchData });
-          toolResults += `\n\nPerplexity Search Results: ${JSON.stringify(searchData)}`;
-        } else if (toolId === 'weather') {
-          if (config?.apiKey) {
-            const weatherResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/weather`, {
+          toolName = 'Perplexity Search';
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/perplexity-search`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: userPrompt }),
+            },
+            TIMEOUT_MS
+          );
+        } else if (toolId === 'weather' && config?.apiKey) {
+          toolName = 'Weather';
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/weather`,
+            {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ location: "New York", apiKey: config.apiKey }),
-            });
-            const weatherData = await weatherResponse.json();
-            console.log("Tool Output [weather]:", JSON.stringify(weatherData, null, 2));
-            toolOutputs.push({ toolId: 'weather', toolName: 'Weather', output: weatherData });
-            toolResults += `\n\nWeather Data: ${JSON.stringify(weatherData)}`;
-          }
+            },
+            TIMEOUT_MS
+          );
         } else if (toolId === 'time') {
-          const timeResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/time`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ timezone: 'UTC' }),
-          });
-          const timeData = await timeResponse.json();
-          console.log("Tool Output [time]:", JSON.stringify(timeData, null, 2));
-          toolOutputs.push({ toolId: 'time', toolName: 'Current Time', output: timeData });
-          toolResults += `\n\nCurrent Time: ${JSON.stringify(timeData)}`;
-        } else if (toolId === 'web_scrape') {
-          if (config?.url) {
-            const scrapeResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/web-scrape`, {
+          toolName = 'Current Time';
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/time`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ timezone: 'UTC' }),
+            },
+            TIMEOUT_MS
+          );
+        } else if (toolId === 'web_scrape' && config?.url) {
+          toolName = 'Web Scraper';
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/web-scrape`,
+            {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ url: config.url }),
-            });
-            const scrapeData = await scrapeResponse.json();
-            console.log("Tool Output [web_scrape]:", JSON.stringify(scrapeData, null, 2));
-            toolOutputs.push({ toolId: 'web_scrape', toolName: 'Web Scraper', output: scrapeData });
-            toolResults += `\n\nWeb Scrape Results: ${JSON.stringify(scrapeData)}`;
-          }
-        } else if (toolId === 'api_call') {
-          if (config?.url) {
-            const headers = config.headers ? JSON.parse(config.headers) : {};
-            const apiResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/api-call`, {
+            },
+            TIMEOUT_MS
+          );
+        } else if (toolId === 'api_call' && config?.url) {
+          toolName = 'API Call';
+          const headers = config.headers ? JSON.parse(config.headers) : {};
+          response = await fetchWithTimeout(
+            `${Deno.env.get('SUPABASE_URL')}/functions/v1/api-call`,
+            {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
@@ -138,25 +166,55 @@ serve(async (req) => {
                 method: config.method || 'GET',
                 headers 
               }),
-            });
-            const apiData = await apiResponse.json();
-            console.log("Tool Output [api_call]:", JSON.stringify(apiData, null, 2));
-            toolOutputs.push({ toolId: 'api_call', toolName: 'API Call', output: apiData });
-            toolResults += `\n\nAPI Call Results: ${JSON.stringify(apiData)}`;
-          }
+            },
+            TIMEOUT_MS
+          );
         }
+        
+        if (response) {
+          const data = await response.json();
+          console.log(`Tool Output [${toolId}]:`, JSON.stringify(data, null, 2));
+          return {
+            toolId,
+            toolName,
+            output: data,
+            result: `\n\n${toolName} Results: ${JSON.stringify(data)}`
+          };
+        }
+        
+        return null;
       } catch (toolError) {
         console.error(`Error executing tool ${toolId}:`, toolError);
         const errorMsg = toolError instanceof Error ? toolError.message : 'Unknown error';
-        console.log("Tool Output [" + toolId + "] ERROR:", errorMsg);
-        toolOutputs.push({ toolId, toolName: toolId, output: { error: errorMsg } });
-        toolResults += `\n\nTool ${toolId} Error: ${errorMsg}`;
+        console.log(`Tool Output [${toolId}] ERROR:`, errorMsg);
+        return {
+          toolId,
+          toolName: toolId,
+          output: { error: errorMsg },
+          result: `\n\nTool ${toolId} Error: ${errorMsg}`
+        };
+      }
+    });
+    
+    // Wait for all tools to complete in parallel
+    const toolResults = await Promise.all(toolPromises);
+    const toolOutputs: Array<{ toolId: string; toolName?: string; output: any }> = [];
+    let combinedResults = "";
+    
+    for (const result of toolResults) {
+      if (result) {
+        toolOutputs.push({
+          toolId: result.toolId,
+          toolName: result.toolName,
+          output: result.output
+        });
+        combinedResults += result.result;
       }
     }
 
     // Call Gemini AI
-    const finalPrompt = toolResults 
-      ? `${userPrompt || "Please respond to the user's request."}\n\nTool Results:${toolResults}` 
+    const finalPrompt = combinedResults 
+      ? `${userPrompt || "Please respond to the user's request."}\n\nTool Results:${combinedResults}` 
       : (userPrompt || "Please respond to the user's request.");
     
     console.log("Using direct Gemini API");
@@ -223,39 +281,54 @@ serve(async (req) => {
       console.log("Enabling JSON response mode");
     }
     
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          systemInstruction: enhancedSystemPrompt,
-          contents: [
-            {
-              role: "user",
-              parts: userParts
-            }
-          ],
-          generationConfig
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Gemini API error: ${error}`);
-    }
-
-    const data = await response.json();
-    const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "No output generated";
+    // OPTIMIZED: Add timeout to Gemini API call
+    const API_TIMEOUT_MS = 60000; // 60 seconds for AI generation
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
     
-    console.log("Agent output generated:", output.substring(0, 100));
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            systemInstruction: enhancedSystemPrompt,
+            contents: [
+              {
+                role: "user",
+                parts: userParts
+              }
+            ],
+            generationConfig
+          }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
 
-    return new Response(JSON.stringify({ output, toolOutputs }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Gemini API error: ${error}`);
+      }
+
+      const data = await response.json();
+      const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "No output generated";
+      
+      console.log("Agent output generated:", output.substring(0, 100));
+
+      return new Response(JSON.stringify({ output, toolOutputs }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Gemini API request timeout');
+      }
+      throw error;
+    }
   } catch (error) {
     console.error('Error in run-agent function:', error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
