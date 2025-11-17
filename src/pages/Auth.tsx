@@ -115,28 +115,32 @@ const Auth = () => {
   const checkServiceHealth = async () => {
     try {
       console.log('[Auth] Checking service health...');
-      // Attempt a lightweight health check using getSession
-      const { error } = await supabase.auth.getSession();
-      
-      if (!error) {
-        console.log('[Auth] Service recovered!');
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const healthUrl = `${import.meta.env.VITE_SUPABASE_URL}/auth/v1/health`;
+      const res = await fetch(healthUrl, { method: 'GET', signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (res.ok) {
+        console.log('[Auth] Service health OK');
         setServiceDown(false);
         setServiceDownStartTime(null);
         setRecoveryEstimate("");
-        
-        // Clear the polling interval
+
         if (healthCheckIntervalRef.current) {
           clearInterval(healthCheckIntervalRef.current);
           healthCheckIntervalRef.current = null;
         }
-        
-        // Show success message
+
         toast.success("Service has been restored! You can now sign in.");
         return true;
       }
+
+      console.log('[Auth] Health endpoint not OK:', res.status);
       return false;
     } catch (error) {
-      console.log('[Auth] Service still unavailable:', error);
+      console.log('[Auth] Service still unavailable (health check failed):', error);
       return false;
     }
   };
