@@ -35,6 +35,7 @@ import { FilePreviewCard } from './chat/FilePreviewCard';
 import { Toggle } from './ui/toggle';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 interface ImageAttachment {
   name: string;
@@ -85,6 +86,7 @@ const Chat = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [messagesToDelete, setMessagesToDelete] = useState<Message[]>([]);
   const [viewAllImagesOpen, setViewAllImagesOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -1512,6 +1514,39 @@ const Chat = () => {
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300" />
                 <div className="relative bg-card border border-border/50 rounded-3xl p-6 shadow-xl backdrop-blur-sm">
                   <div className="flex flex-col gap-4">
+                    {/* Controls Row - Agent, Model, Search */}
+                    <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-border/30">
+                      <div className="flex-1 min-w-[200px]">
+                        <AgentSwitcher
+                          selectedAgent={currentAgent}
+                          onAgentChange={(agent) => setCurrentAgent(agent)}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Select value={selectedModel} onValueChange={setSelectedModel}>
+                          <SelectTrigger className="w-[180px] h-10 rounded-xl">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                            <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Toggle
+                          pressed={realTimeSearchEnabled}
+                          onPressedChange={setRealTimeSearchEnabled}
+                          size="sm"
+                          className="h-10 px-3 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
+                          aria-label="Toggle real-time search for current information"
+                        >
+                          <Search className="h-4 w-4 sm:mr-2" />
+                          <span className="text-sm font-medium whitespace-nowrap hidden sm:inline">
+                            {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
+                          </span>
+                        </Toggle>
+                      </div>
+                    </div>
+
                     <div className="relative">
                       <Textarea
                         value={input}
@@ -1552,18 +1587,6 @@ const Chat = () => {
                         >
                           <Mic className="h-4 w-4" />
                         </Button>
-                        <Toggle
-                          pressed={realTimeSearchEnabled}
-                          onPressedChange={setRealTimeSearchEnabled}
-                          size="sm"
-                          className="h-10 px-4 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
-                          aria-label="Toggle real-time search for current information"
-                        >
-                          <Search className="h-4 w-4 mr-2" />
-                          <span className="text-sm font-medium whitespace-nowrap">
-                            {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
-                          </span>
-                        </Toggle>
                       </div>
                       
                       <Button
