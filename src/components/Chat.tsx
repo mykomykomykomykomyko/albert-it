@@ -34,6 +34,7 @@ import { useRef } from 'react';
 import { FilePreviewCard } from './chat/FilePreviewCard';
 import { Toggle } from './ui/toggle';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 
 interface ImageAttachment {
   name: string;
@@ -83,6 +84,7 @@ const Chat = () => {
   const [editingContent, setEditingContent] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [messagesToDelete, setMessagesToDelete] = useState<Message[]>([]);
+  const [viewAllImagesOpen, setViewAllImagesOpen] = useState(false);
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -1461,9 +1463,21 @@ const Chat = () => {
               {/* File previews on welcome screen */}
               {(images.length > 0 || files.length > 0) && (
                 <div className="mb-6">
-                  <p className="text-sm font-medium mb-3 text-foreground">Attached Files ({images.length + files.length})</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-medium text-foreground">Attached Files ({images.length + files.length})</p>
+                    {images.length > 5 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewAllImagesOpen(true)}
+                        className="text-xs"
+                      >
+                        View All ({images.length})
+                      </Button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {images.map((img, idx) => (
+                    {images.slice(0, 5).map((img, idx) => (
                       <FilePreviewCard
                         key={`welcome-img-${idx}`}
                         file={{
@@ -1949,33 +1963,48 @@ const Chat = () => {
                 )}
                 
                 {(images.length > 0 || files.length > 0) && (
-                  <div className="mb-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {images.map((img, idx) => (
-                      <FilePreviewCard
-                        key={`img-${idx}`}
-                        file={{
-                          name: img.name,
-                          dataUrl: img.dataUrl,
-                          size: img.size,
-                          type: 'image'
-                        }}
-                        onRemove={() => setImages(prev => prev.filter((_, i) => i !== idx))}
-                        type="image"
-                      />
-                    ))}
-                    {files.map((file, idx) => (
-                      <FilePreviewCard
-                        key={`file-${idx}`}
-                        file={{
-                          name: file.filename,
-                          size: new Blob([file.content]).size,
-                          type: file.type || 'text',
-                          content: file.content
-                        }}
-                        onRemove={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
-                        type="file"
-                      />
-                    ))}
+                  <div className="mb-3">
+                    {images.length > 5 && (
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-muted-foreground">{images.length} images attached</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setViewAllImagesOpen(true)}
+                          className="text-xs h-7"
+                        >
+                          View All
+                        </Button>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {images.slice(0, 5).map((img, idx) => (
+                        <FilePreviewCard
+                          key={`img-${idx}`}
+                          file={{
+                            name: img.name,
+                            dataUrl: img.dataUrl,
+                            size: img.size,
+                            type: 'image'
+                          }}
+                          onRemove={() => setImages(prev => prev.filter((_, i) => i !== idx))}
+                          type="image"
+                        />
+                      ))}
+                      {files.map((file, idx) => (
+                        <FilePreviewCard
+                          key={`file-${idx}`}
+                          file={{
+                            name: file.filename,
+                            size: new Blob([file.content]).size,
+                            type: file.type || 'text',
+                            content: file.content
+                          }}
+                          onRemove={() => setFiles(prev => prev.filter((_, i) => i !== idx))}
+                          type="file"
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
                 
@@ -2207,6 +2236,37 @@ const Chat = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* View All Images Dialog */}
+        <Dialog open={viewAllImagesOpen} onOpenChange={setViewAllImagesOpen}>
+          <DialogContent className="max-w-5xl max-h-[85vh]">
+            <DialogHeader>
+              <DialogTitle>All Uploaded Images ({images.length})</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] pr-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {images.map((img, idx) => (
+                  <FilePreviewCard
+                    key={`all-img-${idx}`}
+                    file={{
+                      name: img.name,
+                      dataUrl: img.dataUrl,
+                      size: img.size,
+                      type: 'image'
+                    }}
+                    onRemove={() => {
+                      setImages(prev => prev.filter((_, i) => i !== idx));
+                      if (images.length === 1) {
+                        setViewAllImagesOpen(false);
+                      }
+                    }}
+                    type="image"
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
         </div>
       </div>
     </div>
