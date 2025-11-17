@@ -96,6 +96,8 @@ const Auth = () => {
   const [resetLoading, setResetLoading] = useState(false);
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [serviceDown, setServiceDown] = useState(false);
+  const [recoveryEstimate, setRecoveryEstimate] = useState<string>("");
   const isSubmitting = useRef(false);
 
   useEffect(() => {
@@ -246,8 +248,13 @@ const Auth = () => {
       const errorMessage = formatAuthError(error);
       setError(errorMessage);
       
-      // Show helpful error messages based on error type
-      if (errorMessage.toLowerCase().includes('rate limit')) {
+      // Check for 503 service unavailable
+      if (error?.status === 503 || error?.statusCode === 503 || 
+          errorMessage.includes('503') || errorMessage.includes('upstream connect error')) {
+        setServiceDown(true);
+        setRecoveryEstimate("15-25 minutes");
+        toast.error("Service is temporarily unavailable. Please wait 15-25 minutes.");
+      } else if (errorMessage.toLowerCase().includes('rate limit')) {
         toast.error("Too many signup attempts. Please wait a moment and try again.");
       } else if (errorMessage.toLowerCase().includes('network')) {
         toast.error("Network error. Please check your connection and try again.");
@@ -295,7 +302,13 @@ const Auth = () => {
       const errorMessage = formatAuthError(error);
       setError(errorMessage);
       
-      if (errorMessage.toLowerCase().includes('rate limit')) {
+      // Check for 503 service unavailable
+      if (error?.status === 503 || error?.statusCode === 503 || 
+          errorMessage.includes('503') || errorMessage.includes('upstream connect error')) {
+        setServiceDown(true);
+        setRecoveryEstimate("15-25 minutes");
+        toast.error("Service is temporarily unavailable. Please wait 15-25 minutes.");
+      } else if (errorMessage.toLowerCase().includes('rate limit')) {
         toast.error("Too many login attempts. Please wait a moment and try again.");
       }
     } finally {
@@ -356,6 +369,24 @@ const Auth = () => {
           <h1 className="text-4xl font-bold mb-2 text-gradient">Albert</h1>
           <p className="text-muted-foreground">Government of Alberta AI Assistant</p>
         </div>
+
+        {serviceDown && (
+          <Alert variant="destructive" className="mb-6 border-2 border-destructive bg-destructive/10">
+            <Info className="h-5 w-5" />
+            <div className="ml-2">
+              <div className="font-semibold text-lg">Service Temporarily Unavailable</div>
+              <AlertDescription className="mt-2">
+                Our authentication service is experiencing technical difficulties. 
+                The system is being restarted and should be available in approximately{" "}
+                <span className="font-bold">{recoveryEstimate}</span>.
+                <br />
+                <span className="text-sm mt-1 block">
+                  Please try again shortly. We apologize for the inconvenience.
+                </span>
+              </AlertDescription>
+            </div>
+          </Alert>
+        )}
 
         <Card className="bg-card border-border">
           <CardHeader>
