@@ -92,10 +92,14 @@ FORMATTING GUIDELINES:
 
     const stream = new ReadableStream({
       async start(controller) {
+        let hasContent = false;
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) {
+              if (!hasContent) {
+                console.error("Stream completed but no content was sent");
+              }
               controller.enqueue(encoder.encode("data: [DONE]\n\n"));
               controller.close();
               break;
@@ -110,6 +114,7 @@ FORMATTING GUIDELINES:
                 const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
                 
                 if (text) {
+                  hasContent = true;
                   const sseData = {
                     choices: [{
                       delta: { content: text },
@@ -117,9 +122,12 @@ FORMATTING GUIDELINES:
                     }]
                   };
                   controller.enqueue(encoder.encode(`data: ${JSON.stringify(sseData)}\n\n`));
+                } else {
+                  // Log when we receive a chunk without text
+                  console.log("Received chunk without text:", JSON.stringify(json).substring(0, 200));
                 }
               } catch (e) {
-                console.error("Error parsing chunk:", e);
+                console.error("Error parsing chunk:", e, "Raw line:", line.substring(0, 100));
               }
             }
           }

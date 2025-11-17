@@ -257,6 +257,20 @@ const ChatInterface = ({
         }
       }
 
+      // Validate that we received content
+      if (!assistantContent || assistantContent.trim() === "") {
+        console.error("Empty response received from AI");
+        // Delete the placeholder message
+        await supabase
+          .from("messages")
+          .delete()
+          .eq("id", assistantMessage.id);
+        
+        // Remove from UI
+        onMessagesUpdate(finalMessages.filter(msg => msg.id !== assistantMessage.id));
+        throw new Error("Received empty response from AI. Please try again.");
+      }
+
       // Save final assistant message
       await supabase
         .from("messages")
@@ -270,7 +284,7 @@ const ChatInterface = ({
         .eq("id", conversation.id);
     } catch (error: any) {
       console.error("Chat error:", error);
-      toast.error(error.message || "Failed to send message");
+      toast.error(error.message || "Failed to send message. Please try again.");
     } finally {
       setIsLoading(false);
     }
