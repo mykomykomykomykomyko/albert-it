@@ -464,23 +464,7 @@ const Auth = () => {
             <div className="ml-2">
               <div className="font-semibold text-lg text-foreground">System Maintenance</div>
               <AlertDescription className="mt-2 text-foreground">
-                The system is currently being maintained.
-                <br />
-                <br />
-                <span className="text-sm mt-1 block font-semibold">
-                  In the meantime, please use our temporary website:{" "}
-                  <a 
-                    href="https://albert-temporary.lovable.app" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    albert-temporary.lovable.app
-                  </a>
-                </span>
-                <span className="text-sm mt-1 block">
-                  Please register an account there to continue using the service.
-                </span>
+                The system is currently being maintained. Please check back shortly.
               </AlertDescription>
             </div>
           </Alert>
