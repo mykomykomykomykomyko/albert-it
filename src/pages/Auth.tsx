@@ -459,14 +459,12 @@ const Auth = () => {
         </div>
 
         {serviceDown && (
-          <Alert variant="destructive" className="mb-6 border-2 border-destructive bg-destructive/10">
-            <Info className="h-5 w-5" />
+          <Alert className="mb-6 border-2 border-primary bg-primary/10">
+            <Info className="h-5 w-5 text-primary" />
             <div className="ml-2">
-              <div className="font-semibold text-lg">Service Temporarily Unavailable</div>
-              <AlertDescription className="mt-2">
-                Our authentication service is experiencing technical difficulties. 
-                The system is being restarted and should be available in approximately{" "}
-                <span className="font-bold">{recoveryEstimate}</span>.
+              <div className="font-semibold text-lg text-foreground">System Maintenance</div>
+              <AlertDescription className="mt-2 text-foreground">
+                The system is currently being maintained.
                 <br />
                 <br />
                 <span className="text-sm mt-1 block font-semibold">
