@@ -27,16 +27,25 @@ const retryWithBackoff = async <T,>(
     } catch (error: any) {
       lastError = error;
       
-      // Don't retry on certain errors
+      // Don't retry on auth failures (invalid credentials, already registered, expired tokens)
       if (error.message?.includes('already registered') || 
+          error.message?.includes('Invalid login credentials') ||
           error.message?.includes('Invalid') ||
           error.message?.includes('expired')) {
         throw error;
       }
       
+      // DO retry on 503 service unavailable and connection errors (transient)
+      const is503Error = error.status === 503 || 
+                         error.statusCode === 503 || 
+                         error.message?.includes('503') || 
+                         error.message?.includes('upstream connect error') ||
+                         error.message?.includes('connection failure');
+      
       // Wait with exponential backoff before retrying
       if (attempt < maxRetries - 1) {
         const delay = initialDelay * Math.pow(2, attempt);
+        console.log(`[Auth] Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms${is503Error ? ' (503 error)' : ''}`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -98,7 +107,80 @@ const Auth = () => {
   const [error, setError] = useState<string | null>(null);
   const [serviceDown, setServiceDown] = useState(false);
   const [recoveryEstimate, setRecoveryEstimate] = useState<string>("");
+  const [serviceDownStartTime, setServiceDownStartTime] = useState<number | null>(null);
   const isSubmitting = useRef(false);
+  const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Health check function to detect service recovery
+  const checkServiceHealth = async () => {
+    try {
+      console.log('[Auth] Checking service health...');
+      // Attempt a lightweight health check using getSession
+      const { error } = await supabase.auth.getSession();
+      
+      if (!error) {
+        console.log('[Auth] Service recovered!');
+        setServiceDown(false);
+        setServiceDownStartTime(null);
+        setRecoveryEstimate("");
+        
+        // Clear the polling interval
+        if (healthCheckIntervalRef.current) {
+          clearInterval(healthCheckIntervalRef.current);
+          healthCheckIntervalRef.current = null;
+        }
+        
+        // Show success message
+        toast.success("Service has been restored! You can now sign in.");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.log('[Auth] Service still unavailable:', error);
+      return false;
+    }
+  };
+
+  // Update recovery estimate dynamically based on elapsed time
+  const updateRecoveryEstimate = () => {
+    if (!serviceDownStartTime) return;
+    
+    const elapsedMinutes = Math.floor((Date.now() - serviceDownStartTime) / 1000 / 60);
+    
+    if (elapsedMinutes < 10) {
+      setRecoveryEstimate("15-25 minutes");
+    } else if (elapsedMinutes < 20) {
+      setRecoveryEstimate("10-15 minutes (service recovering...)");
+    } else if (elapsedMinutes < 25) {
+      setRecoveryEstimate("5-10 minutes (almost ready...)");
+    } else {
+      setRecoveryEstimate("shortly (service should be available any moment)");
+    }
+  };
+
+  // Poll for service recovery when service is down
+  useEffect(() => {
+    if (serviceDown) {
+      console.log('[Auth] Starting health check polling (every 30 seconds)');
+      
+      // Update recovery estimate immediately
+      updateRecoveryEstimate();
+      
+      // Set up polling interval
+      healthCheckIntervalRef.current = setInterval(() => {
+        checkServiceHealth();
+        updateRecoveryEstimate();
+      }, 30000); // Check every 30 seconds
+      
+      return () => {
+        if (healthCheckIntervalRef.current) {
+          console.log('[Auth] Clearing health check interval');
+          clearInterval(healthCheckIntervalRef.current);
+          healthCheckIntervalRef.current = null;
+        }
+      };
+    }
+  }, [serviceDown, serviceDownStartTime]);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -252,6 +334,7 @@ const Auth = () => {
       if (error?.status === 503 || error?.statusCode === 503 || 
           errorMessage.includes('503') || errorMessage.includes('upstream connect error')) {
         setServiceDown(true);
+        setServiceDownStartTime(Date.now());
         setRecoveryEstimate("15-25 minutes");
         toast.error("Service is temporarily unavailable. Please wait 15-25 minutes.");
       } else if (errorMessage.toLowerCase().includes('rate limit')) {
@@ -306,6 +389,7 @@ const Auth = () => {
       if (error?.status === 503 || error?.statusCode === 503 || 
           errorMessage.includes('503') || errorMessage.includes('upstream connect error')) {
         setServiceDown(true);
+        setServiceDownStartTime(Date.now());
         setRecoveryEstimate("15-25 minutes");
         toast.error("Service is temporarily unavailable. Please wait 15-25 minutes.");
       } else if (errorMessage.toLowerCase().includes('rate limit')) {
