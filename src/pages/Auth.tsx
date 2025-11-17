@@ -468,8 +468,20 @@ const Auth = () => {
                 The system is being restarted and should be available in approximately{" "}
                 <span className="font-bold">{recoveryEstimate}</span>.
                 <br />
+                <br />
+                <span className="text-sm mt-1 block font-semibold">
+                  In the meantime, please use our temporary website:{" "}
+                  <a 
+                    href="https://albert-temporary.lovable.app" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    albert-temporary.lovable.app
+                  </a>
+                </span>
                 <span className="text-sm mt-1 block">
-                  Please try again shortly. We apologize for the inconvenience.
+                  Please register an account there to continue using the service.
                 </span>
               </AlertDescription>
             </div>
