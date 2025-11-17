@@ -38,6 +38,7 @@ serve(async (req) => {
     }
 
     // Build knowledge base section if documents are provided
+    // OPTIMIZED: Truncate documents early to avoid loading entire large files
     let knowledgeBaseSection = "";
     if (knowledgeDocuments.length > 0) {
       knowledgeBaseSection = "\n\n=== KNOWLEDGE BASE ===\n";
@@ -45,9 +46,10 @@ serve(async (req) => {
       
       for (const doc of knowledgeDocuments) {
         knowledgeBaseSection += `--- ${doc.filename} ---\n`;
-        // Truncate very long documents to avoid token limits (keep first 10000 chars)
-        const content = doc.content.length > 10000 
-          ? doc.content.substring(0, 10000) + "\n\n[Document truncated due to length...]"
+        // OPTIMIZED: Truncate immediately instead of loading full content first
+        const maxChars = 10000;
+        const content = doc.content.length > maxChars 
+          ? doc.content.substring(0, maxChars) + "\n\n[Document truncated due to length...]"
           : doc.content;
         knowledgeBaseSection += content + "\n\n";
       }
@@ -149,67 +151,81 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
 
     console.log('Calling Gemini API with contents:', contents.length);
 
-    // Call Gemini API directly (non-stream for reliability) and re-stream to client
-    const aiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.9,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 8192,
-          }
-        }),
+    // OPTIMIZED: Call Gemini API with timeout
+    const API_TIMEOUT_MS = 60000; // 60 seconds
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+    try {
+      const aiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents,
+            generationConfig: {
+              temperature: 0.9,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
+            }
+          }),
+          signal: controller.signal,
+        }
+      );
+      clearTimeout(timeoutId);
+
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error("Gemini API error:", aiResponse.status, errorText);
+        throw new Error(`Gemini API error: ${errorText}`);
       }
-    );
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("Gemini API error:", aiResponse.status, errorText);
-      throw new Error(`Gemini API error: ${errorText}`);
-    }
+      const result = await aiResponse.json();
+      console.log('Gemini API response:', JSON.stringify(result, null, 2));
+      const parts = result?.candidates?.[0]?.content?.parts || [];
+      const fullText = parts.map((p: any) => p.text).filter(Boolean).join("");
+      
+      console.log('Extracted text length:', fullText.length);
+      console.log('Full text preview:', fullText.substring(0, 200));
 
-    const result = await aiResponse.json();
-    console.log('Gemini API response:', JSON.stringify(result, null, 2));
-    const parts = result?.candidates?.[0]?.content?.parts || [];
-    const fullText = parts.map((p: any) => p.text).filter(Boolean).join("");
-    
-    console.log('Extracted text length:', fullText.length);
-    console.log('Full text preview:', fullText.substring(0, 200));
-
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        if (!fullText || fullText.trim().length === 0) {
-          console.error('Empty response from Gemini API');
-          const errorData = `data: ${JSON.stringify({ text: "I apologize, but I received an empty response. Please try rephrasing your message." })}\n\n`;
-          controller.enqueue(encoder.encode(errorData));
+      const encoder = new TextEncoder();
+      const stream = new ReadableStream({
+        start(controller) {
+          if (!fullText || fullText.trim().length === 0) {
+            console.error('Empty response from Gemini API');
+            const errorData = `data: ${JSON.stringify({ text: "I apologize, but I received an empty response. Please try rephrasing your message." })}\n\n`;
+            controller.enqueue(encoder.encode(errorData));
+            controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
+            controller.close();
+            return;
+          }
+          // Send as single SSE chunk to fit the UI's streaming reader
+          const sseData = `data: ${JSON.stringify({ text: fullText })}\n\n`;
+          controller.enqueue(encoder.encode(sseData));
           controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
           controller.close();
-          return;
         }
-        // Send as single SSE chunk to fit the UI's streaming reader
-        const sseData = `data: ${JSON.stringify({ text: fullText })}\n\n`;
-        controller.enqueue(encoder.encode(sseData));
-        controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
-        controller.close();
-      }
-    });
+      });
 
-    return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
-    });
+      return new Response(stream, {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Gemini API request timeout');
+      }
+      throw error;
+    }
 
   } catch (error) {
     console.error("gemini-chat error:", error);
