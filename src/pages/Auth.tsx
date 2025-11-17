@@ -47,12 +47,20 @@ const retryWithBackoff = async <T,>(
 
 // Normalize unknown auth error shapes into readable strings
 const formatAuthError = (err: any): string => {
-  if (!err) return 'Unknown error';
+  if (!err) return 'An unexpected error occurred. Please try again.';
   if (typeof err === 'string') return err;
   if (err.message && typeof err.message === 'string') return err.message;
+  if (err.error_description && typeof err.error_description === 'string') return err.error_description;
+  if (err.error && typeof err.error === 'string') return err.error;
+  
+  // Try to stringify, but check for empty or useless results
   try {
     const s = JSON.stringify(err);
-    return s === '{}' ? 'An unexpected error occurred. Please try again.' : s;
+    // If JSON.stringify returns empty object or just whitespace, use fallback
+    if (!s || s.trim() === '{}' || s.trim() === '') {
+      return 'An unexpected error occurred. Please try again.';
+    }
+    return s;
   } catch {
     return 'An unexpected error occurred. Please try again.';
   }
