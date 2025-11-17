@@ -161,26 +161,28 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
-      <div className="bg-background rounded-2xl shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-background rounded-2xl shadow-2xl max-w-6xl w-full my-auto flex flex-col" style={{maxHeight: 'calc(100vh - 2rem)'}}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div>
-            <h2 className="text-xl font-semibold">Select PDF Pages</h2>
-            <p className="text-sm text-muted-foreground mt-1">
+        <div className="flex items-center justify-between p-4 md:p-6 border-b shrink-0">
+          <div className="min-w-0">
+            <h2 className="text-lg md:text-xl font-semibold truncate">Select PDF Pages</h2>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1 truncate">
               {pdfData.file.name} • {pdfData.pdfInfo.numPages} pages
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0 ml-2">
             {/* Page navigation */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Page {currentPageSet} of {totalPageSets}</span>
+            <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm text-muted-foreground">
+              <span className="hidden sm:inline">Page {currentPageSet} of {totalPageSets}</span>
+              <span className="sm:hidden">{currentPageSet}/{totalPageSets}</span>
               <div className="flex gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={previousPageSet}
                   disabled={currentPageSet === 1}
+                  className="h-7 w-7 p-0"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
@@ -189,6 +191,7 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
                   size="sm"
                   onClick={nextPageSet}
                   disabled={currentPageSet === totalPageSets}
+                  className="h-7 w-7 p-0"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
@@ -199,7 +202,8 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
             <Button
               variant="ghost"
               onClick={toggleSelectAll}
-              className="text-primary"
+              className="text-primary hidden md:flex"
+              size="sm"
             >
               {allSelected ? 'Deselect All' : 'Select All'}
             </Button>
@@ -207,17 +211,18 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
               variant="ghost"
               size="icon"
               onClick={onClose}
+              className="h-8 w-8"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-hidden flex flex-col">
+        {/* Content with enforced scroll */}
+        <div className="flex-1 overflow-y-auto min-h-0">
           {/* Loading state */}
           {isLoading && (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center justify-center p-8 md:p-12">
               <div className="text-center">
                 <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
                 <p className="text-muted-foreground">Loading PDF pages...</p>
@@ -227,7 +232,7 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
 
           {/* No pages state */}
           {!isLoading && pages.length === 0 && (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex items-center justify-center p-8 md:p-12">
               <div className="text-center">
                 <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground mb-2">No PDF pages loaded</p>
@@ -244,8 +249,8 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
 
           {/* PDF Pages Grid */}
           {!isLoading && pages.length > 0 && (
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <div className="p-4 md:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                 {currentPages.map((page) => (
                   <div
                     key={page.pageIndex}
@@ -309,17 +314,29 @@ export function PDFSelector({ pdfData, onClose, onSelect }: PDFSelectorProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 md:p-6 border-t shrink-0 bg-background">
+          <div className="text-xs md:text-sm text-muted-foreground">
             {selectedCount} of {totalPages} pages selected
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose}>
+          <div className="flex gap-2 md:gap-3 w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              className="flex-1 sm:flex-initial"
+            >
               Cancel
+            </Button>
+            <Button
+              onClick={toggleSelectAll}
+              variant="outline"
+              className="flex-1 sm:flex-initial md:hidden"
+            >
+              {allSelected ? 'Deselect' : 'Select All'}
             </Button>
             <Button
               onClick={confirmSelection}
               disabled={selectedCount === 0}
+              className="flex-1 sm:flex-initial"
             >
               Add {selectedCount} Page{selectedCount !== 1 ? 's' : ''}
             </Button>
