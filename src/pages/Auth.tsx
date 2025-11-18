@@ -106,8 +106,7 @@ const Auth = () => {
   const [accessCode, setAccessCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [serviceDown, setServiceDown] = useState(false);
-  const [recoveryEstimate, setRecoveryEstimate] = useState<string>("");
-  const [serviceDownStartTime, setServiceDownStartTime] = useState<number | null>(null);
+  const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null);
   const isSubmitting = useRef(false);
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -122,11 +121,11 @@ const Auth = () => {
       const res = await fetch(healthUrl, { method: 'GET', signal: controller.signal });
       clearTimeout(timeout);
 
+      setLastHealthCheck(new Date());
+
       if (res.ok) {
         console.log('[Auth] Service health OK');
         setServiceDown(false);
-        setServiceDownStartTime(null);
-        setRecoveryEstimate("");
 
         if (healthCheckIntervalRef.current) {
           clearInterval(healthCheckIntervalRef.current);
@@ -141,24 +140,8 @@ const Auth = () => {
       return false;
     } catch (error) {
       console.log('[Auth] Service still unavailable (health check failed):', error);
+      setLastHealthCheck(new Date());
       return false;
-    }
-  };
-
-  // Update recovery estimate dynamically based on elapsed time
-  const updateRecoveryEstimate = () => {
-    if (!serviceDownStartTime) return;
-    
-    const elapsedMinutes = Math.floor((Date.now() - serviceDownStartTime) / 1000 / 60);
-    
-    if (elapsedMinutes < 10) {
-      setRecoveryEstimate("15-25 minutes");
-    } else if (elapsedMinutes < 20) {
-      setRecoveryEstimate("10-15 minutes (service recovering...)");
-    } else if (elapsedMinutes < 25) {
-      setRecoveryEstimate("5-10 minutes (almost ready...)");
-    } else {
-      setRecoveryEstimate("shortly (service should be available any moment)");
     }
   };
 
@@ -167,13 +150,9 @@ const Auth = () => {
     if (serviceDown) {
       console.log('[Auth] Starting health check polling (every 30 seconds)');
       
-      // Update recovery estimate immediately
-      updateRecoveryEstimate();
-      
       // Set up polling interval
       healthCheckIntervalRef.current = setInterval(() => {
         checkServiceHealth();
-        updateRecoveryEstimate();
       }, 30000); // Check every 30 seconds
       
       return () => {
@@ -184,7 +163,7 @@ const Auth = () => {
         }
       };
     }
-  }, [serviceDown, serviceDownStartTime]);
+  }, [serviceDown]);
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -335,12 +314,18 @@ const Auth = () => {
       setError(errorMessage);
       
       // Check for 503 service unavailable
-      if (error?.status === 503 || error?.statusCode === 503 || 
-          errorMessage.includes('503') || errorMessage.includes('upstream connect error')) {
+      const is503 = error?.status === 503 || error?.statusCode === 503 || 
+                    errorMessage.includes('503') || errorMessage.includes('upstream connect error');
+      
+      if (is503) {
+        console.log('[Auth] 503 error during sign-up:', {
+          context: 'sign-up',
+          status: error?.status,
+          statusCode: error?.statusCode,
+          message: error?.message
+        });
         setServiceDown(true);
-        setServiceDownStartTime(Date.now());
-        setRecoveryEstimate("15-25 minutes");
-        toast.error("Service is temporarily unavailable. Please wait 15-25 minutes.");
+        setLastHealthCheck(new Date());
       } else if (errorMessage.toLowerCase().includes('rate limit')) {
         toast.error("Too many signup attempts. Please wait a moment and try again.");
       } else if (errorMessage.toLowerCase().includes('network')) {
@@ -390,12 +375,18 @@ const Auth = () => {
       setError(errorMessage);
       
       // Check for 503 service unavailable
-      if (error?.status === 503 || error?.statusCode === 503 || 
-          errorMessage.includes('503') || errorMessage.includes('upstream connect error')) {
+      const is503 = error?.status === 503 || error?.statusCode === 503 || 
+                    errorMessage.includes('503') || errorMessage.includes('upstream connect error');
+      
+      if (is503) {
+        console.log('[Auth] 503 error during sign-in:', {
+          context: 'sign-in',
+          status: error?.status,
+          statusCode: error?.statusCode,
+          message: error?.message
+        });
         setServiceDown(true);
-        setServiceDownStartTime(Date.now());
-        setRecoveryEstimate("15-25 minutes");
-        toast.error("Service is temporarily unavailable. Please wait 15-25 minutes.");
+        setLastHealthCheck(new Date());
       } else if (errorMessage.toLowerCase().includes('rate limit')) {
         toast.error("Too many login attempts. Please wait a moment and try again.");
       }
@@ -461,11 +452,27 @@ const Auth = () => {
         {serviceDown && (
           <Alert className="mb-6 border-2 border-primary bg-primary/10">
             <Info className="h-5 w-5 text-primary" />
-            <div className="ml-2">
+            <div className="ml-2 flex-1">
               <div className="font-semibold text-lg text-foreground">System Maintenance</div>
               <AlertDescription className="mt-2 text-foreground">
                 The system is currently being maintained. Please check back shortly.
               </AlertDescription>
+              <div className="mt-3 flex items-center gap-3 text-sm text-muted-foreground">
+                <span>Authentication service is currently unavailable</span>
+                {lastHealthCheck && (
+                  <span className="text-xs">
+                    • Last checked: {lastHealthCheck.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={checkServiceHealth}
+                className="mt-3 border-primary text-primary hover:bg-primary/20"
+              >
+                Retry now
+              </Button>
             </div>
           </Alert>
         )}
