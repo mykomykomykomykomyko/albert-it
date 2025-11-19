@@ -139,10 +139,10 @@ const Chat = () => {
     broadcastThinking(isLoading);
   }, [isLoading, currentConversation, broadcastThinking]);
 
-  // Auto-scroll when messages change
+  // Auto-scroll when messages change or during streaming
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages]);
 
   // Auto-expand textarea based on content
   useEffect(() => {
@@ -1171,30 +1171,37 @@ INSTRUCTION: The above search result contains current, verified information from
 
       // Update active streams state
       setActiveStreams(prev => new Set(prev).add(currentConversation.id));
-      setIsLoading(false); // No longer loading from UI perspective
-
-      // Start background streaming
-      await streamManager.startStream(
+      
+      // Keep loading state active during streaming for visual feedback
+      // Start token-by-token streaming with immediate UI updates
+      streamManager.startStream(
         currentConversation.id,
         assistantMessage.id,
         response,
-        // Only update UI if we're still viewing this conversation
+        // Update UI immediately token-by-token
         (content) => {
-          if (currentConversation.id === location.pathname.split('/')[2]) {
-            setMessages(prev => prev.map(msg => 
-              msg.id === assistantMessage.id 
-                ? { ...msg, content }
-                : msg
-            ));
-          }
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantMessage.id 
+              ? { ...msg, content }
+              : msg
+          ));
         }
-      );
-
-      // Stream completes in background, remove from active streams
-      setActiveStreams(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(currentConversation.id);
-        return newSet;
+      ).then(() => {
+        // Stream completed - remove from active streams and stop loading
+        setActiveStreams(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(currentConversation.id);
+          return newSet;
+        });
+        setIsLoading(false);
+      }).catch((error) => {
+        console.error('Stream error:', error);
+        setActiveStreams(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(currentConversation.id);
+          return newSet;
+        });
+        setIsLoading(false);
       });
 
       setImages([]);
