@@ -5,6 +5,8 @@ interface ActiveStream {
   messageId: string;
   reader: ReadableStreamDefaultReader<Uint8Array>;
   abortController: AbortController;
+  accumulatedContent: string;
+  lastSaveTime: number;
 }
 
 class StreamManager {
@@ -17,7 +19,7 @@ class StreamManager {
     onChunk?: (content: string) => void
   ): Promise<void> {
     // Cancel any existing stream for this conversation
-    this.cancelStream(conversationId);
+    await this.cancelStream(conversationId);
 
     const reader = response.body?.getReader();
     if (!reader) {
@@ -30,6 +32,8 @@ class StreamManager {
       messageId,
       reader,
       abortController,
+      accumulatedContent: "",
+      lastSaveTime: Date.now(),
     });
 
     // Process stream and wait for completion
@@ -47,6 +51,30 @@ class StreamManager {
     let buffer = "";
     let displayQueue: string[] = [];
     let isDisplaying = false;
+    const SAVE_INTERVAL = 2000; // Save to DB every 2 seconds
+
+    // Function to save current content to database
+    const saveToDatabase = async (content: string) => {
+      if (content.length === 0) return;
+      
+      try {
+        await supabase
+          .from("messages")
+          .update({ content })
+          .eq("id", messageId);
+        
+        // Update stream's accumulated content and last save time
+        const stream = this.activeStreams.get(conversationId);
+        if (stream) {
+          stream.accumulatedContent = content;
+          stream.lastSaveTime = Date.now();
+        }
+        
+        console.log(`💾 [${conversationId}] Saved ${content.length} chars to DB`);
+      } catch (error) {
+        console.error(`❌ [${conversationId}] Failed to save to DB:`, error);
+      }
+    };
 
     // Smooth character-by-character display
     const displayNextChunk = async () => {
@@ -59,11 +87,24 @@ class StreamManager {
         // Split into characters for ultra-smooth display
         for (let i = 0; i < chunk.length; i++) {
           accumulatedContent += chunk[i];
+          
+          // Update stream's accumulated content
+          const stream = this.activeStreams.get(conversationId);
+          if (stream) {
+            stream.accumulatedContent = accumulatedContent;
+          }
+          
           if (onChunk) {
             onChunk(accumulatedContent);
           }
-          // Small delay for smooth typing effect (adjust for speed)
-          if (i % 3 === 0) { // Update every 3 characters for balance
+          
+          // Periodic save to database
+          if (stream && Date.now() - stream.lastSaveTime > SAVE_INTERVAL) {
+            await saveToDatabase(accumulatedContent);
+          }
+          
+          // Small delay for smooth typing effect
+          if (i % 3 === 0) {
             await new Promise(resolve => setTimeout(resolve, 10));
           }
         }
@@ -178,10 +219,24 @@ class StreamManager {
     }
   }
 
-  cancelStream(conversationId: string) {
+  async cancelStream(conversationId: string) {
     const stream = this.activeStreams.get(conversationId);
     if (stream) {
-      console.log(`🛑 [${conversationId}] Cancelling stream`);
+      console.log(`🛑 [${conversationId}] Cancelling stream and saving content`);
+      
+      // Save accumulated content before cancelling
+      if (stream.accumulatedContent && stream.accumulatedContent.length > 0) {
+        try {
+          await supabase
+            .from("messages")
+            .update({ content: stream.accumulatedContent })
+            .eq("id", stream.messageId);
+          console.log(`💾 [${conversationId}] Saved ${stream.accumulatedContent.length} chars before cancel`);
+        } catch (error) {
+          console.error(`❌ [${conversationId}] Failed to save before cancel:`, error);
+        }
+      }
+      
       stream.abortController.abort();
       stream.reader.cancel();
       this.activeStreams.delete(conversationId);
@@ -192,11 +247,13 @@ class StreamManager {
     return this.activeStreams.has(conversationId);
   }
 
-  cancelAllStreams() {
+  async cancelAllStreams() {
     console.log("🛑 Cancelling all streams");
+    const cancelPromises = [];
     for (const [conversationId] of this.activeStreams) {
-      this.cancelStream(conversationId);
+      cancelPromises.push(this.cancelStream(conversationId));
     }
+    await Promise.all(cancelPromises);
   }
 }
 
