@@ -49,9 +49,8 @@ class StreamManager {
     const decoder = new TextDecoder();
     let accumulatedContent = "";
     let buffer = "";
-    let displayQueue: string[] = [];
-    let isDisplaying = false;
-    const SAVE_INTERVAL = 2000; // Save to DB every 2 seconds
+    const SAVE_INTERVAL = 1000; // Save to DB every 1 second
+    let lastSaveTime = Date.now();
 
     // Function to save current content to database
     const saveToDatabase = async (content: string) => {
@@ -70,58 +69,20 @@ class StreamManager {
           stream.lastSaveTime = Date.now();
         }
         
+        lastSaveTime = Date.now();
         console.log(`💾 [${conversationId}] Saved ${content.length} chars to DB`);
       } catch (error) {
         console.error(`❌ [${conversationId}] Failed to save to DB:`, error);
       }
     };
 
-    // Smooth character-by-character display
-    const displayNextChunk = async () => {
-      if (isDisplaying || displayQueue.length === 0) return;
-      isDisplaying = true;
-
-      while (displayQueue.length > 0) {
-        const chunk = displayQueue.shift()!;
-        
-        // Split into characters for ultra-smooth display
-        for (let i = 0; i < chunk.length; i++) {
-          accumulatedContent += chunk[i];
-          
-          // Update stream's accumulated content
-          const stream = this.activeStreams.get(conversationId);
-          if (stream) {
-            stream.accumulatedContent = accumulatedContent;
-          }
-          
-          if (onChunk) {
-            onChunk(accumulatedContent);
-          }
-          
-          // Periodic save to database
-          if (stream && Date.now() - stream.lastSaveTime > SAVE_INTERVAL) {
-            await saveToDatabase(accumulatedContent);
-          }
-          
-          // Small delay for smooth typing effect
-          if (i % 3 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 10));
-          }
-        }
-      }
-      
-      isDisplaying = false;
-    };
-
     try {
-      console.log(`📖 [${conversationId}] Starting smooth token-by-token stream for message ${messageId}`);
+      console.log(`📖 [${conversationId}] Starting token-by-token stream for message ${messageId}`);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
           console.log(`✅ [${conversationId}] Stream complete. Final length: ${accumulatedContent.length}`);
-          // Display any remaining queued content
-          await displayNextChunk();
           break;
         }
 
@@ -151,12 +112,23 @@ class StreamManager {
                   const text = data.choices?.[0]?.delta?.content || data.text;
                   
                   if (text) {
-                    // Add to display queue for smooth rendering
-                    displayQueue.push(text);
+                    // Accumulate immediately
+                    accumulatedContent += text;
                     
-                    // Start displaying if not already
-                    if (!isDisplaying) {
-                      displayNextChunk();
+                    // Update stream's accumulated content
+                    const stream = this.activeStreams.get(conversationId);
+                    if (stream) {
+                      stream.accumulatedContent = accumulatedContent;
+                    }
+                    
+                    // Update UI immediately
+                    if (onChunk) {
+                      onChunk(accumulatedContent);
+                    }
+                    
+                    // Periodic save to database
+                    if (Date.now() - lastSaveTime > SAVE_INTERVAL) {
+                      await saveToDatabase(accumulatedContent);
                     }
                   }
                 }
@@ -177,8 +149,10 @@ class StreamManager {
               const data = JSON.parse(jsonStr);
               const text = data.choices?.[0]?.delta?.content || data.text;
               if (text) {
-                displayQueue.push(text);
-                await displayNextChunk();
+                accumulatedContent += text;
+                if (onChunk) {
+                  onChunk(accumulatedContent);
+                }
               }
             }
           } catch (e) {

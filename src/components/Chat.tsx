@@ -288,8 +288,10 @@ const Chat = () => {
           console.log('📨 Message updated:', payload);
           const updatedMessage = payload.new as Message;
           
-          // Only update if this message belongs to current conversation
-          if (currentConversation && updatedMessage.conversation_id === currentConversation.id) {
+          // Only update if this message belongs to current conversation AND is not actively streaming
+          if (currentConversation && 
+              updatedMessage.conversation_id === currentConversation.id &&
+              !streamManager.isStreaming(currentConversation.id)) {
             setMessages(prev => 
               prev.map(msg => 
                 msg.id === updatedMessage.id ? updatedMessage as any : msg
