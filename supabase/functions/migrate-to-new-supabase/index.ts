@@ -63,9 +63,63 @@ Deno.serve(async (req) => {
 
     const migrationResults = {
       success: true,
+      schemaSetup: { success: false, error: '' },
       tables: {} as Record<string, { rows: number; success: boolean; error?: string }>,
       users: { total: 0, migrated: 0, errors: [] as string[] },
+      warnings: [] as string[],
     };
+
+    // WARNING: Schema must be set up first
+    migrationResults.warnings.push(
+      'CRITICAL: Before running this migration, you must apply all schema migrations to the target database.',
+      'This function only copies data, not table structures, RLS policies, or database functions.',
+      'Steps required:',
+      '1. Install Supabase CLI: npm install -g supabase',
+      '2. Link to target project: supabase link --project-ref <target-project-ref>',
+      '3. Apply migrations: supabase db push',
+      '4. Deploy edge functions: supabase functions deploy',
+      '5. Then run this migration to copy data',
+      '',
+      'See MIGRATION_GUIDE.md for complete instructions',
+    );
+
+    // Check if target has basic schema by checking for profiles table
+    console.log('[Migration] Checking if target schema exists...');
+    try {
+      const { error: schemaCheckError } = await targetSupabase
+        .from('profiles')
+        .select('id')
+        .limit(1);
+
+      if (schemaCheckError) {
+        if (schemaCheckError.message.includes('relation') || schemaCheckError.message.includes('does not exist')) {
+          throw new Error(
+            'Target database schema not set up. Tables do not exist. ' +
+            'You must apply migrations first using Supabase CLI or manually execute migration files.'
+          );
+        }
+      } else {
+        migrationResults.schemaSetup.success = true;
+        console.log('[Migration] Target schema appears to be set up correctly');
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      migrationResults.schemaSetup.error = errorMsg;
+      console.error('[Migration] Schema check failed:', errorMsg);
+      
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Target database schema not ready',
+          message: errorMsg,
+          instructions: migrationResults.warnings,
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
 
     // Step 1: Migrate users from auth.users
     console.log('[Migration] Step 1: Migrating users...');
@@ -80,6 +134,15 @@ Deno.serve(async (req) => {
         
         for (const user of sourceUsers.users) {
           try {
+            // Check if user already exists in target
+            const { data: existingUser } = await targetSupabase.auth.admin.getUserById(user.id);
+            
+            if (existingUser?.user) {
+              console.log(`[Migration] User ${user.email} already exists, skipping`);
+              migrationResults.users.migrated++;
+              continue;
+            }
+
             // Create user in target with a temporary password (they'll need to reset)
             const tempPassword = crypto.randomUUID();
             const { error: createError } = await targetSupabase.auth.admin.createUser({
@@ -91,8 +154,14 @@ Deno.serve(async (req) => {
             });
 
             if (createError) {
-              console.error(`[Migration] Error creating user ${user.email}:`, createError);
-              migrationResults.users.errors.push(`${user.email}: ${createError.message}`);
+              // Check if error is because user already exists
+              if (createError.message.includes('already registered')) {
+                console.log(`[Migration] User ${user.email} already registered, skipping`);
+                migrationResults.users.migrated++;
+              } else {
+                console.error(`[Migration] Error creating user ${user.email}:`, createError);
+                migrationResults.users.errors.push(`${user.email}: ${createError.message}`);
+              }
             } else {
               migrationResults.users.migrated++;
               console.log(`[Migration] Migrated user: ${user.email}`);
@@ -144,9 +213,10 @@ Deno.serve(async (req) => {
         for (let i = 0; i < sourceData.length; i += batchSize) {
           const batch = sourceData.slice(i, i + batchSize);
           
+          // Use upsert to handle duplicates
           const { error: insertError } = await targetSupabase
             .from(table)
-            .insert(batch);
+            .upsert(batch, { onConflict: 'id' });
 
           if (insertError) {
             console.error(`[Migration] Error inserting batch into ${table}:`, insertError);
@@ -185,9 +255,16 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: migrationResults.success,
-        message: 'Migration completed. Check results for details.',
+        message: 'Data migration completed. Check results for details.',
         results: migrationResults,
-        note: 'Users have been created with temporary passwords. They will need to use password reset to access their accounts.',
+        postMigrationSteps: [
+          'Verify all data was migrated correctly',
+          'Deploy edge functions manually: supabase functions deploy',
+          'Update storage buckets and policies if needed',
+          'Test authentication and user access',
+          'Users will need to reset passwords to access their accounts',
+          'See MIGRATION_GUIDE.md for complete instructions',
+        ],
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -84,17 +84,26 @@ export const MigrationButton = () => {
         <AlertDialogHeader>
           <AlertDialogTitle>Migrate to Albert Junior?</AlertDialogTitle>
           <AlertDialogDescription className="space-y-2">
-            <p>
-              This will copy all data, users, and configurations from your current Lovable Cloud instance to the Albert Junior Supabase instance.
+            <p className="font-semibold text-destructive">
+              ⚠️ IMPORTANT: Schema must be set up first!
             </p>
-            <p className="font-semibold text-foreground">
-              Important notes:
+            <p>
+              This migration only copies data. Before running:
+            </p>
+            <ol className="list-decimal list-inside space-y-1 text-sm ml-2">
+              <li>Apply all migrations: <code className="bg-muted px-1 rounded">supabase db push</code></li>
+              <li>Deploy edge functions: <code className="bg-muted px-1 rounded">supabase functions deploy</code></li>
+              <li>Configure secrets and storage buckets</li>
+            </ol>
+            <p className="text-xs text-muted-foreground mt-2">
+              See <code className="bg-muted px-1 rounded">MIGRATION_GUIDE.md</code> for complete instructions
+            </p>
+            <p className="font-semibold text-foreground mt-4">
+              Migration will copy:
             </p>
             <ul className="list-disc list-inside space-y-1 text-sm">
-              <li>All users will be created with temporary passwords</li>
-              <li>Users will need to use password reset to access their accounts</li>
-              <li>Edge functions need to be deployed manually to the new instance</li>
-              <li>This process may take several minutes</li>
+              <li>All users (with temporary passwords requiring reset)</li>
+              <li>All table data</li>
             </ul>
           </AlertDialogDescription>
         </AlertDialogHeader>
