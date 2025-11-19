@@ -2001,6 +2001,12 @@ INSTRUCTION: The above search result contains current, verified information from
                            />
                          ) : null;
                        })()}
+                       
+                       {message.role === "assistant" && message.metadata?.generation_time_sec && (
+                         <div className="text-xs text-muted-foreground px-2">
+                           Generated in {message.metadata.generation_time_sec}s
+                         </div>
+                       )}
                      </div>
                    </div>
                 ))}
