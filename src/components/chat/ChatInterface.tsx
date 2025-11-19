@@ -120,10 +120,15 @@ const ChatInterface = ({
           if (searchError) throw searchError;
 
           if (searchData?.answer) {
-            // Real-time search returns a direct answer
-            enhancedMessage = `[User Question]: ${userMessage}\n\n[Real-Time Search Result]:\n${searchData.answer}\n\nPlease answer the user's question using the search result above as context. This is current, real-time information.`;
+            // Real-time search returns a direct answer - format it clearly for the AI
+            enhancedMessage = `[User Question]: ${userMessage}
+
+[Real-Time Search Result]:
+${searchData.answer}
+
+INSTRUCTION: The above search result contains current, verified information from the web. You MUST use this real-time data to answer the user's question. If there is any conflict between this search result and your training data, prioritize the search result as it is more current and accurate.`;
             
-            toast.success(`Found current information`);
+            toast.success("Found current information");
           }
         } catch (searchErr) {
           console.error("Real-time search error:", searchErr);
@@ -175,7 +180,7 @@ const ChatInterface = ({
       // Prepare messages for API (use enhanced message for last user message if search was used)
       const chatMessages: ChatMessage[] = updatedMessages.map((msg, idx) => ({
         role: msg.role,
-        content: idx === updatedMessages.length - 1 && realTimeSearchEnabled ? enhancedMessage : msg.content,
+        content: idx === updatedMessages.length - 1 && shouldUseRealTimeSearch ? enhancedMessage : msg.content,
       }));
 
       // Stream response
