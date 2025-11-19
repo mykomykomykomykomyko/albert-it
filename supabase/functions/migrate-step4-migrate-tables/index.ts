@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
     ];
 
     const results: Record<string, { rows: number; success: boolean; error?: string }> = {};
-    const PAGE_SIZE = 50;
+    const PAGE_SIZE = 1000; // Increased from 50 to reduce iterations and CPU time
 
     for (const table of tablesToMigrate) {
       try {
