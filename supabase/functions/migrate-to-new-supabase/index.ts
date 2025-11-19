@@ -5,7 +5,36 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve(async (req) => {
+Deno.serve((req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response('Method Not Allowed', {
+      status: 405,
+      headers: corsHeaders,
+    });
+  }
+
+  // Run the migration in the background to avoid HTTP timeouts
+  EdgeRuntime.waitUntil(handleMigration(req));
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      started: true,
+      message:
+        'Migration started in background. This may take several minutes; you can close this window.',
+    }),
+    {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    },
+  );
+});
+
+async function handleMigration(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
