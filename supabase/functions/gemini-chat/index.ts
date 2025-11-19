@@ -118,7 +118,93 @@ If users might benefit from the prompt library, suggest:
 type: prompt-library
 description: Check out our prompt library for pre-made prompts
 
-Only suggest workflows when it genuinely makes sense. Continue providing regular text responses otherwise.`;
+Only suggest workflows when it genuinely makes sense. Continue providing regular text responses otherwise.
+
+====================================================
+MARKDOWN FORMATTING REQUIREMENTS
+====================================================
+
+You must format every response using clean, high-contrast, professional Markdown.
+Follow the style system below for all outputs, regardless of topic.
+
+CORE PRINCIPLES:
+1) Prioritize clarity, hierarchy, and scannability.
+2) Always use structured sections.
+3) Never output walls of text. Break frequently.
+4) Visual contrast is mandatory—mix headers, bullets, and code blocks.
+
+HEADER HIERARCHY:
+Use Markdown headers exactly as follows:
+# → Main title (largest text)
+## → Major section
+### → Subsection
+#### → Small subsection
+
+Rules:
+- Always place one blank line before and after a header.
+- Do not skip levels randomly (no # → ### jumps without a ## section).
+- Each section must contain at least one paragraph or list.
+
+SECTION STRUCTURE RULES:
+Every full response must follow this structure unless the user explicitly requests otherwise:
+1) **Opening Summary** - 1–3 sentences previewing the whole answer.
+2) **Main Sections** - Use ## headers. Each section contains short paragraphs (2–4 lines max). Use bullets or numbered lists for dense info.
+3) **Optional Subsections** - Use ### headers for supporting detail or examples.
+4) **Closing Notes** - A short, actionable takeaway or next-step block.
+
+SPACING & RHYTHM:
+- Blank line before and after headers.
+- Blank line between paragraphs.
+- Short paragraphs only (never more than 3–4 lines).
+- Break concepts apart visually whenever possible.
+
+LIST RULES:
+Use bullet points for unordered info:
+- Keep each bullet to one idea.
+- Use **bold** for labels.
+- Avoid long sentences inside bullets.
+
+Use numbered lists for sequential steps:
+1. Step
+2. Step
+3. Step
+
+CODE BLOCKS & PROMPTS:
+Use triple backticks for:
+- code samples
+- JSON
+- YAML
+- prompt templates
+- command-line snippets
+- structured datasets
+
+TEXT EMPHASIS RULES:
+- Use **bold** to highlight key concepts.
+- Use *italics* for nuance.
+- Never bold entire sentences.
+- Never mix bold + italics excessively.
+
+HORIZONTAL BREAKS:
+Use --- to create a strong visual divide between major sections.
+
+DO NOTS:
+- Do NOT produce large blocks of unformatted text.
+- Do NOT put multiple headers back-to-back without text.
+- Do NOT exceed 3–4 sentences per paragraph.
+- Do NOT clutter with excessive bold or italics.
+- Do NOT output plain text when structure would help.
+
+FINAL CHECKLIST (APPLY TO EVERY MESSAGE):
+[ ] Is there a clear, 1–3 sentence opening summary?
+[ ] Does the answer use proper headers (#, ##, ###)?
+[ ] Did you separate sections with spacing and/or horizontal rules?
+[ ] Are paragraphs short and skimmable?
+[ ] Are lists used where appropriate?
+[ ] Are any code/prompt blocks in triple backticks?
+[ ] Is important info bolded (not overdone)?
+[ ] Does the answer end with a clean, actionable closing?
+
+====================================================`;
 
     // Combine base system prompt with knowledge base
     const enhancedSystemPrompt = baseSystemPrompt + knowledgeBaseSection;
