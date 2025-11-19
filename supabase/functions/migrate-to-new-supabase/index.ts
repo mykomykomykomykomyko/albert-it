@@ -121,16 +121,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 1: Migrate users from auth.users
+    // Step 1: Migrate users from auth.users (with pagination)
     console.log('[Migration] Step 1: Migrating users...');
     try {
-      const { data: sourceUsers, error: sourceUsersError } = await sourceSupabase.auth.admin.listUsers();
+      let page = 1;
+      const perPage = 50; // Small batches for memory efficiency
+      let hasMore = true;
       
-      if (sourceUsersError) {
-        console.error('[Migration] Error fetching source users:', sourceUsersError);
-        migrationResults.users.errors.push(`Error fetching users: ${sourceUsersError.message}`);
-      } else if (sourceUsers?.users) {
-        migrationResults.users.total = sourceUsers.users.length;
+      while (hasMore) {
+        const { data: sourceUsers, error: sourceUsersError } = await sourceSupabase.auth.admin.listUsers({
+          page,
+          perPage,
+        });
+        
+        if (sourceUsersError) {
+          console.error('[Migration] Error fetching source users:', sourceUsersError);
+          migrationResults.users.errors.push(`Error fetching users page ${page}: ${sourceUsersError.message}`);
+          break;
+        }
+        
+        if (!sourceUsers?.users || sourceUsers.users.length === 0) {
+          hasMore = false;
+          break;
+        }
+        
+        migrationResults.users.total += sourceUsers.users.length;
         
         for (const user of sourceUsers.users) {
           try {
@@ -172,6 +187,21 @@ Deno.serve(async (req) => {
             migrationResults.users.errors.push(`${user.email}: ${errorMsg}`);
           }
         }
+        
+        console.log(`[Migration] Processed user page ${page}, ${migrationResults.users.migrated} users migrated so far`);
+        
+        // Check if there are more pages
+        if (sourceUsers.users.length < perPage) {
+          hasMore = false;
+        }
+        
+        page++;
+        
+        // Safety limit
+        if (page > 100) {
+          console.warn('[Migration] Hit user page limit, stopping');
+          hasMore = false;
+        }
       }
     } catch (error) {
       console.error('[Migration] Exception in user migration:', error);
@@ -179,64 +209,105 @@ Deno.serve(async (req) => {
       migrationResults.users.errors.push(`General error: ${errorMsg}`);
     }
 
-    // Step 2: Migrate table data
+    // Step 2: Migrate table data with pagination for memory efficiency
     console.log('[Migration] Step 2: Migrating table data...');
+    
+    const PAGE_SIZE = 50; // Small page size to avoid memory issues
+    const INSERT_BATCH_SIZE = 25; // Even smaller insert batches
+    
     for (const table of tablesToMigrate) {
       try {
         console.log(`[Migration] Migrating table: ${table}`);
         
-        // Fetch all data from source
-        const { data: sourceData, error: fetchError } = await sourceSupabase
-          .from(table)
-          .select('*');
-
-        if (fetchError) {
-          console.error(`[Migration] Error fetching ${table}:`, fetchError);
-          migrationResults.tables[table] = {
-            rows: 0,
-            success: false,
-            error: fetchError.message,
-          };
-          continue;
-        }
-
-        if (!sourceData || sourceData.length === 0) {
-          console.log(`[Migration] No data in table: ${table}`);
-          migrationResults.tables[table] = { rows: 0, success: true };
-          continue;
-        }
-
-        // Insert data into target in batches of 100
-        const batchSize = 100;
         let successCount = 0;
+        let page = 0;
+        let hasMore = true;
         
-        for (let i = 0; i < sourceData.length; i += batchSize) {
-          const batch = sourceData.slice(i, i + batchSize);
+        // Paginate through source data to avoid loading everything into memory
+        while (hasMore) {
+          const from = page * PAGE_SIZE;
+          const to = from + PAGE_SIZE - 1;
           
-          // Use upsert to handle duplicates
-          const { error: insertError } = await targetSupabase
+          // Fetch one page at a time
+          const { data: pageData, error: fetchError, count } = await sourceSupabase
             .from(table)
-            .upsert(batch, { onConflict: 'id' });
+            .select('*', { count: 'exact' })
+            .range(from, to);
 
-          if (insertError) {
-            console.error(`[Migration] Error inserting batch into ${table}:`, insertError);
+          if (fetchError) {
+            console.error(`[Migration] Error fetching ${table} page ${page}:`, fetchError);
             migrationResults.tables[table] = {
               rows: successCount,
               success: false,
-              error: insertError.message,
+              error: fetchError.message,
             };
             break;
           }
-          
-          successCount += batch.length;
-          console.log(`[Migration] Inserted ${successCount}/${sourceData.length} rows into ${table}`);
-        }
 
-        if (successCount === sourceData.length) {
-          migrationResults.tables[table] = {
-            rows: successCount,
-            success: true,
-          };
+          // If no data on first page, table is empty
+          if (page === 0 && (!pageData || pageData.length === 0)) {
+            console.log(`[Migration] No data in table: ${table}`);
+            migrationResults.tables[table] = { rows: 0, success: true };
+            hasMore = false;
+            break;
+          }
+
+          // If no more data, we're done
+          if (!pageData || pageData.length === 0) {
+            hasMore = false;
+            migrationResults.tables[table] = {
+              rows: successCount,
+              success: true,
+            };
+            break;
+          }
+
+          // Insert this page's data in small batches
+          for (let i = 0; i < pageData.length; i += INSERT_BATCH_SIZE) {
+            const batch = pageData.slice(i, i + INSERT_BATCH_SIZE);
+            
+            // Use upsert to handle duplicates
+            const { error: insertError } = await targetSupabase
+              .from(table)
+              .upsert(batch, { onConflict: 'id' });
+
+            if (insertError) {
+              console.error(`[Migration] Error inserting batch into ${table}:`, insertError);
+              migrationResults.tables[table] = {
+                rows: successCount,
+                success: false,
+                error: insertError.message,
+              };
+              hasMore = false;
+              break;
+            }
+            
+            successCount += batch.length;
+          }
+
+          console.log(`[Migration] Migrated ${successCount} rows from ${table}`);
+          
+          // Check if we have more pages
+          if (pageData.length < PAGE_SIZE) {
+            hasMore = false;
+            migrationResults.tables[table] = {
+              rows: successCount,
+              success: true,
+            };
+          }
+          
+          page++;
+          
+          // Safety limit to prevent infinite loops
+          if (page > 1000) {
+            console.warn(`[Migration] Hit page limit for ${table}, stopping pagination`);
+            hasMore = false;
+            migrationResults.tables[table] = {
+              rows: successCount,
+              success: true,
+              error: 'Reached pagination limit (50,000 rows)',
+            };
+          }
         }
       } catch (error) {
         console.error(`[Migration] Exception migrating ${table}:`, error);
