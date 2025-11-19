@@ -199,10 +199,15 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
       const stream = new ReadableStream({
         async start(controller) {
           let buffer = "";
+          let jsonBuffer = "";
+          let inJsonObject = false;
+          let braceCount = 0;
+          
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
+                console.log("Stream complete");
                 controller.enqueue(encoder.encode("data: [DONE]\n\n"));
                 controller.close();
                 break;
@@ -211,43 +216,50 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
               // Decode chunk and add to buffer
               buffer += decoder.decode(value, { stream: true });
               
-              // Process complete lines
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-              for (const line of lines) {
-                if (line.trim()) {
-                  try {
-                    const json = JSON.parse(line);
-                    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-                    
-                    if (text) {
-                      // Send token immediately as SSE
-                      const sseData = `data: ${JSON.stringify({ text })}\n\n`;
-                      controller.enqueue(encoder.encode(sseData));
-                    }
-                  } catch (e) {
-                    console.warn("Failed to parse Gemini chunk:", e);
+              // Process character by character to properly parse JSON objects
+              for (let i = 0; i < buffer.length; i++) {
+                const char = buffer[i];
+                
+                if (char === '{') {
+                  if (!inJsonObject) {
+                    inJsonObject = true;
+                    jsonBuffer = '';
                   }
+                  braceCount++;
+                  jsonBuffer += char;
+                } else if (char === '}') {
+                  if (inJsonObject) {
+                    jsonBuffer += char;
+                    braceCount--;
+                    
+                    if (braceCount === 0) {
+                      // Complete JSON object found
+                      try {
+                        const json = JSON.parse(jsonBuffer);
+                        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                        
+                        if (text) {
+                          const sseData = `data: ${JSON.stringify({ text })}\n\n`;
+                          controller.enqueue(encoder.encode(sseData));
+                        }
+                      } catch (e) {
+                        console.warn("Failed to parse JSON object:", jsonBuffer.substring(0, 100), e);
+                      }
+                      
+                      inJsonObject = false;
+                      jsonBuffer = '';
+                    }
+                  }
+                } else if (inJsonObject) {
+                  jsonBuffer += char;
                 }
               }
-            }
-
-            // Process any remaining buffer
-            if (buffer.trim()) {
-              try {
-                const json = JSON.parse(buffer);
-                const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                  const sseData = `data: ${JSON.stringify({ text })}\n\n`;
-                  controller.enqueue(encoder.encode(sseData));
-                }
-              } catch (e) {
-                console.warn("Failed to parse final buffer:", e);
-              }
+              
+              // Clear processed buffer
+              buffer = '';
             }
           } catch (error) {
-            console.error("Stream error:", error);
+            console.error("Stream processing error:", error);
             const errorData = `data: ${JSON.stringify({ error: error instanceof Error ? error.message : "Stream error" })}\n\n`;
             controller.enqueue(encoder.encode(errorData));
             controller.close();
