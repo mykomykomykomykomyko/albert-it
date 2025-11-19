@@ -33,7 +33,7 @@ const ChatInterface = ({
   const { t } = useTranslation('chat');
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [model, setModel] = useState(conversation?.model || "google/gemini-2.5-flash");
+  const [model, setModel] = useState(conversation?.model || "google/gemini-3-pro-preview");
   const [realTimeSearchEnabled, setRealTimeSearchEnabled] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -322,6 +322,7 @@ const ChatInterface = ({
           <SelectContent>
             <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
             <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+            <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro Preview</SelectItem>
           </SelectContent>
         </Select>
       </div>

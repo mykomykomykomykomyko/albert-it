@@ -86,7 +86,7 @@ const Chat = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [messagesToDelete, setMessagesToDelete] = useState<Message[]>([]);
   const [viewAllImagesOpen, setViewAllImagesOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("google/gemini-2.5-flash");
+  const [selectedModel, setSelectedModel] = useState("google/gemini-3-pro-preview");
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -1530,6 +1530,7 @@ const Chat = () => {
                           <SelectContent>
                             <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
                             <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                            <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro Preview</SelectItem>
                           </SelectContent>
                         </Select>
                         <Toggle
