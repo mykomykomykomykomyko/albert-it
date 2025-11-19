@@ -56,16 +56,16 @@ class StreamManager {
     let accumulatedContent = "";
     let buffer = "";
     const SAVE_INTERVAL = 1000; // Save to DB every 1 second
-    const CHAR_DELAY = 1; // 1ms per character for very fast typing effect
     let lastSaveTime = Date.now();
 
-    // Fast character-by-character display
-    const displayCharacterByCharacter = async () => {
+    // Instant character-by-character display without delay
+    const displayCharacterByCharacter = () => {
       const stream = this.activeStreams.get(conversationId);
       if (!stream || stream.isDisplaying) return;
 
       stream.isDisplaying = true;
 
+      // Display all queued characters immediately
       while (stream.displayQueue.length > 0) {
         const char = stream.displayQueue.shift()!;
         stream.displayedContent += char;
@@ -73,9 +73,6 @@ class StreamManager {
         if (onChunk) {
           onChunk(stream.displayedContent);
         }
-
-        // Very small delay for fast character-by-character effect
-        await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
       }
 
       stream.isDisplaying = false;
