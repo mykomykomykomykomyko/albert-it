@@ -75,6 +75,9 @@ Deno.serve(async (req) => {
       warnings: [] as string[],
     };
 
+    // Map to track old user ID -> new user ID
+    const userIdMapping = new Map<string, string>();
+
     // WARNING: Schema must be set up first
     migrationResults.warnings.push(
       'CRITICAL: Before running this migration, you must apply all schema migrations to the target database.',
@@ -155,18 +158,9 @@ Deno.serve(async (req) => {
         
         for (const user of sourceUsers.users) {
           try {
-            // Check if user already exists in target
-            const { data: existingUser } = await targetSupabase.auth.admin.getUserById(user.id);
-            
-            if (existingUser?.user) {
-              console.log(`[Migration] User ${user.email} already exists, skipping`);
-              migrationResults.users.migrated++;
-              continue;
-            }
-
             // Create user in target with a temporary password (they'll need to reset)
             const tempPassword = crypto.randomUUID();
-            const { error: createError } = await targetSupabase.auth.admin.createUser({
+            const { data: newUser, error: createError } = await targetSupabase.auth.admin.createUser({
               email: user.email!,
               password: tempPassword,
               email_confirm: true,
@@ -177,15 +171,23 @@ Deno.serve(async (req) => {
             if (createError) {
               // Check if error is because user already exists
               if (createError.message.includes('already registered')) {
-                console.log(`[Migration] User ${user.email} already registered, skipping`);
-                migrationResults.users.migrated++;
+                console.log(`[Migration] User ${user.email} already registered, fetching ID`);
+                // Get the existing user to build mapping
+                const { data: existingUser } = await targetSupabase.auth.admin.listUsers();
+                const existing = existingUser?.users.find(u => u.email === user.email);
+                if (existing) {
+                  userIdMapping.set(user.id, existing.id);
+                  migrationResults.users.migrated++;
+                }
               } else {
                 console.error(`[Migration] Error creating user ${user.email}:`, createError);
                 migrationResults.users.errors.push(`${user.email}: ${createError.message}`);
               }
-            } else {
+            } else if (newUser?.user) {
+              // Store the mapping of old ID to new ID
+              userIdMapping.set(user.id, newUser.user.id);
               migrationResults.users.migrated++;
-              console.log(`[Migration] Migrated user: ${user.email}`);
+              console.log(`[Migration] Migrated user: ${user.email} (${user.id} -> ${newUser.user.id})`);
             }
           } catch (error) {
             console.error(`[Migration] Exception creating user ${user.email}:`, error);
@@ -215,6 +217,7 @@ Deno.serve(async (req) => {
       migrationResults.users.errors.push(`General error: ${errorMsg}`);
     }
 
+    console.log(`[Migration] User ID mapping built: ${userIdMapping.size} users mapped`);
     console.log('[Migration] Step 2: Migrating table data...');
     
     // Step 2a: Optionally clear existing data
@@ -300,10 +303,45 @@ Deno.serve(async (req) => {
           for (let i = 0; i < pageData.length; i += INSERT_BATCH_SIZE) {
             const batch = pageData.slice(i, i + INSERT_BATCH_SIZE);
             
+            // Transform user IDs in the data
+            const transformedBatch = batch.map(row => {
+              const transformed = { ...row };
+              
+              // Transform user_id fields
+              if (transformed.user_id && userIdMapping.has(transformed.user_id)) {
+                transformed.user_id = userIdMapping.get(transformed.user_id);
+              }
+              
+              // Transform id field for profiles table (references auth.users)
+              if (table === 'profiles' && transformed.id && userIdMapping.has(transformed.id)) {
+                transformed.id = userIdMapping.get(transformed.id);
+              }
+              
+              // Transform reviewer_id for agents table
+              if (table === 'agents' && transformed.reviewer_id && userIdMapping.has(transformed.reviewer_id)) {
+                transformed.reviewer_id = userIdMapping.get(transformed.reviewer_id);
+              }
+              
+              // Transform shared_by_user_id and shared_with_user_id
+              if (transformed.shared_by_user_id && userIdMapping.has(transformed.shared_by_user_id)) {
+                transformed.shared_by_user_id = userIdMapping.get(transformed.shared_by_user_id);
+              }
+              if (transformed.shared_with_user_id && userIdMapping.has(transformed.shared_with_user_id)) {
+                transformed.shared_with_user_id = userIdMapping.get(transformed.shared_with_user_id);
+              }
+              
+              // Transform created_by for user_temp_passwords
+              if (transformed.created_by && userIdMapping.has(transformed.created_by)) {
+                transformed.created_by = userIdMapping.get(transformed.created_by);
+              }
+              
+              return transformed;
+            });
+            
             // Use upsert to handle duplicates
             const { error: insertError } = await targetSupabase
               .from(table)
-              .upsert(batch, { onConflict: 'id' });
+              .upsert(transformedBatch, { onConflict: 'id' });
 
             if (insertError) {
               console.error(`[Migration] Error inserting batch into ${table}:`, insertError);
