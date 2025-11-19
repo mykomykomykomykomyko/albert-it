@@ -43,47 +43,43 @@ export const MigrationButton = () => {
 
       if (error) {
         console.error('Migration error:', error);
-        setProgress('Migration failed');
+        setProgress('Migration failed to start');
         setProgressDetails(prev => [...prev, `Error: ${error.message}`]);
         toast.error(`Migration failed: ${error.message}`);
+        setIsLoading(false);
         return;
       }
 
-      console.log('Migration results:', data);
+      console.log('Migration response:', data);
       
-      if (data?.success) {
-        setProgress('Migration completed successfully');
-        setProgressDetails(prev => [...prev, 'All data migrated', 'Verifying counts...']);
+      if (data?.started) {
+        setProgress('Migration running in background');
+        setProgressDetails(prev => [
+          ...prev, 
+          'Migration started successfully',
+          'Running in background to avoid timeout',
+          'Check edge function logs for detailed progress',
+          'This may take several minutes...'
+        ]);
         
-        // Store comparison data
-        if (data.comparison) {
-          setComparisonData(data.comparison);
-          setShowResults(true);
-        }
+        toast.success("Migration started successfully!");
+        toast.info("Check the edge function logs for progress details.", { duration: 5000 });
         
-        toast.success("Migration completed successfully!");
-        toast.info(`Users migrated: ${data.results.users.migrated}/${data.results.users.total}`);
-        
-        const successfulTables = Object.entries(data.results.tables)
-          .filter(([_, info]: [string, any]) => info.success)
-          .length;
-        
-        toast.info(`Tables migrated: ${successfulTables}/${Object.keys(data.results.tables).length}`);
-        
-        if (data.results.users.errors.length > 0) {
-          console.warn('User migration errors:', data.results.users.errors);
-        }
+        // Keep the progress modal open for a bit so user sees the message
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 3000);
       } else {
-        setProgress('Migration completed with errors');
+        setProgress('Unexpected response');
         setProgressDetails(prev => [...prev, 'Check console for details']);
-        toast.error("Migration completed with errors. Check console for details.");
+        toast.error("Unexpected response from migration function.");
+        setIsLoading(false);
       }
     } catch (error) {
       console.error('Exception during migration:', error);
       setProgress('Migration failed');
       setProgressDetails(prev => [...prev, `Exception: ${error}`]);
       toast.error("Migration failed with an exception. Check console.");
-    } finally {
       setIsLoading(false);
     }
   };
