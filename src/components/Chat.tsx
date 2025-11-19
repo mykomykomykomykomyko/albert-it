@@ -1715,19 +1715,11 @@ INSTRUCTION: The above search result contains current, verified information from
                                : "bg-card border border-border"
                            }`}
                          >
-                             {(() => {
-                              // Extract image URL from markdown if present (including standalone base64)
-                              const mdMatch = message.content?.match(/!\[[^\]]*\]\(([^)]+)\)/);
-                              const standaloneMatch = message.content?.match(/(data:image\/[A-Za-z0-9.+-]+;base64,[A-Za-z0-9+/=]+|https?:\/\/\S+\.(?:png|jpg|jpeg|webp|gif))/);
-                              
-                              const imageUrl = message.image_url || mdMatch?.[1] || standaloneMatch?.[1];
-                              
-                              let textContent = message.content;
-                              if (mdMatch?.[0]) {
-                                textContent = message.content.replace(mdMatch[0], '').trim();
-                              } else if (standaloneMatch?.[1]) {
-                                textContent = message.content.replace(standaloneMatch[1], '').trim();
-                              }
+                              {(() => {
+                              // Only use image_url from database, not from markdown content
+                              // Markdown images will be rendered by ReactMarkdown
+                              const imageUrl = message.image_url;
+                              const textContent = message.content;
                               
                               return (
                                 <>
