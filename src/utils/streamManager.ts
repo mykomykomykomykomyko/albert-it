@@ -15,7 +15,7 @@ class StreamManager {
     messageId: string,
     response: Response,
     onChunk?: (content: string) => void
-  ) {
+  ): Promise<void> {
     // Cancel any existing stream for this conversation
     this.cancelStream(conversationId);
 
@@ -32,8 +32,8 @@ class StreamManager {
       abortController,
     });
 
-    // Process stream in background
-    this.processStream(conversationId, messageId, reader, onChunk);
+    // Process stream and wait for completion
+    await this.processStream(conversationId, messageId, reader, onChunk);
   }
 
   private async processStream(
@@ -44,9 +44,10 @@ class StreamManager {
   ) {
     const decoder = new TextDecoder();
     let accumulatedContent = "";
+    let buffer = "";
 
     try {
-      console.log(`📖 [${conversationId}] Starting stream for message ${messageId}`);
+      console.log(`📖 [${conversationId}] Starting token-by-token stream for message ${messageId}`);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -55,8 +56,12 @@ class StreamManager {
           break;
         }
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+        // Decode chunk without waiting for complete lines
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Process complete lines
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
@@ -68,6 +73,11 @@ class StreamManager {
                 if (data.error) {
                   console.error(`❌ [${conversationId}] Stream error:`, data.error);
                   accumulatedContent = `Error: ${data.error}`;
+                  
+                  // Immediate UI update for errors
+                  if (onChunk) {
+                    onChunk(accumulatedContent);
+                  }
                 } else {
                   // Support both formats: OpenAI-style (choices[0].delta.content) and simple (text)
                   const text = data.choices?.[0]?.delta?.content || data.text;
@@ -75,13 +85,7 @@ class StreamManager {
                   if (text) {
                     accumulatedContent += text;
                     
-                    // Update database immediately
-                    await supabase
-                      .from("messages")
-                      .update({ content: accumulatedContent })
-                      .eq("id", messageId);
-
-                    // Notify listeners (for UI updates if viewing this conversation)
+                    // Immediate UI update - token by token
                     if (onChunk) {
                       onChunk(accumulatedContent);
                     }
@@ -95,7 +99,28 @@ class StreamManager {
         }
       }
 
-      // Final save
+      // Process any remaining buffer content
+      if (buffer.trim()) {
+        if (buffer.startsWith("data: ")) {
+          try {
+            const jsonStr = buffer.substring(6).trim();
+            if (jsonStr && jsonStr !== "{}" && jsonStr !== "[DONE]") {
+              const data = JSON.parse(jsonStr);
+              const text = data.choices?.[0]?.delta?.content || data.text;
+              if (text) {
+                accumulatedContent += text;
+                if (onChunk) {
+                  onChunk(accumulatedContent);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn(`⚠️ [${conversationId}] Failed to parse final buffer:`, e);
+          }
+        }
+      }
+
+      // Final save to database
       console.log(`💾 [${conversationId}] Saving final content to DB`);
       await supabase
         .from("messages")

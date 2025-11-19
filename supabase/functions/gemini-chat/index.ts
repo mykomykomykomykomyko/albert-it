@@ -154,14 +154,14 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
 
     console.log('Calling Gemini API with contents:', contents.length);
 
-    // OPTIMIZED: Call Gemini API with timeout
-    const API_TIMEOUT_MS = 60000; // 60 seconds
+    // Use Gemini's streaming API for token-by-token output
+    const API_TIMEOUT_MS = 120000; // 120 seconds for streaming
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
     try {
       const aiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: {
@@ -187,30 +187,71 @@ Only suggest workflows when it genuinely makes sense. Continue providing regular
         throw new Error(`Gemini API error: ${errorText}`);
       }
 
-      const result = await aiResponse.json();
-      console.log('Gemini API response:', JSON.stringify(result, null, 2));
-      const parts = result?.candidates?.[0]?.content?.parts || [];
-      const fullText = parts.map((p: any) => p.text).filter(Boolean).join("");
+      // Stream the Gemini response token-by-token
+      const reader = aiResponse.body?.getReader();
+      const decoder = new TextDecoder();
       
-      console.log('Extracted text length:', fullText.length);
-      console.log('Full text preview:', fullText.substring(0, 200));
+      if (!reader) {
+        throw new Error("No response body from Gemini");
+      }
 
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
-        start(controller) {
-          if (!fullText || fullText.trim().length === 0) {
-            console.error('Empty response from Gemini API');
-            const errorData = `data: ${JSON.stringify({ text: "I apologize, but I received an empty response. Please try rephrasing your message." })}\n\n`;
+        async start(controller) {
+          let buffer = "";
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) {
+                controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+                controller.close();
+                break;
+              }
+
+              // Decode chunk and add to buffer
+              buffer += decoder.decode(value, { stream: true });
+              
+              // Process complete lines
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+              for (const line of lines) {
+                if (line.trim()) {
+                  try {
+                    const json = JSON.parse(line);
+                    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                    
+                    if (text) {
+                      // Send token immediately as SSE
+                      const sseData = `data: ${JSON.stringify({ text })}\n\n`;
+                      controller.enqueue(encoder.encode(sseData));
+                    }
+                  } catch (e) {
+                    console.warn("Failed to parse Gemini chunk:", e);
+                  }
+                }
+              }
+            }
+
+            // Process any remaining buffer
+            if (buffer.trim()) {
+              try {
+                const json = JSON.parse(buffer);
+                const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  const sseData = `data: ${JSON.stringify({ text })}\n\n`;
+                  controller.enqueue(encoder.encode(sseData));
+                }
+              } catch (e) {
+                console.warn("Failed to parse final buffer:", e);
+              }
+            }
+          } catch (error) {
+            console.error("Stream error:", error);
+            const errorData = `data: ${JSON.stringify({ error: error instanceof Error ? error.message : "Stream error" })}\n\n`;
             controller.enqueue(encoder.encode(errorData));
-            controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
             controller.close();
-            return;
           }
-          // Send as single SSE chunk to fit the UI's streaming reader
-          const sseData = `data: ${JSON.stringify({ text: fullText })}\n\n`;
-          controller.enqueue(encoder.encode(sseData));
-          controller.enqueue(encoder.encode("event: complete\ndata: {}\n\n"));
-          controller.close();
         }
       });
 
