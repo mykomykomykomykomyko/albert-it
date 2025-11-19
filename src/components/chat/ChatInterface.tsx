@@ -346,7 +346,7 @@ INSTRUCTION: The above search result contains current, verified information from
       </div>
 
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -389,7 +389,7 @@ INSTRUCTION: The above search result contains current, verified information from
       </ScrollArea>
 
       <div className="p-4 border-t border-border bg-card/30 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto space-y-2">
+        <div className="max-w-7xl mx-auto space-y-2">
           <div className="flex items-center gap-2">
             <Toggle
               pressed={realTimeSearchEnabled}
