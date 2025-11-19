@@ -52,12 +52,13 @@ class StreamManager {
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          console.log(`✅ [${conversationId}] Stream complete. Length: ${accumulatedContent.length}`);
+          console.log(`✅ [${conversationId}] Stream complete. Final length: ${accumulatedContent.length}`);
           break;
         }
 
         // Decode chunk without waiting for complete lines
         buffer += decoder.decode(value, { stream: true });
+        console.log(`📦 [${conversationId}] Buffer size: ${buffer.length}, chunk size: ${value.length}`);
         
         // Process complete lines
         const lines = buffer.split("\n");
@@ -67,6 +68,8 @@ class StreamManager {
           if (line.startsWith("data: ")) {
             try {
               const jsonStr = line.substring(6).trim();
+              console.log(`🔍 [${conversationId}] Parsing line:`, jsonStr.substring(0, 100));
+              
               if (jsonStr && jsonStr !== "{}" && jsonStr !== "[DONE]") {
                 const data = JSON.parse(jsonStr);
 
@@ -84,16 +87,19 @@ class StreamManager {
                   
                   if (text) {
                     accumulatedContent += text;
+                    console.log(`✨ [${conversationId}] Added text, total length: ${accumulatedContent.length}`);
                     
                     // Immediate UI update - token by token
                     if (onChunk) {
                       onChunk(accumulatedContent);
                     }
+                  } else {
+                    console.warn(`⚠️ [${conversationId}] No text in data:`, data);
                   }
                 }
               }
             } catch (e) {
-              console.warn(`⚠️ [${conversationId}] Failed to parse line:`, e);
+              console.warn(`⚠️ [${conversationId}] Failed to parse line:`, e, line.substring(0, 100));
             }
           }
         }
@@ -121,7 +127,13 @@ class StreamManager {
       }
 
       // Final save to database
-      console.log(`💾 [${conversationId}] Saving final content to DB`);
+      console.log(`💾 [${conversationId}] Saving final content (${accumulatedContent.length} chars) to DB`);
+      
+      if (accumulatedContent.length === 0) {
+        console.error(`❌ [${conversationId}] No content accumulated! Setting error message.`);
+        accumulatedContent = "I apologize, but I received an empty response. Please try again.";
+      }
+      
       await supabase
         .from("messages")
         .update({ content: accumulatedContent })

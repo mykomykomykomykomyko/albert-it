@@ -9,7 +9,7 @@ import { Conversation, Message } from "@/types/chat";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon, Search, Pencil, Save } from "lucide-react";
+import { Send, Paperclip, X, FileText, FileSpreadsheet, Sparkles, Bot, Bug, Download, Mic, HelpCircle, Copy, Share2, Trash2, File, Image as ImageIcon, Search, Pencil, Save, Loader2 } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { PDFSelector } from './PDFSelector';
@@ -1797,10 +1797,17 @@ INSTRUCTION: The above search result contains current, verified information from
                                            </ReactMarkdown>
                                          </div>
                                         ) : !imageUrl ? (
-                                         <div className="text-muted-foreground italic text-sm">
-                                           [Empty message]
-                                         </div>
-                                       ) : null}
+                                          <div className="flex items-center gap-2 text-muted-foreground">
+                                            {activeStreams.has(currentConversation.id) && message.id === messages[messages.length - 1]?.id ? (
+                                              <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                <span className="text-sm">Generating response...</span>
+                                              </>
+                                            ) : (
+                                              <div className="text-sm italic">[Empty message]</div>
+                                            )}
+                                          </div>
+                                        ) : null}
                                      </>
                                    )}
 
