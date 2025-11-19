@@ -144,26 +144,44 @@ export const MigrationButton = () => {
     setStep4Complete(false);
     
     try {
-      toast.info("Step 4: Migrating all tables with UUID transformation...");
+      toast.info("Step 4: Generating SQL file...");
       
-      const { data, error } = await supabase.functions.invoke('migrate-step4-migrate-tables', {
-        body: { uuidCrosswalk }
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/migrate-step4-migrate-tables`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ uuidCrosswalk }),
+        }
+      );
 
-      if (error) {
-        console.error('Step 4 error:', error);
-        toast.error(`Step 4 failed: ${error.message}`);
-        setStep4Loading(false);
-        return;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      console.log('Step 4 response:', data);
-      setStep4Results(data);
+      const sqlContent = await response.text();
+      
+      // Create download
+      const blob = new Blob([sqlContent], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'albert-junior-migration.sql';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      setStep4Results({ message: 'SQL file generated and downloaded successfully' });
       setStep4Complete(true);
-      toast.success(`Step 4 complete: ${data.message}`, { duration: 5000 });
-    } catch (error) {
+      toast.success('Step 4: SQL file downloaded. Execute it manually in your target database.', { duration: 7000 });
+    } catch (error: any) {
       console.error('Step 4 exception:', error);
-      toast.error("Step 4 failed with an exception");
+      toast.error(`Step 4 failed: ${error.message}`);
     } finally {
       setStep4Loading(false);
     }

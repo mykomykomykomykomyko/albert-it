@@ -69,14 +69,23 @@ Deno.serve(async (req) => {
       'chat_history',
     ];
 
-    const results: Record<string, { rows: number; success: boolean; error?: string }> = {};
-    const PAGE_SIZE = 10; // Small batches to reduce CPU usage per iteration
+    let sqlStatements = `-- Albert Junior Migration SQL\n-- Generated: ${new Date().toISOString()}\n\n`;
+    const PAGE_SIZE = 100; // Fetch in larger batches since we're not inserting
+
+    const escapeString = (val: any): string => {
+      if (val === null || val === undefined) return 'NULL';
+      if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
+      if (typeof val === 'boolean') return val ? 'true' : 'false';
+      if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+      return String(val);
+    };
 
     for (const table of tablesToMigrate) {
       try {
-        console.log(`[Step 4] Migrating table: ${table}`);
+        console.log(`[Step 4] Generating SQL for table: ${table}`);
+        sqlStatements += `\n-- Table: ${table}\n`;
         
-        let successCount = 0;
+        let totalRows = 0;
         let page = 0;
         let hasMore = true;
 
@@ -91,13 +100,12 @@ Deno.serve(async (req) => {
 
           if (fetchError) {
             console.error(`[Step 4] Error fetching ${table}:`, fetchError);
-            results[table] = { rows: successCount, success: false, error: fetchError.message };
+            sqlStatements += `-- ERROR fetching ${table}: ${fetchError.message}\n`;
             break;
           }
 
           if (!pageData || pageData.length === 0) {
             hasMore = false;
-            results[table] = { rows: successCount, success: true };
             break;
           }
 
@@ -105,22 +113,18 @@ Deno.serve(async (req) => {
           const transformedData = pageData.map(row => {
             const transformed = { ...row };
 
-            // Transform user_id
             if (transformed.user_id && uuidMap.has(transformed.user_id)) {
               transformed.user_id = uuidMap.get(transformed.user_id);
             }
 
-            // Transform id for profiles table
             if (table === 'profiles' && transformed.id && uuidMap.has(transformed.id)) {
               transformed.id = uuidMap.get(transformed.id);
             }
 
-            // Transform reviewer_id
             if (transformed.reviewer_id && uuidMap.has(transformed.reviewer_id)) {
               transformed.reviewer_id = uuidMap.get(transformed.reviewer_id);
             }
 
-            // Transform shared_by_user_id and shared_with_user_id
             if (transformed.shared_by_user_id && uuidMap.has(transformed.shared_by_user_id)) {
               transformed.shared_by_user_id = uuidMap.get(transformed.shared_by_user_id);
             }
@@ -128,7 +132,6 @@ Deno.serve(async (req) => {
               transformed.shared_with_user_id = uuidMap.get(transformed.shared_with_user_id);
             }
 
-            // Transform created_by
             if (transformed.created_by && uuidMap.has(transformed.created_by)) {
               transformed.created_by = uuidMap.get(transformed.created_by);
             }
@@ -136,23 +139,18 @@ Deno.serve(async (req) => {
             return transformed;
           });
 
-          const { error: insertError } = await targetSupabase
-            .from(table)
-            .upsert(transformedData, { onConflict: 'id' });
-
-          if (insertError) {
-            console.error(`[Step 4] Error inserting into ${table}:`, insertError);
-            results[table] = { rows: successCount, success: false, error: insertError.message };
-            hasMore = false;
-            break;
+          // Generate INSERT statements
+          for (const row of transformedData) {
+            const columns = Object.keys(row);
+            const values = columns.map(col => escapeString(row[col]));
+            sqlStatements += `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${values.join(', ')}) ON CONFLICT (id) DO UPDATE SET ${columns.filter(c => c !== 'id').map(c => `${c} = EXCLUDED.${c}`).join(', ')};\n`;
           }
 
-          successCount += transformedData.length;
-          console.log(`[Step 4] ${table}: ${successCount} rows migrated`);
+          totalRows += transformedData.length;
+          console.log(`[Step 4] ${table}: Generated SQL for ${totalRows} rows`);
 
           if (pageData.length < PAGE_SIZE) {
             hasMore = false;
-            results[table] = { rows: successCount, success: true };
           }
 
           page++;
@@ -160,30 +158,26 @@ Deno.serve(async (req) => {
           if (page > 1000) {
             console.warn(`[Step 4] Hit page limit for ${table}`);
             hasMore = false;
-            results[table] = { rows: successCount, success: true, error: 'Reached pagination limit' };
           }
         }
+
+        sqlStatements += `-- ${table}: ${totalRows} rows\n`;
       } catch (error) {
-        console.error(`[Step 4] Exception migrating ${table}:`, error);
-        results[table] = {
-          rows: 0,
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        };
+        console.error(`[Step 4] Exception generating SQL for ${table}:`, error);
+        sqlStatements += `-- ERROR processing ${table}: ${error instanceof Error ? error.message : String(error)}\n`;
       }
     }
 
-    const totalRows = Object.values(results).reduce((sum, r) => sum + r.rows, 0);
-    console.log(`[Step 4] ✓ Complete: Migrated ${totalRows} total rows across ${tablesToMigrate.length} tables`);
+    console.log(`[Step 4] ✓ Complete: Generated SQL file`);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Migrated ${totalRows} rows across ${tablesToMigrate.length} tables`,
-        results,
-      }),
+      sqlStatements,
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'text/plain',
+          'Content-Disposition': 'attachment; filename="albert-junior-migration.sql"'
+        },
         status: 200,
       }
     );
