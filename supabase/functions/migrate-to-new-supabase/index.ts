@@ -130,84 +130,87 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Step 1: Migrate users from auth.users (with pagination)
-    console.log('[Migration] Step 1: Migrating users...');
+    // Step 1: Migrate users based on profiles table (auth.users lives in auth schema)
+    console.log('[Migration] Step 1: Migrating users from profiles...');
     try {
-      let page = 1;
-      const perPage = 50; // Small batches for memory efficiency
+      const PAGE_SIZE_USERS = 100;
+      let page = 0;
       let hasMore = true;
-      
+
       while (hasMore) {
-        const { data: sourceUsers, error: sourceUsersError } = await sourceSupabase.auth.admin.listUsers({
-          page,
-          perPage,
-        });
-        
-        if (sourceUsersError) {
-          console.error('[Migration] Error fetching source users:', sourceUsersError);
-          migrationResults.users.errors.push(`Error fetching users page ${page}: ${sourceUsersError.message}`);
+        const from = page * PAGE_SIZE_USERS;
+        const to = from + PAGE_SIZE_USERS - 1;
+
+        const { data: profilesPage, error: profilesError } = await sourceSupabase
+          .from('profiles')
+          .select('id, email')
+          .order('created_at', { ascending: true })
+          .range(from, to);
+
+        if (profilesError) {
+          console.error('[Migration] Error fetching source profiles:', profilesError);
+          migrationResults.users.errors.push(
+            `Error fetching profiles page ${page + 1}: ${profilesError.message ?? JSON.stringify(profilesError)}`,
+          );
           break;
         }
-        
-        if (!sourceUsers?.users || sourceUsers.users.length === 0) {
+
+        if (!profilesPage || profilesPage.length === 0) {
           hasMore = false;
           break;
         }
-        
-        migrationResults.users.total += sourceUsers.users.length;
-        
-        for (const user of sourceUsers.users) {
+
+        migrationResults.users.total += profilesPage.length;
+
+        for (const profile of profilesPage) {
+          if (!profile.email) {
+            console.warn(`[Migration] Profile ${profile.id} has no email, skipping user creation`);
+            migrationResults.users.errors.push(`${profile.id}: missing email, user not created`);
+            continue;
+          }
+
           try {
-            // Create user in target with a temporary password (they'll need to reset)
             const tempPassword = crypto.randomUUID();
             const { data: newUser, error: createError } = await targetSupabase.auth.admin.createUser({
-              email: user.email!,
+              email: profile.email,
               password: tempPassword,
               email_confirm: true,
-              user_metadata: user.user_metadata,
-              app_metadata: user.app_metadata,
             });
 
             if (createError) {
-              // Check if error is because user already exists
-              if (createError.message.includes('already registered')) {
-                console.log(`[Migration] User ${user.email} already registered, fetching ID`);
-                // Get the existing user to build mapping
-                const { data: existingUser } = await targetSupabase.auth.admin.listUsers();
-                const existing = existingUser?.users.find(u => u.email === user.email);
-                if (existing) {
-                  userIdMapping.set(user.id, existing.id);
-                  migrationResults.users.migrated++;
-                }
-              } else {
-                console.error(`[Migration] Error creating user ${user.email}:`, createError);
-                migrationResults.users.errors.push(`${user.email}: ${createError.message}`);
-              }
-            } else if (newUser?.user) {
-              // Store the mapping of old ID to new ID
-              userIdMapping.set(user.id, newUser.user.id);
+              console.error(`[Migration] Error creating user ${profile.email}:`, createError);
+              migrationResults.users.errors.push(
+                `${profile.email}: ${createError.message ?? JSON.stringify(createError)}`,
+              );
+              continue;
+            }
+
+            if (newUser?.user) {
+              userIdMapping.set(profile.id, newUser.user.id);
               migrationResults.users.migrated++;
-              console.log(`[Migration] Migrated user: ${user.email} (${user.id} -> ${newUser.user.id})`);
+              console.log(
+                `[Migration] Migrated user from profile: ${profile.email} (${profile.id} -> ${newUser.user.id})`,
+              );
             }
           } catch (error) {
-            console.error(`[Migration] Exception creating user ${user.email}:`, error);
+            console.error(`[Migration] Exception creating user ${profile.email}:`, error);
             const errorMsg = error instanceof Error ? error.message : String(error);
-            migrationResults.users.errors.push(`${user.email}: ${errorMsg}`);
+            migrationResults.users.errors.push(`${profile.email}: ${errorMsg}`);
           }
         }
-        
-        console.log(`[Migration] Processed user page ${page}, ${migrationResults.users.migrated} users migrated so far`);
-        
-        // Check if there are more pages
-        if (sourceUsers.users.length < perPage) {
+
+        console.log(
+          `[Migration] Processed profiles page ${page + 1}, ${migrationResults.users.migrated} users migrated so far`,
+        );
+
+        if (profilesPage.length < PAGE_SIZE_USERS) {
           hasMore = false;
         }
-        
+
         page++;
-        
-        // Safety limit
-        if (page > 100) {
-          console.warn('[Migration] Hit user page limit, stopping');
+
+        if (page > 1000) {
+          console.warn('[Migration] Hit profiles page limit, stopping');
           hasMore = false;
         }
       }
