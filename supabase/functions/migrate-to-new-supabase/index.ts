@@ -262,7 +262,61 @@ Deno.serve(async (req) => {
     // Step 2a: Optionally clear existing data
     if (clearBeforeMigration) {
       console.log('[Migration] Step 2a: Clearing existing data from target...');
+
+      // First, clear auth.users so we can rebuild the mapping cleanly
+      try {
+        console.log('[Migration] Clearing auth.users in target...');
+        let page = 1;
+        const perPage = 100;
+        let totalDeleted = 0;
+        let hasMoreUsers = true;
+
+        while (hasMoreUsers) {
+          const { data: usersPage, error: listUsersError } = await targetSupabase.auth.admin.listUsers({
+            page,
+            perPage,
+          });
+
+          if (listUsersError) {
+            console.error('[Migration] Error listing users in target auth.users:', listUsersError);
+            migrationResults.users.errors.push(
+              `Error clearing auth.users page ${page}: ${listUsersError.message ?? JSON.stringify(listUsersError)}`,
+            );
+            break;
+          }
+
+          const users = usersPage?.users ?? [];
+          if (users.length === 0) {
+            hasMoreUsers = false;
+            break;
+          }
+
+          for (const user of users) {
+            try {
+              await targetSupabase.auth.admin.deleteUser(user.id);
+              totalDeleted++;
+            } catch (deleteError) {
+              console.error(`[Migration] Error deleting user ${user.id}:`, deleteError);
+            }
+          }
+
+          console.log(`[Migration] Cleared ${users.length} users from auth.users on page ${page}`);
+
+          if (users.length < perPage) {
+            hasMoreUsers = false;
+          } else {
+            page++;
+          }
+        }
+
+        console.log(`[Migration] Finished clearing auth.users, deleted ${totalDeleted} users`);
+      } catch (error) {
+        console.error('[Migration] Exception while clearing auth.users:', error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        migrationResults.users.errors.push(`Exception clearing auth.users: ${errorMsg}`);
+      }
       
+      // Then clear all public tables in reverse order to respect foreign keys
       // Delete in reverse order to respect foreign keys
       const reverseTables = [...tablesToMigrate].reverse();
       
@@ -453,9 +507,60 @@ Deno.serve(async (req) => {
       'translations',
       'agent-documents',
     ];
+
+    const bucketConfigs: Record<string, { public: boolean }> = {
+      'profile-images': { public: true },
+      'generated-images': { public: true },
+      'translations': { public: false },
+      'agent-documents': { public: false },
+    };
     
     for (const bucketName of bucketsToMigrate) {
       try {
+        console.log(`[Migration] Preparing bucket: ${bucketName}`);
+
+        // Ensure bucket exists in target, create if missing
+        const { data: existingBucket, error: getBucketError } = await targetSupabase.storage.getBucket(bucketName);
+        if (getBucketError || !existingBucket) {
+          console.log(`[Migration] Bucket ${bucketName} not found in target, creating...`);
+          const bucketConfig = bucketConfigs[bucketName] ?? { public: false };
+          const { error: createBucketError } = await targetSupabase.storage.createBucket(bucketName, {
+            public: bucketConfig.public,
+          });
+          if (createBucketError) {
+            console.error(`[Migration] Error creating bucket ${bucketName}:`, createBucketError);
+            migrationResults.storage[bucketName] = {
+              files: 0,
+              success: false,
+              error: createBucketError.message,
+            };
+            continue;
+          }
+          console.log(`[Migration] Created bucket ${bucketName} (public=${bucketConfig.public})`);
+        }
+
+        // Optionally clear existing files in target bucket when doing a full reset
+        if (clearBeforeMigration) {
+          console.log(`[Migration] Clearing existing files from target bucket: ${bucketName}`);
+          const { data: targetFiles, error: targetListError } = await targetSupabase.storage
+            .from(bucketName)
+            .list(undefined, { limit: 1000 });
+
+          if (targetListError) {
+            console.warn(`[Migration] Error listing existing files in target bucket ${bucketName}:`, targetListError);
+          } else if (targetFiles && targetFiles.length > 0) {
+            const pathsToRemove = targetFiles.map((f) => f.name).filter(Boolean) as string[];
+            if (pathsToRemove.length > 0) {
+              const { error: removeError } = await targetSupabase.storage.from(bucketName).remove(pathsToRemove);
+              if (removeError) {
+                console.warn(`[Migration] Error clearing target bucket ${bucketName}:`, removeError);
+              } else {
+                console.log(`[Migration] Cleared ${pathsToRemove.length} existing files from ${bucketName}`);
+              }
+            }
+          }
+        }
+
         console.log(`[Migration] Migrating files from bucket: ${bucketName}`);
         
         let fileCount = 0;
@@ -468,7 +573,7 @@ Deno.serve(async (req) => {
           const { data: files, error: listError } = await sourceSupabase
             .storage
             .from(bucketName)
-            .list('', {
+            .list(undefined, {
               limit,
               offset,
               sortBy: { column: 'name', order: 'asc' },
