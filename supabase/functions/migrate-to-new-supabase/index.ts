@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-Deno.serve((req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -17,28 +17,11 @@ Deno.serve((req) => {
     });
   }
 
-  // Run the migration in the background to avoid HTTP timeouts
-  EdgeRuntime.waitUntil(handleMigration(req));
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      started: true,
-      message:
-        'Migration started in background. This may take several minutes; you can close this window.',
-    }),
-    {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    },
-  );
+  // Run migration and return results
+  return await handleMigration(req);
 });
 
-async function handleMigration(req: Request) {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+async function handleMigration(req: Request): Promise<Response> {
   try {
     console.log('[Migration] Starting migration to new Supabase instance...');
     
@@ -838,37 +821,36 @@ async function handleMigration(req: Request) {
       }
     }
 
+    console.log('[Migration] ===== FINAL MIGRATION SUMMARY =====');
+    console.log(`[Migration] Users: ${migrationResults.users.migrated}/${migrationResults.users.total} migrated`);
+    console.log(`[Migration] Tables: ${Object.keys(comparisonResults).filter(t => comparisonResults[t].match).length}/${Object.keys(comparisonResults).length} matching`);
+    console.log(`[Migration] Storage: ${Object.keys(storageComparison).filter(b => storageComparison[b].match).length}/${Object.keys(storageComparison).length} matching`);
+    console.log('[Migration] ==========================================');
+    
     return new Response(
       JSON.stringify({
-        success: migrationResults.success,
-        message: 'Data migration completed. Check results for details.',
+        success: true,
+        message: 'Migration completed',
         results: migrationResults,
         comparison: {
           tables: comparisonResults,
           storage: storageComparison,
         },
-        postMigrationSteps: [
-          'Verify all data was migrated correctly',
-          'Verify storage bucket files were copied successfully',
-          'Deploy edge functions manually: supabase functions deploy',
-          'Test authentication and user access',
-          'Users will need to reset passwords to access their accounts',
-          'See MIGRATION_GUIDE.md for complete instructions',
-        ],
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       }
     );
+    
   } catch (error) {
     console.error('[Migration] Fatal error:', error);
     const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[Migration] Error message: ${errorMsg}`);
     return new Response(
       JSON.stringify({ 
         success: false,
         error: errorMsg,
-        details: 'Check edge function logs for more information',
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -876,4 +858,4 @@ async function handleMigration(req: Request) {
       }
     );
   }
-});
+}
