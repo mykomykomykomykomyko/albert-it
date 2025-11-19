@@ -45,30 +45,56 @@ class StreamManager {
     const decoder = new TextDecoder();
     let accumulatedContent = "";
     let buffer = "";
+    let displayQueue: string[] = [];
+    let isDisplaying = false;
+
+    // Smooth character-by-character display
+    const displayNextChunk = async () => {
+      if (isDisplaying || displayQueue.length === 0) return;
+      isDisplaying = true;
+
+      while (displayQueue.length > 0) {
+        const chunk = displayQueue.shift()!;
+        
+        // Split into characters for ultra-smooth display
+        for (let i = 0; i < chunk.length; i++) {
+          accumulatedContent += chunk[i];
+          if (onChunk) {
+            onChunk(accumulatedContent);
+          }
+          // Small delay for smooth typing effect (adjust for speed)
+          if (i % 3 === 0) { // Update every 3 characters for balance
+            await new Promise(resolve => setTimeout(resolve, 10));
+          }
+        }
+      }
+      
+      isDisplaying = false;
+    };
 
     try {
-      console.log(`📖 [${conversationId}] Starting token-by-token stream for message ${messageId}`);
+      console.log(`📖 [${conversationId}] Starting smooth token-by-token stream for message ${messageId}`);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
           console.log(`✅ [${conversationId}] Stream complete. Final length: ${accumulatedContent.length}`);
+          // Display any remaining queued content
+          await displayNextChunk();
           break;
         }
 
-        // Decode chunk without waiting for complete lines
+        // Decode chunk
         buffer += decoder.decode(value, { stream: true });
-        console.log(`📦 [${conversationId}] Buffer size: ${buffer.length}, chunk size: ${value.length}`);
         
         // Process complete lines
         const lines = buffer.split("\n");
-        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             try {
               const jsonStr = line.substring(6).trim();
-              console.log(`🔍 [${conversationId}] Parsing line:`, jsonStr.substring(0, 100));
               
               if (jsonStr && jsonStr !== "{}" && jsonStr !== "[DONE]") {
                 const data = JSON.parse(jsonStr);
@@ -77,29 +103,25 @@ class StreamManager {
                   console.error(`❌ [${conversationId}] Stream error:`, data.error);
                   accumulatedContent = `Error: ${data.error}`;
                   
-                  // Immediate UI update for errors
                   if (onChunk) {
                     onChunk(accumulatedContent);
                   }
                 } else {
-                  // Support both formats: OpenAI-style (choices[0].delta.content) and simple (text)
                   const text = data.choices?.[0]?.delta?.content || data.text;
                   
                   if (text) {
-                    accumulatedContent += text;
-                    console.log(`✨ [${conversationId}] Added text, total length: ${accumulatedContent.length}`);
+                    // Add to display queue for smooth rendering
+                    displayQueue.push(text);
                     
-                    // Immediate UI update - token by token
-                    if (onChunk) {
-                      onChunk(accumulatedContent);
+                    // Start displaying if not already
+                    if (!isDisplaying) {
+                      displayNextChunk();
                     }
-                  } else {
-                    console.warn(`⚠️ [${conversationId}] No text in data:`, data);
                   }
                 }
               }
             } catch (e) {
-              console.warn(`⚠️ [${conversationId}] Failed to parse line:`, e, line.substring(0, 100));
+              console.warn(`⚠️ [${conversationId}] Failed to parse line:`, e);
             }
           }
         }
@@ -114,10 +136,8 @@ class StreamManager {
               const data = JSON.parse(jsonStr);
               const text = data.choices?.[0]?.delta?.content || data.text;
               if (text) {
-                accumulatedContent += text;
-                if (onChunk) {
-                  onChunk(accumulatedContent);
-                }
+                displayQueue.push(text);
+                await displayNextChunk();
               }
             }
           } catch (e) {
