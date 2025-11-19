@@ -166,6 +166,7 @@ export const MigrationButton = () => {
       let batchNumber = 0;
       let totalRows = 0;
       const allBatches: Array<{ sql: string; rowCount: number }> = [];
+      let batchSize = 1000;
 
       while (true) {
         const response = await fetch(
@@ -176,11 +177,17 @@ export const MigrationButton = () => {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
             },
-            body: JSON.stringify({ uuidCrosswalk, tableName, batchNumber }),
+            body: JSON.stringify({ uuidCrosswalk, tableName, batchNumber, batchSize }),
           }
         );
 
         if (!response.ok) {
+          if (response.status === 546 && batchSize > 250) {
+            console.warn(`Worker limit hit for ${tableName} batch ${batchNumber} at batchSize=${batchSize}, retrying with 250 rows`);
+            batchSize = 250;
+            continue;
+          }
+
           throw new Error(`HTTP ${response.status}`);
         }
 

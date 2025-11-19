@@ -11,10 +11,11 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const uuidCrosswalk = body.uuidCrosswalk as Array<{ oldUuid: string; newUuid: string; email: string }>;
-    const tableName = body.tableName as string;
-    const batchNumber = body.batchNumber as number || 0;
+  const body = await req.json();
+  const uuidCrosswalk = body.uuidCrosswalk as Array<{ oldUuid: string; newUuid: string; email: string }>;
+  const tableName = body.tableName as string;
+  const batchNumber = (body.batchNumber as number) || 0;
+  const batchSize = (body.batchSize as number) || 1000;
 
     if (!uuidCrosswalk || !Array.isArray(uuidCrosswalk)) {
       throw new Error('Missing uuidCrosswalk in request body');
@@ -43,8 +44,8 @@ Deno.serve(async (req) => {
       uuidMap.set(entry.oldUuid, entry.newUuid);
     });
 
-    // Fetch only the specific batch (1000 rows per batch)
-    const PAGE_SIZE = 1000;
+    // Fetch only the specific batch (configurable rows per batch; default 1000)
+    const PAGE_SIZE = Math.min(Math.max(batchSize, 1), 1000);
     const offset = batchNumber * PAGE_SIZE;
     
     const { data: batchData, error: fetchError } = await sourceSupabase
