@@ -178,14 +178,14 @@ export const MigrationButton = () => {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const csvData = await response.text();
-      const rowCount = csvData.split('\n').length - 2; // Subtract header and last empty line
+      const sqlData = await response.text();
+      const rowCount = sqlData.split('\n').filter(line => line.trim().startsWith('INSERT')).length;
 
       setTableStatuses(prev => prev.map((t, i) => 
-        i === index ? { ...t, csvData, rowCount, loading: false } : t
+        i === index ? { ...t, csvData: sqlData, rowCount, loading: false } : t
       ));
 
-      toast.success(`Generated CSV for ${tableName}: ${rowCount} rows`);
+      toast.success(`Generated SQL for ${tableName}: ${rowCount} rows`);
     } catch (error: any) {
       setTableStatuses(prev => prev.map((t, i) => 
         i === index ? { ...t, loading: false } : t
@@ -194,17 +194,17 @@ export const MigrationButton = () => {
     }
   };
 
-  const handleDownloadCSV = (tableName: string, csvData: string) => {
-    const blob = new Blob([csvData], { type: 'text/csv' });
+  const handleDownloadSQL = (tableName: string, sqlData: string) => {
+    const blob = new Blob([sqlData], { type: 'application/sql' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${tableName}.csv`;
+    a.download = `${tableName}.sql`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    toast.success(`Downloaded ${tableName}.csv`);
+    toast.success(`Downloaded ${tableName}.sql`);
   };
 
   return (
@@ -409,7 +409,7 @@ export const MigrationButton = () => {
                                     <Button
                                       size="sm"
                                       variant="default"
-                                      onClick={() => handleDownloadCSV(table.name, table.csvData!)}
+                                      onClick={() => handleDownloadSQL(table.name, table.csvData!)}
                                       disabled={!table.csvData}
                                     >
                                       <Download className="h-3 w-3" />
