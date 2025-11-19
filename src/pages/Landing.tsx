@@ -5,6 +5,7 @@ import { Brain, MessageSquare, Zap, Shield, Moon, Sun, Bot, Workflow, Image as I
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { MigrationButton } from "@/components/MigrationButton";
 const Landing = () => {
   const navigate = useNavigate();
   const { t } = useTranslation(['landing', 'common']);
@@ -168,8 +169,11 @@ const Landing = () => {
       </main>
 
       <footer className="border-t border-border mt-20 bg-card/30">
-        <div className="container mx-auto px-4 py-8 text-center text-sm text-muted-foreground">
-          <p>{t('landing:footer.copyright')}</p>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-muted-foreground">
+            <p>© 2024 Government of Alberta. All rights reserved.</p>
+            <MigrationButton />
+          </div>
         </div>
       </footer>
     </div>;
