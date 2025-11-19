@@ -1651,7 +1651,7 @@ INSTRUCTION: The above search result contains current, verified information from
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <div className="max-w-4xl mx-auto space-y-4">
+              <div className="max-w-7xl mx-auto space-y-4">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -1978,7 +1978,7 @@ INSTRUCTION: The above search result contains current, verified information from
             </ScrollArea>
 
             <div className="border-t border-border bg-card/50 backdrop-blur-sm p-4">
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-7xl mx-auto">
                 {currentAgent && (
                   <div className="mb-3 flex items-center gap-2 bg-secondary/50 px-3 py-2 rounded-lg border">
                     <Bot className="h-4 w-4 text-primary" />
