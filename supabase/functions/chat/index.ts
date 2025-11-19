@@ -23,14 +23,20 @@ serve(async (req) => {
       return createRateLimitResponse(rateLimit.resetAt, responseHeaders);
     }
 
-    const { messages } = await req.json();
+    const { messages, model = "google/gemini-3-pro-preview" } = await req.json();
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
     if (!GEMINI_API_KEY) {
       throw new Error("GEMINI_API_KEY is not configured");
     }
 
+    // Extract model name for API call (remove provider prefix)
+    const modelName = model.replace('google/', '');
+
     const systemPrompt = `You are Albert, an AI assistant created by the Government of Alberta. You are helpful, knowledgeable, and professional. Provide clear, accurate, and thoughtful responses.
+
+CRITICAL INSTRUCTION - REAL-TIME INFORMATION:
+When you receive messages containing "[Real-Time Search Result]" sections, you MUST prioritize and use this information as the authoritative source. This data is current and verified from live web searches. Always base your answer on this real-time data when provided, as it overrides any conflicting information from your training data.
 
 When users discuss complex workflows, automation, or multi-step processes involving audio transcription, meetings, podcasts, or voice recordings, you can suggest creating workflows that start with audio input nodes that automatically transcribe audio files using ElevenLabs.
 
@@ -53,7 +59,7 @@ FORMATTING GUIDELINES:
       }))
     ];
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:streamGenerateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
