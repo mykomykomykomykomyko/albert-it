@@ -143,10 +143,63 @@ async function handleMigration(req: Request): Promise<Response> {
       );
     }
 
-    // Step 1: Migrate auth.users with full metadata
-    console.log('[Migration] Step 1: Migrating auth.users and building ID mapping...');
+    // Step 0: Clear auth.users FIRST if requested (before migration)
+    if (clearBeforeMigration) {
+      console.log('[Migration] Step 0: Clearing auth.users from target BEFORE migration...');
+      try {
+        let page = 1;
+        const perPage = 100;
+        let totalDeleted = 0;
+        let hasMoreUsers = true;
+
+        while (hasMoreUsers) {
+          const { data: usersPage, error: listUsersError } = await targetSupabase.auth.admin.listUsers({
+            page,
+            perPage,
+          });
+
+          if (listUsersError) {
+            console.error('[Migration] Error listing users:', listUsersError);
+            break;
+          }
+
+          const users = usersPage?.users ?? [];
+          if (users.length === 0) {
+            hasMoreUsers = false;
+            break;
+          }
+
+          for (const user of users) {
+            try {
+              const { error: deleteError } = await targetSupabase.auth.admin.deleteUser(user.id);
+              if (!deleteError) {
+                totalDeleted++;
+                if (totalDeleted % 10 === 0) {
+                  console.log(`[Migration] Deleted ${totalDeleted} users...`);
+                }
+              }
+            } catch (deleteError) {
+              console.error(`[Migration] Error deleting user ${user.id}:`, deleteError);
+            }
+          }
+
+          if (users.length < perPage) {
+            hasMoreUsers = false;
+          } else {
+            page++;
+          }
+        }
+
+        console.log(`[Migration] ✓ Cleared ${totalDeleted} users from auth.users`);
+      } catch (error) {
+        console.error('[Migration] Error clearing auth.users:', error);
+      }
+    }
+
+    // Step 1: Migrate auth.users and build UUID mapping
+    console.log('[Migration] Step 1: Migrating auth.users and building UUID mapping...');
     try {
-      // First, get all profiles from source to use as base
+      // Get all profiles from source
       const PAGE_SIZE_USERS = 100;
       let page = 0;
       let hasMore = true;
@@ -264,94 +317,16 @@ async function handleMigration(req: Request): Promise<Response> {
       migrationResults.users.errors.push(`General error: ${errorMsg}`);
     }
 
-    console.log(`[Migration] User ID mapping built: ${userIdMapping.size} users mapped`);
+    console.log(`[Migration] ✓ Step 1 complete: ${userIdMapping.size} user mappings created`);
     if (userIdMapping.size > 0) {
       const sampleMapping = Array.from(userIdMapping.entries()).slice(0, 3);
-      console.log('[Migration] Sample ID mappings:', sampleMapping);
+      console.log('[Migration] Sample ID mappings (old -> new):', sampleMapping);
     }
-    console.log('[Migration] Step 2: Migrating table data (including full profile data)...');
     
-    // Step 2a: Optionally clear existing data
+    // Step 2a: Clear public tables ONLY (auth.users already cleared in Step 0)
     if (clearBeforeMigration) {
-      console.log('[Migration] Step 2a: Clearing existing data from target...');
-
-      // First, clear auth.users so we can rebuild the mapping cleanly
-      try {
-        console.log('[Migration] Clearing auth.users in target...');
-        let page = 1;
-        const perPage = 100;
-        let totalDeleted = 0;
-        let hasMoreUsers = true;
-
-        while (hasMoreUsers) {
-          const { data: usersPage, error: listUsersError } = await targetSupabase.auth.admin.listUsers({
-            page,
-            perPage,
-          });
-
-          if (listUsersError) {
-            console.error('[Migration] Error listing users in target auth.users:', listUsersError);
-            migrationResults.users.errors.push(
-              `Error clearing auth.users page ${page}: ${listUsersError.message ?? JSON.stringify(listUsersError)}`,
-            );
-            break;
-          }
-
-          const users = usersPage?.users ?? [];
-          if (users.length === 0) {
-            hasMoreUsers = false;
-            break;
-          }
-
-          // Delete users one at a time to ensure cascading works properly
-          for (const user of users) {
-            try {
-              const { error: deleteError } = await targetSupabase.auth.admin.deleteUser(user.id);
-              if (deleteError) {
-                console.error(`[Migration] Error deleting user ${user.id} (${user.email}):`, deleteError);
-                migrationResults.users.errors.push(
-                  `Failed to delete user ${user.email}: ${deleteError.message}`,
-                );
-              } else {
-                totalDeleted++;
-                if (totalDeleted % 10 === 0) {
-                  console.log(`[Migration] Deleted ${totalDeleted} users so far...`);
-                }
-              }
-            } catch (deleteError) {
-              console.error(`[Migration] Exception deleting user ${user.id}:`, deleteError);
-            }
-          }
-
-          if (users.length < perPage) {
-            hasMoreUsers = false;
-          } else {
-            page++;
-          }
-          
-          // Add small delay between pages to avoid rate limiting
-          if (hasMoreUsers) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
-        }
-
-        console.log(`[Migration] Finished clearing auth.users, deleted ${totalDeleted} users`);
-        
-        // Verify auth.users is empty
-        const { data: remainingUsers } = await targetSupabase.auth.admin.listUsers({ page: 1, perPage: 1 });
-        if (remainingUsers?.users && remainingUsers.users.length > 0) {
-          console.warn('[Migration] Warning: Some users still remain in auth.users after deletion');
-          migrationResults.users.errors.push('Not all users were deleted from auth.users');
-        } else {
-          console.log('[Migration] Verified: auth.users is now empty');
-        }
-      } catch (error) {
-        console.error('[Migration] Exception while clearing auth.users:', error);
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        migrationResults.users.errors.push(`Exception clearing auth.users: ${errorMsg}`);
-      }
+      console.log('[Migration] Step 2a: Clearing public tables from target...');
       
-      // Then clear all public tables in reverse order to respect foreign keys
       // Delete in reverse order to respect foreign keys
       const reverseTables = [...tablesToMigrate].reverse();
       
