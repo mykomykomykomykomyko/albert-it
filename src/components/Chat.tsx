@@ -1176,34 +1176,47 @@ INSTRUCTION: The above search result contains current, verified information from
       
       // Keep loading state active during streaming for visual feedback
       // Start token-by-token streaming with immediate UI updates
+      const streamingConversationId = currentConversation.id;
       streamManager.startStream(
-        currentConversation.id,
+        streamingConversationId,
         assistantMessage.id,
         response,
-        // Update UI immediately token-by-token
+        // Update UI immediately token-by-token - but only if still on same conversation
         (content) => {
-          setMessages(prev => prev.map(msg => 
-            msg.id === assistantMessage.id 
-              ? { ...msg, content }
-              : msg
-          ));
+          setMessages(prev => {
+            // Only update if we're still viewing the conversation that's streaming
+            if (currentConversation?.id === streamingConversationId) {
+              return prev.map(msg => 
+                msg.id === assistantMessage.id 
+                  ? { ...msg, content }
+                  : msg
+              );
+            }
+            return prev;
+          });
         }
       ).then(() => {
         // Stream completed - remove from active streams and stop loading
         setActiveStreams(prev => {
           const newSet = new Set(prev);
-          newSet.delete(currentConversation.id);
+          newSet.delete(streamingConversationId);
           return newSet;
         });
-        setIsLoading(false);
+        // Only stop loading if we're still on the same conversation
+        if (currentConversation?.id === streamingConversationId) {
+          setIsLoading(false);
+        }
       }).catch((error) => {
         console.error('Stream error:', error);
         setActiveStreams(prev => {
           const newSet = new Set(prev);
-          newSet.delete(currentConversation.id);
+          newSet.delete(streamingConversationId);
           return newSet;
         });
-        setIsLoading(false);
+        // Only stop loading if we're still on the same conversation
+        if (currentConversation?.id === streamingConversationId) {
+          setIsLoading(false);
+        }
       });
 
       setImages([]);

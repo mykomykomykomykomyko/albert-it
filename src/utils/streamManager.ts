@@ -50,7 +50,10 @@ class StreamManager {
     let accumulatedContent = "";
     let buffer = "";
     const SAVE_INTERVAL = 1000; // Save to DB every 1 second
+    const UI_UPDATE_INTERVAL = 50; // Update UI every 50ms for smooth streaming
     let lastSaveTime = Date.now();
+    let lastUIUpdateTime = Date.now();
+    let pendingUIUpdate = false;
 
     // Function to save current content to database
     const saveToDatabase = async (content: string) => {
@@ -76,6 +79,30 @@ class StreamManager {
       }
     };
 
+    // Throttled UI update function for smooth streaming
+    const scheduleUIUpdate = () => {
+      if (pendingUIUpdate) return;
+      
+      const timeSinceLastUpdate = Date.now() - lastUIUpdateTime;
+      if (timeSinceLastUpdate >= UI_UPDATE_INTERVAL) {
+        // Update immediately if enough time has passed
+        if (onChunk) {
+          onChunk(accumulatedContent);
+        }
+        lastUIUpdateTime = Date.now();
+      } else {
+        // Schedule update for next interval
+        pendingUIUpdate = true;
+        setTimeout(() => {
+          if (onChunk) {
+            onChunk(accumulatedContent);
+          }
+          lastUIUpdateTime = Date.now();
+          pendingUIUpdate = false;
+        }, UI_UPDATE_INTERVAL - timeSinceLastUpdate);
+      }
+    };
+
     try {
       console.log(`📖 [${conversationId}] Starting token-by-token stream for message ${messageId}`);
 
@@ -83,6 +110,10 @@ class StreamManager {
         const { done, value } = await reader.read();
         if (done) {
           console.log(`✅ [${conversationId}] Stream complete. Final length: ${accumulatedContent.length}`);
+          // Final UI update
+          if (onChunk) {
+            onChunk(accumulatedContent);
+          }
           break;
         }
 
@@ -121,10 +152,8 @@ class StreamManager {
                       stream.accumulatedContent = accumulatedContent;
                     }
                     
-                    // Update UI immediately
-                    if (onChunk) {
-                      onChunk(accumulatedContent);
-                    }
+                    // Schedule throttled UI update for smooth streaming
+                    scheduleUIUpdate();
                     
                     // Periodic save to database
                     if (Date.now() - lastSaveTime > SAVE_INTERVAL) {
