@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
       schemaSetup: { success: false, error: '' },
       tables: {} as Record<string, { rows: number; success: boolean; error?: string }>,
       users: { total: 0, migrated: 0, errors: [] as string[] },
+      storage: {} as Record<string, { files: number; success: boolean; error?: string }>,
       warnings: [] as string[],
     };
 
@@ -443,6 +444,122 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Step 3: Migrate storage bucket files
+    console.log('[Migration] Step 3: Migrating storage bucket files...');
+    
+    const bucketsToMigrate = [
+      'profile-images',
+      'generated-images',
+      'translations',
+      'agent-documents',
+    ];
+    
+    for (const bucketName of bucketsToMigrate) {
+      try {
+        console.log(`[Migration] Migrating files from bucket: ${bucketName}`);
+        
+        let fileCount = 0;
+        let offset = 0;
+        const limit = 100;
+        let hasMoreFiles = true;
+        
+        while (hasMoreFiles) {
+          // List files in source bucket
+          const { data: files, error: listError } = await sourceSupabase
+            .storage
+            .from(bucketName)
+            .list('', {
+              limit,
+              offset,
+              sortBy: { column: 'name', order: 'asc' },
+            });
+          
+          if (listError) {
+            console.error(`[Migration] Error listing files in ${bucketName}:`, listError);
+            migrationResults.storage[bucketName] = {
+              files: fileCount,
+              success: false,
+              error: listError.message,
+            };
+            break;
+          }
+          
+          if (!files || files.length === 0) {
+            hasMoreFiles = false;
+            migrationResults.storage[bucketName] = {
+              files: fileCount,
+              success: true,
+            };
+            break;
+          }
+          
+          // Process each file
+          for (const file of files) {
+            try {
+              // Skip folders (directories have no name or end with /)
+              if (!file.name || file.name.endsWith('/')) {
+                continue;
+              }
+              
+              // Download file from source
+              const { data: fileData, error: downloadError } = await sourceSupabase
+                .storage
+                .from(bucketName)
+                .download(file.name);
+              
+              if (downloadError) {
+                console.error(`[Migration] Error downloading ${bucketName}/${file.name}:`, downloadError);
+                continue;
+              }
+              
+              // Upload file to target
+              const { error: uploadError } = await targetSupabase
+                .storage
+                .from(bucketName)
+                .upload(file.name, fileData, {
+                  contentType: file.metadata?.mimetype,
+                  upsert: true,
+                });
+              
+              if (uploadError) {
+                console.error(`[Migration] Error uploading ${bucketName}/${file.name}:`, uploadError);
+                continue;
+              }
+              
+              fileCount++;
+              
+              if (fileCount % 10 === 0) {
+                console.log(`[Migration] Migrated ${fileCount} files from ${bucketName}`);
+              }
+            } catch (error) {
+              console.error(`[Migration] Exception processing file ${file.name}:`, error);
+            }
+          }
+          
+          offset += limit;
+          
+          // If we got fewer files than limit, we're done
+          if (files.length < limit) {
+            hasMoreFiles = false;
+            migrationResults.storage[bucketName] = {
+              files: fileCount,
+              success: true,
+            };
+          }
+        }
+        
+        console.log(`[Migration] Completed migration of ${fileCount} files from ${bucketName}`);
+      } catch (error) {
+        console.error(`[Migration] Exception migrating bucket ${bucketName}:`, error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        migrationResults.storage[bucketName] = {
+          files: 0,
+          success: false,
+          error: errorMsg,
+        };
+      }
+    }
+
     console.log('[Migration] Migration complete!');
     console.log('[Migration] Results:', JSON.stringify(migrationResults, null, 2));
 
@@ -453,8 +570,8 @@ Deno.serve(async (req) => {
         results: migrationResults,
         postMigrationSteps: [
           'Verify all data was migrated correctly',
+          'Verify storage bucket files were copied successfully',
           'Deploy edge functions manually: supabase functions deploy',
-          'Update storage buckets and policies if needed',
           'Test authentication and user access',
           'Users will need to reset passwords to access their accounts',
           'See MIGRATION_GUIDE.md for complete instructions',
