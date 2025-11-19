@@ -36,6 +36,7 @@ import { Toggle } from './ui/toggle';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { streamManager } from '@/utils/streamManager';
 
 interface ImageAttachment {
   name: string;
@@ -87,6 +88,7 @@ const Chat = () => {
   const [messagesToDelete, setMessagesToDelete] = useState<Message[]>([]);
   const [viewAllImagesOpen, setViewAllImagesOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-pro-preview");
+  const [activeStreams, setActiveStreams] = useState<Set<string>>(new Set());
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -251,6 +253,8 @@ const Chat = () => {
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
+      // Cancel all active streams on unmount
+      streamManager.cancelAllStreams();
     };
   }, [navigate]);
 
@@ -268,6 +272,61 @@ const Chat = () => {
       setMessages([]);
     }
   }, [location.pathname]);
+
+  // Set up realtime subscriptions for message updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('messages-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload) => {
+          console.log('📨 Message updated:', payload);
+          const updatedMessage = payload.new as Message;
+          
+          // Only update if this message belongs to current conversation
+          if (currentConversation && updatedMessage.conversation_id === currentConversation.id) {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === updatedMessage.id ? updatedMessage as any : msg
+              )
+            );
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages'
+        },
+        (payload) => {
+          console.log('📨 Message inserted:', payload);
+          const newMessage = payload.new as Message;
+          
+          // Only add if this message belongs to current conversation
+          if (currentConversation && newMessage.conversation_id === currentConversation.id) {
+            setMessages(prev => {
+              // Check if message already exists (avoid duplicates)
+              if (prev.some(msg => msg.id === newMessage.id)) {
+                return prev;
+              }
+              return [...prev, newMessage as any];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentConversation]);
 
   // Handle automatic message send after conversation creation
   useEffect(() => {
@@ -397,6 +456,11 @@ const Chat = () => {
 
     setCurrentConversation(convData);
     setMessages((messagesData || []) as any);
+    
+    // Check if this conversation has an active stream
+    if (streamManager.isStreaming(conversationId)) {
+      setActiveStreams(prev => new Set(prev).add(conversationId));
+    }
     
     // Auto-scroll to bottom after messages load
     setTimeout(() => {
@@ -1105,75 +1169,33 @@ INSTRUCTION: The above search result contains current, verified information from
       const finalMessages = [...updatedMessages, assistantMessage as any];
       setMessages(finalMessages);
 
-      // Stream response using Gemini format
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedContent = '';
+      // Update active streams state
+      setActiveStreams(prev => new Set(prev).add(currentConversation.id));
+      setIsLoading(false); // No longer loading from UI perspective
 
-      if (reader) {
-        console.log('📖 Starting to read stream...');
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            console.log('✅ Stream complete. Final content length:', accumulatedContent.length);
-            break;
-          }
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const jsonStr = line.substring(6).trim();
-                if (jsonStr && jsonStr !== '{}') {
-                  const data = JSON.parse(jsonStr);
-
-                  if (data.error) {
-                    const errMsg = `Gemini error: ${data.error}`;
-                    accumulatedContent = errMsg;
-                    toast.error(errMsg);
-                    setMessages(prev => prev.map(msg => 
-                      msg.id === (assistantMessage as any).id 
-                        ? { ...msg, content: accumulatedContent }
-                        : msg
-                    ));
-                  } else if (data.text) {
-                    accumulatedContent += data.text;
-                    setMessages(prev => prev.map(msg => 
-                      msg.id === (assistantMessage as any).id 
-                        ? { ...msg, content: accumulatedContent }
-                        : msg
-                    ));
-                  }
-                }
-              } catch (e) {
-                console.warn('Failed to parse line:', line, e);
-              }
-            }
+      // Start background streaming
+      await streamManager.startStream(
+        currentConversation.id,
+        assistantMessage.id,
+        response,
+        // Only update UI if we're still viewing this conversation
+        (content) => {
+          if (currentConversation.id === location.pathname.split('/')[2]) {
+            setMessages(prev => prev.map(msg => 
+              msg.id === assistantMessage.id 
+                ? { ...msg, content }
+                : msg
+            ));
           }
         }
-      }
+      );
 
-      console.log('💾 Saving final content to DB. Length:', accumulatedContent.length, 'Content:', accumulatedContent);
-      
-      // Save final assistant message
-      const { error: updateError } = await supabase
-        .from("messages")
-        .update({ content: accumulatedContent })
-        .eq("id", assistantMessage.id);
-
-      if (updateError) {
-        console.error('❌ Failed to update message:', updateError);
-      } else {
-        console.log('✅ Message saved successfully');
-      }
-
-      // Update conversation timestamp
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", currentConversation.id);
+      // Stream completes in background, remove from active streams
+      setActiveStreams(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(currentConversation.id);
+        return newSet;
+      });
 
       setImages([]);
     } catch (error: any) {
@@ -1433,6 +1455,7 @@ INSTRUCTION: The above search result contains current, verified information from
           onUpdateRetention={handleUpdateRetention}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          activeStreams={activeStreams}
         />
         
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
