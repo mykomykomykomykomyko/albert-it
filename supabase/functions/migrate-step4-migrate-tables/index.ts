@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
         {
           headers: { 
             ...corsHeaders, 
-            'Content-Type': 'text/csv',
-            'Content-Disposition': `attachment; filename="${tableName}.csv"`
+            'Content-Type': 'application/sql',
+            'Content-Disposition': `attachment; filename="${tableName}.sql"`
           },
           status: 200,
         }
@@ -95,32 +95,32 @@ Deno.serve(async (req) => {
       return transformed;
     });
 
-    // Generate CSV
+    // Generate SQL INSERT statements
     const columns = Object.keys(transformedData[0]);
-    let csv = columns.join(',') + '\n';
+    let sql = '';
 
     for (const row of transformedData) {
       const values = columns.map(col => {
         const val = row[col];
-        if (val === null || val === undefined) return '';
-        if (typeof val === 'object') return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
-        if (typeof val === 'string' && (val.includes(',') || val.includes('"') || val.includes('\n'))) {
-          return `"${val.replace(/"/g, '""')}"`;
-        }
+        if (val === null || val === undefined) return 'NULL';
+        if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+        if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
+        if (typeof val === 'boolean') return val ? 'true' : 'false';
         return val;
       });
-      csv += values.join(',') + '\n';
+      
+      sql += `INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')}) ON CONFLICT (id) DO NOTHING;\n`;
     }
 
-    console.log(`[Step 4] ✓ Generated CSV for ${tableName}: ${transformedData.length} rows`);
+    console.log(`[Step 4] ✓ Generated SQL for ${tableName}: ${transformedData.length} rows`);
 
     return new Response(
-      csv,
+      sql,
       {
         headers: { 
           ...corsHeaders, 
-          'Content-Type': 'text/csv',
-          'Content-Disposition': `attachment; filename="${tableName}.csv"`
+          'Content-Type': 'application/sql',
+          'Content-Disposition': `attachment; filename="${tableName}.sql"`
         },
         status: 200,
       }
