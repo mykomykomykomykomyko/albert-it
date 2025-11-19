@@ -27,6 +27,7 @@ interface TableStatus {
   loading: boolean;
   csvData: string | null;
   rowCount: number | null;
+  batches: Array<{ sql: string; rowCount: number }>;
 }
 
 export const MigrationButton = () => {
@@ -54,7 +55,7 @@ export const MigrationButton = () => {
   ];
 
   const [tableStatuses, setTableStatuses] = useState<TableStatus[]>(
-    tablesToMigrate.map(name => ({ name, loading: false, csvData: null, rowCount: null }))
+    tablesToMigrate.map(name => ({ name, loading: false, csvData: null, rowCount: null, batches: [] }))
   );
 
   const handleStep1 = async () => {
@@ -158,34 +159,56 @@ export const MigrationButton = () => {
     }
 
     setTableStatuses(prev => prev.map((t, i) => 
-      i === index ? { ...t, loading: true } : t
+      i === index ? { ...t, loading: true, batches: [] } : t
     ));
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/migrate-step4-migrate-tables`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ uuidCrosswalk, tableName }),
-        }
-      );
+      let batchNumber = 0;
+      let totalRows = 0;
+      const allBatches: Array<{ sql: string; rowCount: number }> = [];
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      while (true) {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/migrate-step4-migrate-tables`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ uuidCrosswalk, tableName, batchNumber }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.rowCount === 0) {
+          break;
+        }
+
+        allBatches.push({ sql: result.sql, rowCount: result.rowCount });
+        totalRows += result.rowCount;
+
+        setTableStatuses(prev => prev.map((t, i) => 
+          i === index ? { ...t, rowCount: totalRows, batches: [...allBatches] } : t
+        ));
+
+        if (!result.hasMore) {
+          break;
+        }
+
+        batchNumber++;
       }
 
-      const sqlData = await response.text();
-      const rowCount = sqlData.split('\n').filter(line => line.trim().startsWith('INSERT')).length;
-
       setTableStatuses(prev => prev.map((t, i) => 
-        i === index ? { ...t, csvData: sqlData, rowCount, loading: false } : t
+        i === index ? { ...t, loading: false, csvData: allBatches.length > 0 ? 'batched' : null } : t
       ));
 
-      toast.success(`Generated SQL for ${tableName}: ${rowCount} rows`);
+      toast.success(`Generated ${allBatches.length} SQL file(s) for ${tableName}: ${totalRows} rows`);
     } catch (error: any) {
       setTableStatuses(prev => prev.map((t, i) => 
         i === index ? { ...t, loading: false } : t
@@ -194,17 +217,24 @@ export const MigrationButton = () => {
     }
   };
 
-  const handleDownloadSQL = (tableName: string, sqlData: string) => {
-    const blob = new Blob([sqlData], { type: 'application/sql' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${tableName}.sql`;
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-    toast.success(`Downloaded ${tableName}.sql`);
+  const handleDownloadSQL = (tableName: string, table: TableStatus) => {
+    if (!table.batches || table.batches.length === 0) return;
+
+    table.batches.forEach((batch, idx) => {
+      const blob = new Blob([batch.sql], { type: 'application/sql' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = table.batches.length > 1 
+        ? `${tableName}_batch${idx + 1}.sql` 
+        : `${tableName}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    });
+    
+    toast.success(`Downloaded ${table.batches.length} SQL file(s) for ${tableName}`);
   };
 
   return (
@@ -409,10 +439,13 @@ export const MigrationButton = () => {
                                     <Button
                                       size="sm"
                                       variant="default"
-                                      onClick={() => handleDownloadSQL(table.name, table.csvData!)}
+                                      onClick={() => handleDownloadSQL(table.name, table)}
                                       disabled={!table.csvData}
                                     >
                                       <Download className="h-3 w-3" />
+                                      {table.batches && table.batches.length > 1 && (
+                                        <span className="ml-1 text-xs">({table.batches.length})</span>
+                                      )}
                                     </Button>
                                   </div>
                                 </td>
