@@ -12,6 +12,12 @@ Deno.serve(async (req) => {
 
   try {
     console.log('[Migration] Starting migration to new Supabase instance...');
+    
+    // Get request body for options
+    const body = await req.json().catch(() => ({}));
+    const clearBeforeMigration = body.clearBeforeMigration ?? false;
+    
+    console.log(`[Migration] Clear before migration: ${clearBeforeMigration}`);
 
     // Get secrets for the new Supabase instance
     const targetUrl = Deno.env.get('JR_URL');
@@ -209,8 +215,36 @@ Deno.serve(async (req) => {
       migrationResults.users.errors.push(`General error: ${errorMsg}`);
     }
 
-    // Step 2: Migrate table data with pagination for memory efficiency
     console.log('[Migration] Step 2: Migrating table data...');
+    
+    // Step 2a: Optionally clear existing data
+    if (clearBeforeMigration) {
+      console.log('[Migration] Step 2a: Clearing existing data from target...');
+      
+      // Delete in reverse order to respect foreign keys
+      const reverseTables = [...tablesToMigrate].reverse();
+      
+      for (const table of reverseTables) {
+        try {
+          console.log(`[Migration] Clearing table: ${table}`);
+          const { error: deleteError } = await targetSupabase
+            .from(table)
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+          
+          if (deleteError && !deleteError.message.includes('no rows')) {
+            console.warn(`[Migration] Error clearing ${table}:`, deleteError);
+          } else {
+            console.log(`[Migration] Cleared table: ${table}`);
+          }
+        } catch (error) {
+          console.warn(`[Migration] Exception clearing ${table}:`, error);
+        }
+      }
+      console.log('[Migration] Finished clearing tables');
+    }
+    
+    // Step 2b: Migrate table data with pagination for memory efficiency
     
     const PAGE_SIZE = 50; // Small page size to avoid memory issues
     const INSERT_BATCH_SIZE = 25; // Even smaller insert batches
