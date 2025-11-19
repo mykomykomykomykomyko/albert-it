@@ -25,7 +25,6 @@ import { AccessibilityPreferences } from '@/components/AccessibilityPreferences'
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { MigrationButton } from '@/components/MigrationButton';
 
 export function ChatHeader() {
   const navigate = useNavigate();
@@ -295,8 +294,6 @@ export function ChatHeader() {
               <Moon className="h-4 w-4" />
           )}
         </Button>
-        
-        <MigrationButton />
         
         {/* User Profile Menu */}
         <DropdownMenu>
