@@ -42,10 +42,11 @@ Deno.serve(async (req) => {
       uuidMap.set(entry.oldUuid, entry.newUuid);
     });
 
-    // Fetch all data for the specified table
+    // Fetch all data for the specified table (up to 10000 rows)
     const { data: allData, error: fetchError } = await sourceSupabase
       .from(tableName)
-      .select('*');
+      .select('*')
+      .limit(10000);
 
     if (fetchError) {
       throw new Error(`Error fetching ${tableName}: ${fetchError.message}`);
