@@ -2,10 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Database } from "lucide-react";
+import { Loader2, Database, Trash2, Users, Database as DatabaseIcon, Table2 } from "lucide-react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -14,73 +13,159 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+interface UuidMapping {
+  oldUuid: string;
+  newUuid: string;
+  email: string;
+}
 
 export const MigrationButton = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [clearData, setClearData] = useState(true);
-  const [progress, setProgress] = useState<string>('');
-  const [progressDetails, setProgressDetails] = useState<string[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const [comparisonData, setComparisonData] = useState<{
-    tables: Record<string, { source: number; target: number; match: boolean }>;
-    storage: Record<string, { source: number; target: number; match: boolean }>;
-  } | null>(null);
+  const [step1Loading, setStep1Loading] = useState(false);
+  const [step2Loading, setStep2Loading] = useState(false);
+  const [step3Loading, setStep3Loading] = useState(false);
+  const [step4Loading, setStep4Loading] = useState(false);
+  
+  const [step1Complete, setStep1Complete] = useState(false);
+  const [step2Complete, setStep2Complete] = useState(false);
+  const [step3Complete, setStep3Complete] = useState(false);
+  const [step4Complete, setStep4Complete] = useState(false);
 
-  const handleMigration = async () => {
-    setIsLoading(true);
-    setProgress('Starting migration...');
-    setProgressDetails(['Initializing connection to Albert Junior']);
-    setShowResults(false);
-    setComparisonData(null);
+  const [uuidCrosswalk, setUuidCrosswalk] = useState<UuidMapping[]>([]);
+  const [step1Results, setStep1Results] = useState<any>(null);
+  const [step2Results, setStep2Results] = useState<any>(null);
+  const [step3Results, setStep3Results] = useState<any>(null);
+  const [step4Results, setStep4Results] = useState<any>(null);
+
+  const handleStep1 = async () => {
+    setStep1Loading(true);
+    setStep1Results(null);
+    setStep1Complete(false);
     
     try {
-      toast.info("Starting migration to Albert Junior...");
-      setProgressDetails(prev => [...prev, 'Sending migration request...']);
+      toast.info("Step 1: Clearing all public tables...");
       
-      const { data, error } = await supabase.functions.invoke('migrate-to-new-supabase', {
-        body: { clearBeforeMigration: clearData }
-      });
+      const { data, error } = await supabase.functions.invoke('migrate-step1-clear-tables');
 
       if (error) {
-        console.error('Migration error:', error);
-        setProgress('Migration failed to start');
-        setProgressDetails(prev => [...prev, `Error: ${error.message}`]);
-        toast.error(`Migration failed: ${error.message}`);
-        setIsLoading(false);
+        console.error('Step 1 error:', error);
+        toast.error(`Step 1 failed: ${error.message}`);
+        setStep1Loading(false);
         return;
       }
 
-      console.log('Migration response:', data);
-      
-      if (data?.started) {
-        setProgress('Migration running in background');
-        setProgressDetails(prev => [
-          ...prev, 
-          'Migration started successfully',
-          'Running in background to avoid timeout',
-          'Check edge function logs for detailed progress',
-          'This may take several minutes...'
-        ]);
-        
-        toast.success("Migration started successfully!");
-        toast.info("Check the edge function logs for progress details.", { duration: 5000 });
-        
-        // Keep the progress modal open for a bit so user sees the message
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 3000);
-      } else {
-        setProgress('Unexpected response');
-        setProgressDetails(prev => [...prev, 'Check console for details']);
-        toast.error("Unexpected response from migration function.");
-        setIsLoading(false);
-      }
+      console.log('Step 1 response:', data);
+      setStep1Results(data);
+      setStep1Complete(true);
+      toast.success(`Step 1 complete: ${data.message}`);
     } catch (error) {
-      console.error('Exception during migration:', error);
-      setProgress('Migration failed');
-      setProgressDetails(prev => [...prev, `Exception: ${error}`]);
-      toast.error("Migration failed with an exception. Check console.");
-      setIsLoading(false);
+      console.error('Step 1 exception:', error);
+      toast.error("Step 1 failed with an exception");
+    } finally {
+      setStep1Loading(false);
+    }
+  };
+
+  const handleStep2 = async () => {
+    setStep2Loading(true);
+    setStep2Results(null);
+    setStep2Complete(false);
+    
+    try {
+      toast.info("Step 2: Clearing auth.users...");
+      
+      const { data, error } = await supabase.functions.invoke('migrate-step2-clear-auth');
+
+      if (error) {
+        console.error('Step 2 error:', error);
+        toast.error(`Step 2 failed: ${error.message}`);
+        setStep2Loading(false);
+        return;
+      }
+
+      console.log('Step 2 response:', data);
+      setStep2Results(data);
+      setStep2Complete(true);
+      toast.success(`Step 2 complete: ${data.message}`);
+    } catch (error) {
+      console.error('Step 2 exception:', error);
+      toast.error("Step 2 failed with an exception");
+    } finally {
+      setStep2Loading(false);
+    }
+  };
+
+  const handleStep3 = async () => {
+    setStep3Loading(true);
+    setStep3Results(null);
+    setStep3Complete(false);
+    setUuidCrosswalk([]);
+    
+    try {
+      toast.info("Step 3: Populating auth.users and building UUID crosswalk...");
+      
+      const { data, error } = await supabase.functions.invoke('migrate-step3-populate-auth');
+
+      if (error) {
+        console.error('Step 3 error:', error);
+        toast.error(`Step 3 failed: ${error.message}`);
+        setStep3Loading(false);
+        return;
+      }
+
+      console.log('Step 3 response:', data);
+      setStep3Results(data);
+      
+      if (data?.uuidCrosswalk) {
+        setUuidCrosswalk(data.uuidCrosswalk);
+        console.log(`UUID Crosswalk received: ${data.uuidCrosswalk.length} mappings`);
+      }
+      
+      setStep3Complete(true);
+      toast.success(`Step 3 complete: ${data.message}`, { duration: 5000 });
+    } catch (error) {
+      console.error('Step 3 exception:', error);
+      toast.error("Step 3 failed with an exception");
+    } finally {
+      setStep3Loading(false);
+    }
+  };
+
+  const handleStep4 = async () => {
+    if (!uuidCrosswalk || uuidCrosswalk.length === 0) {
+      toast.error("Please complete Step 3 first to get the UUID crosswalk");
+      return;
+    }
+
+    setStep4Loading(true);
+    setStep4Results(null);
+    setStep4Complete(false);
+    
+    try {
+      toast.info("Step 4: Migrating all tables with UUID transformation...");
+      
+      const { data, error } = await supabase.functions.invoke('migrate-step4-migrate-tables', {
+        body: { uuidCrosswalk }
+      });
+
+      if (error) {
+        console.error('Step 4 error:', error);
+        toast.error(`Step 4 failed: ${error.message}`);
+        setStep4Loading(false);
+        return;
+      }
+
+      console.log('Step 4 response:', data);
+      setStep4Results(data);
+      setStep4Complete(true);
+      toast.success(`Step 4 complete: ${data.message}`, { duration: 5000 });
+    } catch (error) {
+      console.error('Step 4 exception:', error);
+      toast.error("Step 4 failed with an exception");
+    } finally {
+      setStep4Loading(false);
     }
   };
 
@@ -91,197 +176,201 @@ export const MigrationButton = () => {
           <Button
             variant="outline"
             size="sm"
-            disabled={isLoading}
             className="gap-2"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Syncing...
-              </>
-            ) : (
-              <>
-                <Database className="h-4 w-4" />
-                Sync to Albert Junior
-              </>
-            )}
+            <Database className="h-4 w-4" />
+            Sync to Albert Junior
           </Button>
         </AlertDialogTrigger>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-4xl max-h-[90vh]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Migrate to Albert Junior?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p className="font-semibold text-destructive">
-                ⚠️ IMPORTANT: Schema must be set up first!
-              </p>
-              <p>
-                This migration only copies data. Before running:
-              </p>
-              <ol className="list-decimal list-inside space-y-1 text-sm ml-2">
-                <li>Apply all migrations: <code className="bg-muted px-1 rounded">supabase db push</code></li>
-                <li>Deploy edge functions: <code className="bg-muted px-1 rounded">supabase functions deploy</code></li>
-                <li>Configure secrets and storage buckets</li>
-              </ol>
-              <p className="text-xs text-muted-foreground mt-2">
-                See <code className="bg-muted px-1 rounded">MIGRATION_GUIDE.md</code> for complete instructions
-              </p>
-              <p className="font-semibold text-foreground mt-4">
-                Migration will copy:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>All users (with temporary passwords requiring reset)</li>
-                <li>All table data</li>
-              </ul>
-              <div className="flex items-center space-x-2 mt-4 p-3 bg-muted rounded-md">
-                <input
-                  type="checkbox"
-                  id="clearData"
-                  checked={clearData}
-                  onChange={(e) => setClearData(e.target.checked)}
-                  className="h-4 w-4 cursor-pointer"
-                />
-                <label htmlFor="clearData" className="text-sm cursor-pointer">
-                  Clear existing data before migration (recommended for re-runs)
-                </label>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleMigration} disabled={isLoading}>
-              {isLoading ? "Migrating..." : "Start Migration"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {isLoading && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-card p-6 rounded-lg shadow-lg max-w-md w-full border">
-            <div className="flex items-center gap-3 mb-4">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <h3 className="text-lg font-semibold">{progress || 'Processing...'}</h3>
-            </div>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {progressDetails.map((detail, index) => (
-                <p key={index} className="text-sm text-muted-foreground">
-                  • {detail}
-                </p>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mt-4 pt-4 border-t">
-              Do not close this window. This process may take several minutes depending on data size.
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {/* Results Modal */}
-      <AlertDialog open={showResults} onOpenChange={setShowResults}>
-        <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Migration Verification Results</AlertDialogTitle>
+            <AlertDialogTitle>Migration to Albert Junior</AlertDialogTitle>
             <AlertDialogDescription>
-              Comparison of row counts between source (Lovable Cloud) and target (Albert Junior)
+              Complete the migration in 4 sequential steps. Each step must be completed successfully before proceeding.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          
-          {comparisonData && (
-            <div className="space-y-6">
-              {/* Tables Comparison */}
-              <div>
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Database className="h-4 w-4" />
-                  Database Tables
-                </h3>
-                <div className="border rounded-md overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="px-4 py-2 text-left font-medium">Table</th>
-                        <th className="px-4 py-2 text-right font-medium">Source</th>
-                        <th className="px-4 py-2 text-right font-medium">Target</th>
-                        <th className="px-4 py-2 text-center font-medium">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {Object.entries(comparisonData.tables).map(([table, counts]) => (
-                        <tr key={table} className={counts.match ? '' : 'bg-destructive/5'}>
-                          <td className="px-4 py-2 font-mono text-xs">{table}</td>
-                          <td className="px-4 py-2 text-right">{counts.source === -1 ? 'Error' : counts.source}</td>
-                          <td className="px-4 py-2 text-right">{counts.target === -1 ? 'Error' : counts.target}</td>
-                          <td className="px-4 py-2 text-center">
-                            {counts.match ? (
-                              <span className="text-green-600">✓</span>
-                            ) : (
-                              <span className="text-destructive">✗</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* Storage Comparison */}
-              <div>
-                <h3 className="text-sm font-semibold mb-2">Storage Buckets</h3>
-                <div className="border rounded-md overflow-hidden">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted">
-                      <tr>
-                        <th className="px-4 py-2 text-left font-medium">Bucket</th>
-                        <th className="px-4 py-2 text-right font-medium">Source Files</th>
-                        <th className="px-4 py-2 text-right font-medium">Target Files</th>
-                        <th className="px-4 py-2 text-center font-medium">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {Object.entries(comparisonData.storage).map(([bucket, counts]) => (
-                        <tr key={bucket} className={counts.match ? '' : 'bg-destructive/5'}>
-                          <td className="px-4 py-2 font-mono text-xs">{bucket}</td>
-                          <td className="px-4 py-2 text-right">{counts.source === -1 ? 'Error' : counts.source}</td>
-                          <td className="px-4 py-2 text-right">{counts.target === -1 ? 'Error' : counts.target}</td>
-                          <td className="px-4 py-2 text-center">
-                            {counts.match ? (
-                              <span className="text-green-600">✓</span>
-                            ) : (
-                              <span className="text-destructive">✗</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              
-              {/* Summary */}
-              <div className="p-4 bg-muted rounded-md space-y-2">
-                <p className="text-sm font-medium">Summary:</p>
-                <div className="text-xs space-y-1">
-                  <p>
-                    Tables: {Object.values(comparisonData.tables).filter(t => t.match).length} / {Object.keys(comparisonData.tables).length} matched
-                  </p>
-                  <p>
-                    Storage: {Object.values(comparisonData.storage).filter(s => s.match).length} / {Object.keys(comparisonData.storage).length} matched
-                  </p>
-                </div>
-                {(Object.values(comparisonData.tables).some(t => !t.match) || 
-                  Object.values(comparisonData.storage).some(s => !s.match)) && (
-                  <p className="text-xs text-destructive mt-2">
-                    ⚠️ Some counts don't match. Check the edge function logs for details.
-                  </p>
-                )}
-              </div>
+
+          <ScrollArea className="max-h-[60vh] pr-4">
+            <div className="space-y-4">
+              {/* Step 1 */}
+              <Card className={step1Complete ? "border-green-500" : ""}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Trash2 className="h-5 w-5" />
+                    Step 1: Clear Public Tables
+                  </CardTitle>
+                  <CardDescription>
+                    Remove all existing data from public tables in Albert Junior
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    onClick={handleStep1}
+                    disabled={step1Loading}
+                    className="w-full"
+                  >
+                    {step1Loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Clearing tables...
+                      </>
+                    ) : step1Complete ? (
+                      "✓ Completed - Click to re-run"
+                    ) : (
+                      "Run Step 1"
+                    )}
+                  </Button>
+                  {step1Results && (
+                    <div className="text-sm space-y-1 p-3 bg-muted rounded-md">
+                      <p className="font-medium">{step1Results.message}</p>
+                      {step1Results.results && (
+                        <div className="text-xs">
+                          {Object.entries(step1Results.results).map(([table, result]: [string, any]) => (
+                            <div key={table}>
+                              {table}: {result.deleted} rows {result.success ? "✓" : "✗"}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Step 2 */}
+              <Card className={step2Complete ? "border-green-500" : ""}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Step 2: Clear Auth Users
+                  </CardTitle>
+                  <CardDescription>
+                    Remove all existing users from auth.users in Albert Junior
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    onClick={handleStep2}
+                    disabled={step2Loading}
+                    className="w-full"
+                  >
+                    {step2Loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Clearing users...
+                      </>
+                    ) : step2Complete ? (
+                      "✓ Completed - Click to re-run"
+                    ) : (
+                      "Run Step 2"
+                    )}
+                  </Button>
+                  {step2Results && (
+                    <div className="text-sm p-3 bg-muted rounded-md">
+                      <p className="font-medium">{step2Results.message}</p>
+                      <p className="text-xs">Users deleted: {step2Results.usersDeleted}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Step 3 */}
+              <Card className={step3Complete ? "border-green-500" : ""}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <DatabaseIcon className="h-5 w-5" />
+                    Step 3: Populate Auth & Build UUID Crosswalk
+                  </CardTitle>
+                  <CardDescription>
+                    Create users in Albert Junior and map old UUIDs to new UUIDs
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    onClick={handleStep3}
+                    disabled={step3Loading}
+                    className="w-full"
+                  >
+                    {step3Loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating users...
+                      </>
+                    ) : step3Complete ? (
+                      "✓ Completed - Click to re-run"
+                    ) : (
+                      "Run Step 3"
+                    )}
+                  </Button>
+                  {step3Results && (
+                    <div className="text-sm space-y-1 p-3 bg-muted rounded-md">
+                      <p className="font-medium">{step3Results.message}</p>
+                      <p className="text-xs">Users migrated: {step3Results.usersMigrated} / {step3Results.totalProfiles}</p>
+                      <p className="text-xs">UUID mappings: {step3Results.uuidCrosswalk?.length || 0}</p>
+                      {step3Results.errors?.length > 0 && (
+                        <div className="text-xs text-red-500 mt-2">
+                          <p className="font-medium">Errors:</p>
+                          {step3Results.errors.slice(0, 5).map((err: string, i: number) => (
+                            <p key={i}>{err}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Step 4 */}
+              <Card className={step4Complete ? "border-green-500" : ""}>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Table2 className="h-5 w-5" />
+                    Step 4: Migrate All Tables
+                  </CardTitle>
+                  <CardDescription>
+                    Migrate all table data with UUID transformation (requires Step 3 crosswalk)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    onClick={handleStep4}
+                    disabled={step4Loading || !step3Complete}
+                    className="w-full"
+                  >
+                    {step4Loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Migrating tables...
+                      </>
+                    ) : step4Complete ? (
+                      "✓ Completed - Click to re-run"
+                    ) : !step3Complete ? (
+                      "Complete Step 3 first"
+                    ) : (
+                      "Run Step 4"
+                    )}
+                  </Button>
+                  {step4Results && (
+                    <div className="text-sm space-y-1 p-3 bg-muted rounded-md">
+                      <p className="font-medium">{step4Results.message}</p>
+                      {step4Results.results && (
+                        <div className="text-xs max-h-40 overflow-y-auto">
+                          {Object.entries(step4Results.results).map(([table, result]: [string, any]) => (
+                            <div key={table}>
+                              {table}: {result.rows} rows {result.success ? "✓" : "✗"}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
-          )}
-          
+          </ScrollArea>
+
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setShowResults(false)}>
-              Close
-            </AlertDialogAction>
+            <AlertDialogCancel>Close</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
