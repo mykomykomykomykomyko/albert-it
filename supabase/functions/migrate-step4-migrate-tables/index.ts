@@ -42,17 +42,81 @@ Deno.serve(async (req) => {
       uuidMap.set(entry.oldUuid, entry.newUuid);
     });
 
-    // Fetch all data for the specified table (up to 10000 rows)
-    const { data: allData, error: fetchError } = await sourceSupabase
-      .from(tableName)
-      .select('*')
-      .limit(10000);
+    // Fetch all data for the specified table in batches to bypass 1000 row limit
+    const PAGE_SIZE = 1000;
+    let offset = 0;
+    let sql = '';
+    let totalRows = 0;
 
-    if (fetchError) {
-      throw new Error(`Error fetching ${tableName}: ${fetchError.message}`);
+    while (true) {
+      const { data: batchData, error: fetchError } = await sourceSupabase
+        .from(tableName)
+        .select('*')
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      if (fetchError) {
+        throw new Error(`Error fetching ${tableName}: ${fetchError.message}`);
+      }
+
+      if (!batchData || batchData.length === 0) {
+        break;
+      }
+
+      // Transform UUIDs in the batch
+      const transformedBatch = batchData.map(row => {
+        const transformed = { ...row } as Record<string, any>;
+
+        if (transformed.user_id && uuidMap.has(transformed.user_id)) {
+          transformed.user_id = uuidMap.get(transformed.user_id);
+        }
+
+        if (tableName === 'profiles' && transformed.id && uuidMap.has(transformed.id)) {
+          transformed.id = uuidMap.get(transformed.id);
+        }
+
+        if (transformed.reviewer_id && uuidMap.has(transformed.reviewer_id)) {
+          transformed.reviewer_id = uuidMap.get(transformed.reviewer_id);
+        }
+
+        if (transformed.shared_by_user_id && uuidMap.has(transformed.shared_by_user_id)) {
+          transformed.shared_by_user_id = uuidMap.get(transformed.shared_by_user_id);
+        }
+        if (transformed.shared_with_user_id && uuidMap.has(transformed.shared_with_user_id)) {
+          transformed.shared_with_user_id = uuidMap.get(transformed.shared_with_user_id);
+        }
+
+        if (transformed.created_by && uuidMap.has(transformed.created_by)) {
+          transformed.created_by = uuidMap.get(transformed.created_by);
+        }
+
+        return transformed;
+      });
+
+      // Generate SQL INSERT statements for this batch
+      const columns = Object.keys(transformedBatch[0]);
+
+      for (const row of transformedBatch) {
+        const values = columns.map(col => {
+          const val = (row as any)[col];
+          if (val === null || val === undefined) return 'NULL';
+          if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+          if (typeof val === 'string') return `'${val.replace(/'/g, "''").replace(/\\/g, "\\\\")}'`;
+          if (typeof val === 'boolean') return val ? 'true' : 'false';
+          return val;
+        });
+        
+        sql += `INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')}) ON CONFLICT (id) DO NOTHING;\n`;
+      }
+
+      totalRows += transformedBatch.length;
+      offset += PAGE_SIZE;
+
+      if (batchData.length < PAGE_SIZE) {
+        break;
+      }
     }
 
-    if (!allData || allData.length === 0) {
+    if (!sql) {
       return new Response(
         '',
         {
@@ -66,54 +130,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Transform UUIDs in the data
-    const transformedData = allData.map(row => {
-      const transformed = { ...row };
-
-      if (transformed.user_id && uuidMap.has(transformed.user_id)) {
-        transformed.user_id = uuidMap.get(transformed.user_id);
-      }
-
-      if (tableName === 'profiles' && transformed.id && uuidMap.has(transformed.id)) {
-        transformed.id = uuidMap.get(transformed.id);
-      }
-
-      if (transformed.reviewer_id && uuidMap.has(transformed.reviewer_id)) {
-        transformed.reviewer_id = uuidMap.get(transformed.reviewer_id);
-      }
-
-      if (transformed.shared_by_user_id && uuidMap.has(transformed.shared_by_user_id)) {
-        transformed.shared_by_user_id = uuidMap.get(transformed.shared_by_user_id);
-      }
-      if (transformed.shared_with_user_id && uuidMap.has(transformed.shared_with_user_id)) {
-        transformed.shared_with_user_id = uuidMap.get(transformed.shared_with_user_id);
-      }
-
-      if (transformed.created_by && uuidMap.has(transformed.created_by)) {
-        transformed.created_by = uuidMap.get(transformed.created_by);
-      }
-
-      return transformed;
-    });
-
-    // Generate SQL INSERT statements
-    const columns = Object.keys(transformedData[0]);
-    let sql = '';
-
-    for (const row of transformedData) {
-      const values = columns.map(col => {
-        const val = row[col];
-        if (val === null || val === undefined) return 'NULL';
-        if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
-        if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
-        if (typeof val === 'boolean') return val ? 'true' : 'false';
-        return val;
-      });
-      
-      sql += `INSERT INTO public.${tableName} (${columns.join(', ')}) VALUES (${values.join(', ')}) ON CONFLICT (id) DO NOTHING;\n`;
-    }
-
-    console.log(`[Step 4] ✓ Generated SQL for ${tableName}: ${transformedData.length} rows`);
+    console.log(`[Step 4] ✓ Generated SQL for ${tableName}: ${totalRows} rows`);
 
     return new Response(
       sql,
