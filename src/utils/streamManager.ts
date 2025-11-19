@@ -62,24 +62,29 @@ class StreamManager {
           if (line.startsWith("data: ")) {
             try {
               const jsonStr = line.substring(6).trim();
-              if (jsonStr && jsonStr !== "{}") {
+              if (jsonStr && jsonStr !== "{}" && jsonStr !== "[DONE]") {
                 const data = JSON.parse(jsonStr);
 
                 if (data.error) {
                   console.error(`❌ [${conversationId}] Stream error:`, data.error);
                   accumulatedContent = `Error: ${data.error}`;
-                } else if (data.text) {
-                  accumulatedContent += data.text;
+                } else {
+                  // Support both formats: OpenAI-style (choices[0].delta.content) and simple (text)
+                  const text = data.choices?.[0]?.delta?.content || data.text;
                   
-                  // Update database immediately
-                  await supabase
-                    .from("messages")
-                    .update({ content: accumulatedContent })
-                    .eq("id", messageId);
+                  if (text) {
+                    accumulatedContent += text;
+                    
+                    // Update database immediately
+                    await supabase
+                      .from("messages")
+                      .update({ content: accumulatedContent })
+                      .eq("id", messageId);
 
-                  // Notify listeners (for UI updates if viewing this conversation)
-                  if (onChunk) {
-                    onChunk(accumulatedContent);
+                    // Notify listeners (for UI updates if viewing this conversation)
+                    if (onChunk) {
+                      onChunk(accumulatedContent);
+                    }
                   }
                 }
               }
