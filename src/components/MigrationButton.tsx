@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Database, Trash2, Users, Database as DatabaseIcon, Table2 } from "lucide-react";
+import { Loader2, Database, Trash2, Users, Database as DatabaseIcon, Table2, Download } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -22,22 +22,40 @@ interface UuidMapping {
   email: string;
 }
 
+interface TableStatus {
+  name: string;
+  loading: boolean;
+  csvData: string | null;
+  rowCount: number | null;
+}
+
 export const MigrationButton = () => {
   const [step1Loading, setStep1Loading] = useState(false);
   const [step2Loading, setStep2Loading] = useState(false);
   const [step3Loading, setStep3Loading] = useState(false);
-  const [step4Loading, setStep4Loading] = useState(false);
   
   const [step1Complete, setStep1Complete] = useState(false);
   const [step2Complete, setStep2Complete] = useState(false);
   const [step3Complete, setStep3Complete] = useState(false);
-  const [step4Complete, setStep4Complete] = useState(false);
 
   const [uuidCrosswalk, setUuidCrosswalk] = useState<UuidMapping[]>([]);
   const [step1Results, setStep1Results] = useState<any>(null);
   const [step2Results, setStep2Results] = useState<any>(null);
   const [step3Results, setStep3Results] = useState<any>(null);
-  const [step4Results, setStep4Results] = useState<any>(null);
+
+  const tablesToMigrate = [
+    'profiles', 'user_roles', 'user_preferences', 'user_temp_passwords',
+    'access_codes', 'frameworks', 'agents', 'agent_shares', 'conversations',
+    'messages', 'file_attachments', 'prompts', 'prompt_shares', 'prompt_executions',
+    'workflows', 'workflow_shares', 'workflow_executions', 'saved_canvases',
+    'saved_stages', 'image_analysis_sessions', 'image_analysis_images',
+    'image_analysis_prompts', 'image_analysis_results', 'meeting_transcripts',
+    'voice_analysis_results', 'chat_history'
+  ];
+
+  const [tableStatuses, setTableStatuses] = useState<TableStatus[]>(
+    tablesToMigrate.map(name => ({ name, loading: false, csvData: null, rowCount: null }))
+  );
 
   const handleStep1 = async () => {
     setStep1Loading(true);
@@ -133,19 +151,17 @@ export const MigrationButton = () => {
     }
   };
 
-  const handleStep4 = async () => {
+  const handleGenerateCSV = async (tableName: string, index: number) => {
     if (!uuidCrosswalk || uuidCrosswalk.length === 0) {
-      toast.error("Please complete Step 3 first to get the UUID crosswalk");
+      toast.error("Please complete Step 3 first");
       return;
     }
 
-    setStep4Loading(true);
-    setStep4Results(null);
-    setStep4Complete(false);
-    
+    setTableStatuses(prev => prev.map((t, i) => 
+      i === index ? { ...t, loading: true } : t
+    ));
+
     try {
-      toast.info("Step 4: Generating SQL file...");
-      
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/migrate-step4-migrate-tables`,
         {
@@ -154,37 +170,41 @@ export const MigrationButton = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ uuidCrosswalk }),
+          body: JSON.stringify({ uuidCrosswalk, tableName }),
         }
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      const sqlContent = await response.text();
-      
-      // Create download
-      const blob = new Blob([sqlContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'albert-junior-migration.sql';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      setStep4Results({ message: 'SQL file generated and downloaded successfully' });
-      setStep4Complete(true);
-      toast.success('Step 4: SQL file downloaded. Execute it manually in your target database.', { duration: 7000 });
+      const csvData = await response.text();
+      const rowCount = csvData.split('\n').length - 2; // Subtract header and last empty line
+
+      setTableStatuses(prev => prev.map((t, i) => 
+        i === index ? { ...t, csvData, rowCount, loading: false } : t
+      ));
+
+      toast.success(`Generated CSV for ${tableName}: ${rowCount} rows`);
     } catch (error: any) {
-      console.error('Step 4 exception:', error);
-      toast.error(`Step 4 failed: ${error.message}`);
-    } finally {
-      setStep4Loading(false);
+      setTableStatuses(prev => prev.map((t, i) => 
+        i === index ? { ...t, loading: false } : t
+      ));
+      toast.error(`Failed to generate ${tableName}: ${error.message}`);
     }
+  };
+
+  const handleDownloadCSV = (tableName: string, csvData: string) => {
+    const blob = new Blob([csvData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${tableName}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success(`Downloaded ${tableName}.csv`);
   };
 
   return (
@@ -339,47 +359,68 @@ export const MigrationButton = () => {
               </Card>
 
               {/* Step 4 */}
-              <Card className={step4Complete ? "border-green-500" : ""}>
+              <Card>
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Table2 className="h-5 w-5" />
-                    Step 4: Migrate All Tables
+                    Step 4: Generate CSVs for Each Table
                   </CardTitle>
                   <CardDescription>
-                    Migrate all table data with UUID transformation (requires Step 3 crosswalk)
+                    Generate and download CSV files for each table (requires Step 3 crosswalk)
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button
-                    onClick={handleStep4}
-                    disabled={step4Loading || !step3Complete}
-                    className="w-full"
-                  >
-                    {step4Loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Migrating tables...
-                      </>
-                    ) : step4Complete ? (
-                      "✓ Completed - Click to re-run"
-                    ) : !step3Complete ? (
-                      "Complete Step 3 first"
-                    ) : (
-                      "Run Step 4"
-                    )}
-                  </Button>
-                  {step4Results && (
-                    <div className="text-sm space-y-1 p-3 bg-muted rounded-md">
-                      <p className="font-medium">{step4Results.message}</p>
-                      {step4Results.results && (
-                        <div className="text-xs max-h-40 overflow-y-auto">
-                          {Object.entries(step4Results.results).map(([table, result]: [string, any]) => (
-                            <div key={table}>
-                              {table}: {result.rows} rows {result.success ? "✓" : "✗"}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                  {!step3Complete ? (
+                    <div className="text-sm text-muted-foreground p-4 border rounded-md">
+                      Complete Step 3 first to enable table migration
+                    </div>
+                  ) : (
+                    <div className="border rounded-md">
+                      <div className="max-h-96 overflow-y-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted sticky top-0">
+                            <tr>
+                              <th className="p-2 text-left font-medium">Table</th>
+                              <th className="p-2 text-center font-medium">Rows</th>
+                              <th className="p-2 text-right font-medium">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tableStatuses.map((table, index) => (
+                              <tr key={table.name} className="border-t">
+                                <td className="p-2 font-mono text-xs">{table.name}</td>
+                                <td className="p-2 text-center">
+                                  {table.rowCount !== null ? table.rowCount : '-'}
+                                </td>
+                                <td className="p-2 text-right">
+                                  <div className="flex gap-2 justify-end">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleGenerateCSV(table.name, index)}
+                                      disabled={table.loading}
+                                    >
+                                      {table.loading ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        'Generate'
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="default"
+                                      onClick={() => handleDownloadCSV(table.name, table.csvData!)}
+                                      disabled={!table.csvData}
+                                    >
+                                      <Download className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   )}
                 </CardContent>
