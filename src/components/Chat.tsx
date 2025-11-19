@@ -1509,44 +1509,49 @@ const Chat = () => {
                 </div>
               )}
               
+              {/* Header Controls */}
+              <div className="mb-4">
+                <div className="bg-card/50 border border-border/50 rounded-2xl p-4 backdrop-blur-sm">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="flex-1 w-full sm:w-auto">
+                      <AgentSwitcher
+                        selectedAgent={currentAgent}
+                        onAgentChange={(agent) => setCurrentAgent(agent)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                      <Select value={selectedModel} onValueChange={setSelectedModel}>
+                        <SelectTrigger className="w-full sm:w-[200px] h-10 rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                          <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                          <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro Preview</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Toggle
+                        pressed={realTimeSearchEnabled}
+                        onPressedChange={setRealTimeSearchEnabled}
+                        size="sm"
+                        className="h-10 px-3 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
+                        aria-label="Toggle real-time search for current information"
+                      >
+                        <Search className="h-4 w-4 mr-2" />
+                        <span className="text-sm font-medium whitespace-nowrap">
+                          {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
+                        </span>
+                      </Toggle>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Modern input card */}
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-300" />
-                <div className="relative bg-card border border-border/50 rounded-3xl p-6 shadow-xl backdrop-blur-sm">
+                <div className="relative bg-card border border-border/50 rounded-3xl p-4 sm:p-6 shadow-xl backdrop-blur-sm">
                   <div className="flex flex-col gap-4">
-                    {/* Controls Row - Agent, Model, Search */}
-                    <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-border/30">
-                      <div className="flex-1 min-w-[200px]">
-                        <AgentSwitcher
-                          selectedAgent={currentAgent}
-                          onAgentChange={(agent) => setCurrentAgent(agent)}
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Select value={selectedModel} onValueChange={setSelectedModel}>
-                          <SelectTrigger className="w-[180px] h-10 rounded-xl">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-                            <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-                            <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro Preview</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Toggle
-                          pressed={realTimeSearchEnabled}
-                          onPressedChange={setRealTimeSearchEnabled}
-                          size="sm"
-                          className="h-10 px-3 rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground transition-all"
-                          aria-label="Toggle real-time search for current information"
-                        >
-                          <Search className="h-4 w-4 sm:mr-2" />
-                          <span className="text-sm font-medium whitespace-nowrap hidden sm:inline">
-                            {realTimeSearchEnabled ? "Search: ON" : "Search: OFF"}
-                          </span>
-                        </Toggle>
-                      </div>
-                    </div>
 
                     <div className="relative">
                       <Textarea
@@ -1560,20 +1565,20 @@ const Chat = () => {
                             }
                           }
                         }}
-                         placeholder={t('chat:placeholderEmpty')}
-                        className="min-h-[120px] max-h-[240px] resize-none w-full bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200 rounded-2xl text-base placeholder:text-muted-foreground/60"
+                        placeholder={t('chat:placeholderEmpty')}
+                        className="min-h-[100px] sm:min-h-[120px] max-h-[240px] resize-none w-full bg-background/50 border-border/50 focus:border-primary/50 transition-all duration-200 rounded-2xl text-base placeholder:text-muted-foreground/60 pr-24"
                       />
-                      <div className="absolute bottom-3 right-3 text-xs text-muted-foreground/50">
+                      <div className="absolute bottom-3 right-3 text-xs text-muted-foreground/50 hidden sm:block">
                         {t('chat:pressEnterToSend')}
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex gap-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl hover:bg-accent/50"
                           onClick={() => document.getElementById('welcome-file-upload')?.click()}
                           title="Attach files"
                         >
@@ -1582,7 +1587,7 @@ const Chat = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-10 w-10 rounded-xl hover:bg-accent/50"
+                          className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl hover:bg-accent/50"
                           onClick={() => setShowAudioUploader(!showAudioUploader)}
                           title="Voice input"
                         >
@@ -1597,11 +1602,11 @@ const Chat = () => {
                           }
                         }}
                         disabled={!input.trim()}
-                        size="lg"
-                        className="bg-gradient-to-r from-primary to-accent hover:shadow-lg hover:shadow-primary/25 transition-all duration-200 rounded-xl px-8"
+                        className="h-10 sm:h-12 px-4 sm:px-8 rounded-xl bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 flex items-center gap-2"
                       >
-                        <Send className="h-4 w-4 mr-2" />
-                        {t('chat:startChatting')}
+                        <Send className="h-4 w-4" />
+                        <span className="font-medium hidden sm:inline">{t('chat:startChatting')}</span>
+                        <span className="font-medium sm:hidden">Send</span>
                       </Button>
                     </div>
                   </div>

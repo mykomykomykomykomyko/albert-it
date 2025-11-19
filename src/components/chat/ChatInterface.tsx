@@ -308,23 +308,36 @@ const ChatInterface = ({
 
   return (
     <div className="flex-1 flex flex-col">
-      <div className="p-4 border-b border-border bg-card/30 backdrop-blur-sm flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold">{conversation.title}</h2>
-          <p className="text-xs text-muted-foreground">
-            {messages.length} {messages.length === 1 ? t('message') : t('messages')}
-          </p>
+      <div className="p-3 sm:p-4 border-b border-border bg-card/30 backdrop-blur-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex-1">
+            <h2 className="font-semibold text-base sm:text-lg">{conversation.title}</h2>
+            <p className="text-xs text-muted-foreground">
+              {messages.length} {messages.length === 1 ? t('message') : t('messages')}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Select value={model} onValueChange={handleModelChange}>
+              <SelectTrigger className="w-full sm:w-[200px] h-9 sm:h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
+                <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro Preview</SelectItem>
+              </SelectContent>
+            </Select>
+            <Toggle
+              pressed={realTimeSearchEnabled}
+              onPressedChange={setRealTimeSearchEnabled}
+              size="sm"
+              className="h-9 sm:h-10 px-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              aria-label="Toggle real-time search"
+            >
+              <Search className="h-4 w-4" />
+            </Toggle>
+          </div>
         </div>
-        <Select value={model} onValueChange={handleModelChange}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash</SelectItem>
-            <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro</SelectItem>
-            <SelectItem value="google/gemini-3-pro-preview">Gemini 3 Pro Preview</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
