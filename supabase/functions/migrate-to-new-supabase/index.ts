@@ -143,6 +143,7 @@ Deno.serve(async (req) => {
         const from = page * PAGE_SIZE_USERS;
         const to = from + PAGE_SIZE_USERS - 1;
 
+        console.log(`[Migration] Fetching profiles page ${page} (${from}-${to})...`);
         const { data: profilesPage, error: profilesError } = await sourceSupabase
           .from('profiles')
           .select('*')
@@ -152,10 +153,12 @@ Deno.serve(async (req) => {
         if (profilesError) {
           console.error('[Migration] Error fetching source profiles:', profilesError);
           migrationResults.users.errors.push(
-            `Error fetching profiles: ${profilesError.message ?? JSON.stringify(profilesError)}`,
+            `Error fetching profiles page ${page}: ${profilesError.message ?? JSON.stringify(profilesError)}`,
           );
           break;
         }
+        
+        console.log(`[Migration] Fetched ${profilesPage?.length || 0} profiles from page ${page}`);
 
         if (!profilesPage || profilesPage.length === 0) {
           hasMore = false;
@@ -249,6 +252,10 @@ Deno.serve(async (req) => {
     }
 
     console.log(`[Migration] User ID mapping built: ${userIdMapping.size} users mapped`);
+    if (userIdMapping.size > 0) {
+      const sampleMapping = Array.from(userIdMapping.entries()).slice(0, 3);
+      console.log('[Migration] Sample ID mappings:', sampleMapping);
+    }
     console.log('[Migration] Step 2: Migrating table data (including full profile data)...');
     
     // Step 2a: Optionally clear existing data
@@ -337,33 +344,46 @@ Deno.serve(async (req) => {
             // Transform user IDs in the data
             const transformedBatch = batch.map(row => {
               const transformed = { ...row };
+              let transformCount = 0;
               
               // Transform user_id fields
               if (transformed.user_id && userIdMapping.has(transformed.user_id)) {
+                const oldId = transformed.user_id;
                 transformed.user_id = userIdMapping.get(transformed.user_id);
+                transformCount++;
+                if (i === 0 && transformCount === 1) {
+                  console.log(`[Migration] ${table}: Transformed user_id ${oldId} -> ${transformed.user_id}`);
+                }
               }
               
               // Transform id field for profiles table (references auth.users)
               if (table === 'profiles' && transformed.id && userIdMapping.has(transformed.id)) {
+                const oldId = transformed.id;
                 transformed.id = userIdMapping.get(transformed.id);
+                transformCount++;
+                console.log(`[Migration] profiles: Transformed id ${oldId} -> ${transformed.id}`);
               }
               
               // Transform reviewer_id for agents table
               if (table === 'agents' && transformed.reviewer_id && userIdMapping.has(transformed.reviewer_id)) {
                 transformed.reviewer_id = userIdMapping.get(transformed.reviewer_id);
+                transformCount++;
               }
               
               // Transform shared_by_user_id and shared_with_user_id
               if (transformed.shared_by_user_id && userIdMapping.has(transformed.shared_by_user_id)) {
                 transformed.shared_by_user_id = userIdMapping.get(transformed.shared_by_user_id);
+                transformCount++;
               }
               if (transformed.shared_with_user_id && userIdMapping.has(transformed.shared_with_user_id)) {
                 transformed.shared_with_user_id = userIdMapping.get(transformed.shared_with_user_id);
+                transformCount++;
               }
               
               // Transform created_by for user_temp_passwords
               if (transformed.created_by && userIdMapping.has(transformed.created_by)) {
                 transformed.created_by = userIdMapping.get(transformed.created_by);
+                transformCount++;
               }
               
               return transformed;
