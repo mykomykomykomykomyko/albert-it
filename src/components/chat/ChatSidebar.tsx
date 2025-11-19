@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil, Share2, Info } from "lucide-react";
+import { Brain, Plus, MessageSquare, Trash2, ChevronLeft, ChevronRight, Menu, Pencil, Share2, Info, Loader2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { useTranslation } from "react-i18next";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -47,6 +47,7 @@ interface ChatSidebarProps {
   onUpdateRetention?: (id: string, retentionDays: number | null) => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  activeStreams?: Set<string>;
 }
 
 const ChatSidebar = ({
@@ -59,6 +60,7 @@ const ChatSidebar = ({
   onUpdateRetention,
   isCollapsed = false,
   onToggleCollapse,
+  activeStreams = new Set(),
 }: ChatSidebarProps) => {
   const { t } = useTranslation('chat');
   const navigate = useNavigate();
@@ -133,6 +135,11 @@ const ChatSidebar = ({
                     <div className="flex-1 min-w-0 flex flex-col gap-1">
                       <div className="flex items-start gap-1.5">
                         <span className="flex-1 text-sm leading-snug break-words">{conversation.title}</span>
+                        {activeStreams.has(conversation.id) && (
+                          <span title="Generating response...">
+                            <Loader2 className="w-3 h-3 shrink-0 text-primary animate-spin" />
+                          </span>
+                        )}
                         {conversation.is_shared && (
                           <span title="Shared conversation">
                             <Share2 className="w-3 h-3 shrink-0 text-primary" />
