@@ -7,6 +7,7 @@ import { Conversation, Message, ChatMessage } from "@/types/chat";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   Select,
   SelectContent,
@@ -310,8 +311,83 @@ INSTRUCTION: The above search result contains current, verified information from
                       : "bg-card border border-border"
                   }`}
                 >
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  <div className={`prose prose-sm max-w-none break-words ${
+                    message.role === "user" 
+                      ? "prose-invert [&_*]:text-primary-foreground" 
+                      : "dark:prose-invert"
+                  } 
+                  prose-p:leading-relaxed prose-p:my-2 prose-p:text-base prose-p:break-words
+                  prose-headings:mt-4 prose-headings:mb-2 prose-headings:font-semibold prose-headings:break-words
+                  prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+                  prose-ul:my-2 prose-ul:space-y-1 prose-ul:list-disc prose-ul:pl-5
+                  prose-ol:my-2 prose-ol:space-y-1 prose-ol:list-decimal prose-ol:pl-5
+                  prose-li:my-1 prose-li:leading-relaxed prose-li:text-base prose-li:break-words
+                  prose-strong:font-bold prose-strong:text-foreground
+                  prose-em:italic
+                  prose-a:text-accent prose-a:underline prose-a:font-medium hover:prose-a:text-accent/80 prose-a:break-all
+                  prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:font-mono prose-code:break-words
+                  prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:my-3 prose-pre:p-3 prose-pre:rounded-lg prose-pre:overflow-x-auto prose-pre:max-w-full
+                  prose-blockquote:border-l-4 prose-blockquote:border-l-accent prose-blockquote:pl-4 prose-blockquote:my-3 prose-blockquote:italic prose-blockquote:break-words
+                  prose-hr:border-border prose-hr:my-4
+                  prose-table:border-collapse prose-table:w-full prose-table:my-3
+                  prose-th:border prose-th:border-border prose-th:bg-muted/50 prose-th:px-3 prose-th:py-2 prose-th:text-left prose-th:font-semibold
+                  prose-td:border prose-td:border-border prose-td:px-3 prose-td:py-2 prose-td:break-words
+                  [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_code]:break-words [&_pre_code]:whitespace-pre-wrap
+                  [&_input[type=checkbox]]:mr-2`}>
+                    <ReactMarkdown 
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        table: ({ node, ...props }) => (
+                          <div className="w-full overflow-x-auto my-3">
+                            <table className="min-w-full border-collapse" {...props} />
+                          </div>
+                        ),
+                        thead: (props) => (
+                          <thead className="bg-muted/50">{props.children}</thead>
+                        ),
+                        tbody: (props) => (
+                          <tbody>{props.children}</tbody>
+                        ),
+                        tr: (props) => (
+                          <tr className="border-b border-border">{props.children}</tr>
+                        ),
+                        th: (props) => (
+                          <th className="border border-border px-3 py-2 text-left font-semibold">{props.children}</th>
+                        ),
+                        td: (props) => (
+                          <td className="border border-border px-3 py-2 break-words">{props.children}</td>
+                        ),
+                        code: ({ node, inline, className, children, ...props }: any) => {
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline ? (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          ) : (
+                            <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
+                              {children}
+                            </code>
+                          );
+                        },
+                        input: ({ node, ...props }: any) => {
+                          // Handle checkboxes in task lists
+                          if (props.type === 'checkbox') {
+                            return (
+                              <input
+                                type="checkbox"
+                                disabled={props.disabled}
+                                checked={props.checked}
+                                className="mr-2 align-middle"
+                                {...props}
+                              />
+                            );
+                          }
+                          return <input {...props} />;
+                        },
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
                   </div>
                 </div>
                 {message.role === "assistant" && message.metadata?.generation_time_sec && (

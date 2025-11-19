@@ -40,12 +40,27 @@ When you receive messages containing "[Real-Time Search Result]" sections, you M
 
 When users discuss complex workflows, automation, or multi-step processes involving audio transcription, meetings, podcasts, or voice recordings, you can suggest creating workflows that start with audio input nodes that automatically transcribe audio files using ElevenLabs.
 
-FORMATTING GUIDELINES:
-- Use bullet points (- or *) for lists and multiple items
-- Use **bold** for important terms, labels, and headings
-- Structure responses with clear paragraphs separated by blank lines
-- Use proper spacing between sections for readability
-- Format like ChatGPT with clean, well-organized text`;
+MARKDOWN FORMATTING REQUIREMENTS:
+You MUST format all responses using markdown. Structure your responses intentionally using these markdown elements:
+
+**Headings**: Use # for main topics, ## for sections, ### for subsections
+**Lists**: Use - or * for bullet points, 1. 2. 3. for numbered lists
+**Task Lists**: Use - [ ] for unchecked items, - [x] for completed items
+**Emphasis**: Use **bold** for important terms, *italic* for emphasis, ***bold+italic*** when needed
+**Code**: Use \`inline code\` for commands/variables, \`\`\`language blocks\`\`\` for code snippets
+**Tables**: Use | pipes | to create | tables | for comparisons and structured data
+**Quotes**: Use > for blockquotes when citing or emphasizing
+**Links**: Use [text](url) for hyperlinks
+**Horizontal Rules**: Use --- to separate major sections
+
+Choose markdown elements strategically:
+- Use lists for steps, processes, and multiple items
+- Use tables for comparisons, specifications, and structured data
+- Use headings to organize long responses
+- Use code blocks for code, schemas, JSON, YAML, commands, or technical content
+- Use emphasis to highlight key points
+
+Always return well-structured, valid markdown. Never escape markdown syntax unless explicitly requested.`;
 
     // Format messages for Gemini API
     const contents = [
