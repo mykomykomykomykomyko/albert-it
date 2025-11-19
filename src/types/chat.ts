@@ -24,6 +24,10 @@ export interface Message {
   content: string;
   image_url?: string;
   attachments?: FileAttachment[] | null;
+  metadata?: {
+    generation_time_ms?: number;
+    generation_time_sec?: string;
+  } | null;
   created_at: string;
 }
 
