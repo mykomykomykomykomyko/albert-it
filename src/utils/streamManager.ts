@@ -7,6 +7,9 @@ interface ActiveStream {
   abortController: AbortController;
   accumulatedContent: string;
   lastSaveTime: number;
+  displayQueue: string[];
+  isDisplaying: boolean;
+  displayedContent: string;
 }
 
 class StreamManager {
@@ -34,6 +37,9 @@ class StreamManager {
       abortController,
       accumulatedContent: "",
       lastSaveTime: Date.now(),
+      displayQueue: [],
+      isDisplaying: false,
+      displayedContent: "",
     });
 
     // Process stream and wait for completion
@@ -50,7 +56,37 @@ class StreamManager {
     let accumulatedContent = "";
     let buffer = "";
     const SAVE_INTERVAL = 1000; // Save to DB every 1 second
+    const CHAR_DELAY = 1; // 1ms per character for very fast typing effect
     let lastSaveTime = Date.now();
+
+    // Fast character-by-character display
+    const displayCharacterByCharacter = async () => {
+      const stream = this.activeStreams.get(conversationId);
+      if (!stream || stream.isDisplaying) return;
+
+      stream.isDisplaying = true;
+
+      while (stream.displayQueue.length > 0) {
+        const char = stream.displayQueue.shift()!;
+        stream.displayedContent += char;
+        
+        if (onChunk) {
+          onChunk(stream.displayedContent);
+        }
+
+        // Very small delay for fast character-by-character effect
+        await new Promise(resolve => setTimeout(resolve, CHAR_DELAY));
+      }
+
+      stream.isDisplaying = false;
+
+      // Continue if more content accumulated while displaying
+      if (stream.accumulatedContent.length > stream.displayedContent.length) {
+        const newChars = stream.accumulatedContent.slice(stream.displayedContent.length);
+        stream.displayQueue.push(...newChars.split(''));
+        displayCharacterByCharacter();
+      }
+    };
 
     // Function to save current content to database
     const saveToDatabase = async (content: string) => {
@@ -82,9 +118,18 @@ class StreamManager {
         const { done, value } = await reader.read();
         if (done) {
           console.log(`✅ [${conversationId}] Stream complete. Final length: ${accumulatedContent.length}`);
-          // Final UI update
-          if (onChunk) {
-            onChunk(accumulatedContent);
+          
+          // Wait for display queue to finish
+          const stream = this.activeStreams.get(conversationId);
+          if (stream) {
+            while (stream.displayQueue.length > 0 || stream.isDisplaying) {
+              await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            // Final update with complete content
+            if (onChunk && stream.displayedContent.length < accumulatedContent.length) {
+              onChunk(accumulatedContent);
+            }
           }
           break;
         }
@@ -118,15 +163,17 @@ class StreamManager {
                     // Accumulate content
                     accumulatedContent += text;
                     
-                    // Update stream's accumulated content
+                    // Update stream and add to display queue
                     const stream = this.activeStreams.get(conversationId);
                     if (stream) {
                       stream.accumulatedContent = accumulatedContent;
-                    }
-                    
-                    // Immediate UI update - display as fast as tokens arrive
-                    if (onChunk) {
-                      onChunk(accumulatedContent);
+                      // Add new characters to display queue
+                      stream.displayQueue.push(...text.split(''));
+                      
+                      // Start fast character-by-character display
+                      if (!stream.isDisplaying) {
+                        displayCharacterByCharacter();
+                      }
                     }
                     
                     // Periodic save to database
