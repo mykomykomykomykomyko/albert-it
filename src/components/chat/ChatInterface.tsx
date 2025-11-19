@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { Toggle } from "@/components/ui/toggle";
+import { streamManager } from "@/utils/streamManager";
 
 interface ChatInterfaceProps {
   conversation: Conversation | null;
@@ -183,29 +184,6 @@ INSTRUCTION: The above search result contains current, verified information from
         content: idx === updatedMessages.length - 1 && shouldUseRealTimeSearch ? enhancedMessage : msg.content,
       }));
 
-      // Stream response
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ messages: chatMessages, model }),
-        }
-      );
-
-      if (!response.ok || !response.body) {
-        throw new Error("Failed to get response");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let assistantContent = "";
-      let textBuffer = "";
-      let streamDone = false;
-
       // Create placeholder assistant message
       const { data: assistantMessage, error: assistantError } = await supabase
         .from("messages")
@@ -222,71 +200,38 @@ INSTRUCTION: The above search result contains current, verified information from
       const finalMessages = [...updatedMessages, assistantMessage as any];
       onMessagesUpdate(finalMessages);
 
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        textBuffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") {
-            streamDone = true;
-            break;
-          }
-
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) {
-              assistantContent += content;
-              const updatedFinalMessages = finalMessages.map((msg) =>
-                msg.id === assistantMessage.id
-                  ? { ...msg, content: assistantContent }
-                  : msg
-              );
-              onMessagesUpdate(updatedFinalMessages);
-            }
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
+      // Stream response using streamManager for smooth token-by-token display
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ messages: chatMessages, model }),
         }
+      );
+
+      if (!response.ok || !response.body) {
+        throw new Error("Failed to get response");
       }
 
-      // Validate that we received content
-      if (!assistantContent || assistantContent.trim() === "") {
-        console.error("Empty response received from AI");
-        // Delete the placeholder message
-        await supabase
-          .from("messages")
-          .delete()
-          .eq("id", assistantMessage.id);
-        
-        // Remove from UI
-        onMessagesUpdate(finalMessages.filter(msg => msg.id !== assistantMessage.id));
-        throw new Error("Received empty response from AI. Please try again.");
-      }
-
-      // Save final assistant message
-      await supabase
-        .from("messages")
-        .update({ content: assistantContent })
-        .eq("id", assistantMessage.id);
-
-      // Update conversation timestamp
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversation.id);
+      // Use streamManager for consistent smooth streaming
+      await streamManager.startStream(
+        conversation.id,
+        assistantMessage.id,
+        response,
+        (content) => {
+          // Update UI with accumulated content for smooth token-by-token display
+          const updatedFinalMessages = finalMessages.map((msg) =>
+            msg.id === assistantMessage.id
+              ? { ...msg, content }
+              : msg
+          );
+          onMessagesUpdate(updatedFinalMessages);
+        }
+      );
     } catch (error: any) {
       console.error("Chat error:", error);
       toast.error(error.message || "Failed to send message. Please try again.");
