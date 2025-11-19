@@ -10,6 +10,7 @@ interface ActiveStream {
   displayQueue: string[];
   isDisplaying: boolean;
   displayedContent: string;
+  startTime: number;
 }
 
 class StreamManager {
@@ -30,6 +31,8 @@ class StreamManager {
     }
 
     const abortController = new AbortController();
+    const startTime = Date.now();
+    
     this.activeStreams.set(conversationId, {
       conversationId,
       messageId,
@@ -40,6 +43,7 @@ class StreamManager {
       displayQueue: [],
       isDisplaying: false,
       displayedContent: "",
+      startTime,
     });
 
     // Process stream and wait for completion
@@ -208,7 +212,7 @@ class StreamManager {
         }
       }
 
-      // Final save to database
+      // Final save to database with generation time
       console.log(`💾 [${conversationId}] Saving final content (${accumulatedContent.length} chars) to DB`);
       
       if (accumulatedContent.length === 0) {
@@ -216,9 +220,16 @@ class StreamManager {
         accumulatedContent = "I apologize, but I received an empty response. Please try again.";
       }
       
+      const stream = this.activeStreams.get(conversationId);
+      const generationTimeMs = stream ? Date.now() - stream.startTime : 0;
+      const generationTimeSec = (generationTimeMs / 1000).toFixed(2);
+      
       await supabase
         .from("messages")
-        .update({ content: accumulatedContent })
+        .update({ 
+          content: accumulatedContent,
+          metadata: { generation_time_ms: generationTimeMs, generation_time_sec: generationTimeSec }
+        })
         .eq("id", messageId);
 
       // Update conversation timestamp

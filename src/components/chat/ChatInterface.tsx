@@ -302,16 +302,23 @@ INSTRUCTION: The above search result contains current, verified information from
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
               )}
-              <div
-                className={`rounded-2xl px-4 py-3 max-w-[80%] ${
-                  message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border"
-                }`}
-              >
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
+              <div className="flex flex-col gap-1 max-w-[80%]">
+                <div
+                  className={`rounded-2xl px-4 py-3 ${
+                    message.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card border border-border"
+                  }`}
+                >
+                  <div className="prose prose-sm dark:prose-invert max-w-none">
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
                 </div>
+                {message.role === "assistant" && message.metadata?.generation_time_sec && (
+                  <div className="text-xs text-muted-foreground px-2">
+                    Generated in {message.metadata.generation_time_sec}s
+                  </div>
+                )}
               </div>
             </div>
           ))}
