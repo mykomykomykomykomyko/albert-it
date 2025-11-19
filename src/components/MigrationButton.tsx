@@ -20,11 +20,18 @@ export const MigrationButton = () => {
   const [clearData, setClearData] = useState(true);
   const [progress, setProgress] = useState<string>('');
   const [progressDetails, setProgressDetails] = useState<string[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [comparisonData, setComparisonData] = useState<{
+    tables: Record<string, { source: number; target: number; match: boolean }>;
+    storage: Record<string, { source: number; target: number; match: boolean }>;
+  } | null>(null);
 
   const handleMigration = async () => {
     setIsLoading(true);
     setProgress('Starting migration...');
     setProgressDetails(['Initializing connection to Albert Junior']);
+    setShowResults(false);
+    setComparisonData(null);
     
     try {
       toast.info("Starting migration to Albert Junior...");
@@ -46,7 +53,14 @@ export const MigrationButton = () => {
       
       if (data?.success) {
         setProgress('Migration completed successfully');
-        setProgressDetails(prev => [...prev, 'All data migrated']);
+        setProgressDetails(prev => [...prev, 'All data migrated', 'Verifying counts...']);
+        
+        // Store comparison data
+        if (data.comparison) {
+          setComparisonData(data.comparison);
+          setShowResults(true);
+        }
+        
         toast.success("Migration completed successfully!");
         toast.info(`Users migrated: ${data.results.users.migrated}/${data.results.users.total}`);
         
@@ -165,6 +179,116 @@ export const MigrationButton = () => {
           </div>
         </div>
       )}
+      
+      {/* Results Modal */}
+      <AlertDialog open={showResults} onOpenChange={setShowResults}>
+        <AlertDialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Migration Verification Results</AlertDialogTitle>
+            <AlertDialogDescription>
+              Comparison of row counts between source (Lovable Cloud) and target (Albert Junior)
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {comparisonData && (
+            <div className="space-y-6">
+              {/* Tables Comparison */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Database Tables
+                </h3>
+                <div className="border rounded-md overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="px-4 py-2 text-left font-medium">Table</th>
+                        <th className="px-4 py-2 text-right font-medium">Source</th>
+                        <th className="px-4 py-2 text-right font-medium">Target</th>
+                        <th className="px-4 py-2 text-center font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {Object.entries(comparisonData.tables).map(([table, counts]) => (
+                        <tr key={table} className={counts.match ? '' : 'bg-destructive/5'}>
+                          <td className="px-4 py-2 font-mono text-xs">{table}</td>
+                          <td className="px-4 py-2 text-right">{counts.source === -1 ? 'Error' : counts.source}</td>
+                          <td className="px-4 py-2 text-right">{counts.target === -1 ? 'Error' : counts.target}</td>
+                          <td className="px-4 py-2 text-center">
+                            {counts.match ? (
+                              <span className="text-green-600">✓</span>
+                            ) : (
+                              <span className="text-destructive">✗</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Storage Comparison */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Storage Buckets</h3>
+                <div className="border rounded-md overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="px-4 py-2 text-left font-medium">Bucket</th>
+                        <th className="px-4 py-2 text-right font-medium">Source Files</th>
+                        <th className="px-4 py-2 text-right font-medium">Target Files</th>
+                        <th className="px-4 py-2 text-center font-medium">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y">
+                      {Object.entries(comparisonData.storage).map(([bucket, counts]) => (
+                        <tr key={bucket} className={counts.match ? '' : 'bg-destructive/5'}>
+                          <td className="px-4 py-2 font-mono text-xs">{bucket}</td>
+                          <td className="px-4 py-2 text-right">{counts.source === -1 ? 'Error' : counts.source}</td>
+                          <td className="px-4 py-2 text-right">{counts.target === -1 ? 'Error' : counts.target}</td>
+                          <td className="px-4 py-2 text-center">
+                            {counts.match ? (
+                              <span className="text-green-600">✓</span>
+                            ) : (
+                              <span className="text-destructive">✗</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              
+              {/* Summary */}
+              <div className="p-4 bg-muted rounded-md space-y-2">
+                <p className="text-sm font-medium">Summary:</p>
+                <div className="text-xs space-y-1">
+                  <p>
+                    Tables: {Object.values(comparisonData.tables).filter(t => t.match).length} / {Object.keys(comparisonData.tables).length} matched
+                  </p>
+                  <p>
+                    Storage: {Object.values(comparisonData.storage).filter(s => s.match).length} / {Object.keys(comparisonData.storage).length} matched
+                  </p>
+                </div>
+                {(Object.values(comparisonData.tables).some(t => !t.match) || 
+                  Object.values(comparisonData.storage).some(s => !s.match)) && (
+                  <p className="text-xs text-destructive mt-2">
+                    ⚠️ Some counts don't match. Check the edge function logs for details.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowResults(false)}>
+              Close
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
