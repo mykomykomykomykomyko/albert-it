@@ -57,5 +57,8 @@ verify_jwt = true
 [functions.get-shared-conversation]
 verify_jwt = false
 
+[functions.migrate-to-new-supabase]
+verify_jwt = true
+
 [functions.cleanup-conversations]
 verify_jwt = false
