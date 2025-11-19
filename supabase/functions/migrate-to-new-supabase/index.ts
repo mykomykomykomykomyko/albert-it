@@ -291,25 +291,48 @@ Deno.serve(async (req) => {
             break;
           }
 
+          // Delete users one at a time to ensure cascading works properly
           for (const user of users) {
             try {
-              await targetSupabase.auth.admin.deleteUser(user.id);
-              totalDeleted++;
+              const { error: deleteError } = await targetSupabase.auth.admin.deleteUser(user.id);
+              if (deleteError) {
+                console.error(`[Migration] Error deleting user ${user.id} (${user.email}):`, deleteError);
+                migrationResults.users.errors.push(
+                  `Failed to delete user ${user.email}: ${deleteError.message}`,
+                );
+              } else {
+                totalDeleted++;
+                if (totalDeleted % 10 === 0) {
+                  console.log(`[Migration] Deleted ${totalDeleted} users so far...`);
+                }
+              }
             } catch (deleteError) {
-              console.error(`[Migration] Error deleting user ${user.id}:`, deleteError);
+              console.error(`[Migration] Exception deleting user ${user.id}:`, deleteError);
             }
           }
-
-          console.log(`[Migration] Cleared ${users.length} users from auth.users on page ${page}`);
 
           if (users.length < perPage) {
             hasMoreUsers = false;
           } else {
             page++;
           }
+          
+          // Add small delay between pages to avoid rate limiting
+          if (hasMoreUsers) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
         }
 
         console.log(`[Migration] Finished clearing auth.users, deleted ${totalDeleted} users`);
+        
+        // Verify auth.users is empty
+        const { data: remainingUsers } = await targetSupabase.auth.admin.listUsers({ page: 1, perPage: 1 });
+        if (remainingUsers?.users && remainingUsers.users.length > 0) {
+          console.warn('[Migration] Warning: Some users still remain in auth.users after deletion');
+          migrationResults.users.errors.push('Not all users were deleted from auth.users');
+        } else {
+          console.log('[Migration] Verified: auth.users is now empty');
+        }
       } catch (error) {
         console.error('[Migration] Exception while clearing auth.users:', error);
         const errorMsg = error instanceof Error ? error.message : String(error);
@@ -323,15 +346,38 @@ Deno.serve(async (req) => {
       for (const table of reverseTables) {
         try {
           console.log(`[Migration] Clearing table: ${table}`);
-          const { error: deleteError } = await targetSupabase
-            .from(table)
-            .delete()
-            .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
           
-          if (deleteError && !deleteError.message.includes('no rows')) {
-            console.warn(`[Migration] Error clearing ${table}:`, deleteError);
+          // First check if table has rows
+          const { count: preCount } = await targetSupabase
+            .from(table)
+            .select('*', { count: 'exact', head: true });
+          
+          if (preCount && preCount > 0) {
+            console.log(`[Migration] Table ${table} has ${preCount} rows to delete`);
+            
+            // Delete all rows
+            const { error: deleteError } = await targetSupabase
+              .from(table)
+              .delete()
+              .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+            
+            if (deleteError) {
+              console.warn(`[Migration] Error clearing ${table}:`, deleteError);
+              // Try to continue anyway
+            } else {
+              // Verify deletion
+              const { count: postCount } = await targetSupabase
+                .from(table)
+                .select('*', { count: 'exact', head: true });
+              
+              if (postCount && postCount > 0) {
+                console.warn(`[Migration] Warning: ${postCount} rows still remain in ${table}`);
+              } else {
+                console.log(`[Migration] Successfully cleared table: ${table}`);
+              }
+            }
           } else {
-            console.log(`[Migration] Cleared table: ${table}`);
+            console.log(`[Migration] Table ${table} is already empty`);
           }
         } catch (error) {
           console.warn(`[Migration] Exception clearing ${table}:`, error);
@@ -668,11 +714,110 @@ Deno.serve(async (req) => {
     console.log('[Migration] Migration complete!');
     console.log('[Migration] Results:', JSON.stringify(migrationResults, null, 2));
 
+    // Step 4: Verify migration with row counts comparison
+    console.log('[Migration] Step 4: Verifying migration with row count comparison...');
+    
+    const comparisonResults: Record<string, { source: number; target: number; match: boolean }> = {};
+    
+    for (const table of tablesToMigrate) {
+      try {
+        // Count source rows
+        const { count: sourceCount, error: sourceError } = await sourceSupabase
+          .from(table)
+          .select('*', { count: 'exact', head: true });
+        
+        // Count target rows
+        const { count: targetCount, error: targetError } = await targetSupabase
+          .from(table)
+          .select('*', { count: 'exact', head: true });
+        
+        if (sourceError || targetError) {
+          console.warn(`[Migration] Error counting rows for ${table}:`, sourceError || targetError);
+          comparisonResults[table] = { source: -1, target: -1, match: false };
+        } else {
+          const source = sourceCount ?? 0;
+          const target = targetCount ?? 0;
+          comparisonResults[table] = { source, target, match: source === target };
+          console.log(`[Migration] ${table}: source=${source}, target=${target}, match=${source === target}`);
+        }
+      } catch (error) {
+        console.error(`[Migration] Exception counting rows for ${table}:`, error);
+        comparisonResults[table] = { source: -1, target: -1, match: false };
+      }
+    }
+    
+    // Count storage bucket files
+    const storageComparison: Record<string, { source: number; target: number; match: boolean }> = {};
+    
+    for (const bucketName of bucketsToMigrate) {
+      try {
+        // Count source files (recursive)
+        let sourceFileCount = 0;
+        let offset = 0;
+        const limit = 1000;
+        let hasMore = true;
+        
+        while (hasMore) {
+          const { data: sourceFiles, error: sourceError } = await sourceSupabase
+            .storage
+            .from(bucketName)
+            .list(undefined, { limit, offset });
+          
+          if (sourceError || !sourceFiles || sourceFiles.length === 0) {
+            hasMore = false;
+          } else {
+            sourceFileCount += sourceFiles.filter(f => f.name && !f.name.endsWith('/')).length;
+            offset += limit;
+            if (sourceFiles.length < limit) {
+              hasMore = false;
+            }
+          }
+        }
+        
+        // Count target files (recursive)
+        let targetFileCount = 0;
+        offset = 0;
+        hasMore = true;
+        
+        while (hasMore) {
+          const { data: targetFiles, error: targetError } = await targetSupabase
+            .storage
+            .from(bucketName)
+            .list(undefined, { limit, offset });
+          
+          if (targetError || !targetFiles || targetFiles.length === 0) {
+            hasMore = false;
+          } else {
+            targetFileCount += targetFiles.filter(f => f.name && !f.name.endsWith('/')).length;
+            offset += limit;
+            if (targetFiles.length < limit) {
+              hasMore = false;
+            }
+          }
+        }
+        
+        storageComparison[bucketName] = {
+          source: sourceFileCount,
+          target: targetFileCount,
+          match: sourceFileCount === targetFileCount,
+        };
+        
+        console.log(`[Migration] Storage ${bucketName}: source=${sourceFileCount}, target=${targetFileCount}`);
+      } catch (error) {
+        console.error(`[Migration] Exception counting files in ${bucketName}:`, error);
+        storageComparison[bucketName] = { source: -1, target: -1, match: false };
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: migrationResults.success,
         message: 'Data migration completed. Check results for details.',
         results: migrationResults,
+        comparison: {
+          tables: comparisonResults,
+          storage: storageComparison,
+        },
         postMigrationSteps: [
           'Verify all data was migrated correctly',
           'Verify storage bucket files were copied successfully',
