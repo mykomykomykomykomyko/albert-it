@@ -253,7 +253,7 @@ const Chat = () => {
     return () => {
       subscription.unsubscribe();
       window.removeEventListener('storage', handleStorageChange);
-      // Cancel all active streams on unmount
+      // Cancel all active streams on unmount (async but fire-and-forget is ok on cleanup)
       streamManager.cancelAllStreams();
     };
   }, [navigate]);
