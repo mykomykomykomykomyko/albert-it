@@ -264,7 +264,19 @@ const Agents = () => {
   };
 
   const handleDownloadAgent = (agent: Agent) => {
-    const agentJson = JSON.stringify(agent, null, 2);
+    // Export in reverse-compatible format
+    const exportData = {
+      id: agent.id,
+      name: agent.name,
+      iconName: agent.icon_name,
+      description: agent.description || "Custom agent",
+      defaultSystemPrompt: agent.system_prompt,
+      defaultUserPrompt: agent.user_prompt || "",
+      type: "agent-definition",
+      exportedAt: new Date().toISOString()
+    };
+    
+    const agentJson = JSON.stringify(exportData, null, 2);
     const blob = new Blob([agentJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -306,13 +318,14 @@ const Agents = () => {
 
       let successCount = 0;
       for (const agent of agentsToImport) {
+        // Support both formats: new format and reverse-compatible export format
         const agentData: AgentTemplate = {
           name: agent.name,
           type: agent.type || "Text",
           description: agent.description || "",
-          system_prompt: agent.system_prompt,
-          user_prompt: agent.user_prompt || undefined,
-          icon_name: agent.icon_name || "Bot",
+          system_prompt: agent.system_prompt || agent.defaultSystemPrompt,
+          user_prompt: agent.user_prompt || agent.defaultUserPrompt || undefined,
+          icon_name: agent.icon_name || agent.iconName || "Bot",
           metadata_tags: agent.metadata_tags || [],
           profile_picture_url: agent.profile_picture_url || "",
         };

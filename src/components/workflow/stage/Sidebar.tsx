@@ -138,12 +138,18 @@ export const Sidebar = ({
   };
   
   const handleDownloadAgent = (agent: any) => {
-    const agentData = {
-      ...agent,
+    // Export in reverse-compatible format
+    const exportData = {
+      id: agent.id,
+      name: agent.name,
+      iconName: agent.icon_name,
+      description: agent.description || "Custom agent",
+      defaultSystemPrompt: agent.system_prompt,
+      defaultUserPrompt: agent.user_prompt || "",
       type: "agent-definition",
       exportedAt: new Date().toISOString()
     };
-    const json = JSON.stringify(agentData, null, 2);
+    const json = JSON.stringify(exportData, null, 2);
     const blob = new Blob([json], {
       type: "application/json"
     });
