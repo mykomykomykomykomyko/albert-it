@@ -360,6 +360,58 @@ export const useWorkflowExecution = ({
       }
     };
 
+    // Topological sort helper to determine node execution order
+    const getNodeExecutionOrder = (stageNodes: WorkflowNode[]): WorkflowNode[] => {
+      const nodeIds = new Set(stageNodes.map(n => n.id));
+      const inDegree = new Map<string, number>();
+      const adjacencyList = new Map<string, string[]>();
+      
+      // Initialize
+      stageNodes.forEach(node => {
+        inDegree.set(node.id, 0);
+        adjacencyList.set(node.id, []);
+      });
+      
+      // Build graph for nodes in this stage
+      workflow.connections.forEach(conn => {
+        if (nodeIds.has(conn.fromNodeId) && nodeIds.has(conn.toNodeId)) {
+          adjacencyList.get(conn.fromNodeId)!.push(conn.toNodeId);
+          inDegree.set(conn.toNodeId, (inDegree.get(conn.toNodeId) || 0) + 1);
+        }
+      });
+      
+      // Topological sort using Kahn's algorithm
+      const queue: string[] = [];
+      const sortedOrder: WorkflowNode[] = [];
+      
+      inDegree.forEach((degree, nodeId) => {
+        if (degree === 0) queue.push(nodeId);
+      });
+      
+      while (queue.length > 0) {
+        const nodeId = queue.shift()!;
+        const node = stageNodes.find(n => n.id === nodeId)!;
+        sortedOrder.push(node);
+        
+        adjacencyList.get(nodeId)!.forEach(neighborId => {
+          const newDegree = inDegree.get(neighborId)! - 1;
+          inDegree.set(neighborId, newDegree);
+          if (newDegree === 0) queue.push(neighborId);
+        });
+      }
+      
+      // If not all nodes are in sorted order, there's a cycle or disconnected nodes
+      // Add remaining nodes to the end
+      const processedIds = new Set(sortedOrder.map(n => n.id));
+      stageNodes.forEach(node => {
+        if (!processedIds.has(node.id)) {
+          sortedOrder.push(node);
+        }
+      });
+      
+      return sortedOrder;
+    };
+
     // Execute workflow with loop handling
     let continueLoop = true;
     let globalLoopIteration = 0;
@@ -382,7 +434,43 @@ export const useWorkflowExecution = ({
           `▸ Stage ${i + 1}: Processing ${agentCount} agent(s) and ${functionCount} function(s)`
         );
 
-        const nodePromises = stage.nodes.map(async (node) => {
+        // Get execution order based on dependencies
+        const orderedNodes = getNodeExecutionOrder(stage.nodes);
+        
+        // Group nodes into batches that can run in parallel
+        const batches: WorkflowNode[][] = [];
+        const processed = new Set<string>();
+        
+        while (processed.size < orderedNodes.length) {
+          const batch: WorkflowNode[] = [];
+          
+          for (const node of orderedNodes) {
+            if (processed.has(node.id)) continue;
+            
+            // Check if all dependencies are processed
+            const dependencies = workflow.connections
+              .filter(c => c.toNodeId === node.id && orderedNodes.some(n => n.id === c.fromNodeId))
+              .map(c => c.fromNodeId);
+            
+            const allDepsProcessed = dependencies.every(depId => processed.has(depId));
+            
+            if (allDepsProcessed) {
+              batch.push(node);
+              processed.add(node.id);
+            }
+          }
+          
+          if (batch.length > 0) {
+            batches.push(batch);
+          } else {
+            // No progress made, break to avoid infinite loop
+            break;
+          }
+        }
+
+        // Execute batches sequentially, nodes within batch in parallel
+        for (const batch of batches) {
+          const nodePromises = batch.map(async (node) => {
           // Safety check: global execution limit
           if (globalExecutionCountRef.current >= MAX_GLOBAL_EXECUTIONS) {
             onAddLog("error", "⚠️ Global execution limit reached - stopping workflow");
@@ -493,6 +581,8 @@ export const useWorkflowExecution = ({
         });
 
         await Promise.all(nodePromises);
+        }
+        
         onAddLog("success", `✓ Stage ${i + 1} completed`);
       }
 
