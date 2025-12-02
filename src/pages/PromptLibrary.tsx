@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export default function PromptLibrary() {
   const navigate = useNavigate();
+  const { t } = useTranslation('prompts');
   const {
     prompts,
     loading,
@@ -53,7 +55,7 @@ export default function PromptLibrary() {
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.prompt_text.trim()) {
-      toast.error('Name and prompt text are required');
+      toast.error(t('messages.error'));
       return;
     }
 
@@ -113,7 +115,7 @@ export default function PromptLibrary() {
 
   const handleShare = async () => {
     if (!selectedPrompt || !shareEmail) {
-      toast.error('Please enter an email address');
+      toast.error(t('messages.error'));
       return;
     }
     const success = await sharePrompt(selectedPrompt, shareEmail, sharePermission);
@@ -137,7 +139,7 @@ export default function PromptLibrary() {
       // Create a new conversation
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Please log in to use prompts');
+        toast.error(t('messages.error'));
         return;
       }
 
@@ -151,7 +153,7 @@ export default function PromptLibrary() {
         .single();
 
       if (error || !newConversation) {
-        toast.error('Failed to create conversation');
+        toast.error(t('messages.error'));
         return;
       }
 
@@ -162,7 +164,7 @@ export default function PromptLibrary() {
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+    toast.success(t('marketplace.copiedSuccess'));
   };
 
   const currentPrompts = activeTab === 'personal' ? prompts : marketplacePrompts;
@@ -182,20 +184,20 @@ export default function PromptLibrary() {
         {/* Left side - Prompts List */}
         <div className="hidden md:flex w-64 lg:w-80 border-r border-border flex-col bg-card">
           <div className="p-4 flex-shrink-0 border-b border-border">
-            <h2 className="text-base font-semibold mb-3">Prompts</h2>
+            <h2 className="text-base font-semibold mb-3">{t('title')}</h2>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'personal' | 'marketplace')} className="mb-3">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="personal">Personal</TabsTrigger>
+                <TabsTrigger value="personal">{t('library.title')}</TabsTrigger>
                 <TabsTrigger value="marketplace">
                   <Store className="h-3 w-3 mr-1" />
-                  Marketplace
+                  {t('marketplace.title')}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={activeTab === 'personal' ? t('library.search') : t('marketplace.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-9 text-sm"
@@ -207,12 +209,12 @@ export default function PromptLibrary() {
             <div className="space-y-1.5 py-3">
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  Loading...
+                  {t('messages.error')}...
                 </div>
               ) : filteredPrompts.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-medium">No prompts</p>
+                  <p className="text-sm font-medium">{activeTab === 'personal' ? t('library.noPrompts') : t('marketplace.noResults')}</p>
                 </div>
               ) : (
                 filteredPrompts.map((prompt) => (
@@ -256,8 +258,8 @@ export default function PromptLibrary() {
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">Prompt Library</h1>
-              <p className="text-muted-foreground">Store, test, and share reusable prompts</p>
+              <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
+              <p className="text-muted-foreground">{t('description')}</p>
             </div>
             
             {activeTab === 'personal' && (
@@ -271,62 +273,62 @@ export default function PromptLibrary() {
                 <DialogTrigger asChild>
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
-                    New Prompt
+                    {t('actions.create')}
                   </Button>
                 </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>{editingPrompt ? 'Edit Prompt' : 'Create New Prompt'}</DialogTitle>
+                  <DialogTitle>{editingPrompt ? t('actions.edit') : t('actions.create')}</DialogTitle>
                   <DialogDescription>
-                    {editingPrompt ? 'Update your prompt details' : 'Add a new prompt to your library'}
+                    {editingPrompt ? t('messages.updated') : t('library.createFirst')}
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Name *</Label>
+                    <Label htmlFor="name">{t('form.name')} *</Label>
                     <Input
                       id="name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Prompt name"
+                      placeholder={t('form.namePlaceholder')}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t('form.description')}</Label>
                     <Input
                       id="description"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Brief description"
+                      placeholder={t('form.descriptionPlaceholder')}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="prompt_text">Prompt Text *</Label>
+                    <Label htmlFor="prompt_text">{t('form.content')} *</Label>
                     <Textarea
                       id="prompt_text"
                       value={formData.prompt_text}
                       onChange={(e) => setFormData({ ...formData, prompt_text: e.target.value })}
-                      placeholder="Enter your prompt... Use {{variable}} for dynamic content"
+                      placeholder={t('form.contentPlaceholder')}
                       className="min-h-[150px]"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="category">Category</Label>
+                      <Label htmlFor="category">{t('form.category')}</Label>
                       <Input
                         id="category"
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        placeholder="e.g., Analysis, Writing"
+                        placeholder={t('form.selectCategory')}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="tags">Tags (comma-separated)</Label>
+                      <Label htmlFor="tags">{t('form.tags')}</Label>
                       <Input
                         id="tags"
                         value={formData.tags}
                         onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-                        placeholder="tag1, tag2, tag3"
+                        placeholder={t('form.tagsPlaceholder')}
                       />
                     </div>
                   </div>
@@ -337,7 +339,7 @@ export default function PromptLibrary() {
                         checked={formData.is_public}
                         onCheckedChange={(checked) => setFormData({ ...formData, is_public: checked })}
                       />
-                      <Label htmlFor="is_public">Make public</Label>
+                      <Label htmlFor="is_public">{t('form.public')}</Label>
                     </div>
                     <div className="flex items-center gap-2">
                       <Switch
@@ -349,7 +351,7 @@ export default function PromptLibrary() {
                     </div>
                   </div>
                   <Button onClick={handleSubmit} className="w-full">
-                    {editingPrompt ? 'Update Prompt' : 'Create Prompt'}
+                    {editingPrompt ? t('actions.save') : t('actions.create')}
                   </Button>
                 </div>
               </DialogContent>
@@ -369,7 +371,7 @@ export default function PromptLibrary() {
                           variant="ghost"
                           size="sm"
                           onClick={() => setIsShareOpen(true)}
-                          title="Share with another user"
+                          title={t('actions.share')}
                         >
                           <Share2 className="w-4 h-4" />
                         </Button>
@@ -378,7 +380,7 @@ export default function PromptLibrary() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleSubmitToMarketplace()}
-                            title="Submit to marketplace"
+                            title={t('form.marketplace')}
                           >
                             <Upload className="w-4 h-4" />
                           </Button>
@@ -403,10 +405,10 @@ export default function PromptLibrary() {
                         variant="default"
                         size="sm"
                         onClick={() => copyToPersonalLibrary(selectedPromptData)}
-                        title="Add to your personal library"
+                        title={t('marketplace.copyToLibrary')}
                       >
                         <Download className="w-4 h-4 mr-2" />
-                        Add to Library
+                        {t('marketplace.copyToLibrary')}
                       </Button>
                     )}
                   </div>
@@ -418,7 +420,7 @@ export default function PromptLibrary() {
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-sm font-medium">Prompt Text</Label>
+                    <Label className="text-sm font-medium">{t('form.content')}</Label>
                     <div className="mt-2 p-4 bg-muted/30 rounded-lg">
                       <p className="text-sm whitespace-pre-wrap">{selectedPromptData.prompt_text}</p>
                     </div>
@@ -429,7 +431,7 @@ export default function PromptLibrary() {
                       <Badge variant="secondary">{selectedPromptData.category}</Badge>
                     )}
                     {selectedPromptData.is_public && (
-                      <Badge variant="outline">Public</Badge>
+                      <Badge variant="outline">{t('form.public')}</Badge>
                     )}
                     {selectedPromptData.is_template && (
                       <Badge variant="outline">Template</Badge>
@@ -437,33 +439,26 @@ export default function PromptLibrary() {
                     {selectedPromptData.is_marketplace && (
                       <Badge variant="default">
                         <Store className="h-3 w-3 mr-1" />
-                        Marketplace
+                        {t('form.marketplace')}
                       </Badge>
                     )}
                     {selectedPromptData.tags?.map((tag: string) => (
                       <Badge key={tag} variant="outline">{tag}</Badge>
                     ))}
                   </div>
-                  
-                  <div className="flex gap-2 pt-4">
-                    <Button
-                      onClick={() => handleExecute(selectedPromptData.id)}
-                      className="flex-1"
-                    >
+
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button onClick={() => handleExecute(selectedPromptData.id)} className="flex-1">
                       <Play className="w-4 h-4 mr-2" />
-                      Execute
+                      {t('actions.execute')}
                     </Button>
-                    <Button
-                      variant="outline"
+                    <Button 
+                      variant="outline" 
                       onClick={() => handleCopy(selectedPromptData.prompt_text)}
                     >
                       <Copy className="w-4 h-4 mr-2" />
                       Copy
                     </Button>
-                  </div>
-                  
-                  <div className="text-xs text-muted-foreground text-right pt-2">
-                    Used {selectedPromptData.usage_count} times
                   </div>
                 </div>
               </CardContent>
@@ -472,67 +467,47 @@ export default function PromptLibrary() {
             <Card className="h-[600px] flex items-center justify-center">
               <CardContent className="text-center text-muted-foreground">
                 <FileText className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Select a prompt to view details</p>
-                <p className="text-sm mt-1">Choose from the sidebar or create a new prompt</p>
-                <Button 
-                  onClick={() => setIsCreateOpen(true)}
-                  className="mt-4"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create New Prompt
-                </Button>
+                <p className="text-lg font-medium">{activeTab === 'personal' ? t('library.noPrompts') : t('marketplace.noResults')}</p>
+                <p className="text-sm mt-1">{activeTab === 'personal' ? t('library.createFirst') : t('marketplace.description')}</p>
               </CardContent>
             </Card>
           )}
         </div>
+      </div>
       </div>
 
       {/* Share Dialog */}
       <Dialog open={isShareOpen} onOpenChange={setIsShareOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Share Prompt</DialogTitle>
+            <DialogTitle>{t('actions.share')}</DialogTitle>
             <DialogDescription>
-              Share this prompt with another user by entering their email address
+              {t('messages.shared')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="shareEmail">User Email</Label>
+              <Label>Email</Label>
               <Input
-                id="shareEmail"
                 type="email"
                 value={shareEmail}
                 onChange={(e) => setShareEmail(e.target.value)}
                 placeholder="user@example.com"
               />
             </div>
-            <div>
-              <Label>Permission</Label>
-              <div className="flex gap-2 mt-2">
-                <Button
-                  variant={sharePermission === 'view' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSharePermission('view')}
-                >
-                  View Only
-                </Button>
-                <Button
-                  variant={sharePermission === 'edit' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSharePermission('edit')}
-                >
-                  Can Edit
-                </Button>
-              </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={sharePermission === 'edit'}
+                onCheckedChange={(checked) => setSharePermission(checked ? 'edit' : 'view')}
+              />
+              <Label>{t('actions.edit')}</Label>
             </div>
             <Button onClick={handleShare} className="w-full">
-              Share Prompt
+              {t('actions.share')}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-      </div>
     </>
   );
 }

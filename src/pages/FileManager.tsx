@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChatHeader } from '@/components/ChatHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,7 @@ interface FileAttachment {
 
 const FileManager = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('files');
   const [files, setFiles] = useState<FileAttachment[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<FileAttachment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,7 +90,7 @@ const FileManager = () => {
       if (error) throw error;
       setFiles(data || []);
     } catch (error: any) {
-      toast.error('Failed to load files');
+      toast.error(t('upload.error'));
       console.error(error);
     } finally {
       setLoading(false);
@@ -124,10 +126,10 @@ const FileManager = () => {
 
       if (error) throw error;
 
-      toast.success('File deleted successfully');
+      toast.success(t('messages.deleted'));
       setFiles(files.filter(f => f.id !== fileToDelete));
     } catch (error: any) {
-      toast.error('Failed to delete file');
+      toast.error(t('messages.error'));
       console.error(error);
     } finally {
       setDeleteDialogOpen(false);
@@ -144,12 +146,12 @@ const FileManager = () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        toast.success('File downloaded');
+        toast.success(t('messages.downloaded'));
       } else {
-        toast.error('File data not available');
+        toast.error(t('messages.error'));
       }
     } catch (error) {
-      toast.error('Failed to download file');
+      toast.error(t('messages.error'));
       console.error(error);
     }
   };
@@ -158,7 +160,7 @@ const FileManager = () => {
     if (file.conversation_id) {
       navigate(`/chat/${file.conversation_id}`);
     } else {
-      toast.info('File not associated with a conversation');
+      toast.info(t('messages.error'));
     }
   };
 
@@ -198,7 +200,7 @@ const FileManager = () => {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading files...</p>
+          <p className="text-muted-foreground">{t('upload.uploading')}</p>
         </div>
       </div>
     );
@@ -212,9 +214,9 @@ const FileManager = () => {
         <div className="max-w-7xl mx-auto h-full flex flex-col">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">File Manager</h1>
+            <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
             <p className="text-muted-foreground">
-              Manage all your uploaded files across conversations
+              {t('description')}
             </p>
           </div>
 
@@ -224,7 +226,7 @@ const FileManager = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <File className="h-4 w-4" />
-                  Total Files
+                  {t('list.name')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -236,7 +238,7 @@ const FileManager = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <ImageIcon className="h-4 w-4" />
-                  Images
+                  {t('types.image')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -248,7 +250,7 @@ const FileManager = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Documents
+                  {t('types.document')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -260,7 +262,7 @@ const FileManager = () => {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <HardDrive className="h-4 w-4" />
-                  Total Size
+                  {t('list.size')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -274,7 +276,7 @@ const FileManager = () => {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search files..."
+                placeholder={t('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -287,9 +289,9 @@ const FileManager = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Files</SelectItem>
-                <SelectItem value="image">Images</SelectItem>
-                <SelectItem value="text">Documents</SelectItem>
+                <SelectItem value="all">{t('filter')}</SelectItem>
+                <SelectItem value="image">{t('types.image')}</SelectItem>
+                <SelectItem value="text">{t('types.document')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -301,8 +303,8 @@ const FileManager = () => {
                 <File className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
                   {files.length === 0
-                    ? 'No files uploaded yet'
-                    : 'No files match your search'}
+                    ? t('list.noFiles')
+                    : t('list.noFiles')}
                 </p>
               </div>
             ) : (
@@ -361,7 +363,7 @@ const FileManager = () => {
                               onClick={() => handleView(file)}
                             >
                               <Eye className="h-3 w-3 mr-1" />
-                              View
+                              {t('actions.preview')}
                             </Button>
                             <Button
                               variant="outline"
@@ -396,15 +398,15 @@ const FileManager = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete File</AlertDialogTitle>
+            <AlertDialogTitle>{t('actions.delete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this file? This action cannot be undone.
+              {t('messages.deleted')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('actions.preview')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-              Delete
+              {t('actions.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

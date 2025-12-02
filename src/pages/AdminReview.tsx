@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ type AgentWithEmail = Agent & { submitter_email?: string };
 
 export default function AdminReview() {
   const navigate = useNavigate();
+  const { t } = useTranslation('admin');
   const { isAdmin, loading: rolesLoading } = useUserRoles();
   const [agents, setAgents] = useState<AgentWithEmail[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,13 +38,13 @@ export default function AdminReview() {
       }
       
       if (!rolesLoading && !isAdmin) {
-        toast.error('Access denied. Admin privileges required.');
+        toast.error(t('accessDenied'));
         navigate('/agents');
       }
     };
 
     checkAuth();
-  }, [navigate, isAdmin, rolesLoading]);
+  }, [navigate, isAdmin, rolesLoading, t]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -88,7 +90,7 @@ export default function AdminReview() {
       setAgents(agentsWithEmail);
     } catch (error) {
       console.error('Error loading pending agents:', error);
-      toast.error('Failed to load pending agents');
+      toast.error(t('error'));
     } finally {
       setLoading(false);
     }
@@ -110,13 +112,13 @@ export default function AdminReview() {
 
       if (error) throw error;
 
-      toast.success(`Agent "${agent.name}" published to marketplace`);
+      toast.success(t('agentReview.approved'));
       setSelectedAgent(null);
       setReviewNotes('');
       await loadPendingAgents();
     } catch (error) {
       console.error('Error approving agent:', error);
-      toast.error('Failed to approve agent');
+      toast.error(t('error'));
     }
   };
 
@@ -136,20 +138,20 @@ export default function AdminReview() {
 
       if (error) throw error;
 
-      toast.success(`Agent "${agent.name}" rejected`);
+      toast.success(t('agentReview.rejected'));
       setSelectedAgent(null);
       setReviewNotes('');
       await loadPendingAgents();
     } catch (error) {
       console.error('Error rejecting agent:', error);
-      toast.error('Failed to reject agent');
+      toast.error(t('error'));
     }
   };
 
   if (rolesLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('loading')}</p>
       </div>
     );
   }
@@ -170,23 +172,23 @@ export default function AdminReview() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Agents
           </Button>
-          <h1 className="text-4xl font-bold mb-2">Admin Panel</h1>
-          <p className="text-muted-foreground">Manage agents and translations</p>
+          <h1 className="text-4xl font-bold mb-2">{t('title')}</h1>
+          <p className="text-muted-foreground">{t('description')}</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="agents">Agent Review</TabsTrigger>
-            <TabsTrigger value="prompts">Prompt Review</TabsTrigger>
-            <TabsTrigger value="translations">Translation Management</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="agents">{t('tabs.agents')}</TabsTrigger>
+            <TabsTrigger value="prompts">{t('tabs.prompts')}</TabsTrigger>
+            <TabsTrigger value="translations">{t('tabs.translations')}</TabsTrigger>
+            <TabsTrigger value="users">{t('tabs.users')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="agents">
             {agents.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground">No agents pending review</p>
+                  <p className="text-muted-foreground">{t('agentReview.noAgents')}</p>
                 </CardContent>
               </Card>
             ) : (
@@ -203,14 +205,14 @@ export default function AdminReview() {
                       </div>
                       <CardTitle className="line-clamp-1">{agent.name}</CardTitle>
                       <CardDescription className="line-clamp-2">
-                        {agent.description || 'No description available'}
+                        {agent.description || t('agentReview.description')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         {agent.category && (
                           <div>
-                            <p className="text-xs text-muted-foreground mb-1">Category</p>
+                            <p className="text-xs text-muted-foreground mb-1">{t('agentReview.category')}</p>
                             <Badge variant="outline">{agent.category}</Badge>
                           </div>
                         )}
@@ -227,12 +229,12 @@ export default function AdminReview() {
                           </div>
                         )}
                         <div>
-                          <p className="text-xs text-muted-foreground mb-1">Submitted By</p>
+                          <p className="text-xs text-muted-foreground mb-1">{t('agentReview.submittedBy')}</p>
                           <p className="text-xs font-mono">{agent.submitter_email}</p>
                         </div>
                         {agent.submitted_at && (
                           <p className="text-xs text-muted-foreground">
-                            Submitted: {new Date(agent.submitted_at).toLocaleDateString()}
+                            {t('agentReview.submittedAt')}: {new Date(agent.submitted_at).toLocaleDateString()}
                           </p>
                         )}
                         <div className="flex gap-2 pt-3">
@@ -241,7 +243,7 @@ export default function AdminReview() {
                             className="flex-1"
                             variant="outline"
                           >
-                            Review
+                            {t('agentReview.review')}
                           </Button>
                         </div>
                       </div>
@@ -269,7 +271,7 @@ export default function AdminReview() {
       <Dialog open={selectedAgent !== null} onOpenChange={() => setSelectedAgent(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Review Agent: {selectedAgent?.name}</DialogTitle>
+            <DialogTitle>{t('agentReview.review')}: {selectedAgent?.name}</DialogTitle>
           </DialogHeader>
           {selectedAgent && (
             <div className="space-y-4">
@@ -282,21 +284,21 @@ export default function AdminReview() {
                   <h3 className="font-semibold">{selectedAgent.name}</h3>
                   <Badge variant="secondary">{selectedAgent.type}</Badge>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Submitted by: <span className="font-mono">{selectedAgent.submitter_email}</span>
+                    {t('agentReview.submittedBy')}: <span className="font-mono">{selectedAgent.submitter_email}</span>
                   </p>
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-sm font-medium">{t('agentReview.description')}</label>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {selectedAgent.description || 'No description provided'}
+                  {selectedAgent.description || t('agentReview.description')}
                 </p>
               </div>
 
               {selectedAgent.category && (
                 <div>
-                  <label className="text-sm font-medium">Category</label>
+                  <label className="text-sm font-medium">{t('agentReview.category')}</label>
                   <p className="text-sm text-muted-foreground mt-1">{selectedAgent.category}</p>
                 </div>
               )}
@@ -315,7 +317,7 @@ export default function AdminReview() {
               )}
 
               <div>
-                <label className="text-sm font-medium">System Prompt</label>
+                <label className="text-sm font-medium">{t('agentReview.systemPrompt')}</label>
                 <p className="text-sm text-muted-foreground mt-1 bg-muted p-3 rounded-md whitespace-pre-wrap">
                   {selectedAgent.system_prompt}
                 </p>
@@ -329,11 +331,11 @@ export default function AdminReview() {
               </div>
 
               <div>
-                <label className="text-sm font-medium">Review Notes (Optional)</label>
+                <label className="text-sm font-medium">{t('agentReview.reviewNotes')}</label>
                 <Textarea
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="Add notes about this review..."
+                  placeholder={t('agentReview.notesPlaceholder')}
                   rows={3}
                 />
               </div>
@@ -345,7 +347,7 @@ export default function AdminReview() {
                   variant="default"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve & Publish
+                  {t('agentReview.approve')}
                 </Button>
                 <Button
                   onClick={() => handleReject(selectedAgent)}
@@ -353,7 +355,7 @@ export default function AdminReview() {
                   variant="destructive"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
-                  Reject
+                  {t('agentReview.reject')}
                 </Button>
               </div>
             </div>

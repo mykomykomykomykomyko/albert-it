@@ -7,6 +7,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChatHeader } from '@/components/ChatHeader';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -17,6 +18,7 @@ import remarkGfm from 'remark-gfm';
 const Docs = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('docs');
   const [docsContent, setDocsContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -31,10 +33,10 @@ const Docs = () => {
       })
       .catch(error => {
         console.error('Error loading documentation:', error);
-        setDocsContent('# Documentation\n\nFailed to load documentation. Please try again later.');
+        setDocsContent(`# ${t('title')}\n\n${t('notFound')}`);
         setLoading(false);
       });
-  }, []);
+  }, [t]);
 
   // Handle hash navigation
   useEffect(() => {
@@ -62,7 +64,7 @@ const Docs = () => {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(-1)}
-                title="Go back"
+                title={t('navigation.previous')}
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
@@ -71,8 +73,8 @@ const Docs = () => {
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold">Albert Documentation</h1>
-                  <p className="text-sm text-muted-foreground">Training manual and comprehensive guide</p>
+                  <h1 className="text-2xl font-bold">{t('title')}</h1>
+                  <p className="text-sm text-muted-foreground">{t('description')}</p>
                 </div>
               </div>
             </div>
@@ -85,7 +87,7 @@ const Docs = () => {
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading documentation...</p>
+                    <p className="text-muted-foreground">{t('loading')}</p>
                   </div>
                 </div>
               ) : (
