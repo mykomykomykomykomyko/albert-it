@@ -1,0 +1,47 @@
+{
+  "title": "File Manager",
+  "description": "Manage your uploaded files",
+  "upload": {
+    "title": "Upload Files",
+    "dragDrop": "Drag and drop files here",
+    "or": "or",
+    "browse": "Browse Files",
+    "uploading": "Uploading...",
+    "success": "File uploaded successfully",
+    "error": "Failed to upload file"
+  },
+  "list": {
+    "name": "Name",
+    "type": "Type",
+    "size": "Size",
+    "date": "Date",
+    "actions": "Actions",
+    "noFiles": "No files uploaded",
+    "uploadFirst": "Upload your first file to get started"
+  },
+  "actions": {
+    "download": "Download",
+    "delete": "Delete",
+    "rename": "Rename",
+    "preview": "Preview",
+    "share": "Share"
+  },
+  "types": {
+    "image": "Image",
+    "document": "Document",
+    "pdf": "PDF",
+    "spreadsheet": "Spreadsheet",
+    "audio": "Audio",
+    "video": "Video",
+    "other": "Other"
+  },
+  "messages": {
+    "deleted": "File deleted successfully",
+    "renamed": "File renamed successfully",
+    "downloaded": "File downloaded",
+    "error": "An error occurred"
+  },
+  "search": "Search files...",
+  "filter": "Filter by type",
+  "sort": "Sort by"
+}

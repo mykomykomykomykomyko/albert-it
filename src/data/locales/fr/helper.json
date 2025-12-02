@@ -1,0 +1,48 @@
+{
+  "title": "Assistant IA",
+  "description": "Obtenez de l'aide contextuelle et des suggestions",
+  "defaultGreeting": "Bonjour! Je suis votre assistant IA. Je peux vous aider à naviguer et utiliser Albert efficacement.",
+  "askQuestion": "Posez une question...",
+  "send": "Envoyer",
+  "clear": "Effacer le clavardage",
+  "thinking": "Réflexion...",
+  "quickQuestions": {
+    "title": "Questions rapides",
+    "howToChat": "Comment démarrer un clavardage?",
+    "createAgent": "Comment créer un agent?",
+    "buildWorkflow": "Comment construire un flux de travail?",
+    "uploadFiles": "Comment télécharger des fichiers?",
+    "shareWork": "Comment partager mon travail?"
+  },
+  "contexts": {
+    "chat": {
+      "title": "Aide du clavardage",
+      "description": "Vous êtes dans l'interface de clavardage. Ici, vous pouvez avoir des conversations avec des agents IA, télécharger des fichiers et utiliser divers outils."
+    },
+    "agents": {
+      "title": "Aide des agents",
+      "description": "Vous consultez la page des agents. Ici, vous pouvez créer, modifier et gérer vos agents IA personnalisés."
+    },
+    "stage": {
+      "title": "Aide de la scène",
+      "description": "Vous êtes dans le constructeur de scène. Ici, vous pouvez créer des flux de travail multi-agents en connectant des agents et des fonctions."
+    },
+    "canvas": {
+      "title": "Aide du canevas",
+      "description": "Vous êtes dans la vue canevas. Ici, vous pouvez créer des diagrammes visuels et des organigrammes."
+    },
+    "marketplace": {
+      "title": "Aide du marché",
+      "description": "Vous parcourez le marché. Ici, vous pouvez découvrir et utiliser des agents et des flux de travail créés par la communauté."
+    },
+    "default": {
+      "title": "Aide générale",
+      "description": "Je peux vous aider à naviguer dans Albert et répondre à vos questions sur ses fonctionnalités."
+    }
+  },
+  "suggestions": {
+    "learnMore": "En savoir plus",
+    "tryIt": "Essayez maintenant",
+    "showExample": "Montrez-moi un exemple"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "title": "Documentation",
+  "description": "Learn how to use Albert",
+  "search": "Search documentation...",
+  "tableOfContents": "Table of Contents",
+  "onThisPage": "On this page",
+  "sections": {
+    "gettingStarted": "Getting Started",
+    "chat": "Chat Interface",
+    "agents": "Custom Agents",
+    "workflows": "Workflows",
+    "stage": "Stage Builder",
+    "canvas": "Canvas",
+    "prompts": "Prompt Library",
+    "voice": "Voice Analysis",
+    "image": "Image Analysis",
+    "transcripts": "Meeting Transcripts",
+    "admin": "Administration"
+  },
+  "feedback": {
+    "helpful": "Was this helpful?",
+    "yes": "Yes",
+    "no": "No",
+    "thanks": "Thanks for your feedback!"
+  },
+  "navigation": {
+    "previous": "Previous",
+    "next": "Next",
+    "backToTop": "Back to top"
+  },
+  "loading": "Loading documentation...",
+  "notFound": "Documentation not found"
+}

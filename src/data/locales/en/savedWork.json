@@ -1,0 +1,45 @@
+{
+  "title": "Saved Work",
+  "description": "Access your saved canvases, workflows, and stages",
+  "tabs": {
+    "canvases": "Canvases",
+    "workflows": "Workflows",
+    "stages": "Stages"
+  },
+  "canvas": {
+    "title": "Saved Canvases",
+    "noItems": "No saved canvases",
+    "createFirst": "Create your first canvas to save it here"
+  },
+  "workflow": {
+    "title": "Saved Workflows",
+    "noItems": "No saved workflows",
+    "createFirst": "Create your first workflow to save it here"
+  },
+  "stage": {
+    "title": "Saved Stages",
+    "noItems": "No saved stages",
+    "createFirst": "Create your first stage to save it here"
+  },
+  "actions": {
+    "load": "Load",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "share": "Share",
+    "export": "Export"
+  },
+  "details": {
+    "created": "Created",
+    "updated": "Updated",
+    "description": "Description"
+  },
+  "messages": {
+    "loaded": "Loaded successfully",
+    "deleted": "Deleted successfully",
+    "duplicated": "Duplicated successfully",
+    "error": "An error occurred"
+  },
+  "search": "Search saved work...",
+  "noResults": "No results found"
+}

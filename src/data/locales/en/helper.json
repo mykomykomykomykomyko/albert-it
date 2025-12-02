@@ -1,0 +1,48 @@
+{
+  "title": "AI Helper",
+  "description": "Get contextual help and suggestions",
+  "defaultGreeting": "Hi! I'm your AI helper. I can help you navigate and use Albert effectively.",
+  "askQuestion": "Ask a question...",
+  "send": "Send",
+  "clear": "Clear Chat",
+  "thinking": "Thinking...",
+  "quickQuestions": {
+    "title": "Quick Questions",
+    "howToChat": "How do I start a chat?",
+    "createAgent": "How do I create an agent?",
+    "buildWorkflow": "How do I build a workflow?",
+    "uploadFiles": "How do I upload files?",
+    "shareWork": "How do I share my work?"
+  },
+  "contexts": {
+    "chat": {
+      "title": "Chat Help",
+      "description": "You're in the chat interface. Here you can have conversations with AI agents, upload files, and use various tools."
+    },
+    "agents": {
+      "title": "Agents Help",
+      "description": "You're viewing the agents page. Here you can create, edit, and manage your custom AI agents."
+    },
+    "stage": {
+      "title": "Stage Help",
+      "description": "You're in the Stage builder. Here you can create multi-agent workflows by connecting agents and functions."
+    },
+    "canvas": {
+      "title": "Canvas Help",
+      "description": "You're in the Canvas view. Here you can create visual diagrams and flowcharts."
+    },
+    "marketplace": {
+      "title": "Marketplace Help",
+      "description": "You're browsing the marketplace. Here you can discover and use community-created agents and workflows."
+    },
+    "default": {
+      "title": "General Help",
+      "description": "I can help you navigate Albert and answer questions about its features."
+    }
+  },
+  "suggestions": {
+    "learnMore": "Learn more",
+    "tryIt": "Try it now",
+    "showExample": "Show me an example"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "title": "Panneau d'administration",
+  "description": "Gérer les agents, les invites, les traductions et les utilisateurs",
+  "tabs": {
+    "agents": "Révision des agents",
+    "prompts": "Révision des invites",
+    "translations": "Traductions",
+    "users": "Gestion des utilisateurs"
+  },
+  "agentReview": {
+    "title": "Soumissions d'agents en attente",
+    "noAgents": "Aucun agent en attente de révision",
+    "submittedBy": "Soumis par",
+    "submittedAt": "Soumis le",
+    "category": "Catégorie",
+    "type": "Type",
+    "description": "Description",
+    "systemPrompt": "Invite système",
+    "review": "Réviser",
+    "approve": "Approuver",
+    "reject": "Rejeter",
+    "reviewNotes": "Notes de révision",
+    "notesPlaceholder": "Ajouter des notes de révision optionnelles...",
+    "approved": "Agent approuvé et publié",
+    "rejected": "Agent rejeté"
+  },
+  "promptReview": {
+    "title": "Soumissions d'invites en attente",
+    "noPrompts": "Aucune invite en attente de révision",
+    "content": "Contenu de l'invite",
+    "tags": "Étiquettes"
+  },
+  "translations": {
+    "title": "Gestion des traductions",
+    "language": "Langue",
+    "namespace": "Espace de noms",
+    "key": "Clé",
+    "value": "Valeur",
+    "save": "Enregistrer les modifications",
+    "saved": "Traductions enregistrées avec succès",
+    "add": "Ajouter une traduction",
+    "delete": "Supprimer",
+    "search": "Rechercher des traductions..."
+  },
+  "loading": "Chargement...",
+  "error": "Une erreur s'est produite",
+  "accessDenied": "Accès refusé. Privilèges d'administrateur requis."
+}

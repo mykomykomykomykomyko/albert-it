@@ -1,0 +1,23 @@
+{
+  "title": "Bibliothèque de cadres",
+  "description": "Parcourir et utiliser les cadres IA",
+  "search": "Rechercher des cadres...",
+  "noFrameworks": "Aucun cadre disponible",
+  "noResults": "Aucun cadre ne correspond à votre recherche",
+  "selectFramework": "Sélectionnez un cadre pour voir les détails",
+  "loading": "Chargement des cadres...",
+  "categories": {
+    "all": "Tous",
+    "prompting": "Invites",
+    "reasoning": "Raisonnement",
+    "analysis": "Analyse",
+    "creative": "Créatif",
+    "technical": "Technique"
+  },
+  "details": {
+    "description": "Description",
+    "content": "Contenu",
+    "tags": "Étiquettes",
+    "category": "Catégorie"
+  }
+}

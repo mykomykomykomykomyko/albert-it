@@ -1,0 +1,64 @@
+{
+  "title": "Prompt Library",
+  "description": "Create, manage, and share prompts",
+  "marketplace": {
+    "title": "Prompt Marketplace",
+    "description": "Discover community-created prompts",
+    "copyToLibrary": "Copy to Library",
+    "copiedSuccess": "Prompt copied to your library",
+    "deleteSuccess": "Prompt deleted from marketplace",
+    "search": "Search prompts...",
+    "noResults": "No prompts found",
+    "uses": "uses"
+  },
+  "library": {
+    "title": "My Prompts",
+    "search": "Search your prompts...",
+    "noPrompts": "No prompts yet",
+    "createFirst": "Create your first prompt to get started"
+  },
+  "form": {
+    "name": "Name",
+    "namePlaceholder": "Enter prompt name",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe what this prompt does",
+    "content": "Prompt Content",
+    "contentPlaceholder": "Enter your prompt text...",
+    "category": "Category",
+    "selectCategory": "Select a category",
+    "tags": "Tags",
+    "tagsPlaceholder": "Add tags (comma separated)",
+    "visibility": "Visibility",
+    "private": "Private",
+    "public": "Public",
+    "marketplace": "Marketplace"
+  },
+  "actions": {
+    "create": "Create Prompt",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "share": "Share",
+    "execute": "Execute",
+    "save": "Save",
+    "cancel": "Cancel",
+    "browseMarketplace": "Browse Marketplace"
+  },
+  "categories": {
+    "writing": "Writing",
+    "coding": "Coding",
+    "analysis": "Analysis",
+    "creative": "Creative",
+    "business": "Business",
+    "education": "Education",
+    "other": "Other"
+  },
+  "messages": {
+    "created": "Prompt created successfully",
+    "updated": "Prompt updated successfully",
+    "deleted": "Prompt deleted successfully",
+    "duplicated": "Prompt duplicated successfully",
+    "shared": "Prompt shared successfully",
+    "error": "An error occurred"
+  }
+}
