@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { StandardAppLayout } from '@/components/layout/StandardAppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ import {
 
 export default function SavedWork() {
   const navigate = useNavigate();
+  const { t } = useTranslation('savedWork');
   const { savedCanvases, loading: loadingCanvases, deleteCanvas } = useSavedCanvases();
   const { savedStages, loading: loadingStages, deleteStage } = useSavedStages();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -49,9 +51,9 @@ export default function SavedWork() {
     <StandardAppLayout>
       <div className="container mx-auto p-6 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">My Saved Work</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Access your saved Canvases and Stages. Your progress is automatically preserved.
+            {t('description')}
           </p>
         </div>
 
@@ -59,11 +61,11 @@ export default function SavedWork() {
           <TabsList className="mb-6">
             <TabsTrigger value="canvases" className="gap-2">
               <FileText className="h-4 w-4" />
-              Canvases ({savedCanvases.length})
+              {t('tabs.canvases')} ({savedCanvases.length})
             </TabsTrigger>
             <TabsTrigger value="stages" className="gap-2">
               <FileText className="h-4 w-4" />
-              Stages ({savedStages.length})
+              {t('tabs.stages')} ({savedStages.length})
             </TabsTrigger>
           </TabsList>
 
@@ -76,9 +78,9 @@ export default function SavedWork() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">No saved canvases yet</p>
+                  <p className="text-muted-foreground mb-4">{t('canvas.noItems')}</p>
                   <Button onClick={() => navigate('/canvas')}>
-                    Create New Canvas
+                    {t('canvas.createFirst')}
                   </Button>
                 </CardContent>
               </Card>
@@ -91,7 +93,7 @@ export default function SavedWork() {
                         <div className="flex-1">
                           <CardTitle className="text-lg mb-1">{canvas.name}</CardTitle>
                           <CardDescription className="line-clamp-2">
-                            {canvas.description || 'No description'}
+                            {canvas.description || t('details.description')}
                           </CardDescription>
                         </div>
                       </div>
@@ -99,7 +101,7 @@ export default function SavedWork() {
                     <CardContent>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                         <Calendar className="h-3 w-3" />
-                        <span>Updated {format(new Date(canvas.updated_at), 'MMM d, yyyy')}</span>
+                        <span>{t('details.updated')} {format(new Date(canvas.updated_at), 'MMM d, yyyy')}</span>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -109,7 +111,7 @@ export default function SavedWork() {
                           onClick={() => navigate('/canvas', { state: { loadCanvasId: canvas.id } })}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          Load
+                          {t('actions.load')}
                         </Button>
                         <Button
                           variant="outline"
@@ -135,9 +137,9 @@ export default function SavedWork() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground mb-4">No saved stages yet</p>
+                  <p className="text-muted-foreground mb-4">{t('stage.noItems')}</p>
                   <Button onClick={() => navigate('/stage')}>
-                    Create New Stage
+                    {t('stage.createFirst')}
                   </Button>
                 </CardContent>
               </Card>
@@ -150,7 +152,7 @@ export default function SavedWork() {
                         <div className="flex-1">
                           <CardTitle className="text-lg mb-1">{stage.name}</CardTitle>
                           <CardDescription className="line-clamp-2">
-                            {stage.description || 'No description'}
+                            {stage.description || t('details.description')}
                           </CardDescription>
                         </div>
                       </div>
@@ -158,7 +160,7 @@ export default function SavedWork() {
                     <CardContent>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
                         <Calendar className="h-3 w-3" />
-                        <span>Updated {format(new Date(stage.updated_at), 'MMM d, yyyy')}</span>
+                        <span>{t('details.updated')} {format(new Date(stage.updated_at), 'MMM d, yyyy')}</span>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -168,7 +170,7 @@ export default function SavedWork() {
                           onClick={() => navigate('/stage', { state: { loadStageId: stage.id } })}
                         >
                           <Eye className="h-4 w-4 mr-1" />
-                          Load
+                          {t('actions.load')}
                         </Button>
                         <Button
                           variant="outline"
@@ -189,14 +191,14 @@ export default function SavedWork() {
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete {itemToDelete?.type}</AlertDialogTitle>
+              <AlertDialogTitle>{t('actions.delete')} {itemToDelete?.type}</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete "{itemToDelete?.name}"? This action cannot be undone.
+                {t('messages.deleted')} "{itemToDelete?.name}"?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+              <AlertDialogCancel>{t('actions.load')}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>{t('actions.delete')}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

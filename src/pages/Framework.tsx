@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +13,7 @@ import { Input } from '@/components/ui/input';
 
 export default function Framework() {
   const navigate = useNavigate();
+  const { t } = useTranslation('framework');
   const { frameworks, loading } = useFrameworks();
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,11 +32,11 @@ export default function Framework() {
         {/* Left side - Frameworks List */}
         <div className="hidden md:flex w-64 lg:w-80 border-r border-border flex-col bg-card">
           <div className="p-3 sm:p-4 flex-shrink-0 border-b border-border">
-            <h2 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">Frameworks</h2>
+            <h2 className="text-sm sm:text-base font-semibold mb-2 sm:mb-3">{t('title')}</h2>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={t('search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-8 h-9 text-sm"
@@ -46,12 +48,12 @@ export default function Framework() {
             <div className="space-y-1.5 py-3">
               {loading ? (
                 <div className="text-center py-8 text-muted-foreground text-sm">
-                  Loading...
+                  {t('loading')}
                 </div>
               ) : filteredFrameworks.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <BookOpen className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-medium">No frameworks</p>
+                  <p className="text-sm font-medium">{t('noResults')}</p>
                 </div>
               ) : (
                 filteredFrameworks.map((framework) => (
@@ -87,9 +89,9 @@ export default function Framework() {
         <div className="flex-1 overflow-auto">
           <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Framework Library</h1>
+            <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
             <p className="text-muted-foreground">
-              Learn best practices and frameworks for effective AI interactions
+              {t('description')}
             </p>
           </div>
 
@@ -111,8 +113,8 @@ export default function Framework() {
             <Card className="h-[600px] flex items-center justify-center">
               <CardContent className="text-center text-muted-foreground">
                 <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg font-medium">Select a framework to view details</p>
-                <p className="text-sm mt-1">Choose from the sidebar to get started</p>
+                <p className="text-lg font-medium">{t('selectFramework')}</p>
+                <p className="text-sm mt-1">{t('description')}</p>
               </CardContent>
             </Card>
           )}

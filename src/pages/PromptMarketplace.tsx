@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { ChatHeader } from '@/components/ChatHeader';
 
 export default function PromptMarketplace() {
   const navigate = useNavigate();
+  const { t } = useTranslation('prompts');
   const { loadMarketplacePrompts, copyToPersonalLibrary, deletePrompt, isAdmin } = usePrompts();
   const [prompts, setPrompts] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -29,16 +31,16 @@ export default function PromptMarketplace() {
 
   const handleCopyToLibrary = async (prompt: any) => {
     await copyToPersonalLibrary(prompt);
-    toast.success("Prompt copied to your library");
+    toast.success(t('marketplace.copiedSuccess'));
   };
 
   const handleDelete = async (promptId: string) => {
-    if (!confirm('Are you sure you want to delete this prompt from the marketplace?')) return;
+    if (!confirm(t('actions.delete') + '?')) return;
     
     const success = await deletePrompt(promptId);
     if (success) {
       setPrompts(prev => prev.filter(p => p.id !== promptId));
-      toast.success('Prompt deleted successfully');
+      toast.success(t('marketplace.deleteSuccess'));
     }
   };
 
@@ -63,14 +65,14 @@ export default function PromptMarketplace() {
                 className="mb-4"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to My Prompts
+                {t('library.title')}
               </Button>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <Sparkles className="h-8 w-8" />
-                Prompt Marketplace
+                {t('marketplace.title')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Discover and use prompts created by the community
+                {t('marketplace.description')}
                 {isAdmin && <span className="ml-2 text-xs">(Admin Mode)</span>}
               </p>
             </div>
@@ -80,7 +82,7 @@ export default function PromptMarketplace() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search prompts..."
+              placeholder={t('marketplace.search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -90,11 +92,11 @@ export default function PromptMarketplace() {
           {/* Prompts Grid */}
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">
-              Loading marketplace...
+              {t('messages.error')}...
             </div>
           ) : filteredPrompts.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              No prompts found
+              {t('marketplace.noResults')}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -134,7 +136,7 @@ export default function PromptMarketplace() {
                       )}
 
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Uses: {prompt.usage_count || 0}</span>
+                        <span>{t('marketplace.uses')}: {prompt.usage_count || 0}</span>
                       </div>
 
                       <div className="flex gap-2">
@@ -143,7 +145,7 @@ export default function PromptMarketplace() {
                           className="flex-1"
                         >
                           <Copy className="mr-2 h-4 w-4" />
-                          Copy to Library
+                          {t('marketplace.copyToLibrary')}
                         </Button>
                         {isAdmin && (
                           <Button
