@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Check, ArrowRight, Sparkles, Bot, Workflow, MessageSquare } from 'lucide-react';
+import { Check, ArrowRight, Sparkles, Bot, Workflow, MessageSquare, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface GettingStartedWizardProps {
@@ -12,153 +13,80 @@ interface GettingStartedWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const steps = [
+interface StepConfig {
+  titleKey: string;
+  descriptionKey: string;
+  icon: LucideIcon;
+  contentType: 'welcome' | 'features';
+  introKey?: string;
+  features?: string[];
+  tipKey?: string;
+  action?: { labelKey: string; path: string };
+}
+
+const stepConfigs: StepConfig[] = [
   {
-    title: 'Welcome to Albert',
-    description: 'Your AI-powered assistant platform for building intelligent workflows',
+    titleKey: 'gettingStarted.step1.title',
+    descriptionKey: 'gettingStarted.step1.description',
     icon: Sparkles,
-    content: (
-      <div className="space-y-4">
-        <p className="text-muted-foreground">
-          Albert combines the power of AI agents, workflows, and intelligent conversations to help you solve complex problems.
-        </p>
-        <div className="grid gap-3">
-          <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-            <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <p className="font-medium">Chat Interface</p>
-              <p className="text-sm text-muted-foreground">
-                Have natural conversations with AI, upload files, and get instant answers
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-            <Bot className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <p className="font-medium">Custom Agents</p>
-              <p className="text-sm text-muted-foreground">
-                Create specialized AI agents tailored to specific tasks
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
-            <Workflow className="h-5 w-5 text-primary mt-0.5" />
-            <div>
-              <p className="font-medium">Visual Workflows</p>
-              <p className="text-sm text-muted-foreground">
-                Build complex multi-agent workflows with a visual canvas
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
+    contentType: 'welcome',
+    introKey: 'gettingStarted.step1.intro',
   },
   {
-    title: 'Start with Chat',
-    description: 'The quickest way to get started',
+    titleKey: 'gettingStarted.step2.title',
+    descriptionKey: 'gettingStarted.step2.description',
     icon: MessageSquare,
-    content: (
-      <div className="space-y-4">
-        <p className="text-muted-foreground">
-          The chat interface is your main hub for interacting with AI. You can:
-        </p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Upload PDFs, Excel files, images, and documents</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Switch between different AI agents mid-conversation</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Use web search and built-in tools</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>View full request payloads for transparency</span>
-          </li>
-        </ul>
-        <Badge variant="secondary">Tip: Press Ctrl+Enter to send messages</Badge>
-      </div>
-    ),
-    action: { label: 'Go to Chat', path: '/chat' },
+    contentType: 'features',
+    introKey: 'gettingStarted.step2.intro',
+    features: [
+      'gettingStarted.step2.feature1',
+      'gettingStarted.step2.feature2',
+      'gettingStarted.step2.feature3',
+      'gettingStarted.step2.feature4',
+    ],
+    tipKey: 'gettingStarted.step2.tip',
+    action: { labelKey: 'gettingStarted.step2.action', path: '/chat' },
   },
   {
-    title: 'Create Custom Agents',
-    description: 'Build AI assistants for specific tasks',
+    titleKey: 'gettingStarted.step3.title',
+    descriptionKey: 'gettingStarted.step3.description',
     icon: Bot,
-    content: (
-      <div className="space-y-4">
-        <p className="text-muted-foreground">
-          Agents are specialized AI assistants with custom instructions. You can:
-        </p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Define system prompts to control agent behavior</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Add custom profile pictures and tags</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Share agents with team members</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Browse the agent marketplace for templates</span>
-          </li>
-        </ul>
-        <Badge variant="secondary">Tip: Use frameworks from the library</Badge>
-      </div>
-    ),
-    action: { label: 'Create Agent', path: '/agents' },
+    contentType: 'features',
+    introKey: 'gettingStarted.step3.intro',
+    features: [
+      'gettingStarted.step3.feature1',
+      'gettingStarted.step3.feature2',
+      'gettingStarted.step3.feature3',
+      'gettingStarted.step3.feature4',
+    ],
+    tipKey: 'gettingStarted.step3.tip',
+    action: { labelKey: 'gettingStarted.step3.action', path: '/agents' },
   },
   {
-    title: 'Build Workflows',
-    description: 'Connect agents for complex automation',
+    titleKey: 'gettingStarted.step4.title',
+    descriptionKey: 'gettingStarted.step4.description',
     icon: Workflow,
-    content: (
-      <div className="space-y-4">
-        <p className="text-muted-foreground">
-          Workflows let you chain multiple agents and functions together:
-        </p>
-        <ul className="space-y-2 text-sm">
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Drag and drop agents onto stages</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Connect nodes to pass data between stages</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Add functions like web search and API calls</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <Check className="h-4 w-4 text-primary mt-0.5" />
-            <span>Save and share workflows with others</span>
-          </li>
-        </ul>
-        <Badge variant="secondary">Tip: Start simple and iterate</Badge>
-      </div>
-    ),
-    action: { label: 'Open Stage', path: '/stage' },
+    contentType: 'features',
+    introKey: 'gettingStarted.step4.intro',
+    features: [
+      'gettingStarted.step4.feature1',
+      'gettingStarted.step4.feature2',
+      'gettingStarted.step4.feature3',
+      'gettingStarted.step4.feature4',
+    ],
+    tipKey: 'gettingStarted.step4.tip',
+    action: { labelKey: 'gettingStarted.step4.action', path: '/stage' },
   },
 ];
 
 export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizardProps) {
+  const { t } = useTranslation('common');
   const [currentStep, setCurrentStep] = useState(0);
   const [dontShowAgain, setDontShowAgain] = useState(false);
   const navigate = useNavigate();
 
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
+    if (currentStep < stepConfigs.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
@@ -187,8 +115,64 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
     onOpenChange(false);
   };
 
-  const step = steps[currentStep];
+  const step = stepConfigs[currentStep];
   const Icon = step.icon;
+
+  const renderWelcomeContent = () => (
+    <div className="space-y-4">
+      <p className="text-muted-foreground">
+        {t('gettingStarted.step1.intro')}
+      </p>
+      <div className="grid gap-3">
+        <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+          <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
+          <div>
+            <p className="font-medium">{t('gettingStarted.step1.chatTitle')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('gettingStarted.step1.chatDescription')}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+          <Bot className="h-5 w-5 text-primary mt-0.5" />
+          <div>
+            <p className="font-medium">{t('gettingStarted.step1.agentsTitle')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('gettingStarted.step1.agentsDescription')}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-start gap-3 p-3 bg-muted rounded-lg">
+          <Workflow className="h-5 w-5 text-primary mt-0.5" />
+          <div>
+            <p className="font-medium">{t('gettingStarted.step1.workflowsTitle')}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('gettingStarted.step1.workflowsDescription')}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFeaturesContent = () => (
+    <div className="space-y-4">
+      <p className="text-muted-foreground">
+        {t(step.introKey!)}
+      </p>
+      <ul className="space-y-2 text-sm">
+        {step.features?.map((featureKey, idx) => (
+          <li key={idx} className="flex items-start gap-2">
+            <Check className="h-4 w-4 text-primary mt-0.5" />
+            <span>{t(featureKey)}</span>
+          </li>
+        ))}
+      </ul>
+      {step.tipKey && (
+        <Badge variant="secondary">{t(step.tipKey)}</Badge>
+      )}
+    </div>
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -196,21 +180,21 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon className="h-5 w-5 text-primary" />
-            {step.title}
+            {t(step.titleKey)}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          <p className="text-sm text-muted-foreground">{step.description}</p>
+          <p className="text-sm text-muted-foreground">{t(step.descriptionKey)}</p>
 
           <Card>
             <CardContent className="pt-6">
-              {step.content}
+              {step.contentType === 'welcome' ? renderWelcomeContent() : renderFeaturesContent()}
             </CardContent>
           </Card>
 
           <div className="flex items-center gap-2">
-            {steps.map((_, idx) => (
+            {stepConfigs.map((_, idx) => (
               <div
                 key={idx}
                 className={`h-1.5 flex-1 rounded-full transition-colors ${
@@ -231,29 +215,29 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
                 htmlFor="dont-show" 
                 className="text-sm text-muted-foreground cursor-pointer select-none"
               >
-                Don't show again
+                {t('gettingStarted.ui.dontShowAgain')}
               </label>
             </div>
             <div className="flex gap-2">
               <Button variant="ghost" onClick={handleSkip}>
-                Skip Tour
+                {t('gettingStarted.ui.skipTour')}
               </Button>
               {step.action && (
                 <Button
                   variant="outline"
                   onClick={() => handleAction(step.action!.path)}
                 >
-                  {step.action.label}
+                  {t(step.action.labelKey)}
                 </Button>
               )}
               <Button onClick={handleNext}>
-                {currentStep < steps.length - 1 ? (
+                {currentStep < stepConfigs.length - 1 ? (
                   <>
-                    Next
+                    {t('gettingStarted.ui.next')}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </>
                 ) : (
-                  'Get Started'
+                  t('gettingStarted.ui.getStarted')
                 )}
               </Button>
             </div>

@@ -85,5 +85,57 @@
     "requirements": "Exigences du mot de passe",
     "changeButton": "Changer le mot de passe",
     "success": "Mot de passe modifié avec succès"
+  },
+  "gettingStarted": {
+    "step1": {
+      "title": "Bienvenue sur Albert",
+      "description": "Votre plateforme d'assistant IA pour créer des flux de travail intelligents",
+      "intro": "Albert combine la puissance des agents IA, des flux de travail et des conversations intelligentes pour vous aider à résoudre des problèmes complexes.",
+      "chatTitle": "Interface de clavardage",
+      "chatDescription": "Ayez des conversations naturelles avec l'IA, téléchargez des fichiers et obtenez des réponses instantanées",
+      "agentsTitle": "Agents personnalisés",
+      "agentsDescription": "Créez des agents IA spécialisés adaptés à des tâches spécifiques",
+      "workflowsTitle": "Flux de travail visuels",
+      "workflowsDescription": "Construisez des flux de travail multi-agents complexes avec un canevas visuel"
+    },
+    "step2": {
+      "title": "Commencez par le clavardage",
+      "description": "Le moyen le plus rapide de commencer",
+      "intro": "L'interface de clavardage est votre hub principal pour interagir avec l'IA. Vous pouvez :",
+      "feature1": "Télécharger des PDF, fichiers Excel, images et documents",
+      "feature2": "Basculer entre différents agents IA en cours de conversation",
+      "feature3": "Utiliser la recherche web et les outils intégrés",
+      "feature4": "Voir les charges utiles complètes des requêtes pour la transparence",
+      "tip": "Astuce : Appuyez sur Ctrl+Entrée pour envoyer des messages",
+      "action": "Aller au clavardage"
+    },
+    "step3": {
+      "title": "Créer des agents personnalisés",
+      "description": "Construire des assistants IA pour des tâches spécifiques",
+      "intro": "Les agents sont des assistants IA spécialisés avec des instructions personnalisées. Vous pouvez :",
+      "feature1": "Définir des invites système pour contrôler le comportement de l'agent",
+      "feature2": "Ajouter des photos de profil et des étiquettes personnalisées",
+      "feature3": "Partager des agents avec les membres de l'équipe",
+      "feature4": "Parcourir le marché des agents pour des modèles",
+      "tip": "Astuce : Utilisez les cadres de la bibliothèque",
+      "action": "Créer un agent"
+    },
+    "step4": {
+      "title": "Construire des flux de travail",
+      "description": "Connecter des agents pour une automatisation complexe",
+      "intro": "Les flux de travail vous permettent d'enchaîner plusieurs agents et fonctions :",
+      "feature1": "Glisser-déposer des agents sur les étapes",
+      "feature2": "Connecter des nœuds pour transmettre des données entre les étapes",
+      "feature3": "Ajouter des fonctions comme la recherche web et les appels API",
+      "feature4": "Enregistrer et partager des flux de travail avec d'autres",
+      "tip": "Astuce : Commencez simplement et itérez",
+      "action": "Ouvrir la scène"
+    },
+    "ui": {
+      "dontShowAgain": "Ne plus afficher",
+      "skipTour": "Passer la visite",
+      "next": "Suivant",
+      "getStarted": "Commencer"
+    }
   }
 }

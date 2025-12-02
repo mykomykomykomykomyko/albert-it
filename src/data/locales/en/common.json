@@ -85,5 +85,57 @@
     "requirements": "Password Requirements",
     "changeButton": "Change Password",
     "success": "Password changed successfully"
+  },
+  "gettingStarted": {
+    "step1": {
+      "title": "Welcome to Albert",
+      "description": "Your AI-powered assistant platform for building intelligent workflows",
+      "intro": "Albert combines the power of AI agents, workflows, and intelligent conversations to help you solve complex problems.",
+      "chatTitle": "Chat Interface",
+      "chatDescription": "Have natural conversations with AI, upload files, and get instant answers",
+      "agentsTitle": "Custom Agents",
+      "agentsDescription": "Create specialized AI agents tailored to specific tasks",
+      "workflowsTitle": "Visual Workflows",
+      "workflowsDescription": "Build complex multi-agent workflows with a visual canvas"
+    },
+    "step2": {
+      "title": "Start with Chat",
+      "description": "The quickest way to get started",
+      "intro": "The chat interface is your main hub for interacting with AI. You can:",
+      "feature1": "Upload PDFs, Excel files, images, and documents",
+      "feature2": "Switch between different AI agents mid-conversation",
+      "feature3": "Use web search and built-in tools",
+      "feature4": "View full request payloads for transparency",
+      "tip": "Tip: Press Ctrl+Enter to send messages",
+      "action": "Go to Chat"
+    },
+    "step3": {
+      "title": "Create Custom Agents",
+      "description": "Build AI assistants for specific tasks",
+      "intro": "Agents are specialized AI assistants with custom instructions. You can:",
+      "feature1": "Define system prompts to control agent behavior",
+      "feature2": "Add custom profile pictures and tags",
+      "feature3": "Share agents with team members",
+      "feature4": "Browse the agent marketplace for templates",
+      "tip": "Tip: Use frameworks from the library",
+      "action": "Create Agent"
+    },
+    "step4": {
+      "title": "Build Workflows",
+      "description": "Connect agents for complex automation",
+      "intro": "Workflows let you chain multiple agents and functions together:",
+      "feature1": "Drag and drop agents onto stages",
+      "feature2": "Connect nodes to pass data between stages",
+      "feature3": "Add functions like web search and API calls",
+      "feature4": "Save and share workflows with others",
+      "tip": "Tip: Start simple and iterate",
+      "action": "Open Stage"
+    },
+    "ui": {
+      "dontShowAgain": "Don't show again",
+      "skipTour": "Skip Tour",
+      "next": "Next",
+      "getStarted": "Get Started"
+    }
   }
 }
