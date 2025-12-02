@@ -1,0 +1,45 @@
+{
+  "title": "Travaux enregistrés",
+  "description": "Accédez à vos canevas, flux de travail et étapes enregistrés",
+  "tabs": {
+    "canvases": "Canevas",
+    "workflows": "Flux de travail",
+    "stages": "Étapes"
+  },
+  "canvas": {
+    "title": "Canevas enregistrés",
+    "noItems": "Aucun canevas enregistré",
+    "createFirst": "Créez votre premier canevas pour l'enregistrer ici"
+  },
+  "workflow": {
+    "title": "Flux de travail enregistrés",
+    "noItems": "Aucun flux de travail enregistré",
+    "createFirst": "Créez votre premier flux de travail pour l'enregistrer ici"
+  },
+  "stage": {
+    "title": "Étapes enregistrées",
+    "noItems": "Aucune étape enregistrée",
+    "createFirst": "Créez votre première étape pour l'enregistrer ici"
+  },
+  "actions": {
+    "load": "Charger",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "share": "Partager",
+    "export": "Exporter"
+  },
+  "details": {
+    "created": "Créé",
+    "updated": "Mis à jour",
+    "description": "Description"
+  },
+  "messages": {
+    "loaded": "Chargé avec succès",
+    "deleted": "Supprimé avec succès",
+    "duplicated": "Dupliqué avec succès",
+    "error": "Une erreur s'est produite"
+  },
+  "search": "Rechercher des travaux enregistrés...",
+  "noResults": "Aucun résultat trouvé"
+}

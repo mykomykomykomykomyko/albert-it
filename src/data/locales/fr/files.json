@@ -1,0 +1,47 @@
+{
+  "title": "Gestionnaire de fichiers",
+  "description": "Gérez vos fichiers téléchargés",
+  "upload": {
+    "title": "Télécharger des fichiers",
+    "dragDrop": "Glissez-déposez des fichiers ici",
+    "or": "ou",
+    "browse": "Parcourir les fichiers",
+    "uploading": "Téléchargement en cours...",
+    "success": "Fichier téléchargé avec succès",
+    "error": "Échec du téléchargement du fichier"
+  },
+  "list": {
+    "name": "Nom",
+    "type": "Type",
+    "size": "Taille",
+    "date": "Date",
+    "actions": "Actions",
+    "noFiles": "Aucun fichier téléchargé",
+    "uploadFirst": "Téléchargez votre premier fichier pour commencer"
+  },
+  "actions": {
+    "download": "Télécharger",
+    "delete": "Supprimer",
+    "rename": "Renommer",
+    "preview": "Aperçu",
+    "share": "Partager"
+  },
+  "types": {
+    "image": "Image",
+    "document": "Document",
+    "pdf": "PDF",
+    "spreadsheet": "Tableur",
+    "audio": "Audio",
+    "video": "Vidéo",
+    "other": "Autre"
+  },
+  "messages": {
+    "deleted": "Fichier supprimé avec succès",
+    "renamed": "Fichier renommé avec succès",
+    "downloaded": "Fichier téléchargé",
+    "error": "Une erreur s'est produite"
+  },
+  "search": "Rechercher des fichiers...",
+  "filter": "Filtrer par type",
+  "sort": "Trier par"
+}

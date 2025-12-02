@@ -1,0 +1,64 @@
+{
+  "title": "Bibliothèque d'invites",
+  "description": "Créer, gérer et partager des invites",
+  "marketplace": {
+    "title": "Marché des invites",
+    "description": "Découvrez des invites créées par la communauté",
+    "copyToLibrary": "Copier dans la bibliothèque",
+    "copiedSuccess": "Invite copiée dans votre bibliothèque",
+    "deleteSuccess": "Invite supprimée du marché",
+    "search": "Rechercher des invites...",
+    "noResults": "Aucune invite trouvée",
+    "uses": "utilisations"
+  },
+  "library": {
+    "title": "Mes invites",
+    "search": "Rechercher vos invites...",
+    "noPrompts": "Aucune invite pour le moment",
+    "createFirst": "Créez votre première invite pour commencer"
+  },
+  "form": {
+    "name": "Nom",
+    "namePlaceholder": "Entrez le nom de l'invite",
+    "description": "Description",
+    "descriptionPlaceholder": "Décrivez ce que fait cette invite",
+    "content": "Contenu de l'invite",
+    "contentPlaceholder": "Entrez le texte de votre invite...",
+    "category": "Catégorie",
+    "selectCategory": "Sélectionnez une catégorie",
+    "tags": "Étiquettes",
+    "tagsPlaceholder": "Ajouter des étiquettes (séparées par des virgules)",
+    "visibility": "Visibilité",
+    "private": "Privé",
+    "public": "Public",
+    "marketplace": "Marché"
+  },
+  "actions": {
+    "create": "Créer une invite",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "share": "Partager",
+    "execute": "Exécuter",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "browseMarketplace": "Parcourir le marché"
+  },
+  "categories": {
+    "writing": "Rédaction",
+    "coding": "Programmation",
+    "analysis": "Analyse",
+    "creative": "Créatif",
+    "business": "Affaires",
+    "education": "Éducation",
+    "other": "Autre"
+  },
+  "messages": {
+    "created": "Invite créée avec succès",
+    "updated": "Invite mise à jour avec succès",
+    "deleted": "Invite supprimée avec succès",
+    "duplicated": "Invite dupliquée avec succès",
+    "shared": "Invite partagée avec succès",
+    "error": "Une erreur s'est produite"
+  }
+}

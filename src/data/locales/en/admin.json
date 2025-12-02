@@ -1,0 +1,48 @@
+{
+  "title": "Admin Panel",
+  "description": "Manage agents, prompts, translations, and users",
+  "tabs": {
+    "agents": "Agent Review",
+    "prompts": "Prompt Review",
+    "translations": "Translations",
+    "users": "User Management"
+  },
+  "agentReview": {
+    "title": "Pending Agent Submissions",
+    "noAgents": "No pending agents to review",
+    "submittedBy": "Submitted by",
+    "submittedAt": "Submitted at",
+    "category": "Category",
+    "type": "Type",
+    "description": "Description",
+    "systemPrompt": "System Prompt",
+    "review": "Review",
+    "approve": "Approve",
+    "reject": "Reject",
+    "reviewNotes": "Review Notes",
+    "notesPlaceholder": "Add optional review notes...",
+    "approved": "Agent approved and published",
+    "rejected": "Agent rejected"
+  },
+  "promptReview": {
+    "title": "Pending Prompt Submissions",
+    "noPrompts": "No pending prompts to review",
+    "content": "Prompt Content",
+    "tags": "Tags"
+  },
+  "translations": {
+    "title": "Translation Management",
+    "language": "Language",
+    "namespace": "Namespace",
+    "key": "Key",
+    "value": "Value",
+    "save": "Save Changes",
+    "saved": "Translations saved successfully",
+    "add": "Add Translation",
+    "delete": "Delete",
+    "search": "Search translations..."
+  },
+  "loading": "Loading...",
+  "error": "An error occurred",
+  "accessDenied": "Access denied. Admin privileges required."
+}

@@ -1,0 +1,23 @@
+{
+  "title": "Framework Library",
+  "description": "Browse and use AI frameworks",
+  "search": "Search frameworks...",
+  "noFrameworks": "No frameworks available",
+  "noResults": "No frameworks match your search",
+  "selectFramework": "Select a framework to view details",
+  "loading": "Loading frameworks...",
+  "categories": {
+    "all": "All",
+    "prompting": "Prompting",
+    "reasoning": "Reasoning",
+    "analysis": "Analysis",
+    "creative": "Creative",
+    "technical": "Technical"
+  },
+  "details": {
+    "description": "Description",
+    "content": "Content",
+    "tags": "Tags",
+    "category": "Category"
+  }
+}
