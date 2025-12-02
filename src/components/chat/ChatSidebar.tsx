@@ -74,14 +74,14 @@ const ChatSidebar = ({
     const retentionDays = conversation.retention_days ?? preferences.default_retention_days;
     
     if (retentionDays === null) {
-      return { text: "Never deleted", date: null };
+      return { text: t('sidebar.neverDeleted', 'Never deleted'), date: null };
     }
 
     const createdDate = new Date(conversation.created_at);
     const deleteDate = addDays(createdDate, retentionDays);
     
     return {
-      text: `Auto-deletes on ${format(deleteDate, 'MMM d, yyyy')}`,
+      text: t('sidebar.autoDeletesOn', { date: format(deleteDate, 'MMM d, yyyy'), defaultValue: `Auto-deletes on ${format(deleteDate, 'MMM d, yyyy')}` }),
       date: deleteDate
     };
   };
@@ -113,7 +113,7 @@ const ChatSidebar = ({
                     key={conversation.id}
                     role="button"
                     tabIndex={0}
-                    aria-label={`Select conversation: ${conversation.title}`}
+                    aria-label={t('sidebar.selectConversation', { title: conversation.title, defaultValue: `Select conversation: ${conversation.title}` })}
                     className={`group relative flex items-start gap-2 p-3 border-b border-border cursor-pointer transition-colors ${
                       currentConversationId === conversation.id
                         ? "bg-accent text-accent-foreground"
@@ -136,12 +136,12 @@ const ChatSidebar = ({
                       <div className="flex items-start gap-1.5">
                         <span className="flex-1 text-sm leading-snug break-words">{conversation.title}</span>
                         {activeStreams.has(conversation.id) && (
-                          <span title="Generating response...">
+                          <span title={t('sidebar.generatingResponse', 'Generating response...')}>
                             <Loader2 className="w-3 h-3 shrink-0 text-primary animate-spin" />
                           </span>
                         )}
                         {conversation.is_shared && (
-                          <span title="Shared conversation">
+                          <span title={t('sidebar.sharedConversation', 'Shared conversation')}>
                             <Share2 className="w-3 h-3 shrink-0 text-primary" />
                           </span>
                         )}
@@ -177,7 +177,7 @@ const ChatSidebar = ({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      <p>Rename</p>
+                      <p>{t('sidebar.rename', 'Rename')}</p>
                     </TooltipContent>
                   </Tooltip>
                   <AlertDialog>
@@ -198,24 +198,23 @@ const ChatSidebar = ({
                         </AlertDialogTrigger>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p>Delete</p>
+                        <p>{t('sidebar.delete', 'Delete')}</p>
                       </TooltipContent>
                     </Tooltip>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('sidebar.deleteConversation', 'Delete conversation?')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete this conversation
-                        and all its messages.
+                        {t('sidebar.deleteDescription', 'This action cannot be undone. This will permanently delete this conversation and all its messages.')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t('sidebar.cancel', 'Cancel')}</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => onDeleteConversation(conversation.id)}
                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                       >
-                        Delete
+                        {t('sidebar.delete', 'Delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -233,14 +232,14 @@ const ChatSidebar = ({
       <Dialog open={!!renamingConversation} onOpenChange={() => setRenamingConversation(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename Conversation</DialogTitle>
+            <DialogTitle>{t('sidebar.renameConversation', 'Rename Conversation')}</DialogTitle>
             <DialogDescription>
-              Update the conversation name.
+              {t('sidebar.updateConversationName', 'Update the conversation name.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title (max 100 characters)</Label>
+              <Label htmlFor="title">{t('sidebar.titleMaxChars', 'Title (max 100 characters)')}</Label>
               <Input
                 id="title"
                 value={newTitle}
@@ -252,16 +251,16 @@ const ChatSidebar = ({
                     setRenamingConversation(null);
                   }
                 }}
-                placeholder="Enter conversation title"
+                placeholder={t('sidebar.enterConversationTitle', 'Enter conversation title')}
               />
               <p className="text-xs text-muted-foreground">
-                {newTitle.length}/100 characters
+                {newTitle.length}/100 {t('sidebar.characters', 'characters')}
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenamingConversation(null)}>
-              Cancel
+              {t('sidebar.cancel', 'Cancel')}
             </Button>
             <Button
               onClick={() => {
@@ -272,7 +271,7 @@ const ChatSidebar = ({
               }}
               disabled={!newTitle.trim()}
             >
-              Save
+              {t('sidebar.save', 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -285,7 +284,7 @@ const ChatSidebar = ({
             size={isCollapsed ? "icon" : "sm"}
             className={isCollapsed ? "w-full" : "w-full justify-start"}
             onClick={onToggleCollapse}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? t('sidebar.expand', 'Expand sidebar') : t('sidebar.collapse', 'Collapse sidebar')}
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
