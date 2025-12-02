@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SaveWorkflowDialogProps {
   open: boolean;
@@ -16,13 +17,14 @@ interface SaveWorkflowDialogProps {
 }
 
 export const SaveWorkflowDialog = ({ open, onOpenChange, workflowData, currentName }: SaveWorkflowDialogProps) => {
+  const { t } = useTranslation('stage');
   const [name, setName] = useState(currentName || "");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!name.trim()) {
-      toast.error('Please enter a workflow name');
+      toast.error(t('dialogs.save.enterName', 'Please enter a workflow name'));
       return;
     }
 
@@ -42,13 +44,13 @@ export const SaveWorkflowDialog = ({ open, onOpenChange, workflowData, currentNa
 
       if (error) throw error;
       
-      toast.success('Workflow saved successfully');
+      toast.success(t('dialogs.save.success', 'Workflow saved successfully'));
       onOpenChange(false);
       setName("");
       setDescription("");
     } catch (error) {
       console.error('Error saving workflow:', error);
-      toast.error('Failed to save workflow');
+      toast.error(t('dialogs.save.error', 'Failed to save workflow'));
     } finally {
       setSaving(false);
     }
@@ -58,35 +60,35 @@ export const SaveWorkflowDialog = ({ open, onOpenChange, workflowData, currentNa
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Save Workflow</DialogTitle>
+          <DialogTitle>{t('dialogs.save.title', 'Save Workflow')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Workflow Name</Label>
+            <Label htmlFor="name">{t('dialogs.save.workflowName', 'Workflow Name')}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter workflow name"
+              placeholder={t('dialogs.save.enterWorkflowName', 'Enter workflow name')}
             />
           </div>
           <div>
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="description">{t('dialogs.save.descriptionOptional', 'Description (optional)')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter workflow description"
+              placeholder={t('dialogs.save.enterDescription', 'Enter workflow description')}
               rows={3}
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {t('dialogs.cancel', 'Cancel')}
             </Button>
             <Button onClick={handleSave} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Save
+              {t('dialogs.save.saveButton', 'Save')}
             </Button>
           </div>
         </div>

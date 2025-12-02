@@ -1,18 +1,130 @@
 {
   "title": "Assistant IA",
   "description": "Obtenez de l'aide contextuelle et des suggestions",
-  "defaultGreeting": "Bonjour! Je suis votre assistant IA. Je peux vous aider à naviguer et utiliser Albert efficacement.",
-  "askQuestion": "Posez une question...",
+  "defaultGreeting": "Bonjour! Je suis votre assistant IA. Posez-moi des questions sur la plateforme ou choisissez une question ci-dessous.",
+  "contextGreeting": "Bonjour! Je suis votre assistant IA pour {{context}}. Posez-moi des questions ou choisissez une question ci-dessous.",
+  "askQuestion": "Posez-moi une question...",
   "send": "Envoyer",
   "clear": "Effacer le clavardage",
   "thinking": "Réflexion...",
+  "errorResponse": "Échec de l'obtention de la réponse",
+  "errorMessage": "Désolé, j'ai rencontré une erreur. Veuillez réessayer.",
   "quickQuestions": {
     "title": "Questions rapides",
     "howToChat": "Comment démarrer un clavardage?",
     "createAgent": "Comment créer un agent?",
     "buildWorkflow": "Comment construire un flux de travail?",
     "uploadFiles": "Comment télécharger des fichiers?",
-    "shareWork": "Comment partager mon travail?"
+    "shareWork": "Comment partager mon travail?",
+    "whatFeatures": "Quelles fonctionnalités sont disponibles sur cette plateforme?",
+    "getStarted": "Comment démarrer mon premier projet?",
+    "findTools": "Où puis-je trouver les outils principaux?",
+    "switchAgents": "Comment basculer entre différents agents?",
+    "useTools": "Comment utiliser des outils comme la recherche web et la génération d'images?",
+    "systemPrompts": "Quelles sont les meilleures pratiques pour les invites système?",
+    "testAgent": "Comment puis-je tester mon agent avant de l'enregistrer?",
+    "findAgents": "Comment trouver des agents pour des tâches spécifiques?",
+    "modifyAgents": "Puis-je modifier les agents du marché?",
+    "cloneAgent": "Comment cloner un agent?",
+    "promptTypes": "Quels types d'invites sont disponibles?",
+    "useTemplate": "Comment utiliser un modèle d'invite?",
+    "savePrompts": "Puis-je enregistrer mes propres invites?",
+    "whatFrameworks": "Que sont les cadres d'invites?",
+    "whichFramework": "Quel cadre dois-je utiliser pour ma tâche?",
+    "applyFramework": "Comment appliquer un cadre à mes invites?",
+    "whatStages": "Que sont les étapes dans un flux de travail?",
+    "connectAgents": "Comment connecter des agents entre les étapes?",
+    "useVariables": "Comment puis-je utiliser des variables comme {input} et {prompt}?",
+    "nodeTypes": "Quels sont les différents types de nœuds?",
+    "createBranches": "Comment créer des branches dans mon flux de travail?",
+    "debugWorkflow": "Comment déboguer l'exécution du flux de travail?",
+    "findWorkflows": "Comment trouver des flux de travail pour mon cas d'utilisation?",
+    "workflowDifference": "Quelle est la différence entre les flux de travail Canvas et Stage?",
+    "customizeWorkflows": "Puis-je personnaliser les flux de travail clonés?",
+    "analyzeImages": "Que puis-je analyser dans les images?",
+    "ocrWork": "Comment fonctionne l'extraction OCR?",
+    "processMultiple": "Puis-je traiter plusieurs images à la fois?",
+    "speechToText": "Comment convertir la parole en texte?",
+    "voiceModels": "Quels modèles de voix sont disponibles?",
+    "customVoices": "Puis-je générer des voix personnalisées?",
+    "uploadTranscripts": "Comment télécharger des transcriptions de réunions?",
+    "extractActions": "Puis-je extraire automatiquement les éléments d'action?",
+    "supportedFormats": "Quels formats sont pris en charge?",
+    "navigate": "Comment naviguer entre les fonctionnalités?",
+    "whatCan": "Que peut faire cette plateforme?",
+    "findExamples": "Où puis-je trouver des exemples et des tutoriels?"
+  },
+  "routes": {
+    "home": {
+      "name": "Tableau de bord",
+      "description": "Votre hub central pour accéder à toutes les fonctionnalités d'Albert IA."
+    },
+    "chat": {
+      "name": "Interface de clavardage IA",
+      "description": "Engagez des conversations intelligentes avec des agents IA."
+    },
+    "agents": {
+      "name": "Gestion des agents",
+      "description": "Créez et gérez des assistants IA spécialisés."
+    },
+    "marketplace": {
+      "name": "Marché des agents",
+      "description": "Découvrez et clonez des agents créés par la communauté."
+    },
+    "prompts": {
+      "name": "Bibliothèque d'invites",
+      "description": "Enregistrez, organisez et réutilisez des invites efficaces."
+    },
+    "framework": {
+      "name": "Bibliothèque de cadres",
+      "description": "Accédez à des méthodologies éprouvées pour les interactions IA."
+    },
+    "stage": {
+      "name": "Constructeur de flux Stage",
+      "description": "Construisez des flux de travail séquentiels en plusieurs étapes."
+    },
+    "canvas": {
+      "name": "Constructeur de flux Canvas",
+      "description": "Créez des flux de travail non linéaires complexes."
+    },
+    "workflowMarketplace": {
+      "name": "Marché des flux de travail",
+      "description": "Parcourez et importez des flux de travail préconstruits."
+    },
+    "image": {
+      "name": "Outil d'analyse d'images",
+      "description": "Traitez des images et des documents avec la vision IA."
+    },
+    "voice": {
+      "name": "Traitement vocal",
+      "description": "Fonctionnalités de conversion parole-texte et texte-parole."
+    },
+    "transcripts": {
+      "name": "Analyseur de transcriptions de réunions",
+      "description": "Analysez les enregistrements et transcriptions de réunions."
+    },
+    "adminReview": {
+      "name": "Panneau de révision admin",
+      "description": "Révisez les agents soumis par la communauté."
+    },
+    "docs": {
+      "name": "Documentation",
+      "description": "Manuel utilisateur complet pour toutes les fonctionnalités."
+    },
+    "savedWork": {
+      "name": "Travaux enregistrés",
+      "description": "Accédez à vos flux de travail et canevas enregistrés."
+    },
+    "files": {
+      "name": "Gestionnaire de fichiers",
+      "description": "Gérez les fichiers et documents téléchargés."
+    },
+    "admin": {
+      "name": "Panneau d'administration"
+    },
+    "default": {
+      "name": "Navigation de la plateforme"
+    }
   },
   "contexts": {
     "chat": {

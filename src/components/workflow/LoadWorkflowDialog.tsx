@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 
 interface SavedWorkflow {
   id: string;
@@ -22,6 +23,7 @@ interface LoadWorkflowDialogProps {
 }
 
 export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowDialogProps) => {
+  const { t } = useTranslation('stage');
   const [workflows, setWorkflows] = useState<SavedWorkflow[]>([]);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
       setWorkflows(data || []);
     } catch (error) {
       console.error('Error loading workflows:', error);
-      toast.error('Failed to load workflows');
+      toast.error(t('dialogs.load.errorLoading', 'Failed to load workflows'));
     } finally {
       setLoading(false);
     }
@@ -61,15 +63,15 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
       if (error) throw error;
       onLoad(data.workflow_data);
       onOpenChange(false);
-      toast.success('Workflow loaded successfully');
+      toast.success(t('dialogs.load.success', 'Workflow loaded successfully'));
     } catch (error) {
       console.error('Error loading workflow:', error);
-      toast.error('Failed to load workflow');
+      toast.error(t('dialogs.load.errorLoadingWorkflow', 'Failed to load workflow'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this workflow?')) return;
+    if (!confirm(t('dialogs.load.confirmDelete', 'Are you sure you want to delete this workflow?'))) return;
     
     setDeleting(id);
     try {
@@ -79,11 +81,11 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
         .eq('id', id);
 
       if (error) throw error;
-      toast.success('Workflow deleted');
+      toast.success(t('dialogs.load.deleted', 'Workflow deleted'));
       loadWorkflows();
     } catch (error) {
       console.error('Error deleting workflow:', error);
-      toast.error('Failed to delete workflow');
+      toast.error(t('dialogs.load.errorDeleting', 'Failed to delete workflow'));
     } finally {
       setDeleting(null);
     }
@@ -93,7 +95,7 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Load Workflow</DialogTitle>
+          <DialogTitle>{t('dialogs.load.title', 'Load Workflow')}</DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           {loading ? (
@@ -102,7 +104,7 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
             </div>
           ) : workflows.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
-              No saved workflows found
+              {t('dialogs.load.noWorkflows', 'No saved workflows found')}
             </div>
           ) : (
             <div className="space-y-2">
@@ -117,7 +119,7 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
                       <p className="text-sm text-muted-foreground">{workflow.description}</p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      Updated: {format(new Date(workflow.updated_at), 'MMM d, yyyy h:mm a')}
+                      {t('dialogs.load.updated', 'Updated')}: {format(new Date(workflow.updated_at), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -126,7 +128,7 @@ export const LoadWorkflowDialog = ({ open, onOpenChange, onLoad }: LoadWorkflowD
                       size="sm"
                       onClick={() => handleLoad(workflow.id)}
                     >
-                      Load
+                      {t('dialogs.load.loadButton', 'Load')}
                     </Button>
                     <Button
                       variant="ghost"

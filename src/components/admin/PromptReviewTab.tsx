@@ -7,8 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { usePrompts } from '@/hooks/usePrompts';
 import { format } from 'date-fns';
 import { CheckCircle, XCircle, Edit, Eye } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function PromptReviewTab() {
+  const { t } = useTranslation('admin');
   const { loadPendingPrompts, approvePrompt, rejectPrompt, sendBackForEditing } = usePrompts();
   const [prompts, setPrompts] = useState<any[]>([]);
   const [selectedPrompt, setSelectedPrompt] = useState<any | null>(null);
@@ -51,21 +53,21 @@ export default function PromptReviewTab() {
   };
 
   if (loading) {
-    return <div className="p-6 text-center text-muted-foreground">Loading pending prompts...</div>;
+    return <div className="p-6 text-center text-muted-foreground">{t('promptReview.loading', 'Loading pending prompts...')}</div>;
   }
 
   return (
     <div className="p-6 space-y-6">
       <div>
-        <h3 className="text-xl font-semibold">Pending Prompt Reviews</h3>
+        <h3 className="text-xl font-semibold">{t('promptReview.title')}</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Review and approve prompts submitted to the marketplace
+          {t('promptReview.description', 'Review and approve prompts submitted to the marketplace')}
         </p>
       </div>
 
       {prompts.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          No prompts pending review
+          {t('promptReview.noPrompts')}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -81,7 +83,7 @@ export default function PromptReviewTab() {
                       </Badge>
                     )}
                   </div>
-                  <Badge variant="outline">Pending</Badge>
+                  <Badge variant="outline">{t('promptReview.pending', 'Pending')}</Badge>
                 </div>
                 {prompt.description && (
                   <CardDescription className="mt-2">
@@ -106,7 +108,7 @@ export default function PromptReviewTab() {
                   )}
 
                   <div className="text-xs text-muted-foreground">
-                    Submitted: {prompt.submitted_at ? format(new Date(prompt.submitted_at), 'MMM d, yyyy') : 'N/A'}
+                    {t('promptReview.submitted', 'Submitted')}: {prompt.submitted_at ? format(new Date(prompt.submitted_at), 'MMM d, yyyy') : 'N/A'}
                   </div>
 
                   <Button
@@ -115,7 +117,7 @@ export default function PromptReviewTab() {
                     variant="outline"
                   >
                     <Eye className="mr-2 h-4 w-4" />
-                    Review
+                    {t('agentReview.review')}
                   </Button>
                 </div>
               </CardContent>
@@ -128,29 +130,29 @@ export default function PromptReviewTab() {
       <Dialog open={!!selectedPrompt} onOpenChange={() => setSelectedPrompt(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Review Prompt: {selectedPrompt?.name}</DialogTitle>
+            <DialogTitle>{t('promptReview.reviewTitle', 'Review Prompt')}: {selectedPrompt?.name}</DialogTitle>
             <DialogDescription>
-              Review this prompt submission and decide to approve, send back for editing, or reject
+              {t('promptReview.reviewDescription', 'Review this prompt submission and decide to approve, send back for editing, or reject')}
             </DialogDescription>
           </DialogHeader>
 
           {selectedPrompt && (
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Name</label>
+                <label className="text-sm font-medium">{t('promptReview.name', 'Name')}</label>
                 <p className="text-sm mt-1">{selectedPrompt.name}</p>
               </div>
 
               {selectedPrompt.description && (
                 <div>
-                  <label className="text-sm font-medium">Description</label>
+                  <label className="text-sm font-medium">{t('agentReview.description')}</label>
                   <p className="text-sm mt-1">{selectedPrompt.description}</p>
                 </div>
               )}
 
               {selectedPrompt.category && (
                 <div>
-                  <label className="text-sm font-medium">Category</label>
+                  <label className="text-sm font-medium">{t('agentReview.category')}</label>
                   <p className="text-sm mt-1">
                     <Badge variant="secondary">{selectedPrompt.category}</Badge>
                   </p>
@@ -159,7 +161,7 @@ export default function PromptReviewTab() {
 
               {selectedPrompt.tags && selectedPrompt.tags.length > 0 && (
                 <div>
-                  <label className="text-sm font-medium">Tags</label>
+                  <label className="text-sm font-medium">{t('promptReview.tags')}</label>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {selectedPrompt.tags.map((tag: string, idx: number) => (
                       <Badge key={idx} variant="outline" className="text-xs">
@@ -171,18 +173,18 @@ export default function PromptReviewTab() {
               )}
 
               <div>
-                <label className="text-sm font-medium">Prompt Content</label>
+                <label className="text-sm font-medium">{t('promptReview.content')}</label>
                 <div className="bg-muted p-4 rounded-md text-sm mt-1 max-h-64 overflow-y-auto whitespace-pre-wrap">
                   {selectedPrompt.prompt_text}
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium">Review Notes (optional for approval, required for sending back)</label>
+                <label className="text-sm font-medium">{t('promptReview.reviewNotes', 'Review Notes (optional for approval, required for sending back)')}</label>
                 <Textarea
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="Add notes about your review decision..."
+                  placeholder={t('agentReview.notesPlaceholder')}
                   className="mt-1"
                   rows={3}
                 />
@@ -196,7 +198,7 @@ export default function PromptReviewTab() {
               variant="default"
             >
               <CheckCircle className="mr-2 h-4 w-4" />
-              Approve & Publish
+              {t('promptReview.approvePublish', 'Approve & Publish')}
             </Button>
             <Button
               onClick={handleSendBack}
@@ -204,14 +206,14 @@ export default function PromptReviewTab() {
               disabled={!reviewNotes.trim()}
             >
               <Edit className="mr-2 h-4 w-4" />
-              Send Back for Editing
+              {t('promptReview.sendBack', 'Send Back for Editing')}
             </Button>
             <Button
               onClick={handleReject}
               variant="destructive"
             >
               <XCircle className="mr-2 h-4 w-4" />
-              Reject
+              {t('agentReview.reject')}
             </Button>
           </DialogFooter>
         </DialogContent>

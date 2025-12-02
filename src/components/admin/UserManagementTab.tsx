@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { Key, Search, Users, Shield, UserCheck, MoreVertical } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,7 @@ interface UserProfile {
 }
 
 export const UserManagementTab = () => {
+  const { t } = useTranslation('admin');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,8 +113,8 @@ export const UserManagementTab = () => {
     } catch (error) {
       console.error('Error loading users:', error);
       toast({
-        title: "Error loading users",
-        description: "Failed to load user list",
+        title: t('userManagement.errorLoading', 'Error loading users'),
+        description: t('userManagement.failedToLoad', 'Failed to load user list'),
         variant: "destructive",
       });
     } finally {
@@ -137,16 +139,16 @@ export const UserManagementTab = () => {
       setShowPasswordDialog(true);
 
       toast({
-        title: "Password reset successful",
-        description: `Temporary password created for ${user.full_name || user.email}`,
+        title: t('userManagement.passwordResetSuccess', 'Password reset successful'),
+        description: t('userManagement.tempPasswordCreated', { name: user.full_name || user.email, defaultValue: `Temporary password created for ${user.full_name || user.email}` }),
       });
 
       loadUsers(); // Refresh the list
     } catch (error: any) {
       console.error('Error resetting password:', error);
       toast({
-        title: "Error resetting password",
-        description: error.message || "Failed to reset password",
+        title: t('userManagement.errorResetting', 'Error resetting password'),
+        description: error.message || t('userManagement.failedToReset', 'Failed to reset password'),
         variant: "destructive",
       });
     }
@@ -155,8 +157,8 @@ export const UserManagementTab = () => {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(tempPassword);
     toast({
-      title: "Copied to clipboard",
-      description: "Temporary password has been copied",
+      title: t('userManagement.copied', 'Copied to clipboard'),
+      description: t('userManagement.tempPasswordCopied', 'Temporary password has been copied'),
     });
   };
 
@@ -170,8 +172,8 @@ export const UserManagementTab = () => {
         if (error) throw error;
         
         toast({
-          title: "Role assigned",
-          description: `${role} role has been assigned`,
+          title: t('userManagement.roleAssigned', 'Role assigned'),
+          description: t('userManagement.roleHasBeenAssigned', { role, defaultValue: `${role} role has been assigned` }),
         });
       } else {
         const { error } = await supabase
@@ -183,8 +185,8 @@ export const UserManagementTab = () => {
         if (error) throw error;
         
         toast({
-          title: "Role removed",
-          description: `${role} role has been removed`,
+          title: t('userManagement.roleRemoved', 'Role removed'),
+          description: t('userManagement.roleHasBeenRemoved', { role, defaultValue: `${role} role has been removed` }),
         });
       }
       
@@ -192,8 +194,8 @@ export const UserManagementTab = () => {
     } catch (error: any) {
       console.error('Error changing role:', error);
       toast({
-        title: "Error changing role",
-        description: error.message || "Failed to change role",
+        title: t('userManagement.errorChangingRole', 'Error changing role'),
+        description: error.message || t('userManagement.failedToChangeRole', 'Failed to change role'),
         variant: "destructive",
       });
     }
@@ -240,32 +242,32 @@ export const UserManagementTab = () => {
 
   const getRoleBadge = (roles: string[]) => {
     if (roles.includes('admin')) {
-      return <Badge variant="destructive" className="bg-red-500">Admin</Badge>;
+      return <Badge variant="destructive" className="bg-red-500">{t('userManagement.roles.admin', 'Admin')}</Badge>;
     }
     if (roles.includes('moderator')) {
-      return <Badge variant="secondary">Facilitator</Badge>;
+      return <Badge variant="secondary">{t('userManagement.roles.facilitator', 'Facilitator')}</Badge>;
     }
-    return <Badge variant="outline">User</Badge>;
+    return <Badge variant="outline">{t('userManagement.roles.user', 'User')}</Badge>;
   };
 
   const getStatusBadge = (user: UserProfile) => {
     if (user.must_change_password) {
-      return <Badge variant="outline" className="border-yellow-500 text-yellow-600">Must Change Password</Badge>;
+      return <Badge variant="outline" className="border-yellow-500 text-yellow-600">{t('userManagement.status.mustChangePassword', 'Must Change Password')}</Badge>;
     }
     
     // Check activity level
     if (user.last_active_at) {
       const daysSinceActive = (Date.now() - new Date(user.last_active_at).getTime()) / (1000 * 60 * 60 * 24);
       if (daysSinceActive <= 1) {
-        return <Badge variant="outline" className="border-green-500 text-green-600">Very Active</Badge>;
+        return <Badge variant="outline" className="border-green-500 text-green-600">{t('userManagement.status.veryActive', 'Very Active')}</Badge>;
       } else if (daysSinceActive <= 7) {
-        return <Badge variant="outline" className="border-blue-500 text-blue-600">Active</Badge>;
+        return <Badge variant="outline" className="border-blue-500 text-blue-600">{t('userManagement.status.active', 'Active')}</Badge>;
       } else if (daysSinceActive <= 30) {
-        return <Badge variant="outline" className="border-orange-500 text-orange-600">Inactive</Badge>;
+        return <Badge variant="outline" className="border-orange-500 text-orange-600">{t('userManagement.status.inactive', 'Inactive')}</Badge>;
       }
     }
     
-    return <Badge variant="outline" className="border-gray-500 text-gray-600">No Activity</Badge>;
+    return <Badge variant="outline" className="border-gray-500 text-gray-600">{t('userManagement.status.noActivity', 'No Activity')}</Badge>;
   };
 
   return (
@@ -274,7 +276,7 @@ export const UserManagementTab = () => {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('userManagement.stats.totalUsers', 'Total Users')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -283,7 +285,7 @@ export const UserManagementTab = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Admins</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('userManagement.stats.admins', 'Admins')}</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -292,7 +294,7 @@ export const UserManagementTab = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Facilitators</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('userManagement.stats.facilitators', 'Facilitators')}</CardTitle>
             <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -301,7 +303,7 @@ export const UserManagementTab = () => {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active (30d)</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('userManagement.stats.active30d', 'Active (30d)')}</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -313,8 +315,8 @@ export const UserManagementTab = () => {
       {/* Most Active Users */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm font-medium">Most Active Users</CardTitle>
-          <CardDescription>Top users by message activity</CardDescription>
+          <CardTitle className="text-sm font-medium">{t('userManagement.mostActiveUsers', 'Most Active Users')}</CardTitle>
+          <CardDescription>{t('userManagement.topUsersByActivity', 'Top users by message activity')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -335,18 +337,18 @@ export const UserManagementTab = () => {
                     <div>
                       <div className="font-medium text-sm">{user.full_name || user.email}</div>
                       <div className="text-xs text-muted-foreground">
-                        {user.conversation_count} conversations
+                        {user.conversation_count} {t('userManagement.conversations', 'conversations')}
                       </div>
                     </div>
                   </div>
                   <Badge variant="outline" className="font-mono">
-                    {user.message_count} msgs
+                    {user.message_count} {t('userManagement.msgs', 'msgs')}
                   </Badge>
                 </div>
               ))}
             {users.filter(u => u.message_count > 0).length === 0 && (
               <div className="text-sm text-muted-foreground text-center py-4">
-                No activity yet
+                {t('userManagement.noActivityYet', 'No activity yet')}
               </div>
             )}
           </div>
@@ -357,7 +359,7 @@ export const UserManagementTab = () => {
       <div className="relative">
         <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search users by name or email..."
+          placeholder={t('userManagement.searchPlaceholder', 'Search users by name or email...')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-8"
@@ -367,51 +369,51 @@ export const UserManagementTab = () => {
       {/* User Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>Manage user accounts and passwords</CardDescription>
+          <CardTitle>{t('userManagement.users', 'Users')}</CardTitle>
+          <CardDescription>{t('userManagement.manageUsers', 'Manage user accounts and passwords')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t('userManagement.table.user', 'User')}</TableHead>
+                <TableHead>{t('userManagement.table.role', 'Role')}</TableHead>
+                <TableHead>{t('userManagement.table.status', 'Status')}</TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort('last_active')}
                 >
-                  Last Active {sortBy === 'last_active' && (sortOrder === 'desc' ? '↓' : '↑')}
+                  {t('userManagement.table.lastActive', 'Last Active')} {sortBy === 'last_active' && (sortOrder === 'desc' ? '↓' : '↑')}
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort('conversations')}
                 >
-                  Conversations {sortBy === 'conversations' && (sortOrder === 'desc' ? '↓' : '↑')}
+                  {t('userManagement.table.conversations', 'Conversations')} {sortBy === 'conversations' && (sortOrder === 'desc' ? '↓' : '↑')}
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort('messages')}
                 >
-                  Messages {sortBy === 'messages' && (sortOrder === 'desc' ? '↓' : '↑')}
+                  {t('userManagement.table.messages', 'Messages')} {sortBy === 'messages' && (sortOrder === 'desc' ? '↓' : '↑')}
                 </TableHead>
                 <TableHead 
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort('created')}
                 >
-                  Created {sortBy === 'created' && (sortOrder === 'desc' ? '↓' : '↑')}
+                  {t('userManagement.table.created', 'Created')} {sortBy === 'created' && (sortOrder === 'desc' ? '↓' : '↑')}
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right">{t('userManagement.table.actions', 'Actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">Loading...</TableCell>
+                  <TableCell colSpan={8} className="text-center">{t('loading')}</TableCell>
                 </TableRow>
               ) : sortedUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">No users found</TableCell>
+                  <TableCell colSpan={8} className="text-center">{t('userManagement.noUsersFound', 'No users found')}</TableCell>
                 </TableRow>
               ) : (
                 sortedUsers.map((user) => (
@@ -443,7 +445,7 @@ export const UserManagementTab = () => {
                           </div>
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">Never</span>
+                        <span className="text-muted-foreground">{t('userManagement.never', 'Never')}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -463,7 +465,7 @@ export const UserManagementTab = () => {
                           onClick={() => handleResetPassword(user)}
                         >
                           <Key className="h-4 w-4 mr-2" />
-                          Reset Password
+                          {t('userManagement.resetPassword', 'Reset Password')}
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -472,28 +474,28 @@ export const UserManagementTab = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Manage Roles</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t('userManagement.manageRoles', 'Manage Roles')}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             {!user.roles.includes('admin') ? (
                               <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin', 'add')}>
                                 <Shield className="h-4 w-4 mr-2" />
-                                Make Admin
+                                {t('userManagement.makeAdmin', 'Make Admin')}
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin', 'remove')}>
                                 <Shield className="h-4 w-4 mr-2" />
-                                Remove Admin
+                                {t('userManagement.removeAdmin', 'Remove Admin')}
                               </DropdownMenuItem>
                             )}
                             {!user.roles.includes('moderator') ? (
                               <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'moderator', 'add')}>
                                 <UserCheck className="h-4 w-4 mr-2" />
-                                Make Facilitator
+                                {t('userManagement.makeFacilitator', 'Make Facilitator')}
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'moderator', 'remove')}>
                                 <UserCheck className="h-4 w-4 mr-2" />
-                                Remove Facilitator
+                                {t('userManagement.removeFacilitator', 'Remove Facilitator')}
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -512,24 +514,24 @@ export const UserManagementTab = () => {
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Temporary Password Generated</DialogTitle>
+            <DialogTitle>{t('userManagement.tempPasswordGenerated', 'Temporary Password Generated')}</DialogTitle>
             <DialogDescription>
-              A temporary password has been created for {selectedUser?.full_name || selectedUser?.email}
+              {t('userManagement.tempPasswordCreatedFor', { name: selectedUser?.full_name || selectedUser?.email, defaultValue: `A temporary password has been created for ${selectedUser?.full_name || selectedUser?.email}` })}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="bg-muted p-4 rounded-md">
-              <div className="text-sm text-muted-foreground mb-2">Temporary Password</div>
+              <div className="text-sm text-muted-foreground mb-2">{t('userManagement.tempPassword', 'Temporary Password')}</div>
               <div className="font-mono text-lg font-bold">{tempPassword}</div>
             </div>
             <div className="text-sm text-amber-600 dark:text-amber-400">
-              ⚠️ This password will only be shown once. Make sure to copy it and share it securely with the user.
+              ⚠️ {t('userManagement.passwordWarning', 'This password will only be shown once. Make sure to copy it and share it securely with the user.')}
             </div>
             <div className="text-sm text-muted-foreground">
-              The user will be required to change this password upon their next login.
+              {t('userManagement.mustChangeOnLogin', 'The user will be required to change this password upon their next login.')}
             </div>
             <Button onClick={copyToClipboard} className="w-full">
-              Copy to Clipboard
+              {t('userManagement.copyToClipboard', 'Copy to Clipboard')}
             </Button>
           </div>
         </DialogContent>

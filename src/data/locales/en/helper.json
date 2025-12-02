@@ -1,18 +1,130 @@
 {
   "title": "AI Helper",
   "description": "Get contextual help and suggestions",
-  "defaultGreeting": "Hi! I'm your AI helper. I can help you navigate and use Albert effectively.",
-  "askQuestion": "Ask a question...",
+  "defaultGreeting": "Hi! I'm your AI helper. Ask me anything about the platform or choose a question below.",
+  "contextGreeting": "Hi! I'm your AI helper for {{context}}. Ask me anything or choose a question below.",
+  "askQuestion": "Ask me anything...",
   "send": "Send",
   "clear": "Clear Chat",
   "thinking": "Thinking...",
+  "errorResponse": "Failed to get response",
+  "errorMessage": "Sorry, I encountered an error. Please try again.",
   "quickQuestions": {
     "title": "Quick Questions",
     "howToChat": "How do I start a chat?",
     "createAgent": "How do I create an agent?",
     "buildWorkflow": "How do I build a workflow?",
     "uploadFiles": "How do I upload files?",
-    "shareWork": "How do I share my work?"
+    "shareWork": "How do I share my work?",
+    "whatFeatures": "What features are available on this platform?",
+    "getStarted": "How do I get started with my first project?",
+    "findTools": "Where can I find the main tools?",
+    "switchAgents": "How do I switch between different agents?",
+    "useTools": "How do I use tools like web search and image generation?",
+    "systemPrompts": "What are best practices for system prompts?",
+    "testAgent": "How can I test my agent before saving?",
+    "findAgents": "How do I find agents for specific tasks?",
+    "modifyAgents": "Can I modify agents from the marketplace?",
+    "cloneAgent": "How do I clone an agent?",
+    "promptTypes": "What types of prompts are available?",
+    "useTemplate": "How do I use a prompt template?",
+    "savePrompts": "Can I save my own prompts?",
+    "whatFrameworks": "What are prompt frameworks?",
+    "whichFramework": "Which framework should I use for my task?",
+    "applyFramework": "How do I apply a framework to my prompts?",
+    "whatStages": "What are stages in a workflow?",
+    "connectAgents": "How do I connect agents between stages?",
+    "useVariables": "How can I use variables like {input} and {prompt}?",
+    "nodeTypes": "What are the different node types?",
+    "createBranches": "How do I create branches in my workflow?",
+    "debugWorkflow": "How do I debug workflow execution?",
+    "findWorkflows": "How do I find workflows for my use case?",
+    "workflowDifference": "What's the difference between Canvas and Stage workflows?",
+    "customizeWorkflows": "Can I customize cloned workflows?",
+    "analyzeImages": "What can I analyze in images?",
+    "ocrWork": "How does OCR extraction work?",
+    "processMultiple": "Can I process multiple images at once?",
+    "speechToText": "How do I convert speech to text?",
+    "voiceModels": "What voice models are available?",
+    "customVoices": "Can I generate custom voices?",
+    "uploadTranscripts": "How do I upload meeting transcripts?",
+    "extractActions": "Can I extract action items automatically?",
+    "supportedFormats": "What formats are supported?",
+    "navigate": "How do I navigate between features?",
+    "whatCan": "What can this platform do?",
+    "findExamples": "Where can I find examples and tutorials?"
+  },
+  "routes": {
+    "home": {
+      "name": "Home Dashboard",
+      "description": "Your central hub for accessing all Albert AI features."
+    },
+    "chat": {
+      "name": "AI Chat Interface",
+      "description": "Engage in intelligent conversations with AI agents."
+    },
+    "agents": {
+      "name": "Agent Management",
+      "description": "Create and manage specialized AI assistants."
+    },
+    "marketplace": {
+      "name": "Agent Marketplace",
+      "description": "Discover and clone community-created agents."
+    },
+    "prompts": {
+      "name": "Prompt Library",
+      "description": "Save, organize, and reuse effective prompts."
+    },
+    "framework": {
+      "name": "Framework Library",
+      "description": "Access proven methodologies for AI interactions."
+    },
+    "stage": {
+      "name": "Stage Workflow Builder",
+      "description": "Build sequential multi-step workflows."
+    },
+    "canvas": {
+      "name": "Canvas Workflow Builder",
+      "description": "Create complex non-linear workflows."
+    },
+    "workflowMarketplace": {
+      "name": "Workflow Marketplace",
+      "description": "Browse and import pre-built workflows."
+    },
+    "image": {
+      "name": "Image Analysis Tool",
+      "description": "Process images and documents with AI vision."
+    },
+    "voice": {
+      "name": "Voice Processing",
+      "description": "Speech-to-Text and Text-to-Speech features."
+    },
+    "transcripts": {
+      "name": "Meeting Transcripts Analyzer",
+      "description": "Analyze meeting recordings and transcripts."
+    },
+    "adminReview": {
+      "name": "Admin Review Panel",
+      "description": "Review community-submitted agents."
+    },
+    "docs": {
+      "name": "Documentation",
+      "description": "Complete user manual for all features."
+    },
+    "savedWork": {
+      "name": "Saved Work",
+      "description": "Access your saved workflows and canvases."
+    },
+    "files": {
+      "name": "File Manager",
+      "description": "Manage uploaded files and documents."
+    },
+    "admin": {
+      "name": "Admin Panel"
+    },
+    "default": {
+      "name": "Platform Navigation"
+    }
   },
   "contexts": {
     "chat": {

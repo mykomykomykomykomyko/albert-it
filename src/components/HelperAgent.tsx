@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 import { useFrameworks } from '@/hooks/useFrameworks';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -22,6 +23,7 @@ interface HelperAgentProps {
 }
 
 export function HelperAgent({ context, onClose }: HelperAgentProps) {
+  const { t } = useTranslation('helper');
   const { frameworks, loading: frameworksLoading } = useFrameworks();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -31,69 +33,69 @@ export function HelperAgent({ context, onClose }: HelperAgentProps) {
   // Common questions based on context - comprehensive guide for all pages
   const quickQuestions: Record<string, string[]> = {
     'Home Dashboard': [
-      'What features are available on this platform?',
-      'How do I get started with my first project?',
-      'Where can I find the main tools?',
+      t('quickQuestions.whatFeatures', 'What features are available on this platform?'),
+      t('quickQuestions.getStarted', 'How do I get started with my first project?'),
+      t('quickQuestions.findTools', 'Where can I find the main tools?'),
     ],
     'AI Chat': [
-      'How do I switch between different agents?',
-      'Can I upload files during conversations?',
-      'How do I use tools like web search and image generation?',
+      t('quickQuestions.switchAgents', 'How do I switch between different agents?'),
+      t('quickQuestions.uploadFiles', 'Can I upload files during conversations?'),
+      t('quickQuestions.useTools', 'How do I use tools like web search and image generation?'),
     ],
     'Agent Management': [
-      'How do I create a custom agent?',
-      'What are best practices for system prompts?',
-      'How can I test my agent before saving?',
+      t('quickQuestions.createAgent', 'How do I create a custom agent?'),
+      t('quickQuestions.systemPrompts', 'What are best practices for system prompts?'),
+      t('quickQuestions.testAgent', 'How can I test my agent before saving?'),
     ],
     'Agent Marketplace': [
-      'How do I find agents for specific tasks?',
-      'Can I modify agents from the marketplace?',
-      'How do I clone an agent?',
+      t('quickQuestions.findAgents', 'How do I find agents for specific tasks?'),
+      t('quickQuestions.modifyAgents', 'Can I modify agents from the marketplace?'),
+      t('quickQuestions.cloneAgent', 'How do I clone an agent?'),
     ],
     'Prompt Library': [
-      'What types of prompts are available?',
-      'How do I use a prompt template?',
-      'Can I save my own prompts?',
+      t('quickQuestions.promptTypes', 'What types of prompts are available?'),
+      t('quickQuestions.useTemplate', 'How do I use a prompt template?'),
+      t('quickQuestions.savePrompts', 'Can I save my own prompts?'),
     ],
     'Prompt Frameworks': [
-      'What are prompt frameworks?',
-      'Which framework should I use for my task?',
-      'How do I apply a framework to my prompts?',
+      t('quickQuestions.whatFrameworks', 'What are prompt frameworks?'),
+      t('quickQuestions.whichFramework', 'Which framework should I use for my task?'),
+      t('quickQuestions.applyFramework', 'How do I apply a framework to my prompts?'),
     ],
     'Stage Workflow Builder': [
-      'What are stages in a workflow?',
-      'How do I connect agents between stages?',
-      'How can I use variables like {input} and {prompt}?',
+      t('quickQuestions.whatStages', 'What are stages in a workflow?'),
+      t('quickQuestions.connectAgents', 'How do I connect agents between stages?'),
+      t('quickQuestions.useVariables', 'How can I use variables like {input} and {prompt}?'),
     ],
     'Canvas Workflow Builder': [
-      'What are the different node types?',
-      'How do I create branches in my workflow?',
-      'How do I debug workflow execution?',
+      t('quickQuestions.nodeTypes', 'What are the different node types?'),
+      t('quickQuestions.createBranches', 'How do I create branches in my workflow?'),
+      t('quickQuestions.debugWorkflow', 'How do I debug workflow execution?'),
     ],
     'Workflow Marketplace': [
-      'How do I find workflows for my use case?',
-      'What\'s the difference between Canvas and Stage workflows?',
-      'Can I customize cloned workflows?',
+      t('quickQuestions.findWorkflows', 'How do I find workflows for my use case?'),
+      t('quickQuestions.workflowDifference', 'What\'s the difference between Canvas and Stage workflows?'),
+      t('quickQuestions.customizeWorkflows', 'Can I customize cloned workflows?'),
     ],
     'Image Analysis': [
-      'What can I analyze in images?',
-      'How does OCR extraction work?',
-      'Can I process multiple images at once?',
+      t('quickQuestions.analyzeImages', 'What can I analyze in images?'),
+      t('quickQuestions.ocrWork', 'How does OCR extraction work?'),
+      t('quickQuestions.processMultiple', 'Can I process multiple images at once?'),
     ],
     'Voice Analysis': [
-      'How do I convert speech to text?',
-      'What voice models are available?',
-      'Can I generate custom voices?',
+      t('quickQuestions.speechToText', 'How do I convert speech to text?'),
+      t('quickQuestions.voiceModels', 'What voice models are available?'),
+      t('quickQuestions.customVoices', 'Can I generate custom voices?'),
     ],
     'Meeting Transcripts': [
-      'How do I upload meeting transcripts?',
-      'Can I extract action items automatically?',
-      'What formats are supported?',
+      t('quickQuestions.uploadTranscripts', 'How do I upload meeting transcripts?'),
+      t('quickQuestions.extractActions', 'Can I extract action items automatically?'),
+      t('quickQuestions.supportedFormats', 'What formats are supported?'),
     ],
     'Platform Navigation': [
-      'How do I navigate between features?',
-      'What can this platform do?',
-      'Where can I find examples and tutorials?',
+      t('quickQuestions.navigate', 'How do I navigate between features?'),
+      t('quickQuestions.whatCan', 'What can this platform do?'),
+      t('quickQuestions.findExamples', 'Where can I find examples and tutorials?'),
     ],
   };
 
@@ -102,11 +104,11 @@ export function HelperAgent({ context, onClose }: HelperAgentProps) {
   useEffect(() => {
     // Initial greeting
     const greeting = context
-      ? `Hi! I'm your AI helper for ${context}. Ask me anything or choose a question below.`
-      : 'Hi! I\'m your AI helper. Ask me anything about the platform or choose a question below.';
+      ? t('contextGreeting', { context, defaultValue: `Hi! I'm your AI helper for ${context}. Ask me anything or choose a question below.` })
+      : t('defaultGreeting');
     
     setMessages([{ role: 'assistant', content: greeting }]);
-  }, [context]);
+  }, [context, t]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -250,11 +252,11 @@ Answer the user's question based on the current context.`;
       }
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Failed to get response');
+      toast.error(t('errorResponse', 'Failed to get response'));
       setMessages(prev => 
         prev.map((msg, idx) => 
           idx === prev.length - 1 
-            ? { ...msg, content: 'Sorry, I encountered an error. Please try again.' }
+            ? { ...msg, content: t('errorMessage', 'Sorry, I encountered an error. Please try again.') }
             : msg
         )
       );
@@ -270,7 +272,7 @@ Answer the user's question based on the current context.`;
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <HelpCircle className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg">AI Helper</CardTitle>
+              <CardTitle className="text-lg">{t('title')}</CardTitle>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="h-4 w-4" />
@@ -350,7 +352,7 @@ Answer the user's question based on the current context.`;
                   handleSend();
                 }
               }}
-              placeholder="Ask me anything..."
+              placeholder={t('askQuestion')}
               className="min-h-[60px] resize-none"
               disabled={isLoading}
             />
