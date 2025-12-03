@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Brain, Eye, EyeOff, Info, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Info, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 // import { LanguageToggle } from "@/components/LanguageToggle";
 
@@ -560,9 +560,11 @@ const Auth = () => {
       </div> */}
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent mb-4 glow-effect">
-            <Brain className="w-8 h-8 text-white" />
-          </div>
+          <img 
+            src="/alberta-logo.svg" 
+            alt="Government of Alberta" 
+            className="h-16 mx-auto mb-4"
+          />
           <h1 className="text-4xl font-bold mb-2 text-gradient">Albert</h1>
           <p className="text-muted-foreground">Government of Alberta AI Assistant</p>
         </div>
