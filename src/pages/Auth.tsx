@@ -262,6 +262,31 @@ const Auth = () => {
     }
   }, []);
 
+  // Canadian government email domains that don't require access code
+  const CANADIAN_GOV_DOMAINS = [
+    'gov.ab.ca',      // Alberta
+    'gov.bc.ca',      // British Columbia
+    'gov.mb.ca',      // Manitoba
+    'leg.gov.mb.ca',  // Manitoba Legislative
+    'gnb.ca',         // New Brunswick
+    'gov.nl.ca',      // Newfoundland and Labrador
+    'gov.nt.ca',      // Northwest Territories
+    'novascotia.ca',  // Nova Scotia
+    'gov.nu.ca',      // Nunavut
+    'ontario.ca',     // Ontario
+    'gov.pe.ca',      // Prince Edward Island
+    'gouv.qc.ca',     // Quebec
+    'gov.sk.ca',      // Saskatchewan
+    'gov.yk.ca',      // Yukon
+  ];
+
+  const isCanadianGovEmail = (email: string): boolean => {
+    const emailLower = email.toLowerCase();
+    return CANADIAN_GOV_DOMAINS.some(domain => 
+      emailLower.endsWith(`@${domain}`) || emailLower.includes(`.${domain}`)
+    );
+  };
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -275,32 +300,37 @@ const Auth = () => {
     setError(null);
 
     try {
-      // Validate access code first
-      if (!accessCode.trim()) {
-        setError("Access code is required");
-        isSubmitting.current = false;
-        setLoading(false);
-        return;
-      }
-
-      // Use retry logic for access code validation
-      const isValid = await retryWithBackoff(async () => {
-        const { data, error: validationError } = await supabase.rpc('validate_access_code', {
-          code_input: accessCode.trim().toUpperCase()
-        });
-
-        if (validationError) {
-          throw new Error("Failed to validate access code. Please try again.");
+      const isGovEmail = isCanadianGovEmail(email);
+      
+      // Skip access code validation for Canadian government emails
+      if (!isGovEmail) {
+        // Validate access code for non-government emails
+        if (!accessCode.trim()) {
+          setError("Access code is required for non-government email addresses");
+          isSubmitting.current = false;
+          setLoading(false);
+          return;
         }
 
-        return data;
-      }, 3, 500);
+        // Use retry logic for access code validation
+        const isValid = await retryWithBackoff(async () => {
+          const { data, error: validationError } = await supabase.rpc('validate_access_code', {
+            code_input: accessCode.trim().toUpperCase()
+          });
 
-      if (!isValid) {
-        setError("Invalid or expired access code. Please contact Alberta AI Academy.");
-        isSubmitting.current = false;
-        setLoading(false);
-        return;
+          if (validationError) {
+            throw new Error("Failed to validate access code. Please try again.");
+          }
+
+          return data;
+        }, 3, 500);
+
+        if (!isValid) {
+          setError("Invalid or expired access code. Please contact Alberta AI Academy.");
+          isSubmitting.current = false;
+          setLoading(false);
+          return;
+        }
       }
 
       // Use retry logic for signup with exponential backoff
@@ -325,14 +355,16 @@ const Auth = () => {
         }
       }, 3, 1000);
 
-      // Increment usage count (don't retry if this fails, it's not critical)
-      try {
-        await supabase.rpc('increment_access_code_usage', {
-          code_input: accessCode.trim().toUpperCase()
-        });
-      } catch (usageError) {
-        console.error('Failed to increment usage count:', usageError);
-        // Continue anyway - user is registered
+      // Increment usage count only if access code was used
+      if (!isGovEmail && accessCode.trim()) {
+        try {
+          await supabase.rpc('increment_access_code_usage', {
+            code_input: accessCode.trim().toUpperCase()
+          });
+        } catch (usageError) {
+          console.error('Failed to increment usage count:', usageError);
+          // Continue anyway - user is registered
+        }
       }
 
       toast.success("Account created successfully! You can now sign in.");
@@ -809,24 +841,34 @@ const Auth = () => {
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="access-code" className="text-foreground">
-                      Access Code <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="access-code"
-                      type="text"
-                      placeholder="Enter your access code"
-                      value={accessCode}
-                      onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                      required
-                      className="bg-background text-foreground border-input"
-                      maxLength={20}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Access code is required for Alberta AI Academy participants
-                    </p>
-                  </div>
+                  {!isCanadianGovEmail(email) && (
+                    <div className="space-y-2">
+                      <Label htmlFor="access-code" className="text-foreground">
+                        Access Code <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="access-code"
+                        type="text"
+                        placeholder="Enter your access code"
+                        value={accessCode}
+                        onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                        required={!isCanadianGovEmail(email)}
+                        className="bg-background text-foreground border-input"
+                        maxLength={20}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Access code is required for non-government email addresses
+                      </p>
+                    </div>
+                  )}
+                  {isCanadianGovEmail(email) && (
+                    <Alert className="bg-primary/10 border-primary/20">
+                      <Info className="h-4 w-4 text-primary" />
+                      <AlertDescription className="text-sm text-foreground">
+                        Canadian government email detected. No access code required.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <Alert className="bg-muted/50 border-border">
                     <Info className="h-4 w-4" />
                     <AlertDescription className="text-sm text-muted-foreground">
