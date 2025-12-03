@@ -264,6 +264,10 @@ const Auth = () => {
 
   // Canadian government email domains that don't require access code
   const CANADIAN_GOV_DOMAINS = [
+    // Federal
+    'canada.ca',      // Federal Government
+    'gc.ca',          // Government of Canada (includes *.gc.ca subdomains)
+    // Provincial/Territorial
     'gov.ab.ca',      // Alberta
     'gov.bc.ca',      // British Columbia
     'gov.mb.ca',      // Manitoba
