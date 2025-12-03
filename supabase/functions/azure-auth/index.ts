@@ -39,8 +39,12 @@ serve(async (req) => {
       const redirectUri = body.redirectUri;
       const state = crypto.randomUUID();
 
+      // Normalize tenant URL - extract base URL without any path
+      const tenantUrlObj = new URL(AZURE_TENANT_URL);
+      const baseUrl = `${tenantUrlObj.origin}${tenantUrlObj.pathname.replace(/\/oauth2\/v2\.0\/(authorize|token).*$/, '')}`;
+      
       // Build Microsoft authorization URL
-      const authUrl = new URL(`${AZURE_TENANT_URL}/oauth2/v2.0/authorize`);
+      const authUrl = new URL(`${baseUrl}/oauth2/v2.0/authorize`);
       authUrl.searchParams.set('client_id', AZURE_CLIENT_ID);
       authUrl.searchParams.set('response_type', 'code');
       authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -72,8 +76,12 @@ serve(async (req) => {
 
       console.log('[Azure Auth] Exchanging code for tokens...');
 
+      // Normalize tenant URL - extract base URL without any path
+      const tenantUrlObj = new URL(AZURE_TENANT_URL);
+      const baseUrl = `${tenantUrlObj.origin}${tenantUrlObj.pathname.replace(/\/oauth2\/v2\.0\/(authorize|token).*$/, '')}`;
+
       // Exchange code for tokens
-      const tokenUrl = `${AZURE_TENANT_URL}/oauth2/v2.0/token`;
+      const tokenUrl = `${baseUrl}/oauth2/v2.0/token`;
       const tokenParams = new URLSearchParams({
         client_id: AZURE_CLIENT_ID,
         client_secret: AZURE_CLIENT_SECRET,
