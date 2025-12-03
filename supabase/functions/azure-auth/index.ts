@@ -200,7 +200,43 @@ serve(async (req) => {
 
         if (createError) {
           console.error('[Azure Auth] User creation failed:', createError);
-          return new Response(JSON.stringify({ error: 'Failed to create user' }), {
+          
+          // If user already exists (race condition or wasn't found initially), try to sign them in
+          if (createError.message?.includes('already') || createError.message?.includes('exists')) {
+            console.log('[Azure Auth] User may already exist, attempting to sign in...');
+            
+            // Try to get user by email directly
+            const { data: userByEmail } = await supabaseAdmin.auth.admin.listUsers();
+            const foundUser = userByEmail?.users?.find(u => u.email?.toLowerCase() === emailLower);
+            
+            if (foundUser) {
+              const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+                type: 'magiclink',
+                email: foundUser.email!,
+              });
+
+              if (!signInError && signInData) {
+                const linkUrl = new URL(signInData.properties.action_link);
+                const token = linkUrl.searchParams.get('token');
+                const type = linkUrl.searchParams.get('type');
+
+                return new Response(JSON.stringify({ 
+                  success: true,
+                  userId: foundUser.id,
+                  email: foundUser.email,
+                  name,
+                  isNewUser: false,
+                  verifyUrl: signInData.properties.action_link,
+                  token,
+                  type,
+                }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                });
+              }
+            }
+          }
+          
+          return new Response(JSON.stringify({ error: 'Failed to create user', details: createError.message }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
