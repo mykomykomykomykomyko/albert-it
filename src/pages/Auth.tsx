@@ -109,6 +109,7 @@ const Auth = () => {
   const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null);
   const isSubmitting = useRef(false);
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isAzureAuthInProgress = useRef(false);
 
   // Health check function to detect service recovery
   const checkServiceHealth = async () => {
@@ -204,6 +205,12 @@ const Auth = () => {
         return;
       }
 
+      // Skip navigation if Azure auth is handling it to prevent double navigation
+      if (isAzureAuthInProgress.current) {
+        console.log('[Auth] Skipping onAuthStateChange navigation - Azure auth in progress');
+        return;
+      }
+
       if (session && event === 'SIGNED_IN') {
         // Defer any Supabase calls to avoid blocking the auth callback
         setTimeout(async () => {
@@ -246,6 +253,10 @@ const Auth = () => {
     }
     
     if (code && azureCallback === 'true') {
+      // Set flag to prevent onAuthStateChange from also navigating
+      isAzureAuthInProgress.current = true;
+      // Clean URL immediately to prevent re-processing on re-renders
+      window.history.replaceState({}, document.title, '/auth');
       console.log('[Azure Auth] Callback detected, processing code...');
       handleAzureCallback(code);
     }
@@ -519,9 +530,13 @@ const Auth = () => {
       
       console.log('[Azure Auth] Callback success:', data);
       
+      // Clean up session storage before sign-in
+      sessionStorage.removeItem('azure_oauth_state');
+      sessionStorage.removeItem('azure_redirect_uri');
+      
       // Use the magic link token to verify and sign in
       if (data.token && data.type) {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
+        const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: data.token,
           type: data.type as any,
         });
@@ -531,25 +546,34 @@ const Auth = () => {
           throw verifyError;
         }
         
-        toast.success(data.isNewUser ? "Account created successfully!" : "Signed in with Microsoft!");
-        // Navigation will be handled by onAuthStateChange
+        toast.success(data.isNewUser ? "Account created successfully!" : "Signed in successfully!");
+        
+        // Navigate directly - don't wait for onAuthStateChange to avoid double navigation
+        if (verifyData.session) {
+          // Check if user needs to change password
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('must_change_password')
+            .eq('id', verifyData.session.user.id)
+            .single();
+          
+          if (profile?.must_change_password) {
+            navigate('/force-password-change');
+          } else {
+            navigate('/chat');
+          }
+        }
       } else {
         throw new Error('Invalid response from authentication server');
       }
       
-      // Clean up
-      sessionStorage.removeItem('azure_oauth_state');
-      sessionStorage.removeItem('azure_redirect_uri');
-      
     } catch (error: any) {
       const errorMessage = formatAuthError(error);
       setError(errorMessage);
-      toast.error("Microsoft sign-in failed");
-      
-      // Clean URL
-      window.history.replaceState({}, document.title, '/auth');
+      toast.error("Sign-in failed");
     } finally {
       setLoading(false);
+      isAzureAuthInProgress.current = false;
     }
   };
 
