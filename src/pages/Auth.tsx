@@ -230,6 +230,27 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Handle Azure OAuth callback
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const azureCallback = urlParams.get('azure_callback');
+    const errorParam = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+    
+    if (errorParam) {
+      console.error('[Azure Auth] OAuth error:', errorParam, errorDescription);
+      setError(errorDescription || errorParam);
+      window.history.replaceState({}, document.title, '/auth');
+      return;
+    }
+    
+    if (code && azureCallback === 'true') {
+      console.log('[Azure Auth] Callback detected, processing code...');
+      handleAzureCallback(code);
+    }
+  }, []);
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -440,19 +461,93 @@ const Auth = () => {
     setError(null);
     
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'azure',
-        options: {
-          scopes: 'openid email profile offline_access',
-          redirectTo: `${window.location.origin}/chat`,
-        },
-      });
+      const redirectUri = `${window.location.origin}/auth?azure_callback=true`;
       
-      if (error) throw error;
+      // Call edge function to get authorization URL
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/azure-auth?action=authorize`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ redirectUri }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      // Store state for verification
+      sessionStorage.setItem('azure_oauth_state', data.state);
+      sessionStorage.setItem('azure_redirect_uri', redirectUri);
+      
+      // Redirect to Microsoft login
+      window.location.href = data.authUrl;
     } catch (error: any) {
       const errorMessage = formatAuthError(error);
       setError(errorMessage);
-      toast.error("Failed to sign in with Microsoft");
+      toast.error("Failed to start Microsoft sign-in");
+      setLoading(false);
+    }
+  };
+  
+  // Handle Azure OAuth callback
+  const handleAzureCallback = async (code: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const redirectUri = sessionStorage.getItem('azure_redirect_uri') || `${window.location.origin}/auth?azure_callback=true`;
+      
+      // Exchange code for tokens
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/azure-auth?action=callback`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, redirectUri }),
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.details || data.error);
+      }
+      
+      console.log('[Azure Auth] Callback success:', data);
+      
+      // Use the magic link token to verify and sign in
+      if (data.token && data.type) {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: data.token,
+          type: data.type as any,
+        });
+        
+        if (verifyError) {
+          console.error('[Azure Auth] OTP verification failed:', verifyError);
+          throw verifyError;
+        }
+        
+        toast.success(data.isNewUser ? "Account created successfully!" : "Signed in with Microsoft!");
+        // Navigation will be handled by onAuthStateChange
+      } else {
+        throw new Error('Invalid response from authentication server');
+      }
+      
+      // Clean up
+      sessionStorage.removeItem('azure_oauth_state');
+      sessionStorage.removeItem('azure_redirect_uri');
+      
+    } catch (error: any) {
+      const errorMessage = formatAuthError(error);
+      setError(errorMessage);
+      toast.error("Microsoft sign-in failed");
+      
+      // Clean URL
+      window.history.replaceState({}, document.title, '/auth');
     } finally {
       setLoading(false);
     }
