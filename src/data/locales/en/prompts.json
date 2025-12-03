@@ -31,7 +31,8 @@
     "visibility": "Visibility",
     "private": "Private",
     "public": "Public",
-    "marketplace": "Marketplace"
+    "marketplace": "Marketplace",
+    "template": "Template"
   },
   "actions": {
     "create": "Create Prompt",
@@ -42,7 +43,12 @@
     "execute": "Execute",
     "save": "Save",
     "cancel": "Cancel",
-    "browseMarketplace": "Browse Marketplace"
+    "browseMarketplace": "Browse Marketplace",
+    "copy": "Copy"
+  },
+  "share": {
+    "email": "Email",
+    "emailPlaceholder": "user@example.com"
   },
   "categories": {
     "writing": "Writing",

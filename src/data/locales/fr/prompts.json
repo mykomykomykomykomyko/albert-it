@@ -31,7 +31,8 @@
     "visibility": "Visibilité",
     "private": "Privé",
     "public": "Public",
-    "marketplace": "Marché"
+    "marketplace": "Marché",
+    "template": "Modèle"
   },
   "actions": {
     "create": "Créer une invite",
@@ -42,7 +43,12 @@
     "execute": "Exécuter",
     "save": "Enregistrer",
     "cancel": "Annuler",
-    "browseMarketplace": "Parcourir le marché"
+    "browseMarketplace": "Parcourir le marché",
+    "copy": "Copier"
+  },
+  "share": {
+    "email": "Courriel",
+    "emailPlaceholder": "utilisateur@exemple.com"
   },
   "categories": {
     "writing": "Rédaction",
