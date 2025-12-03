@@ -435,6 +435,29 @@ const Auth = () => {
     }
   };
 
+  const handleAzureSignIn = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'openid email profile offline_access',
+          redirectTo: `${window.location.origin}/chat`,
+        },
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      const errorMessage = formatAuthError(error);
+      setError(errorMessage);
+      toast.error("Failed to sign in with Microsoft");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       {/* <div className="absolute top-4 right-4">
@@ -548,6 +571,31 @@ const Auth = () => {
                     ) : (
                       t('auth:signIn.button')
                     )}
+                  </Button>
+                  
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">{t('auth:signIn.or', { defaultValue: 'Or' })}</span>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleAzureSignIn}
+                    disabled={loading}
+                  >
+                    <svg className="mr-2 h-4 w-4" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                      <rect x="11" y="1" width="9" height="9" fill="#00a4ef"/>
+                      <rect x="1" y="11" width="9" height="9" fill="#7fba00"/>
+                      <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                    </svg>
+                    {t('auth:signIn.microsoft', { defaultValue: 'Sign in with Microsoft' })}
                   </Button>
                   <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
                     <DialogTrigger asChild>
