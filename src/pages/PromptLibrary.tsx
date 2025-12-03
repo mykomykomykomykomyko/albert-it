@@ -347,7 +347,7 @@ export default function PromptLibrary() {
                         checked={formData.is_template}
                         onCheckedChange={(checked) => setFormData({ ...formData, is_template: checked })}
                       />
-                      <Label htmlFor="is_template">Template</Label>
+                      <Label htmlFor="is_template">{t('form.template')}</Label>
                     </div>
                   </div>
                   <Button onClick={handleSubmit} className="w-full">
@@ -434,7 +434,7 @@ export default function PromptLibrary() {
                       <Badge variant="outline">{t('form.public')}</Badge>
                     )}
                     {selectedPromptData.is_template && (
-                      <Badge variant="outline">Template</Badge>
+                      <Badge variant="outline">{t('form.template')}</Badge>
                     )}
                     {selectedPromptData.is_marketplace && (
                       <Badge variant="default">
@@ -457,7 +457,7 @@ export default function PromptLibrary() {
                       onClick={() => handleCopy(selectedPromptData.prompt_text)}
                     >
                       <Copy className="w-4 h-4 mr-2" />
-                      Copy
+                      {t('actions.copy')}
                     </Button>
                   </div>
                 </div>
@@ -487,12 +487,12 @@ export default function PromptLibrary() {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Email</Label>
+              <Label>{t('share.email')}</Label>
               <Input
                 type="email"
                 value={shareEmail}
                 onChange={(e) => setShareEmail(e.target.value)}
-                placeholder="user@example.com"
+                placeholder={t('share.emailPlaceholder')}
               />
             </div>
             <div className="flex items-center gap-2">
