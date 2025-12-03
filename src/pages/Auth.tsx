@@ -684,11 +684,9 @@ const Auth = () => {
                     onClick={handleAzureSignIn}
                     disabled={loading}
                   >
-                    <svg className="mr-2 h-4 w-4" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                      <rect x="11" y="1" width="9" height="9" fill="#00a4ef"/>
-                      <rect x="1" y="11" width="9" height="9" fill="#7fba00"/>
-                      <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+                    <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="24" height="24" rx="4" fill="#00aad2"/>
+                      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="Arial, sans-serif">AB</text>
                     </svg>
                     {t('auth:signIn.microsoft', { defaultValue: 'Sign in with Microsoft' })}
                   </Button>
