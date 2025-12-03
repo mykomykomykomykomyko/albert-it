@@ -137,45 +137,30 @@ serve(async (req) => {
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
 
-      // Check if user exists (case-insensitive comparison since Azure may return mixed-case emails)
-      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+      // Normalize email to lowercase (Supabase stores emails in lowercase)
       const emailLower = email.toLowerCase();
-      const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === emailLower);
+      
+      // Strategy: Try to generate magic link first (works for existing users)
+      // If that fails because user doesn't exist, then create the user
+      console.log('[Azure Auth] Attempting magic link for:', emailLower);
+      
+      const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: emailLower,
+      });
 
-      let userId: string;
-      let session: any;
-
-      if (existingUser) {
-        // User exists - generate a magic link token for sign in
-        // Use the stored email from Supabase (lowercase) to ensure magic link works
-        const storedEmail = existingUser.email!;
-        console.log('[Azure Auth] Existing user found, signing in:', storedEmail);
+      if (signInData && !signInError) {
+        // User exists - return the magic link
+        console.log('[Azure Auth] Existing user found, signing in:', emailLower);
         
-        // Generate a sign-in link (we'll use the token directly)
-        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email: storedEmail,
-        });
-
-        if (signInError) {
-          console.error('[Azure Auth] Sign-in link generation failed:', signInError);
-          return new Response(JSON.stringify({ error: 'Failed to sign in user' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        userId = existingUser.id;
-        
-        // Extract the token from the link
         const linkUrl = new URL(signInData.properties.action_link);
         const token = linkUrl.searchParams.get('token');
         const type = linkUrl.searchParams.get('type');
 
         return new Response(JSON.stringify({ 
           success: true,
-          userId,
-          email,
+          userId: signInData.properties.hashed_token ? undefined : signInData.user?.id,
+          email: emailLower,
           name,
           isNewUser: false,
           verifyUrl: signInData.properties.action_link,
@@ -184,97 +169,89 @@ serve(async (req) => {
         }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
-      } else {
-        // Create new user
-        console.log('[Azure Auth] Creating new user:', email);
+      }
+
+      // User doesn't exist - create new user
+      console.log('[Azure Auth] User not found, creating new user:', emailLower);
+      
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email: emailLower,
+        email_confirm: true,
+        user_metadata: {
+          full_name: name,
+          azure_id: azureId,
+          provider: 'azure',
+        },
+      });
+
+      if (createError) {
+        console.error('[Azure Auth] User creation failed:', createError);
         
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: email,
-          email_confirm: true,
-          user_metadata: {
-            full_name: name,
-            azure_id: azureId,
-            provider: 'azure',
-          },
-        });
-
-        if (createError) {
-          console.error('[Azure Auth] User creation failed:', createError);
+        // If user already exists (race condition), try magic link again
+        if (createError.message?.includes('already') || createError.message?.includes('exists') || createError.message?.includes('registered')) {
+          console.log('[Azure Auth] User already exists, retrying magic link...');
           
-          // If user already exists (race condition or wasn't found initially), try to sign them in
-          if (createError.message?.includes('already') || createError.message?.includes('exists')) {
-            console.log('[Azure Auth] User may already exist, attempting to sign in...');
-            
-            // Try to get user by email directly
-            const { data: userByEmail } = await supabaseAdmin.auth.admin.listUsers();
-            const foundUser = userByEmail?.users?.find(u => u.email?.toLowerCase() === emailLower);
-            
-            if (foundUser) {
-              const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-                type: 'magiclink',
-                email: foundUser.email!,
-              });
+          const { data: retrySignIn, error: retryError } = await supabaseAdmin.auth.admin.generateLink({
+            type: 'magiclink',
+            email: emailLower,
+          });
 
-              if (!signInError && signInData) {
-                const linkUrl = new URL(signInData.properties.action_link);
-                const token = linkUrl.searchParams.get('token');
-                const type = linkUrl.searchParams.get('type');
+          if (retrySignIn && !retryError) {
+            const linkUrl = new URL(retrySignIn.properties.action_link);
+            const token = linkUrl.searchParams.get('token');
+            const type = linkUrl.searchParams.get('type');
 
-                return new Response(JSON.stringify({ 
-                  success: true,
-                  userId: foundUser.id,
-                  email: foundUser.email,
-                  name,
-                  isNewUser: false,
-                  verifyUrl: signInData.properties.action_link,
-                  token,
-                  type,
-                }), {
-                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                });
-              }
-            }
+            return new Response(JSON.stringify({ 
+              success: true,
+              userId: retrySignIn.user?.id,
+              email: emailLower,
+              name,
+              isNewUser: false,
+              verifyUrl: retrySignIn.properties.action_link,
+              token,
+              type,
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            });
           }
-          
-          return new Response(JSON.stringify({ error: 'Failed to create user', details: createError.message }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
         }
-
-        userId = newUser.user.id;
-
-        // Generate sign-in link for the new user
-        const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email: email,
-        });
-
-        if (signInError) {
-          console.error('[Azure Auth] Sign-in link generation failed:', signInError);
-          return new Response(JSON.stringify({ error: 'Failed to sign in new user' }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-
-        const linkUrl = new URL(signInData.properties.action_link);
-        const token = linkUrl.searchParams.get('token');
-        const type = linkUrl.searchParams.get('type');
-
-        return new Response(JSON.stringify({ 
-          success: true,
-          userId,
-          email,
-          name,
-          isNewUser: true,
-          verifyUrl: signInData.properties.action_link,
-          token,
-          type,
-        }), {
+        
+        return new Response(JSON.stringify({ error: 'Failed to create user', details: createError.message }), {
+          status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // Generate sign-in link for the new user
+      const { data: newUserSignIn, error: newUserSignInError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: emailLower,
+      });
+
+      if (newUserSignInError) {
+        console.error('[Azure Auth] Sign-in link generation failed:', newUserSignInError);
+        return new Response(JSON.stringify({ error: 'Failed to sign in new user' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const linkUrl = new URL(newUserSignIn.properties.action_link);
+      const token = linkUrl.searchParams.get('token');
+      const type = linkUrl.searchParams.get('type');
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        userId: newUser.user.id,
+        email: emailLower,
+        name,
+        isNewUser: true,
+        verifyUrl: newUserSignIn.properties.action_link,
+        token,
+        type,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     return new Response(JSON.stringify({ error: 'Invalid action' }), {
