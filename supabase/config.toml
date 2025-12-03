@@ -62,3 +62,6 @@ verify_jwt = true
 
 [functions.cleanup-conversations]
 verify_jwt = false
+
+[functions.azure-auth]
+verify_jwt = false
