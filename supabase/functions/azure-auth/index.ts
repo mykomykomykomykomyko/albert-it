@@ -137,21 +137,24 @@ serve(async (req) => {
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
 
-      // Check if user exists
+      // Check if user exists (case-insensitive comparison since Azure may return mixed-case emails)
       const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-      const existingUser = existingUsers?.users?.find(u => u.email === email);
+      const emailLower = email.toLowerCase();
+      const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === emailLower);
 
       let userId: string;
       let session: any;
 
       if (existingUser) {
         // User exists - generate a magic link token for sign in
-        console.log('[Azure Auth] Existing user found, signing in:', email);
+        // Use the stored email from Supabase (lowercase) to ensure magic link works
+        const storedEmail = existingUser.email!;
+        console.log('[Azure Auth] Existing user found, signing in:', storedEmail);
         
         // Generate a sign-in link (we'll use the token directly)
         const { data: signInData, error: signInError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'magiclink',
-          email: email,
+          email: storedEmail,
         });
 
         if (signInError) {
