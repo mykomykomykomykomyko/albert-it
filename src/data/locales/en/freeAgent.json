@@ -1,0 +1,79 @@
+{
+  "title": "Free Agent",
+  "model": {
+    "label": "Model",
+    "claudeSonnet": "Claude 4.5 Sonnet",
+    "geminiPro": "Gemini 2.5 Pro",
+    "geminiFlash": "Gemini 2.5 Flash",
+    "grok": "Grok 4.1",
+    "gpt5": "GPT-5"
+  },
+  "prompt": {
+    "label": "Prompt",
+    "placeholder": "Describe what you want the agent to accomplish...",
+    "enhance": "Enhance"
+  },
+  "settings": {
+    "title": "Settings",
+    "maxIterations": "Max Iterations",
+    "loopDetection": "Loop Detection",
+    "enableBlackboard": "Enable Blackboard",
+    "enableScratchpad": "Enable Scratchpad",
+    "enableAttributes": "Enable Named Attributes"
+  },
+  "controls": {
+    "start": "Start",
+    "stop": "Stop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "reset": "Reset",
+    "interject": "Interject",
+    "clear": "Clear",
+    "export": "Export Session",
+    "interjectionPrompt": "Enter your interjection:"
+  },
+  "memory": {
+    "blackboard": "Blackboard",
+    "scratchpad": "Scratchpad",
+    "attributes": "Attributes",
+    "workingMemory": "Working Memory",
+    "notes": "Notes",
+    "context": "Context",
+    "empty": "Empty",
+    "emptyBlackboard": "No entries yet",
+    "emptyAttributes": "No attributes yet"
+  },
+  "view": {
+    "canvas": "Canvas",
+    "simple": "Simple"
+  },
+  "status": {
+    "ready": "Ready to start",
+    "running": "Agent is running...",
+    "paused": "Session paused",
+    "completed": "Session completed",
+    "error": "An error occurred"
+  },
+  "canvas": {
+    "categories": {
+      "information": "Information",
+      "search": "Search",
+      "analysis": "Analysis",
+      "code": "Code",
+      "document": "Document",
+      "communication": "Communication",
+      "memory": "Memory",
+      "reasoning": "Reasoning",
+      "utility": "Utility"
+    }
+  },
+  "export": {
+    "title": "Export Session",
+    "description": "Download session data as a ZIP file",
+    "includePrompt": "Include Prompt",
+    "includeBlackboard": "Include Blackboard",
+    "includeScratchpad": "Include Scratchpad",
+    "includeArtifacts": "Include Artifacts",
+    "includeMetadata": "Include Metadata"
+  }
+}

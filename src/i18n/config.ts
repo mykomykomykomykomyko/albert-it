@@ -21,6 +21,7 @@ import enFiles from '@/data/locales/en/files.json';
 import enDocs from '@/data/locales/en/docs.json';
 import enAdmin from '@/data/locales/en/admin.json';
 import enHelper from '@/data/locales/en/helper.json';
+import enFreeAgent from '@/data/locales/en/freeAgent.json';
 
 // Import translation files - French
 import frCommon from '@/data/locales/fr/common.json';
@@ -41,6 +42,7 @@ import frFiles from '@/data/locales/fr/files.json';
 import frDocs from '@/data/locales/fr/docs.json';
 import frAdmin from '@/data/locales/fr/admin.json';
 import frHelper from '@/data/locales/fr/helper.json';
+import frFreeAgent from '@/data/locales/fr/freeAgent.json';
 
 // Define resources
 const resources = {
@@ -63,6 +65,7 @@ const resources = {
     docs: enDocs,
     admin: enAdmin,
     helper: enHelper,
+    freeAgent: enFreeAgent,
   },
   fr: {
     common: frCommon,
@@ -83,6 +86,7 @@ const resources = {
     docs: frDocs,
     admin: frAdmin,
     helper: frHelper,
+    freeAgent: frFreeAgent,
   },
 };
 
@@ -93,7 +97,7 @@ i18n
     resources,
     fallbackLng: 'en',
     defaultNS: 'common',
-    ns: ['common', 'landing', 'auth', 'chat', 'agents', 'stage', 'image', 'voice', 'transcripts', 'canvas', 'marketplace', 'prompts', 'framework', 'savedWork', 'files', 'docs', 'admin', 'helper'],
+    ns: ['common', 'landing', 'auth', 'chat', 'agents', 'stage', 'image', 'voice', 'transcripts', 'canvas', 'marketplace', 'prompts', 'framework', 'savedWork', 'files', 'docs', 'admin', 'helper', 'freeAgent'],
     
     interpolation: {
       escapeValue: false, // React already escapes values
