@@ -5,6 +5,7 @@ import { Toolbar } from "@/components/toolbar/Toolbar";
 import { OutputLog } from "@/components/output/OutputLog";
 import { ResponsiveLayout } from "@/components/layout/ResponsiveLayout";
 import { ChatHeader } from "@/components/ChatHeader";
+import { FreeAgentPanel } from "@/components/freeAgent/FreeAgentPanel";
 import { useState, useCallback, useEffect } from "react";
 import { useWorkflows } from "@/hooks/useWorkflows";
 import { toast } from "sonner";
@@ -20,6 +21,8 @@ import type {
   LogEntry 
 } from "@/types/workflow";
 import { useWorkflowExecution } from "@/hooks/useWorkflowExecution";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Workflow as WorkflowIcon, Bot } from "lucide-react";
 
 // Legacy export for backward compatibility
 export type { ToolInstance, LogEntry } from "@/types/workflow";
@@ -28,9 +31,18 @@ export type Agent = AgentNode;
 import { useTranslation } from "react-i18next";
 import { generateId } from "@/lib/utils";
 
+type StageMode = "workflow" | "freeAgent";
+
 const Stage = () => {
   const { t } = useTranslation('stage');
+  const { t: tFreeAgent } = useTranslation('freeAgent');
   const { workflows, createWorkflow, updateWorkflow } = useWorkflows();
+  
+  // Mode state
+  const [mode, setMode] = useState<StageMode>(() => {
+    return (localStorage.getItem('stage_mode') as StageMode) || 'workflow';
+  });
+  
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(() => {
     return localStorage.getItem('canvas_currentWorkflowId');
   });
@@ -43,6 +55,11 @@ const Stage = () => {
   const [customAgents, setCustomAgents] = useState<any[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [workflow, setWorkflow] = useState<Workflow>({ stages: [], connections: [] });
+
+  // Save mode to localStorage
+  useEffect(() => {
+    localStorage.setItem('stage_mode', mode);
+  }, [mode]);
 
   // Load workflow from database
   useEffect(() => {
@@ -427,9 +444,42 @@ const Stage = () => {
   
   const selectedAgent = selectedNodeData?.nodeType === "agent" ? (selectedNodeData as AgentNode) : undefined;
 
+  // Mode toggle component
+  const ModeToggle = () => (
+    <div className="flex items-center justify-center py-2 px-4 border-b border-border bg-muted/30">
+      <Tabs value={mode} onValueChange={(v) => setMode(v as StageMode)} className="w-auto">
+        <TabsList className="grid grid-cols-2 w-[320px]">
+          <TabsTrigger value="workflow" className="flex items-center gap-2">
+            <WorkflowIcon className="h-4 w-4" />
+            {t('modes.workflow')}
+          </TabsTrigger>
+          <TabsTrigger value="freeAgent" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" />
+            {t('modes.freeAgent')}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+    </div>
+  );
+
+  // Free Agent mode rendering
+  if (mode === "freeAgent") {
+    return (
+      <div className="flex flex-col h-screen bg-background overflow-hidden">
+        <ChatHeader />
+        <ModeToggle />
+        <div className="flex-1 overflow-hidden">
+          <FreeAgentPanel />
+        </div>
+      </div>
+    );
+  }
+
+  // Workflow mode rendering (original)
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <ChatHeader />
+      <ModeToggle />
       <Toolbar
         onAddStage={addStage}
         onSave={saveWorkflow}

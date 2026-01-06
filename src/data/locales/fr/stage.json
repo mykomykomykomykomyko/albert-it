@@ -1,6 +1,10 @@
 {
   "title": "Flux de travail scéniques",
   "subtitle": "Créez des flux de travail IA en plusieurs étapes visuellement",
+  "modes": {
+    "workflow": "Mode Flux",
+    "freeAgent": "Mode Agent Libre"
+  },
   "newWorkflow": "Nouveau flux",
   "saveWorkflow": "Enregistrer le flux",
   "loadWorkflow": "Charger le flux",

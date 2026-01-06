@@ -1,6 +1,10 @@
 {
   "title": "Stage Workflows",
   "subtitle": "Build multi-step AI workflows visually",
+  "modes": {
+    "workflow": "Workflow Mode",
+    "freeAgent": "Free Agent Mode"
+  },
   "newWorkflow": "New Workflow",
   "saveWorkflow": "Save Workflow",
   "loadWorkflow": "Load Workflow",
