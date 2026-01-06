@@ -74,6 +74,13 @@
     "includeBlackboard": "Include Blackboard",
     "includeScratchpad": "Include Scratchpad",
     "includeArtifacts": "Include Artifacts",
-    "includeMetadata": "Include Metadata"
+    "includeMetadata": "Include Metadata",
+    "zip": "Export as ZIP",
+    "json": "Export as JSON",
+    "blackboard": "Export Blackboard",
+    "success": "Session exported successfully",
+    "failed": "Failed to export session",
+    "jsonSuccess": "JSON exported successfully",
+    "blackboardSuccess": "Blackboard exported successfully"
   }
 }
