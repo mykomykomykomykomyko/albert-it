@@ -23,15 +23,16 @@ import {
   FileArchive,
   FileJson,
   FileText,
+  Upload,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFreeAgentSession } from '@/hooks/useFreeAgentSession';
-import { FreeAgentModel, DEFAULT_FREE_AGENT_MODELS } from '@/types/freeAgent';
+import { FreeAgentModel, FreeAgentSession, DEFAULT_FREE_AGENT_MODELS } from '@/types/freeAgent';
 import { SessionControls } from './SessionControls';
 import { MemoryPanel } from './MemoryPanel';
 import { FreeAgentCanvas } from './FreeAgentCanvas';
 import { cn } from '@/lib/utils';
-import { downloadSession, downloadArtifact } from '@/utils/sessionExporter';
+import { downloadSession, importSession } from '@/utils/sessionExporter';
 import { toast } from 'sonner';
 
 interface FreeAgentPanelProps {
@@ -52,8 +53,11 @@ export const FreeAgentPanel: React.FC<FreeAgentPanelProps> = ({ className }) => 
     interject,
     clearMemory,
     exportSession,
+    loadSession,
     models,
   } = useFreeAgentSession();
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const [selectedModelId, setSelectedModelId] = useState<string>(models[0]?.id || 'gemini-flash');
   const [maxIterations, setMaxIterations] = useState(50);
@@ -129,6 +133,35 @@ export const FreeAgentPanel: React.FC<FreeAgentPanelProps> = ({ className }) => 
     toast.success(t('export.blackboardSuccess', 'Blackboard exported successfully'));
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const importedSession = importSession(text);
+      
+      if (importedSession) {
+        loadSession(importedSession);
+        toast.success(t('import.success', 'Session imported successfully'));
+      } else {
+        toast.error(t('import.invalidFormat', 'Invalid session format'));
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      toast.error(t('import.failed', 'Failed to import session'));
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const handleClearMemory = () => {
     clearMemory('all');
   };
@@ -151,6 +184,21 @@ export const FreeAgentPanel: React.FC<FreeAgentPanelProps> = ({ className }) => 
               {t('title', 'Free Agent')}
             </CardTitle>
             <div className="flex items-center gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".json"
+                className="hidden"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleImportClick}
+                title={t('import.title', 'Import Session')}
+              >
+                <Upload className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"

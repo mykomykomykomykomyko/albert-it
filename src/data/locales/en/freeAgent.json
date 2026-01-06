@@ -82,5 +82,11 @@
     "failed": "Failed to export session",
     "jsonSuccess": "JSON exported successfully",
     "blackboardSuccess": "Blackboard exported successfully"
+  },
+  "import": {
+    "title": "Import Session",
+    "success": "Session imported successfully",
+    "failed": "Failed to import session",
+    "invalidFormat": "Invalid session format"
   }
 }
