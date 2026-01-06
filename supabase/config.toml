@@ -65,3 +65,18 @@ verify_jwt = false
 
 [functions.azure-auth]
 verify_jwt = false
+
+[functions.free-agent]
+verify_jwt = true
+
+[functions.github-fetch]
+verify_jwt = true
+
+[functions.enhance-prompt]
+verify_jwt = true
+
+[functions.tool-summarize]
+verify_jwt = true
+
+[functions.tool-analyze]
+verify_jwt = true
