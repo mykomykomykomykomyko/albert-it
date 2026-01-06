@@ -1,0 +1,79 @@
+{
+  "title": "Agent Libre",
+  "model": {
+    "label": "Modèle",
+    "claudeSonnet": "Claude 4.5 Sonnet",
+    "geminiPro": "Gemini 2.5 Pro",
+    "geminiFlash": "Gemini 2.5 Flash",
+    "grok": "Grok 4.1",
+    "gpt5": "GPT-5"
+  },
+  "prompt": {
+    "label": "Invite",
+    "placeholder": "Décrivez ce que vous voulez que l'agent accomplisse...",
+    "enhance": "Améliorer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "maxIterations": "Itérations maximales",
+    "loopDetection": "Détection de boucle",
+    "enableBlackboard": "Activer le tableau noir",
+    "enableScratchpad": "Activer le bloc-notes",
+    "enableAttributes": "Activer les attributs nommés"
+  },
+  "controls": {
+    "start": "Démarrer",
+    "stop": "Arrêter",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "reset": "Réinitialiser",
+    "interject": "Intervenir",
+    "clear": "Effacer",
+    "export": "Exporter la session",
+    "interjectionPrompt": "Entrez votre intervention :"
+  },
+  "memory": {
+    "blackboard": "Tableau noir",
+    "scratchpad": "Bloc-notes",
+    "attributes": "Attributs",
+    "workingMemory": "Mémoire de travail",
+    "notes": "Notes",
+    "context": "Contexte",
+    "empty": "Vide",
+    "emptyBlackboard": "Aucune entrée pour le moment",
+    "emptyAttributes": "Aucun attribut pour le moment"
+  },
+  "view": {
+    "canvas": "Canevas",
+    "simple": "Simple"
+  },
+  "status": {
+    "ready": "Prêt à démarrer",
+    "running": "L'agent est en cours d'exécution...",
+    "paused": "Session en pause",
+    "completed": "Session terminée",
+    "error": "Une erreur s'est produite"
+  },
+  "canvas": {
+    "categories": {
+      "information": "Information",
+      "search": "Recherche",
+      "analysis": "Analyse",
+      "code": "Code",
+      "document": "Document",
+      "communication": "Communication",
+      "memory": "Mémoire",
+      "reasoning": "Raisonnement",
+      "utility": "Utilitaire"
+    }
+  },
+  "export": {
+    "title": "Exporter la session",
+    "description": "Télécharger les données de session en fichier ZIP",
+    "includePrompt": "Inclure l'invite",
+    "includeBlackboard": "Inclure le tableau noir",
+    "includeScratchpad": "Inclure le bloc-notes",
+    "includeArtifacts": "Inclure les artefacts",
+    "includeMetadata": "Inclure les métadonnées"
+  }
+}
