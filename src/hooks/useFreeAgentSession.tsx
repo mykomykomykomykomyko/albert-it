@@ -355,6 +355,25 @@ export function useFreeAgentSession(options: UseFreeAgentSessionOptions = {}) {
     };
   }, [session]);
 
+  const loadSession = useCallback((importedSession: FreeAgentSession) => {
+    // Validate the session has required fields
+    if (!importedSession.id || !importedSession.config || !importedSession.blackboard) {
+      toast.error('Invalid session format');
+      return false;
+    }
+
+    // Reset the session to a viewable state (not running)
+    const loadedSession: FreeAgentSession = {
+      ...importedSession,
+      status: importedSession.status === 'running' ? 'stopped' : importedSession.status,
+    };
+
+    setSession(loadedSession);
+    options.onStatusChange?.(loadedSession.status);
+    toast.success('Session loaded successfully');
+    return true;
+  }, [options]);
+
   return {
     session,
     isProcessing,
@@ -371,6 +390,7 @@ export function useFreeAgentSession(options: UseFreeAgentSessionOptions = {}) {
     setAttribute,
     addArtifact,
     exportSession,
+    loadSession,
     models: DEFAULT_FREE_AGENT_MODELS,
   };
 }
