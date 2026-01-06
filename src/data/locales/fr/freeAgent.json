@@ -74,6 +74,13 @@
     "includeBlackboard": "Inclure le tableau noir",
     "includeScratchpad": "Inclure le bloc-notes",
     "includeArtifacts": "Inclure les artefacts",
-    "includeMetadata": "Inclure les métadonnées"
+    "includeMetadata": "Inclure les métadonnées",
+    "zip": "Exporter en ZIP",
+    "json": "Exporter en JSON",
+    "blackboard": "Exporter le tableau noir",
+    "success": "Session exportée avec succès",
+    "failed": "Échec de l'exportation de la session",
+    "jsonSuccess": "JSON exporté avec succès",
+    "blackboardSuccess": "Tableau noir exporté avec succès"
   }
 }

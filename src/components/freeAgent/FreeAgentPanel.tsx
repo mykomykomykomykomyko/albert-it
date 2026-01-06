@@ -7,12 +7,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import { 
   Bot, 
   Settings, 
   Download, 
   ChevronDown,
   Sparkles,
-  Eye
+  Eye,
+  FileArchive,
+  FileJson,
+  FileText,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useFreeAgentSession } from '@/hooks/useFreeAgentSession';
@@ -21,6 +31,8 @@ import { SessionControls } from './SessionControls';
 import { MemoryPanel } from './MemoryPanel';
 import { FreeAgentCanvas } from './FreeAgentCanvas';
 import { cn } from '@/lib/utils';
+import { downloadSession, downloadArtifact } from '@/utils/sessionExporter';
+import { toast } from 'sonner';
 
 interface FreeAgentPanelProps {
   className?: string;
@@ -75,12 +87,22 @@ export const FreeAgentPanel: React.FC<FreeAgentPanelProps> = ({ className }) => 
     }
   };
 
-  const handleExport = () => {
+  const handleExportZip = async () => {
+    if (!session) return;
+    try {
+      await downloadSession(session);
+      toast.success(t('export.success', 'Session exported successfully'));
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error(t('export.failed', 'Failed to export session'));
+    }
+  };
+
+  const handleExportJson = () => {
     if (!session) return;
     const exportData = exportSession();
     if (!exportData) return;
     
-    // Create and download JSON file
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -88,6 +110,23 @@ export const FreeAgentPanel: React.FC<FreeAgentPanelProps> = ({ className }) => 
     a.download = `session-${session.id}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success(t('export.jsonSuccess', 'JSON exported successfully'));
+  };
+
+  const handleExportBlackboard = () => {
+    if (!session) return;
+    const content = session.blackboard.map(entry => 
+      `## [${entry.type.toUpperCase()}] Iteration ${entry.iteration}\n\n${entry.content}\n\n---\n`
+    ).join('\n');
+    
+    const blob = new Blob([`# Blackboard Export\n\n${content}`], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `blackboard-${session.id}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(t('export.blackboardSuccess', 'Blackboard exported successfully'));
   };
 
   const handleClearMemory = () => {
@@ -121,9 +160,28 @@ export const FreeAgentPanel: React.FC<FreeAgentPanelProps> = ({ className }) => 
                 {viewMode === 'canvas' ? t('view.simple', 'Simple') : t('view.canvas', 'Canvas')}
               </Button>
               {hasSession && (
-                <Button variant="ghost" size="sm" onClick={handleExport}>
-                  <Download className="h-4 w-4" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleExportZip}>
+                      <FileArchive className="h-4 w-4 mr-2" />
+                      {t('export.zip', 'Export as ZIP')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportJson}>
+                      <FileJson className="h-4 w-4 mr-2" />
+                      {t('export.json', 'Export as JSON')}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleExportBlackboard}>
+                      <FileText className="h-4 w-4 mr-2" />
+                      {t('export.blackboard', 'Export Blackboard')}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               )}
             </div>
           </div>
