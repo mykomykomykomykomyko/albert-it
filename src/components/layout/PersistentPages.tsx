@@ -16,8 +16,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, lazy, Suspense } from "react";
 import EnhancedChat from "@/components/Chat";
-import Canvas from "@/pages/Canvas";
-import Stage from "@/pages/Stage";
 import ImageAnalysis from "@/pages/ImageAnalysis";
 import VoiceAnalysis from "@/pages/VoiceAnalysis";
 import MeetingTranscripts from "@/pages/MeetingTranscripts";
@@ -43,7 +41,7 @@ export const PersistentPages = () => {
   
   // Mark page as visited when it becomes active
   useEffect(() => {
-    const routes = ['/chat', '/canvas', '/stage', '/image', '/voice', '/transcripts', 
+    const routes = ['/chat', '/image', '/voice', '/transcripts', 
                     '/agents', '/marketplace', '/prompts', '/framework', 
                     '/workflow-marketplace', '/saved-work', '/docs'];
     
@@ -101,36 +99,6 @@ export const PersistentPages = () => {
           }}
         >
           <EnhancedChat />
-        </div>
-      )}
-
-      {/* Canvas - /canvas */}
-      {shouldRender('/canvas') && (
-        <div 
-          style={{ 
-            display: isActive('/canvas') ? 'flex' : 'none',
-            flexDirection: 'column',
-            height: '100vh',
-            width: '100%',
-            overflow: 'hidden'
-          }}
-        >
-          <Canvas />
-        </div>
-      )}
-
-      {/* Stage - /stage */}
-      {shouldRender('/stage') && (
-        <div 
-          style={{ 
-            display: isActive('/stage') ? 'flex' : 'none',
-            flexDirection: 'column',
-            height: '100vh',
-            width: '100%',
-            overflow: 'hidden'
-          }}
-        >
-          <Stage />
         </div>
       )}
 
