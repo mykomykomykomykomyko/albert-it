@@ -154,6 +154,63 @@ export type Database = {
         }
         Relationships: []
       }
+      allowed_email_domains: {
+        Row: {
+          created_at: string | null
+          domain: string
+          domain_type: string
+          id: string
+          is_active: boolean | null
+          requires_access_code: boolean | null
+          requires_sso: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain: string
+          domain_type: string
+          id?: string
+          is_active?: boolean | null
+          requires_access_code?: boolean | null
+          requires_sso?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string
+          domain_type?: string
+          id?: string
+          is_active?: boolean | null
+          requires_access_code?: boolean | null
+          requires_sso?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      blocked_email_domains: {
+        Row: {
+          created_at: string | null
+          domain: string
+          id: string
+          is_active: boolean | null
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean | null
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean | null
+          reason?: string | null
+        }
+        Relationships: []
+      }
       chat_history: {
         Row: {
           content: string
@@ -923,6 +980,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_terms_acceptance: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          ip_address: string | null
+          terms_version: string
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          ip_address?: string | null
+          terms_version: string
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          ip_address?: string | null
+          terms_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_analysis_results: {
         Row: {
           analysis: string | null
@@ -1125,6 +1206,14 @@ export type Database = {
       increment_access_code_usage: {
         Args: { code_input: string }
         Returns: undefined
+      }
+      is_allowed_email_domain: {
+        Args: { email_input: string }
+        Returns: boolean
+      }
+      is_blocked_email_domain: {
+        Args: { email_input: string }
+        Returns: boolean
       }
       validate_access_code: { Args: { code_input: string }; Returns: boolean }
     }
