@@ -11,7 +11,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { toast } from "sonner";
 import { Brain, Eye, EyeOff, Info, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-// import { LanguageToggle } from "@/components/LanguageToggle";
+import { useEmailValidation } from "@/hooks/useEmailValidation";
+import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
+import { isPasswordValid, getPasswordErrors, PASSWORD_MIN_LENGTH } from "@/utils/passwordValidation";
+import logger from "@/utils/logger";
 
 // Retry utility with exponential backoff
 const retryWithBackoff = async <T,>(
@@ -45,7 +48,7 @@ const retryWithBackoff = async <T,>(
       // Wait with exponential backoff before retrying
       if (attempt < maxRetries - 1) {
         const delay = initialDelay * Math.pow(2, attempt);
-        console.log(`[Auth] Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms${is503Error ? ' (503 error)' : ''}`);
+        logger.log(`[Auth] Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms${is503Error ? ' (503 error)' : ''}`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -110,11 +113,22 @@ const Auth = () => {
   const isSubmitting = useRef(false);
   const healthCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isAzureAuthInProgress = useRef(false);
+  
+  // V2/V4: Email validation hook
+  const { validateEmail, isValidating: isValidatingEmail } = useEmailValidation();
+  const [emailValidation, setEmailValidation] = useState<{
+    isAllowedDomain: boolean;
+    requiresAccessCode: boolean;
+    requiresSSO: boolean;
+    isBlockedDomain: boolean;
+    domainType: string | null;
+    error: string | null;
+  } | null>(null);
 
   // Health check function to detect service recovery
   const checkServiceHealth = async () => {
     try {
-      console.log('[Auth] Checking service health...');
+      logger.log('[Auth] Checking service health...');
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
@@ -125,7 +139,7 @@ const Auth = () => {
       setLastHealthCheck(new Date());
 
       if (res.ok) {
-        console.log('[Auth] Service health OK');
+        logger.log('[Auth] Service health OK');
         setServiceDown(false);
 
         if (healthCheckIntervalRef.current) {
@@ -137,10 +151,10 @@ const Auth = () => {
         return true;
       }
 
-      console.log('[Auth] Health endpoint not OK:', res.status);
+      logger.log('[Auth] Health endpoint not OK:', res.status);
       return false;
     } catch (error) {
-      console.log('[Auth] Service still unavailable (health check failed):', error);
+      logger.log('[Auth] Service still unavailable (health check failed):', error);
       setLastHealthCheck(new Date());
       return false;
     }
@@ -149,7 +163,7 @@ const Auth = () => {
   // Poll for service recovery when service is down
   useEffect(() => {
     if (serviceDown) {
-      console.log('[Auth] Starting health check polling (every 30 seconds)');
+      logger.log('[Auth] Starting health check polling (every 30 seconds)');
       
       // Set up polling interval
       healthCheckIntervalRef.current = setInterval(() => {
@@ -158,7 +172,7 @@ const Auth = () => {
       
       return () => {
         if (healthCheckIntervalRef.current) {
-          console.log('[Auth] Clearing health check interval');
+          logger.log('[Auth] Clearing health check interval');
           clearInterval(healthCheckIntervalRef.current);
           healthCheckIntervalRef.current = null;
         }
@@ -198,7 +212,7 @@ const Auth = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Synchronous state updates only to avoid deadlocks
-      console.log('[Auth] onAuthStateChange:', event);
+      logger.log('[Auth] onAuthStateChange:', event);
 
       if (event === 'SIGNED_OUT') {
         if (window.location.pathname !== '/auth') navigate('/auth');
@@ -207,7 +221,7 @@ const Auth = () => {
 
       // Skip navigation if Azure auth is handling it to prevent double navigation
       if (isAzureAuthInProgress.current) {
-        console.log('[Auth] Skipping onAuthStateChange navigation - Azure auth in progress');
+        logger.log('[Auth] Skipping onAuthStateChange navigation - Azure auth in progress');
         return;
       }
 
@@ -227,7 +241,7 @@ const Auth = () => {
               navigate('/chat');
             }
           } catch (e) {
-            console.error('[Auth] post-login profile check failed:', e);
+            logger.error('[Auth] post-login profile check failed:', e);
             navigate('/chat');
           }
         }, 0);
@@ -246,7 +260,7 @@ const Auth = () => {
     const errorDescription = urlParams.get('error_description');
     
     if (errorParam) {
-      console.error('[Azure Auth] OAuth error:', errorParam, errorDescription);
+      logger.error('[Azure Auth] OAuth error:', errorParam, errorDescription);
       setError(errorDescription || errorParam);
       window.history.replaceState({}, document.title, '/auth');
       return;
@@ -257,38 +271,42 @@ const Auth = () => {
       isAzureAuthInProgress.current = true;
       // Clean URL immediately to prevent re-processing on re-renders
       window.history.replaceState({}, document.title, '/auth');
-      console.log('[Azure Auth] Callback detected, processing code...');
+      logger.log('[Azure Auth] Callback detected, processing code...');
       handleAzureCallback(code);
     }
   }, []);
 
-  // Canadian government email domains that don't require access code
-  const CANADIAN_GOV_DOMAINS = [
-    // Federal
-    'canada.ca',      // Federal Government
-    'gc.ca',          // Government of Canada (includes *.gc.ca subdomains)
-    // Provincial/Territorial
-    'gov.ab.ca',      // Alberta
-    'gov.bc.ca',      // British Columbia
-    'gov.mb.ca',      // Manitoba
-    'leg.gov.mb.ca',  // Manitoba Legislative
-    'gnb.ca',         // New Brunswick
-    'gov.nl.ca',      // Newfoundland and Labrador
-    'gov.nt.ca',      // Northwest Territories
-    'novascotia.ca',  // Nova Scotia
-    'gov.nu.ca',      // Nunavut
-    'ontario.ca',     // Ontario
-    'gov.pe.ca',      // Prince Edward Island
-    'gouv.qc.ca',     // Quebec
-    'gov.sk.ca',      // Saskatchewan
-    'gov.yk.ca',      // Yukon
-  ];
+  // V2: Validate email on change using database-driven domains
+  useEffect(() => {
+    const validateEmailDomain = async () => {
+      if (!email || !email.includes('@')) {
+        setEmailValidation(null);
+        return;
+      }
+      
+      const result = await validateEmail(email);
+      setEmailValidation({
+        isAllowedDomain: result.isAllowedDomain,
+        requiresAccessCode: result.requiresAccessCode,
+        requiresSSO: result.requiresSSO,
+        isBlockedDomain: result.isBlockedDomain,
+        domainType: result.domainType,
+        error: result.error,
+      });
+    };
+    
+    const debounce = setTimeout(validateEmailDomain, 300);
+    return () => clearTimeout(debounce);
+  }, [email, validateEmail]);
 
-  const isCanadianGovEmail = (email: string): boolean => {
-    const emailLower = email.toLowerCase();
-    return CANADIAN_GOV_DOMAINS.some(domain => 
-      emailLower.endsWith(`@${domain}`) || emailLower.includes(`.${domain}`)
-    );
+  // Helper to check if email is from allowed domain (uses cached validation)
+  const isAllowedDomainEmail = (): boolean => {
+    return emailValidation?.isAllowedDomain ?? false;
+  };
+
+  // Helper to check if access code is required
+  const needsAccessCode = (): boolean => {
+    return emailValidation?.requiresAccessCode ?? true;
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -304,10 +322,27 @@ const Auth = () => {
     setError(null);
 
     try {
-      const isGovEmail = isCanadianGovEmail(email);
+      // V4: Check for blocked email domains
+      if (emailValidation?.isBlockedDomain) {
+        setError("Temporary or disposable email addresses are not allowed.");
+        isSubmitting.current = false;
+        setLoading(false);
+        return;
+      }
+
+      // V25: Validate password strength
+      if (!isPasswordValid(password)) {
+        const errors = getPasswordErrors(password);
+        setError(errors[0] || "Password does not meet security requirements.");
+        isSubmitting.current = false;
+        setLoading(false);
+        return;
+      }
+
+      const isGovEmail = isAllowedDomainEmail();
       
-      // Skip access code validation for Canadian government emails
-      if (!isGovEmail) {
+      // Skip access code validation for allowed government domains
+      if (!isGovEmail && needsAccessCode()) {
         // Validate access code for non-government emails
         if (!accessCode.trim()) {
           setError("Access code is required for non-government email addresses");
@@ -351,9 +386,10 @@ const Auth = () => {
         });
 
         if (error) {
-          // Check for specific error types
-          if (error.message.includes('already registered')) {
-            throw new Error("This email is already registered. Please sign in instead.");
+          // V12: Don't reveal if email is already registered - use generic message
+          if (error.message.includes('already registered') || 
+              error.message.includes('User already registered')) {
+            throw new Error("Unable to complete signup. Please try again or contact support.");
           }
           throw error;
         }
@@ -366,7 +402,7 @@ const Auth = () => {
             code_input: accessCode.trim().toUpperCase()
           });
         } catch (usageError) {
-          console.error('Failed to increment usage count:', usageError);
+          logger.error('Failed to increment usage count:', usageError);
           // Continue anyway - user is registered
         }
       }
@@ -376,6 +412,7 @@ const Auth = () => {
       setPassword("");
       setFullName("");
       setAccessCode("");
+      setEmailValidation(null);
       setError(null);
     } catch (error: any) {
       const errorMessage = formatAuthError(error);
@@ -386,11 +423,10 @@ const Auth = () => {
                     errorMessage.includes('503') || errorMessage.includes('upstream connect error');
       
       if (is503) {
-        console.log('[Auth] 503 error during sign-up:', {
+        logger.log('[Auth] 503 error during sign-up:', {
           context: 'sign-up',
           status: error?.status,
           statusCode: error?.statusCode,
-          message: error?.message
         });
         setServiceDown(true);
         setLastHealthCheck(new Date());
@@ -447,11 +483,10 @@ const Auth = () => {
                     errorMessage.includes('503') || errorMessage.includes('upstream connect error');
       
       if (is503) {
-        console.log('[Auth] 503 error during sign-in:', {
+        logger.log('[Auth] 503 error during sign-in:', {
           context: 'sign-in',
           status: error?.status,
           statusCode: error?.statusCode,
-          message: error?.message
         });
         setServiceDown(true);
         setLastHealthCheck(new Date());
@@ -564,7 +599,7 @@ const Auth = () => {
         throw new Error(data.details || data.error);
       }
       
-      console.log('[Azure Auth] Callback success:', data);
+      logger.log('[Azure Auth] Callback success');
       
       // Clean up session storage before sign-in
       sessionStorage.removeItem('azure_oauth_state');
@@ -578,7 +613,7 @@ const Auth = () => {
         });
         
         if (verifyError) {
-          console.error('[Azure Auth] OTP verification failed:', verifyError);
+          logger.error('[Azure Auth] OTP verification failed:', verifyError);
           throw verifyError;
         }
         
@@ -822,11 +857,11 @@ const Auth = () => {
                         id="signup-password"
                         name="password"
                         type={showSignupPassword ? "text" : "password"}
-                        placeholder="••••••••"
+                        placeholder="••••••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        minLength={6}
+                        minLength={PASSWORD_MIN_LENGTH}
                         autoComplete="new-password"
                         className="bg-background text-foreground border-input pr-10"
                       />
@@ -844,8 +879,11 @@ const Auth = () => {
                         )}
                       </Button>
                     </div>
+                    {/* V25: Password Strength Indicator */}
+                    <PasswordStrengthIndicator password={password} />
                   </div>
-                  {!isCanadianGovEmail(email) && (
+                  {/* V2: Show access code field only when required */}
+                  {needsAccessCode() && !emailValidation?.isBlockedDomain && (
                     <div className="space-y-2">
                       <Label htmlFor="access-code" className="text-foreground">
                         Access Code <span className="text-destructive">*</span>
@@ -856,7 +894,7 @@ const Auth = () => {
                         placeholder="Enter your access code"
                         value={accessCode}
                         onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                        required={!isCanadianGovEmail(email)}
+                        required={needsAccessCode()}
                         className="bg-background text-foreground border-input"
                         maxLength={20}
                       />
@@ -865,11 +903,23 @@ const Auth = () => {
                       </p>
                     </div>
                   )}
-                  {isCanadianGovEmail(email) && (
+                  {/* V4: Show blocked email error */}
+                  {emailValidation?.isBlockedDomain && (
+                    <Alert variant="destructive">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        Temporary or disposable email addresses are not allowed.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {/* Show allowed domain confirmation */}
+                  {isAllowedDomainEmail() && !emailValidation?.isBlockedDomain && (
                     <Alert className="bg-primary/10 border-primary/20">
                       <Info className="h-4 w-4 text-primary" />
                       <AlertDescription className="text-sm text-foreground">
-                        Canadian government email detected. No access code required.
+                        {emailValidation?.domainType === 'federal' 
+                          ? 'Federal government email detected. No access code required.'
+                          : 'Government email detected. No access code required.'}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -879,7 +929,7 @@ const Auth = () => {
                       The personal information collected through Albert for the purpose of registering for an account. This collection is authorized by section 4 (c) of the Protection of Privacy Act. For questions about the collection of personal information, contact <a href="mailto:aiacademy@gov.ab.ca" className="text-primary hover:underline">aiacademy@gov.ab.ca</a>.
                     </AlertDescription>
                   </Alert>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full" disabled={loading || emailValidation?.isBlockedDomain || isValidatingEmail}>
                     {loading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
