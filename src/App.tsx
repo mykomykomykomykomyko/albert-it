@@ -40,6 +40,7 @@ import { lazy, Suspense } from "react";
 import { GlobalHelperAgent } from "./components/GlobalHelperAgent";
 import { AccessibilityProvider } from "./components/AccessibilityProvider";
 import { PersistentPages } from "./components/layout/PersistentPages";
+import { ExternalRedirect } from "./components/ExternalRedirect";
 
 // Lazy load pages for better performance
 const Index = lazy(() => import("./pages/Index"));
@@ -96,10 +97,12 @@ const App = () => (
             {/* Shared conversation - can unmount */}
             <Route path="/chat/shared/:shareToken" element={<SharedConversation />} />
             
+            {/* External redirects - Canvas and Stage now on Agent Builder Console */}
+            <Route path="/canvas/*" element={<ExternalRedirect url="https://agentbuilderconsole.com" />} />
+            <Route path="/stage/*" element={<ExternalRedirect url="https://agentbuilderconsole.com" />} />
+            
             {/* Main app routes - persistent state container */}
             <Route path="/chat/*" element={<PersistentPages />} />
-            <Route path="/canvas/*" element={<PersistentPages />} />
-            <Route path="/stage/*" element={<PersistentPages />} />
             <Route path="/image/*" element={<PersistentPages />} />
             <Route path="/voice/*" element={<PersistentPages />} />
             <Route path="/transcripts/*" element={<PersistentPages />} />
