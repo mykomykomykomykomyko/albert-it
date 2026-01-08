@@ -424,23 +424,39 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
           total_speakers: uniqueSpeakers.length
         };
       } else {
-        formattedContent = file.transcription.text || t("speechToText.noTranscription");
+        // Fallback to text property
+        formattedContent = file.transcription.text || "";
       }
 
-      // Save to meeting_transcripts table
-      const { error } = await supabase
-        .from("meeting_transcripts")
-        .insert({
-          user_id: session.user.id,
-          title: file.name.replace(/\.[^/.]+$/, ""), // Remove file extension
-          original_filename: file.name,
-          file_format: 'voice',
-          content: formattedContent,
-          structured_data: structuredData,
-          participants: participants.length > 0 ? participants : null,
-        });
+      // Ensure content is not empty
+      if (!formattedContent || formattedContent.trim() === "") {
+        formattedContent = "No transcription content available";
+      }
 
-      if (error) throw error;
+      const insertData = {
+        user_id: session.user.id,
+        title: file.name.replace(/\.[^/.]+$/, "") || "Untitled Transcription",
+        original_filename: file.name,
+        file_format: 'voice',
+        content: formattedContent,
+        structured_data: structuredData,
+        participants: participants.length > 0 ? participants : null,
+      };
+
+      console.log('Saving transcription with data:', insertData);
+
+      // Save to meeting_transcripts table
+      const { data, error } = await supabase
+        .from("meeting_transcripts")
+        .insert(insertData)
+        .select();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Successfully saved transcript:', data);
 
       toast({
         title: t("speechToText.savedToTranscripts"),
@@ -450,7 +466,7 @@ export const SpeechToTextTab: React.FC<SpeechToTextTabProps> = () => {
       console.error('Error saving to transcripts:', error);
       toast({
         title: t("speechToText.saveFailed"),
-        description: t("speechToText.saveFailedDesc"),
+        description: error instanceof Error ? error.message : t("speechToText.saveFailedDesc"),
         variant: "destructive",
       });
     }
