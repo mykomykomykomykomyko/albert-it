@@ -371,7 +371,7 @@ export default function AgentMarketplace() {
                 }}
               >
                 <Download className="w-4 h-4 mr-2" />
-                {viewingAgent?.is_template ? t('buttons.addAgent') : t('buttons.cloneAgent')}
+                {t('buttons.addToMyAgents')}
               </Button>
             </div>
           </div>

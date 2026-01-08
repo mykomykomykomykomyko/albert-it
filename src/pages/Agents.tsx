@@ -650,7 +650,7 @@ const Agents = () => {
         </PageSidebar>
       }
     >
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 p-6">
         <div className="max-w-7xl mx-auto space-y-6">
           {loading ? (
             <div className="text-center py-12">Loading agents...</div>
