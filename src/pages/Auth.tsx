@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Brain, Eye, EyeOff, Info, Loader2 } from "lucide-react";
+import { Brain, Eye, EyeOff, Info, Loader2, Shield } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEmailValidation } from "@/hooks/useEmailValidation";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
@@ -325,6 +325,16 @@ const Auth = () => {
       // V4: Check for blocked email domains
       if (emailValidation?.isBlockedDomain) {
         setError("Temporary or disposable email addresses are not allowed.");
+        isSubmitting.current = false;
+        setLoading(false);
+        return;
+      }
+
+      // V5/V6: Block email/password signup for domains requiring SSO
+      if (emailValidation?.requiresSSO) {
+        setError(t('auth:signUp.ssoRequired.errorMessage', { 
+          defaultValue: "Government of Alberta email addresses must sign in using Microsoft. Please use the 'Sign in with Microsoft' button." 
+        }));
         isSubmitting.current = false;
         setLoading(false);
         return;
@@ -822,20 +832,7 @@ const Auth = () => {
 
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name" className="text-foreground">Full Name</Label>
-                    <Input
-                      id="signup-name"
-                      name="name"
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      required
-                      autoComplete="name"
-                      className="bg-background text-foreground border-input"
-                    />
-                  </div>
+                  {/* Email field - always shown first */}
                   <div className="space-y-2">
                     <Label htmlFor="signup-email" className="text-foreground">{t('auth:signUp.email')}</Label>
                     <Input
@@ -850,95 +847,142 @@ const Auth = () => {
                       className="bg-background text-foreground border-input"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-foreground">{t('auth:signUp.password')}</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        name="password"
-                        type={showSignupPassword ? "text" : "password"}
-                        placeholder="••••••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={PASSWORD_MIN_LENGTH}
-                        autoComplete="new-password"
-                        className="bg-background text-foreground border-input pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowSignupPassword(!showSignupPassword)}
+
+                  {/* V5/V6: SSO Required - show Microsoft signin instead of password form */}
+                  {emailValidation?.requiresSSO ? (
+                    <>
+                      <Alert className="bg-primary/10 border-primary/20">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <AlertDescription className="text-sm text-foreground">
+                          <strong>{t('auth:signUp.ssoRequired.title', { defaultValue: 'Government of Alberta Account Detected' })}</strong>
+                          <br />
+                          {t('auth:signUp.ssoRequired.message', { 
+                            defaultValue: 'For security, @gov.ab.ca users must sign in with their Microsoft account. Your name will be automatically populated from your Microsoft profile.' 
+                          })}
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Button 
+                        type="button" 
+                        className="w-full" 
+                        onClick={handleAzureSignIn}
+                        disabled={loading}
                       >
-                        {showSignupPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="24" height="24" rx="4" fill="#00aad2"/>
+                          <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="Arial, sans-serif">AB</text>
+                        </svg>
+                        {t('auth:signUp.ssoRequired.button', { defaultValue: 'Sign in with Microsoft' })}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Regular signup form - name, password, access code */}
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-name" className="text-foreground">Full Name</Label>
+                        <Input
+                          id="signup-name"
+                          name="name"
+                          type="text"
+                          placeholder="John Doe"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          required
+                          autoComplete="name"
+                          className="bg-background text-foreground border-input"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-password" className="text-foreground">{t('auth:signUp.password')}</Label>
+                        <div className="relative">
+                          <Input
+                            id="signup-password"
+                            name="password"
+                            type={showSignupPassword ? "text" : "password"}
+                            placeholder="••••••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={PASSWORD_MIN_LENGTH}
+                            autoComplete="new-password"
+                            className="bg-background text-foreground border-input pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowSignupPassword(!showSignupPassword)}
+                          >
+                            {showSignupPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                        {/* V25: Password Strength Indicator */}
+                        <PasswordStrengthIndicator password={password} />
+                      </div>
+                      {/* V2: Show access code field only when required */}
+                      {needsAccessCode() && !emailValidation?.isBlockedDomain && (
+                        <div className="space-y-2">
+                          <Label htmlFor="access-code" className="text-foreground">
+                            Access Code <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            id="access-code"
+                            type="text"
+                            placeholder="Enter your access code"
+                            value={accessCode}
+                            onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                            required={needsAccessCode()}
+                            className="bg-background text-foreground border-input"
+                            maxLength={20}
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Access code is required for non-government email addresses
+                          </p>
+                        </div>
+                      )}
+                      {/* V4: Show blocked email error */}
+                      {emailValidation?.isBlockedDomain && (
+                        <Alert variant="destructive">
+                          <Info className="h-4 w-4" />
+                          <AlertDescription className="text-sm">
+                            Temporary or disposable email addresses are not allowed.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      {/* Show allowed domain confirmation */}
+                      {isAllowedDomainEmail() && !emailValidation?.isBlockedDomain && (
+                        <Alert className="bg-primary/10 border-primary/20">
+                          <Info className="h-4 w-4 text-primary" />
+                          <AlertDescription className="text-sm text-foreground">
+                            {emailValidation?.domainType === 'federal' 
+                              ? 'Federal government email detected. No access code required.'
+                              : 'Government email detected. No access code required.'}
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      <Alert className="bg-muted/50 border-border">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-sm text-muted-foreground">
+                          The personal information collected through Albert for the purpose of registering for an account. This collection is authorized by section 4 (c) of the Protection of Privacy Act. For questions about the collection of personal information, contact <a href="mailto:aiacademy@gov.ab.ca" className="text-primary hover:underline">aiacademy@gov.ab.ca</a>.
+                        </AlertDescription>
+                      </Alert>
+                      <Button type="submit" className="w-full" disabled={loading || emailValidation?.isBlockedDomain || isValidatingEmail}>
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating account...
+                          </>
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          t('auth:signUp.button')
                         )}
                       </Button>
-                    </div>
-                    {/* V25: Password Strength Indicator */}
-                    <PasswordStrengthIndicator password={password} />
-                  </div>
-                  {/* V2: Show access code field only when required */}
-                  {needsAccessCode() && !emailValidation?.isBlockedDomain && (
-                    <div className="space-y-2">
-                      <Label htmlFor="access-code" className="text-foreground">
-                        Access Code <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="access-code"
-                        type="text"
-                        placeholder="Enter your access code"
-                        value={accessCode}
-                        onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                        required={needsAccessCode()}
-                        className="bg-background text-foreground border-input"
-                        maxLength={20}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Access code is required for non-government email addresses
-                      </p>
-                    </div>
+                    </>
                   )}
-                  {/* V4: Show blocked email error */}
-                  {emailValidation?.isBlockedDomain && (
-                    <Alert variant="destructive">
-                      <Info className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        Temporary or disposable email addresses are not allowed.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  {/* Show allowed domain confirmation */}
-                  {isAllowedDomainEmail() && !emailValidation?.isBlockedDomain && (
-                    <Alert className="bg-primary/10 border-primary/20">
-                      <Info className="h-4 w-4 text-primary" />
-                      <AlertDescription className="text-sm text-foreground">
-                        {emailValidation?.domainType === 'federal' 
-                          ? 'Federal government email detected. No access code required.'
-                          : 'Government email detected. No access code required.'}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  <Alert className="bg-muted/50 border-border">
-                    <Info className="h-4 w-4" />
-                    <AlertDescription className="text-sm text-muted-foreground">
-                      The personal information collected through Albert for the purpose of registering for an account. This collection is authorized by section 4 (c) of the Protection of Privacy Act. For questions about the collection of personal information, contact <a href="mailto:aiacademy@gov.ab.ca" className="text-primary hover:underline">aiacademy@gov.ab.ca</a>.
-                    </AlertDescription>
-                  </Alert>
-                  <Button type="submit" className="w-full" disabled={loading || emailValidation?.isBlockedDomain || isValidatingEmail}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating account...
-                      </>
-                    ) : (
-                      t('auth:signUp.button')
-                    )}
-                  </Button>
                 </form>
               </TabsContent>
             </Tabs>
