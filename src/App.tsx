@@ -20,7 +20,7 @@
  * - /prompts : Prompt library and management
  * - /framework : Framework management for prompts
  * - /admin/review : Admin panel for reviewing submissions
- * - /workflow-marketplace : Browse and share workflows
+ 
  * - /chat : Main chat interface with AI
  * - /chat/:id : Specific conversation view
  * - /stage : Stage workflow builder (sequential pipelines)
@@ -110,7 +110,7 @@ const App = () => (
             <Route path="/marketplace/*" element={<PersistentPages />} />
             <Route path="/prompts/*" element={<PersistentPages />} />
             <Route path="/framework/*" element={<PersistentPages />} />
-            <Route path="/workflow-marketplace/*" element={<PersistentPages />} />
+            
             <Route path="/saved-work/*" element={<PersistentPages />} />
             <Route path="/docs/*" element={<PersistentPages />} />
             

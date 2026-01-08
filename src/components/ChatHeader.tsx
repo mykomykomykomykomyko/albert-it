@@ -77,7 +77,7 @@ export function ChatHeader() {
     { name: t('navigation.marketplace'), path: '/marketplace', value: 'marketplace' },
     { name: t('navigation.stage'), path: '/stage', value: 'stage' },
     { name: t('navigation.canvas'), path: '/canvas', value: 'canvas' },
-    { name: t('navigation.workflowMarketplace'), path: '/workflow-marketplace', value: 'workflow-marketplace' },
+    
     { name: t('navigation.transcripts'), path: '/transcripts', value: 'transcripts' },
     { name: t('navigation.imageAnalysis'), path: '/image', value: 'image' },
     { name: t('navigation.voiceAnalysis'), path: '/voice', value: 'voice' },
@@ -194,16 +194,6 @@ export function ChatHeader() {
               }`}
             >
               {t('navigation.canvas')}
-            </button>
-            <button
-              onClick={() => navigate('/workflow-marketplace')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                location.pathname.startsWith('/workflow-marketplace')
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              {t('navigation.workflowMarketplace')}
             </button>
             <button
               onClick={() => navigate('/transcripts')}

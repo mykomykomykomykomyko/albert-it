@@ -42,10 +42,6 @@ export function GlobalHelperAgent() {
       name: t('routes.canvas.name', 'Canvas Workflow Builder'),
       description: t('routes.canvas.description', 'Create complex non-linear workflows.')
     },
-    '/workflow-marketplace': {
-      name: t('routes.workflowMarketplace.name', 'Workflow Marketplace'),
-      description: t('routes.workflowMarketplace.description', 'Browse and import pre-built workflows.')
-    },
     '/image': {
       name: t('routes.image.name', 'Image Analysis Tool'),
       description: t('routes.image.description', 'Process images and documents with AI vision.')

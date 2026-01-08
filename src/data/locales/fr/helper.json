@@ -87,10 +87,6 @@
       "name": "Constructeur de flux Canvas",
       "description": "Créez des flux de travail non linéaires complexes."
     },
-    "workflowMarketplace": {
-      "name": "Marché des flux de travail",
-      "description": "Parcourez et importez des flux de travail préconstruits."
-    },
     "image": {
       "name": "Outil d'analyse d'images",
       "description": "Traitez des images et des documents avec la vision IA."
