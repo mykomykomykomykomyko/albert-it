@@ -464,6 +464,16 @@ const Auth = () => {
     setError(null);
 
     try {
+      // V5/V6: Block email/password sign-in for domains requiring SSO
+      if (emailValidation?.requiresSSO) {
+        setError(t('auth:signIn.ssoRequired.errorMessage', { 
+          defaultValue: "Government of Alberta email addresses must sign in using Microsoft. Please use the 'Sign in with Microsoft' button." 
+        }));
+        isSubmitting.current = false;
+        setLoading(false);
+        return;
+      }
+
       // Use retry logic for sign in
       const result = await retryWithBackoff(async () => {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -733,74 +743,102 @@ const Auth = () => {
                       className="bg-background text-foreground border-input"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password" className="text-foreground">{t('auth:signIn.password')}</Label>
-                    <div className="relative">
-                      <Input
-                        id="signin-password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        autoComplete="current-password"
-                        className="bg-background text-foreground border-input pr-10"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
+
+                  {/* V5/V6: SSO Required - show Microsoft signin only */}
+                  {emailValidation?.requiresSSO ? (
+                    <>
+                      <Alert className="bg-primary/10 border-primary/20">
+                        <Shield className="h-4 w-4 text-primary" />
+                        <AlertDescription>
+                          <strong>{t('auth:signIn.ssoRequired.title', { defaultValue: 'Government of Alberta Account Detected' })}</strong>
+                          <br />
+                          {t('auth:signIn.ssoRequired.message', { defaultValue: 'For security, @gov.ab.ca users must sign in with their Microsoft account.' })}
+                        </AlertDescription>
+                      </Alert>
+                      
+                      <Button 
+                        type="button" 
+                        className="w-full" 
+                        onClick={handleAzureSignIn}
+                        disabled={loading}
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="24" height="24" rx="4" fill="#00aad2"/>
+                          <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="Arial, sans-serif">AB</text>
+                        </svg>
+                        {t('auth:signUp.ssoRequired.button', { defaultValue: 'Sign in with Microsoft' })}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="signin-password" className="text-foreground">{t('auth:signIn.password')}</Label>
+                        <div className="relative">
+                          <Input
+                            id="signin-password"
+                            name="password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            autoComplete="current-password"
+                            className="bg-background text-foreground border-input pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={loading}>
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Signing in...
+                          </>
                         ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          t('auth:signIn.button')
                         )}
                       </Button>
-                    </div>
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing in...
-                      </>
-                    ) : (
-                      t('auth:signIn.button')
-                    )}
-                  </Button>
-                  
-                  <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t border-border" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">{t('auth:signIn.or', { defaultValue: 'Or' })}</span>
-                    </div>
-                  </div>
-                  
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full" 
-                    onClick={handleAzureSignIn}
-                    disabled={loading}
-                  >
-                    <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="24" height="24" rx="4" fill="#00aad2"/>
-                      <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="Arial, sans-serif">AB</text>
-                    </svg>
-                    {t('auth:signIn.microsoft', { defaultValue: 'Sign in with Microsoft' })}
-                  </Button>
-                  <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button type="button" variant="link" className="w-full text-sm text-muted-foreground hover:text-primary">
-                        {t('auth:signIn.forgotPassword')}
+                      
+                      <div className="relative my-4">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-border" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-card px-2 text-muted-foreground">{t('auth:signIn.or', { defaultValue: 'Or' })}</span>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        className="w-full" 
+                        onClick={handleAzureSignIn}
+                        disabled={loading}
+                      >
+                        <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="24" height="24" rx="4" fill="#00aad2"/>
+                          <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontFamily="Arial, sans-serif">AB</text>
+                        </svg>
+                        {t('auth:signIn.microsoft', { defaultValue: 'Sign in with Microsoft' })}
                       </Button>
-                    </DialogTrigger>
+                      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="link" className="w-full text-sm text-muted-foreground hover:text-primary">
+                            {t('auth:signIn.forgotPassword')}
+                          </Button>
+                        </DialogTrigger>
                     <DialogContent className="bg-card border-border">
                       <DialogHeader>
                         <DialogTitle className="text-foreground">{t('auth:resetPassword.title')}</DialogTitle>
@@ -826,7 +864,9 @@ const Auth = () => {
                         </Button>
                       </form>
                     </DialogContent>
-                  </Dialog>
+                      </Dialog>
+                    </>
+                  )}
                 </form>
               </TabsContent>
 
