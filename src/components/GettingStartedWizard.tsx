@@ -4,7 +4,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Check, ArrowRight, Sparkles, Bot, Workflow, MessageSquare, LucideIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -82,7 +81,6 @@ const stepConfigs: StepConfig[] = [
 export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizardProps) {
   const { t } = useTranslation('common');
   const [currentStep, setCurrentStep] = useState(0);
-  const [dontShowAgain, setDontShowAgain] = useState(false);
   const navigate = useNavigate();
 
   const handleNext = () => {
@@ -94,25 +92,30 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
   };
 
   const handleComplete = () => {
-    if (dontShowAgain) {
-      localStorage.setItem('getting-started-completed', 'true');
-    }
+    // Always mark as completed when finishing the wizard
+    localStorage.setItem('getting-started-completed', 'true');
     onOpenChange(false);
   };
 
   const handleAction = (path: string) => {
-    if (dontShowAgain) {
-      localStorage.setItem('getting-started-completed', 'true');
-    }
+    // Always mark as completed when taking an action
+    localStorage.setItem('getting-started-completed', 'true');
     onOpenChange(false);
     navigate(path);
   };
 
   const handleSkip = () => {
-    if (dontShowAgain) {
+    // Always mark as completed when skipping
+    localStorage.setItem('getting-started-completed', 'true');
+    onOpenChange(false);
+  };
+  
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      // Mark as completed when closing via X button or clicking outside
       localStorage.setItem('getting-started-completed', 'true');
     }
-    onOpenChange(false);
+    onOpenChange(open);
   };
 
   const step = stepConfigs[currentStep];
@@ -175,7 +178,7 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
   );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -204,20 +207,7 @@ export function GettingStartedWizard({ open, onOpenChange }: GettingStartedWizar
             ))}
           </div>
 
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox 
-                id="dont-show" 
-                checked={dontShowAgain}
-                onCheckedChange={(checked) => setDontShowAgain(checked as boolean)}
-              />
-              <label 
-                htmlFor="dont-show" 
-                className="text-sm text-muted-foreground cursor-pointer select-none"
-              >
-                {t('gettingStarted.ui.dontShowAgain')}
-              </label>
-            </div>
+          <div className="flex items-center justify-end gap-4">
             <div className="flex gap-2">
               <Button variant="ghost" onClick={handleSkip}>
                 {t('gettingStarted.ui.skipTour')}
