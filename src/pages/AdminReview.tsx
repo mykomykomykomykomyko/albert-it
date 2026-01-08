@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { TranslationManager } from '@/components/admin/TranslationManager';
 import { UserManagementTab } from '@/components/admin/UserManagementTab';
 import PromptReviewTab from '@/components/admin/PromptReviewTab';
+import { AccessCodeManagementTab } from '@/components/admin/AccessCodeManagementTab';
 
 type AgentWithEmail = Agent & { submitter_email?: string };
 
@@ -180,6 +181,7 @@ export default function AdminReview() {
           <TabsList className="mb-6">
             <TabsTrigger value="agents">{t('tabs.agents')}</TabsTrigger>
             <TabsTrigger value="prompts">{t('tabs.prompts')}</TabsTrigger>
+            <TabsTrigger value="accessCodes">{t('tabs.accessCodes')}</TabsTrigger>
             <TabsTrigger value="translations">{t('tabs.translations')}</TabsTrigger>
             <TabsTrigger value="users">{t('tabs.users')}</TabsTrigger>
           </TabsList>
@@ -256,6 +258,10 @@ export default function AdminReview() {
 
           <TabsContent value="prompts">
             <PromptReviewTab />
+          </TabsContent>
+
+          <TabsContent value="accessCodes">
+            <AccessCodeManagementTab />
           </TabsContent>
 
           <TabsContent value="translations">
