@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Brain, Eye, EyeOff, Info, Loader2, Shield } from "lucide-react";
+import { Brain, Eye, EyeOff, Info, Loader2, Shield, Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEmailValidation } from "@/hooks/useEmailValidation";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
@@ -107,6 +107,9 @@ const Auth = () => {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
   const [accessCode, setAccessCode] = useState("");
+  const [accessCodeValid, setAccessCodeValid] = useState<boolean | null>(null);
+  const [isValidatingAccessCode, setIsValidatingAccessCode] = useState(false);
+  const accessCodeDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [serviceDown, setServiceDown] = useState(false);
   const [lastHealthCheck, setLastHealthCheck] = useState<Date | null>(null);
@@ -307,6 +310,52 @@ const Auth = () => {
   // Helper to check if access code is required
   const needsAccessCode = (): boolean => {
     return emailValidation?.requiresAccessCode ?? true;
+  };
+
+  // Real-time access code validation
+  const validateAccessCode = async (code: string) => {
+    if (!code.trim()) {
+      setAccessCodeValid(null);
+      return;
+    }
+    
+    setIsValidatingAccessCode(true);
+    try {
+      const { data, error } = await supabase.rpc('validate_access_code', {
+        code_input: code.trim().toUpperCase()
+      });
+      
+      if (error) {
+        logger.log('[Auth] Access code validation error:', error);
+        setAccessCodeValid(false);
+      } else {
+        setAccessCodeValid(data === true);
+      }
+    } catch (err) {
+      logger.log('[Auth] Access code validation failed:', err);
+      setAccessCodeValid(false);
+    } finally {
+      setIsValidatingAccessCode(false);
+    }
+  };
+
+  // Handle access code input change with debounce
+  const handleAccessCodeChange = (value: string) => {
+    const upperValue = value.toUpperCase();
+    setAccessCode(upperValue);
+    setAccessCodeValid(null);
+    
+    // Clear existing debounce
+    if (accessCodeDebounceRef.current) {
+      clearTimeout(accessCodeDebounceRef.current);
+    }
+    
+    // Debounce validation
+    if (upperValue.trim()) {
+      accessCodeDebounceRef.current = setTimeout(() => {
+        validateAccessCode(upperValue);
+      }, 500);
+    }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -968,19 +1017,43 @@ const Auth = () => {
                           <Label htmlFor="access-code" className="text-foreground">
                             Access Code <span className="text-destructive">*</span>
                           </Label>
-                          <Input
-                            id="access-code"
-                            type="text"
-                            placeholder="Enter your access code"
-                            value={accessCode}
-                            onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                            required={needsAccessCode()}
-                            className="bg-background text-foreground border-input"
-                            maxLength={20}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Access code is required for non-government email addresses
-                          </p>
+                          <div className="relative">
+                            <Input
+                              id="access-code"
+                              type="text"
+                              placeholder="Enter your access code"
+                              value={accessCode}
+                              onChange={(e) => handleAccessCodeChange(e.target.value)}
+                              required={needsAccessCode()}
+                              className={`bg-background text-foreground border-input pr-10 ${
+                                accessCodeValid === true ? 'border-green-500 focus-visible:ring-green-500' : 
+                                accessCodeValid === false ? 'border-destructive focus-visible:ring-destructive' : ''
+                              }`}
+                              maxLength={20}
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {isValidatingAccessCode ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                              ) : accessCodeValid === true ? (
+                                <Check className="h-4 w-4 text-green-500" />
+                              ) : accessCodeValid === false ? (
+                                <X className="h-4 w-4 text-destructive" />
+                              ) : null}
+                            </div>
+                          </div>
+                          {accessCodeValid === true ? (
+                            <p className="text-xs text-green-600">
+                              Valid access code
+                            </p>
+                          ) : accessCodeValid === false ? (
+                            <p className="text-xs text-destructive">
+                              Invalid or expired access code
+                            </p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">
+                              Access code is required to register
+                            </p>
+                          )}
                         </div>
                       )}
                       {/* V4: Show blocked email error */}
