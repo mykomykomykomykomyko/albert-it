@@ -36,8 +36,6 @@ export function ChatHeader() {
 
   const currentTab = location.pathname.startsWith('/agents') ? 'agents' :
                      location.pathname.startsWith('/chat') ? 'chat' :
-                     location.pathname.startsWith('/stage') ? 'stage' :
-                     location.pathname.startsWith('/canvas') ? 'canvas' :
                      location.pathname.startsWith('/transcripts') ? 'transcripts' :
                      location.pathname.startsWith('/image') ? 'image' :
                      location.pathname.startsWith('/voice') ? 'voice' :
@@ -80,16 +78,18 @@ export function ChatHeader() {
     { name: t('navigation.chat'), path: '/chat', value: 'chat' },
     { name: t('navigation.agents'), path: '/agents', value: 'agents' },
     { name: t('navigation.marketplace'), path: '/marketplace', value: 'marketplace' },
-    { name: t('navigation.stage'), path: '/stage', value: 'stage' },
-    { name: t('navigation.canvas'), path: '/canvas', value: 'canvas' },
-    
+    { name: t('navigation.workflows'), path: 'https://agentbuilderconsole.com', value: 'workflows', external: true },
     { name: t('navigation.transcripts'), path: '/transcripts', value: 'transcripts' },
     { name: t('navigation.imageAnalysis'), path: '/image', value: 'image' },
     { name: t('navigation.voiceAnalysis'), path: '/voice', value: 'voice' },
   ];
 
-  const handleNavClick = (path: string) => {
-    navigate(path);
+  const handleNavClick = (item: typeof navItems[0]) => {
+    if (item.external) {
+      window.open(item.path, '_blank');
+    } else {
+      navigate(item.path);
+    }
     setMobileMenuOpen(false);
   };
 
@@ -181,24 +181,10 @@ export function ChatHeader() {
               {t('navigation.marketplace')}
             </button>
             <button
-              onClick={() => navigate('/stage')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                currentTab === 'stage'
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-foreground hover:bg-accent'
-              }`}
+              onClick={() => window.open('https://agentbuilderconsole.com', '_blank')}
+              className="px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap text-foreground hover:bg-accent"
             >
-              {t('navigation.stage')}
-            </button>
-            <button
-              onClick={() => navigate('/canvas')}
-              className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${
-                currentTab === 'canvas'
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'text-foreground hover:bg-accent'
-              }`}
-            >
-              {t('navigation.canvas')}
+              {t('navigation.workflows')}
             </button>
             <button
               onClick={() => navigate('/transcripts')}
@@ -384,7 +370,7 @@ export function ChatHeader() {
                   key={item.value}
                   variant={currentTab === item.value ? "default" : "ghost"}
                   className="justify-start"
-                  onClick={() => handleNavClick(item.path)}
+                  onClick={() => handleNavClick(item)}
                 >
                   {item.name}
                 </Button>
@@ -393,7 +379,7 @@ export function ChatHeader() {
               <Button
                 variant="ghost"
                 className="justify-start"
-                onClick={() => handleNavClick('/')}
+                onClick={() => { navigate('/'); setMobileMenuOpen(false); }}
               >
                 <Home className="h-4 w-4 mr-2" />
                 {t('navigation.home')}
@@ -401,7 +387,7 @@ export function ChatHeader() {
               <Button
                 variant="ghost"
                 className="justify-start"
-                onClick={() => handleNavClick('/prompts')}
+                onClick={() => { navigate('/prompts'); setMobileMenuOpen(false); }}
               >
                 <Library className="h-4 w-4 mr-2" />
                 {t('navigation.prompts')}
@@ -409,7 +395,7 @@ export function ChatHeader() {
               <Button
                 variant="ghost"
                 className="justify-start"
-                onClick={() => handleNavClick('/framework')}
+                onClick={() => { navigate('/framework'); setMobileMenuOpen(false); }}
               >
                 <Layers className="h-4 w-4 mr-2" />
                 {t('navigation.framework')}

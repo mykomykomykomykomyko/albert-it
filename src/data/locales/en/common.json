@@ -2,8 +2,7 @@
   "navigation": {
     "chat": "Chat",
     "agents": "Agents",
-    "stage": "Stage",
-    "canvas": "Canvas",
+    "workflows": "Workflows",
     "imageAnalysis": "Image",
     "voiceAnalysis": "Voice",
     "transcripts": "Transcripts",
