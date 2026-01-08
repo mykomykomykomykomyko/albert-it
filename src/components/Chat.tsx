@@ -90,6 +90,7 @@ const Chat = () => {
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-pro-preview");
   const [activeStreams, setActiveStreams] = useState<Set<string>>(new Set());
   const [conversationFiles, setConversationFiles] = useState<FileAttachment[]>([]);
+  const [conversationImages, setConversationImages] = useState<ImageAttachment[]>([]); // Persistent images like PDF pages
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -492,10 +493,21 @@ const Chat = () => {
       }
       setConversationFiles(textFiles);
       console.log(`📎 Loaded ${textFiles.length} conversation files for context`);
+      
+      // Also load images (like PDF pages) for persistent visual context
+      const imageFiles = filesData.filter(f => f.file_type === 'image' && f.data_url);
+      const persistentImages: ImageAttachment[] = imageFiles.map(f => ({
+        name: f.filename,
+        dataUrl: f.data_url!,
+        size: f.file_size,
+        source: 'pdf' as const
+      }));
+      setConversationImages(persistentImages);
+      console.log(`🖼️ Loaded ${persistentImages.length} conversation images for context`);
     } else {
       setConversationFiles([]);
+      setConversationImages([]);
     }
-    
     // Check if this conversation has an active stream
     if (streamManager.isStreaming(conversationId)) {
       setActiveStreams(prev => new Set(prev).add(conversationId));
@@ -996,7 +1008,7 @@ INSTRUCTION: The above search result contains current, verified information from
       // Save files to database for file manager
       const { data: { session: userSession } } = await supabase.auth.getSession();
       if (userSession) {
-        // Save images to file_attachments table
+        // Save images to file_attachments table and add to persistent conversation images
         for (const img of images) {
           await supabase.from('file_attachments').insert({
             user_id: userSession.user.id,
@@ -1006,6 +1018,13 @@ INSTRUCTION: The above search result contains current, verified information from
             file_size: img.size,
             data_url: img.dataUrl,
             metadata: { source: img.source || 'upload' }
+          });
+          
+          // Add to persistent conversation images for follow-up questions
+          setConversationImages(prev => {
+            // Avoid duplicates
+            if (prev.some(i => i.name === img.name)) return prev;
+            return [...prev, img];
           });
         }
 
@@ -1177,21 +1196,28 @@ INSTRUCTION: The above search result contains current, verified information from
         }
       }
 
-      if (images.length > 0 || recentImageForAnalysis) {
-        console.log('📸 Including images in request:', images.length > 0 ? `${images.length} uploaded` : '1 from history');
-        requestPayload.images = images.length > 0 
-          ? images.map(img => img.dataUrl)
+      // Combine current images with persistent conversation images (like PDF pages)
+      const allImagesToSend = [
+        ...images.map(img => img.dataUrl),
+        ...conversationImages.map(img => img.dataUrl)
+      ];
+      
+      if (allImagesToSend.length > 0 || recentImageForAnalysis) {
+        const imageCount = allImagesToSend.length > 0 ? allImagesToSend.length : 1;
+        console.log(`📸 Including ${imageCount} images in request (${images.length} new, ${conversationImages.length} persistent)`);
+        requestPayload.images = allImagesToSend.length > 0 
+          ? allImagesToSend
           : [recentImageForAnalysis];
       }
 
       // Store payload for troubleshooting
       setLastPayload({
         timestamp: new Date().toISOString(),
-        endpoint: (images.length > 0 || recentImageForAnalysis) ? 'gemini-chat-with-images' : 'gemini-chat',
+        endpoint: (allImagesToSend.length > 0 || recentImageForAnalysis) ? 'gemini-chat-with-images' : 'gemini-chat',
         model: 'gemini-2.5-flash',
         systemPrompt: requestPayload.systemPrompt,
         messages: sanitizedHistory,
-        attachments: [...images.map(img => ({ type: 'image', name: img.name })), ...files.map(f => ({ type: 'file', name: f.filename }))],
+        attachments: [...images.map(img => ({ type: 'image', name: img.name })), ...conversationImages.map(img => ({ type: 'image', name: img.name, persistent: true })), ...files.map(f => ({ type: 'file', name: f.filename }))],
         fullRequest: requestPayload,
         payload: requestPayload,
         agent: currentAgent ? {
@@ -1202,7 +1228,7 @@ INSTRUCTION: The above search result contains current, verified information from
       });
 
       // Call appropriate endpoint - both use Gemini API
-      const endpoint = (images.length > 0 || recentImageForAnalysis)
+      const endpoint = (allImagesToSend.length > 0 || recentImageForAnalysis)
         ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat-with-images`
         : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini-chat`;
 
@@ -2108,22 +2134,29 @@ INSTRUCTION: The above search result contains current, verified information from
                   </div>
                 )}
                 
-                {/* Persistent conversation files indicator */}
-                {conversationFiles.length > 0 && (
+                {/* Persistent conversation context indicator */}
+                {(conversationFiles.length > 0 || conversationImages.length > 0) && (
                   <div className="mb-3 flex items-center gap-2 bg-accent/30 px-3 py-2 rounded-lg border border-accent/50">
                     <FileText className="h-4 w-4 text-accent-foreground" />
                     <span className="text-sm text-accent-foreground">
-                      {conversationFiles.length} {conversationFiles.length === 1 ? 'file' : 'files'} in context:
+                      {conversationFiles.length + conversationImages.length} {conversationFiles.length + conversationImages.length === 1 ? 'file' : 'files'} in context:
                     </span>
                     <div className="flex flex-wrap gap-1 ml-1">
-                      {conversationFiles.slice(0, 3).map((file, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
+                      {/* Show text files */}
+                      {conversationFiles.slice(0, 2).map((file, idx) => (
+                        <Badge key={`file-${idx}`} variant="secondary" className="text-xs">
                           {file.filename.length > 20 ? file.filename.slice(0, 17) + '...' : file.filename}
                         </Badge>
                       ))}
-                      {conversationFiles.length > 3 && (
+                      {/* Show image files (PDFs) */}
+                      {conversationImages.slice(0, 2).map((img, idx) => (
+                        <Badge key={`img-${idx}`} variant="secondary" className="text-xs bg-primary/20">
+                          📄 {img.name.length > 20 ? img.name.slice(0, 17) + '...' : img.name}
+                        </Badge>
+                      ))}
+                      {(conversationFiles.length + conversationImages.length) > 4 && (
                         <Badge variant="outline" className="text-xs">
-                          +{conversationFiles.length - 3} more
+                          +{(conversationFiles.length + conversationImages.length) - 4} more
                         </Badge>
                       )}
                     </div>
