@@ -40,7 +40,12 @@ export function ChatHeader() {
                      location.pathname.startsWith('/canvas') ? 'canvas' :
                      location.pathname.startsWith('/transcripts') ? 'transcripts' :
                      location.pathname.startsWith('/image') ? 'image' :
-                     location.pathname.startsWith('/voice') ? 'voice' : 'chat';
+                     location.pathname.startsWith('/voice') ? 'voice' :
+                     location.pathname.startsWith('/marketplace') ? 'marketplace' :
+                     location.pathname.startsWith('/prompts') ? 'prompts' :
+                     location.pathname.startsWith('/framework') ? 'framework' :
+                     location.pathname.startsWith('/docs') ? 'docs' :
+                     location.pathname === '/' ? 'home' : 'none';
 
   useEffect(() => {
     // Initialize theme from localStorage or system preference
@@ -234,7 +239,7 @@ export function ChatHeader() {
             onClick={() => navigate('/')}
             title="Go to Home"
             aria-label="Go to Home"
-            className="hover:bg-accent text-foreground h-8 w-8"
+            className={`h-8 w-8 ${currentTab === 'home' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'hover:bg-accent text-foreground'}`}
           >
             <Home className="h-4 w-4" />
           </Button>
@@ -244,7 +249,7 @@ export function ChatHeader() {
             onClick={() => navigate('/prompts')}
             title="Prompt Library"
             aria-label="Prompt Library"
-            className="hover:bg-accent text-foreground h-8 w-8"
+            className={`h-8 w-8 ${currentTab === 'prompts' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'hover:bg-accent text-foreground'}`}
           >
             <Library className="h-4 w-4" />
           </Button>
@@ -254,7 +259,7 @@ export function ChatHeader() {
             onClick={() => navigate('/framework')}
             title="Framework Library"
             aria-label="Framework Library"
-            className="hover:bg-accent text-foreground h-8 w-8"
+            className={`h-8 w-8 ${currentTab === 'framework' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'hover:bg-accent text-foreground'}`}
           >
             <Layers className="h-4 w-4" />
           </Button>
@@ -264,7 +269,7 @@ export function ChatHeader() {
             onClick={openDocs}
             title="Documentation & Training"
             aria-label="Documentation & Training"
-            className="hover:bg-accent text-foreground h-8 w-8"
+            className={`h-8 w-8 ${currentTab === 'docs' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'hover:bg-accent text-foreground'}`}
           >
             <BookOpen className="h-4 w-4" />
           </Button>
