@@ -20,5 +20,5 @@
     "agentAdded": "Agent added successfully",
     "agentCloned": "Agent cloned successfully",
     "failedToCreate": "Failed to create agent"
-  },
+  }
 }
