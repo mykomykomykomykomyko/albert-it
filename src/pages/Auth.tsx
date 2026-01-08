@@ -349,13 +349,11 @@ const Auth = () => {
         return;
       }
 
-      const isGovEmail = isAllowedDomainEmail();
-      
-      // Skip access code validation for allowed government domains
-      if (!isGovEmail && needsAccessCode()) {
-        // Validate access code for non-government emails
+      // V5/V6: Check if domain requires access code (all non-SSO domains)
+      if (needsAccessCode()) {
+        // Validate access code
         if (!accessCode.trim()) {
-          setError("Access code is required for non-government email addresses");
+          setError(t('auth:signUp.accessCode.required', { defaultValue: "Access code is required" }));
           isSubmitting.current = false;
           setLoading(false);
           return;
@@ -406,7 +404,7 @@ const Auth = () => {
       }, 3, 1000);
 
       // Increment usage count only if access code was used
-      if (!isGovEmail && accessCode.trim()) {
+      if (accessCode.trim()) {
         try {
           await supabase.rpc('increment_access_code_usage', {
             code_input: accessCode.trim().toUpperCase()
