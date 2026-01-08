@@ -89,6 +89,7 @@ const Chat = () => {
   const [viewAllImagesOpen, setViewAllImagesOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState("google/gemini-3-pro-preview");
   const [activeStreams, setActiveStreams] = useState<Set<string>>(new Set());
+  const [conversationFiles, setConversationFiles] = useState<FileAttachment[]>([]);
 
   // Detect if a question needs real-time data
   const needsRealTimeData = (text: string): boolean => {
@@ -458,6 +459,42 @@ const Chat = () => {
 
     setCurrentConversation(convData);
     setMessages((messagesData || []) as any);
+    
+    // Load conversation files for persistent context
+    const { data: filesData } = await supabase
+      .from("file_attachments")
+      .select("*")
+      .eq("conversation_id", conversationId);
+    
+    if (filesData && filesData.length > 0) {
+      // Build conversationFiles from attachments - only text-based files with content
+      const textFiles: FileAttachment[] = [];
+      for (const file of filesData) {
+        // Check if we have stored content in metadata or need to extract from messages
+        if (file.file_type === 'text' || file.file_type === 'pdf' || file.file_type === 'excel') {
+          // Try to find the file content from the message that contains it
+          const msgWithFile = messagesData?.find(msg => 
+            msg.content?.includes(`=== ${file.filename} ===`)
+          );
+          if (msgWithFile) {
+            // Extract content between the file markers
+            const regex = new RegExp(`=== ${file.filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^=]*===\\n\\n([\\s\\S]*?)(?=\\n\\n===|$)`, 'i');
+            const match = msgWithFile.content.match(regex);
+            if (match) {
+              textFiles.push({
+                filename: file.filename,
+                content: match[1].trim(),
+                type: file.file_type
+              });
+            }
+          }
+        }
+      }
+      setConversationFiles(textFiles);
+      console.log(`📎 Loaded ${textFiles.length} conversation files for context`);
+    } else {
+      setConversationFiles([]);
+    }
     
     // Check if this conversation has an active stream
     if (streamManager.isStreaming(conversationId)) {
@@ -972,7 +1009,7 @@ INSTRUCTION: The above search result contains current, verified information from
           });
         }
 
-        // Save text files to file_attachments table
+        // Save text files to file_attachments table and add to conversation files
         for (const file of files) {
           await supabase.from('file_attachments').insert({
             user_id: userSession.user.id,
@@ -985,6 +1022,13 @@ INSTRUCTION: The above search result contains current, verified information from
               totalSheets: file.totalSheets,
               totalRows: file.totalRows
             }
+          });
+          
+          // Add to persistent conversation files
+          setConversationFiles(prev => {
+            // Avoid duplicates
+            if (prev.some(f => f.filename === file.filename)) return prev;
+            return [...prev, file];
           });
         }
       }
@@ -1085,6 +1129,24 @@ INSTRUCTION: The above search result contains current, verified information from
             content: doc.content
           }));
         }
+      }
+      
+      // IMPORTANT: Always include conversation files as knowledge documents for persistent context
+      if (conversationFiles.length > 0) {
+        const existingDocs = requestPayload.knowledgeDocuments || [];
+        const conversationDocs = conversationFiles.map(file => ({
+          filename: file.filename,
+          content: file.content
+        }));
+        // Merge, avoiding duplicates by filename
+        const allDocs = [...existingDocs];
+        for (const doc of conversationDocs) {
+          if (!allDocs.some(d => d.filename === doc.filename)) {
+            allDocs.push(doc);
+          }
+        }
+        requestPayload.knowledgeDocuments = allDocs;
+        console.log(`📎 Including ${conversationFiles.length} conversation files as persistent context`);
       }
 
       // Check if user is asking about a recent image
@@ -2043,6 +2105,28 @@ INSTRUCTION: The above search result contains current, verified information from
                     >
                       <X className="h-3 w-3" />
                     </Button>
+                  </div>
+                )}
+                
+                {/* Persistent conversation files indicator */}
+                {conversationFiles.length > 0 && (
+                  <div className="mb-3 flex items-center gap-2 bg-accent/30 px-3 py-2 rounded-lg border border-accent/50">
+                    <FileText className="h-4 w-4 text-accent-foreground" />
+                    <span className="text-sm text-accent-foreground">
+                      {conversationFiles.length} {conversationFiles.length === 1 ? 'file' : 'files'} in context:
+                    </span>
+                    <div className="flex flex-wrap gap-1 ml-1">
+                      {conversationFiles.slice(0, 3).map((file, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {file.filename.length > 20 ? file.filename.slice(0, 17) + '...' : file.filename}
+                        </Badge>
+                      ))}
+                      {conversationFiles.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{conversationFiles.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 )}
                 
