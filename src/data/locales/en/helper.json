@@ -87,10 +87,6 @@
       "name": "Canvas Workflow Builder",
       "description": "Create complex non-linear workflows."
     },
-    "workflowMarketplace": {
-      "name": "Workflow Marketplace",
-      "description": "Browse and import pre-built workflows."
-    },
     "image": {
       "name": "Image Analysis Tool",
       "description": "Process images and documents with AI vision."

@@ -21,26 +21,4 @@
     "agentCloned": "Agent cloné avec succès",
     "failedToCreate": "Échec de la création de l'agent"
   },
-  "workflow": {
-    "title": "Marché des flux de travail",
-    "subtitle": "Découvrez et clonez des flux de travail créés par la communauté",
-    "back": "Retour",
-    "searchPlaceholder": "Rechercher des flux de travail...",
-    "loading": "Chargement du marché...",
-    "noWorkflowsFound": "Aucun flux de travail trouvé",
-    "categories": {
-      "all": "Tous",
-      "productivity": "Productivité",
-      "analytics": "Analytique",
-      "marketing": "Marketing",
-      "developer": "Développeur"
-    },
-    "general": "Général",
-    "noDescription": "Aucune description disponible",
-    "version": "Version",
-    "cloneWorkflow": "Cloner le flux de travail",
-    "loadingCloned": "Chargement du flux de travail cloné...",
-    "loadingCanvasCloned": "Chargement du flux de travail cloné dans Canvas...",
-    "loadingStageCloned": "Chargement du flux de travail cloné dans Stage..."
-  }
 }

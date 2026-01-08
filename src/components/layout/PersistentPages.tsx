@@ -23,7 +23,7 @@ import Agents from "@/pages/Agents";
 import AgentMarketplace from "@/pages/AgentMarketplace";
 import PromptLibrary from "@/pages/PromptLibrary";
 import Framework from "@/pages/Framework";
-import WorkflowMarketplace from "@/pages/WorkflowMarketplace";
+
 import SavedWork from "@/pages/SavedWork";
 import Docs from "@/pages/Docs";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,7 +43,7 @@ export const PersistentPages = () => {
   useEffect(() => {
     const routes = ['/chat', '/image', '/voice', '/transcripts', 
                     '/agents', '/marketplace', '/prompts', '/framework', 
-                    '/workflow-marketplace', '/saved-work', '/docs'];
+                    '/saved-work', '/docs'];
     
     const currentRoute = routes.find(route => path.startsWith(route));
     if (currentRoute && !visitedPages.has(currentRoute)) {
@@ -207,20 +207,6 @@ export const PersistentPages = () => {
         </div>
       )}
 
-      {/* Workflow Marketplace - /workflow-marketplace */}
-      {shouldRender('/workflow-marketplace') && (
-        <div 
-          style={{ 
-            display: isActive('/workflow-marketplace') ? 'flex' : 'none',
-            flexDirection: 'column',
-            height: '100vh',
-            width: '100%',
-            overflow: 'hidden'
-          }}
-        >
-          <WorkflowMarketplace />
-        </div>
-      )}
 
       {/* Saved Work - /saved-work */}
       {shouldRender('/saved-work') && (
