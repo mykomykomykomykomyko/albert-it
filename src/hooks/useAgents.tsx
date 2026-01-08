@@ -201,6 +201,8 @@ export const useAgents = () => {
           metadata_tags: template.metadata_tags,
           profile_picture_url: template.profile_picture_url,
           knowledge_documents: template.knowledge_documents,
+          is_template: false,
+          visibility: 'private',
         })
         .select()
         .single();

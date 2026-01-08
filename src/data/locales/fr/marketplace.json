@@ -13,7 +13,8 @@
   },
   "buttons": {
     "addAgent": "Ajouter un agent",
-    "cloneAgent": "Cloner l'agent"
+    "cloneAgent": "Cloner l'agent",
+    "addToMyAgents": "Ajouter à mes agents"
   },
   "messages": {
     "signInRequired": "Veuillez vous connecter pour cloner des agents",
