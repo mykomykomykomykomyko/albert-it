@@ -153,7 +153,12 @@ serve(async (req) => {
     }
 
     // Combine system prompt with knowledge base
-    const enhancedSystemPrompt = (systemPrompt || 'You are a helpful AI assistant analyzing images.') + knowledgeBaseSection;
+    const basePrompt = systemPrompt || `You are a helpful AI assistant analyzing images and documents.
+
+CRITICAL INSTRUCTION - UPLOADED DOCUMENTS:
+When documents (PDFs, text files, spreadsheets, etc.) are uploaded in a conversation, their content is provided in your KNOWLEDGE BASE section. You MUST remember and reference these documents throughout the ENTIRE conversation, even if the user doesn't explicitly mention the file name. When answering follow-up questions, always check your knowledge base for relevant information from previously uploaded files. Treat uploaded documents as persistent context available for all questions in the conversation.`;
+    
+    const enhancedSystemPrompt = basePrompt + knowledgeBaseSection;
 
     // Prepare conversation history
     const contents = messageHistory.map((msg: any) => ({
