@@ -992,17 +992,6 @@ const Auth = () => {
                           </AlertDescription>
                         </Alert>
                       )}
-                      {/* Show allowed domain confirmation */}
-                      {isAllowedDomainEmail() && !emailValidation?.isBlockedDomain && (
-                        <Alert className="bg-primary/10 border-primary/20">
-                          <Info className="h-4 w-4 text-primary" />
-                          <AlertDescription className="text-sm text-foreground">
-                            {emailValidation?.domainType === 'federal' 
-                              ? 'Federal government email detected. No access code required.'
-                              : 'Government email detected. No access code required.'}
-                          </AlertDescription>
-                        </Alert>
-                      )}
                       <Alert className="bg-muted/50 border-border">
                         <Info className="h-4 w-4" />
                         <AlertDescription className="text-sm text-muted-foreground">
