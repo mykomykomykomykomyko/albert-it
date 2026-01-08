@@ -4,19 +4,21 @@ import { supabase } from '@/integrations/supabase/client';
 import { ChatHeader } from '@/components/ChatHeader';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Sparkles, Loader2, Trash2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, Loader2, Trash2, Upload, CheckCircle2, Zap, Image as ImageIcon, X, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentSelectorDialog } from '@/components/agents/AgentSelectorDialog';
 import { Agent } from '@/hooks/useAgents';
 import { FileUploader } from '@/components/imageAnalysis/FileUploader';
-import { ImageGallery } from '@/components/imageAnalysis/ImageGallery';
 import { ResultsDisplay } from '@/components/imageAnalysis/ResultsDisplay';
 import { ResultsViewer } from '@/components/imageAnalysis/ResultsViewer';
 import { PromptManager } from '@/components/imageAnalysis/PromptManager';
 import { ProcessedImage, AnalysisResult, AnalysisPrompt, PREDEFINED_PROMPTS } from '@/types/imageAnalysis';
-import { generateId, resizeAndCompressImage } from '@/lib/utils';
+import { generateId, resizeAndCompressImage, formatBytes } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
@@ -25,7 +27,16 @@ export default function ImageAnalysis() {
   const [images, setImages] = useState<ProcessedImage[]>([]);
   const [prompts, setPrompts] = useState<AnalysisPrompt[]>(() => {
     const saved = localStorage.getItem('imageAnalysis_prompts');
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.length > 0) return parsed;
+    }
+    // Load predefined prompts if none saved
+    return PREDEFINED_PROMPTS.map((p, index) => ({
+      ...p,
+      id: `predefined-${index}`,
+      createdAt: new Date()
+    }));
   });
   const [selectedPromptIds, setSelectedPromptIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('imageAnalysis_selectedPromptIds');
@@ -86,22 +97,7 @@ export default function ImageAnalysis() {
   };
 
   const handleFilesAdded = (newImages: ProcessedImage[]) => {
-    console.log('=== handleFilesAdded called ===');
-    console.log('New images count:', newImages.length);
-    console.log('New images:', newImages);
-    
-    setImages(prev => {
-      const updated = [...prev, ...newImages];
-      console.log('Updated images state - total count:', updated.length);
-      console.log('Updated images array:', updated);
-      
-      // Force a re-render by also logging after state update
-      setTimeout(() => {
-        console.log('After state update - images length should be:', updated.length);
-      }, 100);
-      
-      return updated;
-    });
+    setImages(prev => [...prev, ...newImages]);
   };
 
   const handleImageSelect = (imageId: string) => {
@@ -113,12 +109,7 @@ export default function ImageAnalysis() {
   const handleImageRemove = (imageId: string) => {
     setImages(prev => prev.filter(img => img.id !== imageId));
     // Remove all results associated with this image
-    setResults(prev => {
-      const removedCount = prev.filter(r => r.imageId === imageId).length;
-      const filtered = prev.filter(r => r.imageId !== imageId);
-      console.log(`Removed ${removedCount} results associated with deleted image`);
-      return filtered;
-    });
+    setResults(prev => prev.filter(r => r.imageId !== imageId));
   };
 
   const handleSelectAll = () => {
@@ -127,19 +118,6 @@ export default function ImageAnalysis() {
 
   const handleDeselectAll = () => {
     setImages(prev => prev.map(img => ({ ...img, selected: false })));
-  };
-
-  const handleResizeToggle = (imageId: string) => {
-    setImages(prev =>
-      prev.map(img => {
-        if (img.id === imageId) {
-          const newResizeState = !img.resizeEnabled;
-          toast.success(newResizeState ? 'Resize enabled (1000px width)' : 'Resize disabled');
-          return { ...img, resizeEnabled: newResizeState };
-        }
-        return img;
-      })
-    );
   };
 
   const handleSelectAgent = (agent: Agent) => {
@@ -164,51 +142,6 @@ export default function ImageAnalysis() {
   const handleImageClick = (imageId: string) => {
     setSelectedImageId(imageId);
     setShowResultsViewer(true);
-  };
-
-  const resizeImage = async (dataUrl: string, maxWidth: number): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx) {
-          resolve(dataUrl);
-          return;
-        }
-
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.85));
-      };
-      img.src = dataUrl;
-    });
-  };
-
-  const convertImageToDataUrl = (image: ProcessedImage): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      // If URL is already a data URL, return it
-      if (image.url.startsWith('data:')) {
-        resolve(image.url);
-        return;
-      }
-
-      // Otherwise read from file
-      const reader = new FileReader();
-      reader.onload = (e) => resolve(e.target?.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(image.file);
-    });
   };
 
   const startAnalysis = async () => {
@@ -255,16 +188,12 @@ export default function ImageAnalysis() {
       };
 
       // Convert all image URLs to base64 (with resize if enabled)
-      console.log('Converting images to base64...');
       const imageDataUrls = await Promise.all(
         selectedImages.map(img => convertBlobToBase64(img.url, img.resizeEnabled))
       );
-      console.log('Images converted successfully:', imageDataUrls.length);
 
       // Process each prompt separately
       for (const prompt of selectedPrompts) {
-        console.log(`Processing prompt: ${prompt.name}`, { isAgent: !!prompt.agentId });
-
         try {
           // Create temporary results for real-time updates
           const tempResults: AnalysisResult[] = [];
@@ -288,7 +217,6 @@ export default function ImageAnalysis() {
 
           // Use agent endpoint if this is an agent prompt
           if (prompt.agentId && prompt.agentSystemPrompt) {
-            console.log('Using agent endpoint for:', prompt.name);
             response = await fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-agent`,
               {
@@ -308,7 +236,6 @@ export default function ImageAnalysis() {
             );
           } else {
             // Use standard image analysis endpoint
-            console.log('Using standard image analysis endpoint');
             const systemPrompt = `You are analyzing ${selectedImages.length} image(s). Please provide a separate, detailed analysis for each image. Number your responses (Image 1:, Image 2:, etc.) and analyze each image thoroughly based on the given prompt.`;
             
             response = await fetch(
@@ -409,7 +336,6 @@ export default function ImageAnalysis() {
                       });
                     }
                     if (data.error) {
-                      console.error('Streaming error:', data.error);
                       throw new Error(`Streaming error: ${data.error}`);
                     }
                   } catch (e) {
@@ -495,12 +421,16 @@ export default function ImageAnalysis() {
 
   const selectedImageCount = images.filter(img => img.selected).length;
   const selectedImage = selectedImageId ? images.find(img => img.id === selectedImageId) || null : null;
+  const validResultsCount = results.filter(r => images.some(img => img.id === r.imageId)).length;
 
   const handleClearAll = () => {
     if (confirm('Are you sure you want to clear all images, prompts, and results? This cannot be undone.')) {
-      console.log('Clearing all data...');
       setImages([]);
-      setPrompts([]);
+      setPrompts(PREDEFINED_PROMPTS.map((p, index) => ({
+        ...p,
+        id: `predefined-${index}`,
+        createdAt: new Date()
+      })));
       setSelectedPromptIds([]);
       setResults([]);
       setSelectedImageId(null);
@@ -508,10 +438,11 @@ export default function ImageAnalysis() {
       localStorage.removeItem('imageAnalysis_prompts');
       localStorage.removeItem('imageAnalysis_selectedPromptIds');
       localStorage.removeItem('imageAnalysis_results');
-      console.log('All data cleared successfully');
       toast.success('All data cleared');
     }
   };
+
+  const canAnalyze = selectedImageCount > 0 && selectedPromptIds.length > 0;
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -519,126 +450,253 @@ export default function ImageAnalysis() {
       
       <div className="flex-1 overflow-hidden">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Left Sidebar - Resizable */}
-          <ResizablePanel defaultSize={20} minSize={15} maxSize={35}>
+          {/* Left Panel - Workflow Steps */}
+          <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
             <ScrollArea className="h-full">
               <div className="p-6 space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold">{t('title')}</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t('subtitle')}
-              </p>
-            </div>
+                {/* Header */}
+                <div>
+                  <h2 className="text-xl font-semibold">{t('title')}</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t('subtitle')}
+                  </p>
+                </div>
 
-            {/* File Uploader */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">{t('uploadImage')}</h3>
-              <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
-            </div>
+                {/* Step 1: Upload Images */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium ${
+                      images.length > 0 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {images.length > 0 ? <CheckCircle2 className="w-4 h-4" /> : '1'}
+                    </div>
+                    <h3 className="font-medium">Upload Images</h3>
+                    {images.length > 0 && (
+                      <Badge variant="secondary" className="ml-auto">
+                        {images.length} file{images.length !== 1 ? 's' : ''}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <FileUploader onFilesAdded={handleFilesAdded} disabled={isAnalyzing} />
+                  
+                  {/* Inline Image Thumbnails */}
+                  {images.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {selectedImageCount} of {images.length} selected
+                        </span>
+                        <div className="flex gap-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-xs px-2"
+                            onClick={handleSelectAll}
+                            disabled={selectedImageCount === images.length}
+                          >
+                            Select all
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-xs px-2"
+                            onClick={handleDeselectAll}
+                            disabled={selectedImageCount === 0}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {images.slice(0, 8).map((image) => (
+                          <div
+                            key={image.id}
+                            className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                              image.selected 
+                                ? 'border-primary ring-1 ring-primary/30' 
+                                : 'border-transparent hover:border-muted-foreground/50'
+                            }`}
+                            onClick={() => handleImageSelect(image.id)}
+                          >
+                            <div className="aspect-square bg-muted">
+                              {image.type === 'application/pdf' ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <FileText className="w-6 h-6 text-destructive" />
+                                </div>
+                              ) : (
+                                <img 
+                                  src={image.url} 
+                                  alt={image.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="absolute top-1 left-1">
+                              <Checkbox 
+                                checked={image.selected}
+                                className="w-4 h-4 bg-background/80"
+                              />
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="absolute top-1 right-1 h-5 w-5 p-0 opacity-0 group-hover:opacity-100 bg-background/80 hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleImageRemove(image.id);
+                              }}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                        {images.length > 8 && (
+                          <div className="aspect-square bg-muted rounded-lg flex items-center justify-center text-sm text-muted-foreground">
+                            +{images.length - 8}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-            {/* Prompt Manager */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">{t('prompt.examples')}</h3>
-              <PromptManager
-                prompts={prompts}
-                selectedPromptIds={selectedPromptIds}
-                onPromptsChange={setPrompts}
-                onSelectionChange={setSelectedPromptIds}
-                onOpenAgentSelector={() => setShowAgentSelector(true)}
-                disabled={isAnalyzing}
-              />
-            </div>
+                {/* Step 2: Select Prompts */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium ${
+                      selectedPromptIds.length > 0 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {selectedPromptIds.length > 0 ? <CheckCircle2 className="w-4 h-4" /> : '2'}
+                    </div>
+                    <h3 className="font-medium">Select Prompts</h3>
+                    {selectedPromptIds.length > 0 && (
+                      <Badge variant="secondary" className="ml-auto">
+                        {selectedPromptIds.length} selected
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <PromptManager
+                    prompts={prompts}
+                    selectedPromptIds={selectedPromptIds}
+                    onPromptsChange={setPrompts}
+                    onSelectionChange={setSelectedPromptIds}
+                    onOpenAgentSelector={() => setShowAgentSelector(true)}
+                    disabled={isAnalyzing}
+                  />
+                </div>
 
-            {/* Analysis Button */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">{t('analyze')}</h3>
-              <Button
-                onClick={startAnalysis}
-                disabled={isAnalyzing || selectedImageCount === 0 || selectedPromptIds.length === 0}
-                className="w-full"
-                size="lg"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {t('analyzing')}
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {t('analyze')} {selectedImageCount} × {selectedPromptIds.length}
-                  </>
+                {/* Step 3: Analyze */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium ${
+                      validResultsCount > 0 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {validResultsCount > 0 ? <CheckCircle2 className="w-4 h-4" /> : '3'}
+                    </div>
+                    <h3 className="font-medium">Analyze</h3>
+                  </div>
+                  
+                  <Button
+                    onClick={startAnalysis}
+                    disabled={isAnalyzing || !canAnalyze}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {t('analyzing')}
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        {canAnalyze 
+                          ? `Analyze ${selectedImageCount} image${selectedImageCount !== 1 ? 's' : ''} × ${selectedPromptIds.length} prompt${selectedPromptIds.length !== 1 ? 's' : ''}`
+                          : 'Select images and prompts'
+                        }
+                      </>
+                    )}
+                  </Button>
+
+                  {!canAnalyze && !isAnalyzing && (
+                    <p className="text-xs text-muted-foreground text-center">
+                      {images.length === 0 && selectedPromptIds.length === 0
+                        ? 'Upload images and select prompts to start'
+                        : images.length === 0
+                        ? 'Upload some images first'
+                        : selectedImageCount === 0
+                        ? 'Select at least one image'
+                        : 'Select at least one prompt'
+                      }
+                    </p>
+                  )}
+                </div>
+
+                {/* Clear All */}
+                {(images.length > 0 || results.length > 0) && (
+                  <Button
+                    onClick={handleClearAll}
+                    disabled={isAnalyzing}
+                    variant="outline"
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear All
+                  </Button>
                 )}
-              </Button>
-            </div>
-
-            {/* Clear All Button */}
-            <div className="space-y-2">
-              <Button
-                onClick={handleClearAll}
-                disabled={isAnalyzing || (images.length === 0 && results.length === 0)}
-                variant="outline"
-                className="w-full"
-                size="lg"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Clear All
-              </Button>
-            </div>
               </div>
             </ScrollArea>
           </ResizablePanel>
           
           <ResizableHandle withHandle />
           
-          {/* Main Content Area */}
-          <ResizablePanel defaultSize={80}>
-            <div className="h-full overflow-hidden flex flex-col lg:flex-row">
-          {/* Image Gallery */}
-          <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-border flex flex-col min-h-0">
-            <div className="p-6 border-b border-border flex-shrink-0">
-              <h3 className="text-xl font-semibold">{t('gallery.title')}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t('gallery.imagesUploaded', { count: images.length })}
-              </p>
-            </div>
-            <ScrollArea className="flex-1">
-              <div className="p-6">
-                <ImageGallery
-                  images={images}
-                  onImageSelect={handleImageSelect}
-                  onImageRemove={handleImageRemove}
-                  onSelectAll={handleSelectAll}
-                  onDeselectAll={handleDeselectAll}
-                  selectedCount={selectedImageCount}
-                  onImageClick={handleImageClick}
-                  onResizeToggle={handleResizeToggle}
-                />
+          {/* Right Panel - Results */}
+          <ResizablePanel defaultSize={65}>
+            <div className="h-full flex flex-col">
+              <div className="p-6 border-b border-border flex-shrink-0">
+                <h3 className="text-xl font-semibold">{t('results.title')}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {validResultsCount > 0 
+                    ? t('results.resultsGenerated', { count: validResultsCount })
+                    : 'Results will appear here after analysis'
+                  }
+                </p>
               </div>
-            </ScrollArea>
-          </div>
 
-          {/* Results Panel */}
-          <div className="w-full lg:w-1/2 flex flex-col min-h-0 overflow-hidden flex-1">
-            <div className="p-6 border-b border-border flex-shrink-0">
-              <h3 className="text-xl font-semibold">{t('results.title')}</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {t('results.resultsGenerated', { count: results.filter(r => images.some(img => img.id === r.imageId)).length })}
-              </p>
-            </div>
-
-            <ScrollArea className="flex-1">
-              <div className="p-6">
-                <ResultsDisplay
-                  results={results}
-                  images={images}
-                  prompts={prompts}
-                  selectedImageId={selectedImageId || undefined}
-                  onImageClick={handleImageClick}
-                />
-              </div>
-            </ScrollArea>
-          </div>
+              <ScrollArea className="flex-1">
+                <div className="p-6">
+                  {validResultsCount === 0 ? (
+                    <div className="h-[400px] flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+                          <Sparkles className="w-8 h-8 text-muted-foreground" />
+                        </div>
+                        <h4 className="font-medium text-lg mb-2">No analysis yet</h4>
+                        <p className="text-sm text-muted-foreground max-w-sm">
+                          Upload images, select prompts, then click <strong>Analyze</strong> to see AI-generated insights about your images.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <ResultsDisplay
+                      results={results}
+                      images={images}
+                      prompts={prompts}
+                      selectedImageId={selectedImageId || undefined}
+                      onImageClick={handleImageClick}
+                    />
+                  )}
+                </div>
+              </ScrollArea>
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
