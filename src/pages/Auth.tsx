@@ -880,38 +880,9 @@ const Auth = () => {
                         </svg>
                         {t('auth:signIn.microsoft', { defaultValue: 'Sign in with Microsoft' })}
                       </Button>
-                      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button type="button" variant="link" className="w-full text-sm text-muted-foreground hover:text-primary">
-                            {t('auth:signIn.forgotPassword')}
-                          </Button>
-                        </DialogTrigger>
-                    <DialogContent className="bg-card border-border">
-                      <DialogHeader>
-                        <DialogTitle className="text-foreground">{t('auth:resetPassword.title')}</DialogTitle>
-                        <DialogDescription className="text-muted-foreground">
-                          {t('auth:resetPassword.subtitle')}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={handleResetPassword} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="reset-email" className="text-foreground">{t('auth:resetPassword.email')}</Label>
-                          <Input
-                            id="reset-email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={resetEmail}
-                            onChange={(e) => setResetEmail(e.target.value)}
-                            required
-                            className="bg-background text-foreground border-input"
-                          />
-                        </div>
-                        <Button type="submit" className="w-full" disabled={resetLoading}>
-                          {resetLoading ? "Sending..." : t('auth:resetPassword.button')}
-                        </Button>
-                      </form>
-                    </DialogContent>
-                      </Dialog>
+                      <p className="text-xs text-center text-muted-foreground px-2">
+                        {t('auth:signIn.forgotPassword')}
+                      </p>
                     </>
                   )}
                 </form>
