@@ -295,7 +295,9 @@ serve(async (req) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            systemInstruction: enhancedSystemPrompt,
+            system_instruction: {
+              parts: [{ text: enhancedSystemPrompt }]
+            },
             contents: [
               {
                 role: "user",
