@@ -85,9 +85,9 @@ export function AgentSwitcher({ selectedAgent, onAgentChange }: AgentSwitcherPro
                     AI
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">Default Agent</p>
-                  <p className="text-sm text-muted-foreground">General purpose assistant</p>
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <p className="font-semibold text-foreground truncate">Default Agent</p>
+                  <p className="text-sm text-muted-foreground truncate">General purpose assistant</p>
                 </div>
                 {!selectedAgent && (
                   <Badge variant="default" className="bg-primary">Active</Badge>
@@ -117,9 +117,9 @@ export function AgentSwitcher({ selectedAgent, onAgentChange }: AgentSwitcherPro
                         {agent.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 overflow-hidden">
                       <p className="font-semibold text-foreground truncate">{agent.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-sm text-muted-foreground truncate max-w-full">
                         {agent.description || agent.type}
                       </p>
                     </div>
