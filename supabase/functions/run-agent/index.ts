@@ -13,9 +13,9 @@ serve(async (req) => {
   try {
     const { systemPrompt, userPrompt, tools = [], knowledgeDocuments = [], images = [] } = await req.json();
     
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     console.log("Running agent with system prompt:", systemPrompt.substring(0, 50));
@@ -212,112 +212,113 @@ serve(async (req) => {
       }
     }
 
-    // Call Gemini AI
+    // Build the final prompt
     const finalPrompt = combinedResults 
       ? `${userPrompt || "Please respond to the user's request."}\n\nTool Results:${combinedResults}` 
       : (userPrompt || "Please respond to the user's request.");
     
-    console.log("Using direct Gemini API");
+    console.log("Using Lovable AI Gateway with google/gemini-3-flash-preview");
     
-    // Process images if provided (same logic as gemini-chat-with-images)
-    const processImageDataUrl = async (imageUrl: string) => {
-      // 1) Data URL
-      const base64Regex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
-      if (base64Regex.test(imageUrl)) {
-        const mimeTypeMatch = imageUrl.match(/^data:image\/(png|jpeg|jpg|gif|webp);base64,/);
-        const mimeType = mimeTypeMatch ? `image/${mimeTypeMatch[1]}` : 'image/jpeg';
-        const base64Content = imageUrl.replace(base64Regex, '');
-        return { mimeType, data: base64Content };
-      }
-
-      // 2) HTTP(S) fetch
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-        const response = await fetch(imageUrl);
-        if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
-        const contentType = response.headers.get('content-type') || 'image/jpeg';
-        const arrayBuffer = await response.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        const base64 = btoa(binary);
-        return { mimeType: contentType, data: base64 };
-      }
-
-      throw new Error('Invalid image format. Must be a data URL or HTTP(S) URL.');
-    };
-
-    // Process all images
-    const imageParts = await Promise.all(images.map(async (imageDataUrl: string) => {
-      const { mimeType, data } = await processImageDataUrl(imageDataUrl);
-      return {
-        inlineData: {
-          mimeType,
-          data
+    // Process images for Lovable AI Gateway (expects base64 data URLs)
+    const processedImages: Array<{ type: "image_url"; image_url: { url: string } }> = [];
+    
+    for (const imageUrl of images) {
+      // Data URLs can be passed directly
+      if (typeof imageUrl === 'string' && imageUrl.startsWith('data:')) {
+        processedImages.push({
+          type: "image_url",
+          image_url: { url: imageUrl }
+        });
+      } else if (typeof imageUrl === 'string' && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+        // For HTTP URLs, fetch and convert to base64
+        try {
+          const response = await fetch(imageUrl);
+          if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+          const contentType = response.headers.get('content-type') || 'image/jpeg';
+          const arrayBuffer = await response.arrayBuffer();
+          const bytes = new Uint8Array(arrayBuffer);
+          let binary = '';
+          for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+          const base64 = btoa(binary);
+          processedImages.push({
+            type: "image_url",
+            image_url: { url: `data:${contentType};base64,${base64}` }
+          });
+        } catch (error) {
+          console.error('Error fetching image:', error);
         }
-      };
-    }));
-
-    // Build parts array with text first, then images (order matters)
-    const userParts = [{ text: finalPrompt }, ...imageParts];
-    
-    // Check if JSON output is requested (case-insensitive)
-    const jsonKeywords = ['json', 'JSON', 'application/json', 'return a json', 'output json'];
-    const promptText = `${enhancedSystemPrompt} ${finalPrompt}`.toLowerCase();
-    const needsJsonOutput = jsonKeywords.some(keyword => promptText.includes(keyword.toLowerCase()));
-    
-    console.log("JSON output detected:", needsJsonOutput);
-    
-    // Build generation config
-    const generationConfig: any = {
-      temperature: 1,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 8192,
-    };
-    
-    // Add JSON mode if needed
-    if (needsJsonOutput) {
-      generationConfig.responseMimeType = "application/json";
-      console.log("Enabling JSON response mode");
+      }
     }
     
-    // OPTIMIZED: Add timeout to Gemini API call
-    const API_TIMEOUT_MS = 60000; // 60 seconds for AI generation
+    // Build message content (text + images for multimodal)
+    const userContent: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+      { type: "text", text: finalPrompt }
+    ];
+    
+    // Add images if present
+    for (const img of processedImages) {
+      userContent.push(img);
+    }
+
+    // Call Lovable AI Gateway with stable model
+    const API_TIMEOUT_MS = 45000; // 45 seconds for AI generation
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
     
     try {
+      console.log("Sending request to Lovable AI Gateway...");
+      const startTime = Date.now();
+      
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:generateContent?key=${GEMINI_API_KEY}`,
+        "https://ai.gateway.lovable.dev/v1/chat/completions",
         {
           method: "POST",
           headers: {
+            "Authorization": `Bearer ${LOVABLE_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            system_instruction: {
-              parts: [{ text: enhancedSystemPrompt }]
-            },
-            contents: [
-              {
-                role: "user",
-                parts: userParts
-              }
-            ],
-            generationConfig
+            model: "google/gemini-3-flash-preview",
+            messages: [
+              { role: "system", content: enhancedSystemPrompt },
+              { role: "user", content: userContent }
+            ]
           }),
           signal: controller.signal,
         }
       );
       clearTimeout(timeoutId);
+      
+      const elapsedMs = Date.now() - startTime;
+      console.log(`Lovable AI Gateway responded in ${elapsedMs}ms`);
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Gemini API error: ${error}`);
+        const errorText = await response.text();
+        console.error("Lovable AI Gateway error:", response.status, errorText);
+        
+        // Handle rate limits and payment errors
+        if (response.status === 429) {
+          return new Response(JSON.stringify({ 
+            error: "Rate limit exceeded. Please try again in a moment." 
+          }), {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        if (response.status === 402) {
+          return new Response(JSON.stringify({ 
+            error: "AI credits exhausted. Please add funds to continue." 
+          }), {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        
+        throw new Error(`Lovable AI Gateway error: ${response.status} - ${errorText}`);
       }
 
       const data = await response.json();
-      const output = data.candidates?.[0]?.content?.parts?.[0]?.text || "No output generated";
+      const output = data.choices?.[0]?.message?.content || "No output generated";
       
       console.log("Agent output generated:", output.substring(0, 100));
 
@@ -327,7 +328,13 @@ serve(async (req) => {
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Gemini API request timeout');
+        console.error('Lovable AI Gateway request timeout after', API_TIMEOUT_MS, 'ms');
+        return new Response(JSON.stringify({ 
+          error: 'Analysis timed out. The request took too long to process. Please try with simpler content or fewer images.' 
+        }), {
+          status: 504,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       throw error;
     }

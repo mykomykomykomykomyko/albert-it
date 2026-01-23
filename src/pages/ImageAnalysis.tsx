@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ChatHeader } from '@/components/ChatHeader';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Loader2, Trash2, Upload, CheckCircle2, Zap, Image as ImageIcon, X, FileText } from 'lucide-react';
+import { Sparkles, Loader2, Trash2, Upload, CheckCircle2, Zap, Image as ImageIcon, X, FileText, StopCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { AgentSelectorDialog } from '@/components/agents/AgentSelectorDialog';
 import { Agent } from '@/hooks/useAgents';
@@ -19,6 +19,9 @@ import { generateId, resizeAndCompressImage, formatBytes } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { Checkbox } from '@/components/ui/checkbox';
+
+// Constants for timeout
+const AGENT_ANALYSIS_TIMEOUT_MS = 120000; // 2 minutes for agent-based analysis
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
@@ -50,6 +53,12 @@ export default function ImageAnalysis() {
   });
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   const [showResultsViewer, setShowResultsViewer] = useState(false);
+  
+  // New state for cancel/timeout functionality
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -72,6 +81,19 @@ export default function ImageAnalysis() {
         console.error('Error cleaning up results:', error);
       }
     }
+    
+    // Cleanup on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+      if (elapsedIntervalRef.current) {
+        clearInterval(elapsedIntervalRef.current);
+      }
+    };
   }, []);
 
   // Persist prompts to localStorage
@@ -144,6 +166,32 @@ export default function ImageAnalysis() {
     setShowResultsViewer(true);
   };
 
+  const handleCancelAnalysis = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+    if (elapsedIntervalRef.current) {
+      clearInterval(elapsedIntervalRef.current);
+      elapsedIntervalRef.current = null;
+    }
+    
+    // Update any processing results to cancelled
+    setResults(prev => prev.map(r => 
+      r.status === 'processing' 
+        ? { ...r, status: 'error' as const, content: 'Analysis cancelled by user' }
+        : r
+    ));
+    
+    setIsAnalyzing(false);
+    setElapsedTime(0);
+    toast.info('Analysis cancelled');
+  }, []);
+
   const startAnalysis = async () => {
     const selectedImages = images.filter(img => img.selected);
     const selectedPrompts = prompts.filter(p => selectedPromptIds.includes(p.id));
@@ -159,6 +207,13 @@ export default function ImageAnalysis() {
     }
 
     setIsAnalyzing(true);
+    setElapsedTime(0);
+    
+    // Start elapsed time counter
+    const startTime = Date.now();
+    elapsedIntervalRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
 
     try {
       // Convert blob URLs to base64 data URLs (with optional resizing)
@@ -194,6 +249,9 @@ export default function ImageAnalysis() {
 
       // Process each prompt separately
       for (const prompt of selectedPrompts) {
+        // Create new AbortController for this prompt
+        abortControllerRef.current = new AbortController();
+        
         try {
           // Create temporary results for real-time updates
           const tempResults: AnalysisResult[] = [];
@@ -217,7 +275,15 @@ export default function ImageAnalysis() {
 
           // Use agent endpoint if this is an agent prompt
           if (prompt.agentId && prompt.agentSystemPrompt) {
-            response = await fetch(
+            // Set up timeout for agent requests
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              timeoutIdRef.current = setTimeout(() => {
+                abortControllerRef.current?.abort();
+                reject(new Error('TIMEOUT'));
+              }, AGENT_ANALYSIS_TIMEOUT_MS);
+            });
+            
+            const fetchPromise = fetch(
               `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-agent`,
               {
                 method: 'POST',
@@ -231,9 +297,18 @@ export default function ImageAnalysis() {
                   images: imageDataUrls,
                   knowledgeDocuments: prompt.agentKnowledgeDocuments || [],
                   tools: []
-                })
+                }),
+                signal: abortControllerRef.current.signal
               }
             );
+            
+            response = await Promise.race([fetchPromise, timeoutPromise]);
+            
+            // Clear timeout on success
+            if (timeoutIdRef.current) {
+              clearTimeout(timeoutIdRef.current);
+              timeoutIdRef.current = null;
+            }
           } else {
             // Use standard image analysis endpoint
             const systemPrompt = `You are analyzing ${selectedImages.length} image(s). Please provide a separate, detailed analysis for each image. Number your responses (Image 1:, Image 2:, etc.) and analyze each image thoroughly based on the given prompt.`;
@@ -250,14 +325,38 @@ export default function ImageAnalysis() {
                   message: prompt.content,
                   images: imageDataUrls,
                   systemPrompt
-                })
+                }),
+                signal: abortControllerRef.current.signal
               }
             );
           }
 
           if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, ${errorText}`);
+            
+            // Parse error message if JSON
+            let errorMessage = `HTTP error! status: ${response.status}`;
+            try {
+              const errorJson = JSON.parse(errorText);
+              if (errorJson.error) {
+                errorMessage = errorJson.error;
+              }
+            } catch {
+              if (errorText) {
+                errorMessage = errorText;
+              }
+            }
+            
+            // Handle specific error codes
+            if (response.status === 504) {
+              throw new Error('Analysis timed out. Please try with fewer images or simpler prompts.');
+            } else if (response.status === 429) {
+              throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+            } else if (response.status === 402) {
+              throw new Error('AI credits exhausted. Please add funds to continue.');
+            }
+            
+            throw new Error(errorMessage);
           }
 
           // Handle response based on endpoint type
@@ -284,7 +383,7 @@ export default function ImageAnalysis() {
                     ...updatedResults[resultIndex],
                     content: typeof analysis === 'string' ? analysis.trim() : String(analysis).trim(),
                     status: 'completed',
-                    processingTime: 0
+                    processingTime: elapsedTime
                   };
                 }
               }
@@ -356,24 +455,44 @@ export default function ImageAnalysis() {
           }
         } catch (error) {
           console.error(`Error processing prompt "${prompt.name}":`, error);
+          
+          // Check if this was a user cancellation or timeout
+          const isCancelled = error instanceof Error && error.name === 'AbortError';
+          const isTimeout = error instanceof Error && error.message === 'TIMEOUT';
+          
+          if (isCancelled && !isTimeout) {
+            // User cancelled - don't add error results, they're already marked
+            continue;
+          }
 
-          // Update existing results to show error
+          // Determine error message
+          let errorMessage = 'Unknown error occurred';
+          if (isTimeout) {
+            errorMessage = 'Analysis timed out after 2 minutes. Please try with fewer images or simpler prompts.';
+          } else if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+
+          // Update existing processing results to error state OR add new error results
           setResults(prev => {
-            const updatedResults = [...prev];
-            for (const image of selectedImages) {
-              const errorResult: AnalysisResult = {
-                id: generateId(),
-                imageId: image.id,
-                promptId: prompt.id,
-                content: `Error processing image with prompt "${prompt.name}": ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-                processingTime: 0,
-                createdAt: new Date(),
-                status: 'error'
-              };
-              updatedResults.push(errorResult);
-            }
+            const updatedResults = prev.map(r => {
+              // Find processing results for this prompt and update them
+              if (r.promptId === prompt.id && r.status === 'processing') {
+                return {
+                  ...r,
+                  content: `Error: ${errorMessage}`,
+                  status: 'error' as const
+                };
+              }
+              return r;
+            });
             return updatedResults;
           });
+          
+          // Show toast for specific error types
+          if (isTimeout) {
+            toast.error('Analysis timed out. Try with fewer images or simpler prompts.');
+          }
         }
       }
 
@@ -382,7 +501,18 @@ export default function ImageAnalysis() {
       console.error('Analysis error:', error);
       toast.error('Analysis failed');
     } finally {
+      // Clean up
+      if (elapsedIntervalRef.current) {
+        clearInterval(elapsedIntervalRef.current);
+        elapsedIntervalRef.current = null;
+      }
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+        timeoutIdRef.current = null;
+      }
+      abortControllerRef.current = null;
       setIsAnalyzing(false);
+      setElapsedTime(0);
     }
   };
 
@@ -443,6 +573,16 @@ export default function ImageAnalysis() {
   };
 
   const canAnalyze = selectedImageCount > 0 && selectedPromptIds.length > 0;
+
+  // Format elapsed time for display
+  const formatElapsedTime = (seconds: number): string => {
+    if (seconds < 60) {
+      return `${seconds}s`;
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -604,27 +744,36 @@ export default function ImageAnalysis() {
                     <h3 className="font-medium">Analyze</h3>
                   </div>
                   
-                  <Button
-                    onClick={startAnalysis}
-                    disabled={isAnalyzing || !canAnalyze}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isAnalyzing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {t('analyzing')}
-                      </>
-                    ) : (
-                      <>
-                        <Zap className="w-4 h-4 mr-2" />
-                        {canAnalyze 
-                          ? `Analyze ${selectedImageCount} image${selectedImageCount !== 1 ? 's' : ''} × ${selectedPromptIds.length} prompt${selectedPromptIds.length !== 1 ? 's' : ''}`
-                          : 'Select images and prompts'
-                        }
-                      </>
-                    )}
-                  </Button>
+                  {isAnalyzing ? (
+                    <div className="space-y-2">
+                      <Button
+                        onClick={handleCancelAnalysis}
+                        variant="destructive"
+                        className="w-full"
+                        size="lg"
+                      >
+                        <StopCircle className="w-4 h-4 mr-2" />
+                        Cancel Analysis
+                      </Button>
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Analyzing... ({formatElapsedTime(elapsedTime)})</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={startAnalysis}
+                      disabled={!canAnalyze}
+                      className="w-full"
+                      size="lg"
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      {canAnalyze 
+                        ? `Analyze ${selectedImageCount} image${selectedImageCount !== 1 ? 's' : ''} × ${selectedPromptIds.length} prompt${selectedPromptIds.length !== 1 ? 's' : ''}`
+                        : 'Select images and prompts'
+                      }
+                    </Button>
+                  )}
 
                   {!canAnalyze && !isAnalyzing && (
                     <p className="text-xs text-muted-foreground text-center">
