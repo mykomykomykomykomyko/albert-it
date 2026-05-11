@@ -15,6 +15,7 @@ import { useEmailValidation } from "@/hooks/useEmailValidation";
 import { PasswordStrengthIndicator } from "@/components/PasswordStrengthIndicator";
 import { isPasswordValid, getPasswordErrors, PASSWORD_MIN_LENGTH } from "@/utils/passwordValidation";
 import logger from "@/utils/logger";
+import { lovable } from "@/integrations/lovable";
 
 // Retry utility with exponential backoff
 const retryWithBackoff = async <T,>(
