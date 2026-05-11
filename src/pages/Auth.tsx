@@ -642,8 +642,25 @@ const Auth = () => {
       setLoading(false);
     }
   };
-  
-  // Handle Azure OAuth callback
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/chat`,
+      });
+      if (result.error) {
+        throw new Error(typeof result.error === 'string' ? result.error : (result.error as any)?.message || 'Google sign-in failed');
+      }
+      // If redirected, browser navigates away; otherwise session is set and onAuthStateChange handles routing
+    } catch (error: any) {
+      const errorMessage = formatAuthError(error);
+      setError(errorMessage);
+      toast.error("Failed to start Google sign-in");
+      setLoading(false);
+    }
+  };
   const handleAzureCallback = async (code: string) => {
     setLoading(true);
     setError(null);
