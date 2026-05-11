@@ -647,11 +647,11 @@ const Auth = () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result: any = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: `${window.location.origin}/chat`,
       });
-      if (result.error) {
-        throw new Error(typeof result.error === 'string' ? result.error : (result.error as any)?.message || 'Google sign-in failed');
+      if (result?.error) {
+        throw new Error(typeof result.error === 'string' ? result.error : result.error?.message || 'Google sign-in failed');
       }
       // If redirected, browser navigates away; otherwise session is set and onAuthStateChange handles routing
     } catch (error: any) {
