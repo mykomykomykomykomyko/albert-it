@@ -1069,8 +1069,6 @@ const Auth = () => {
                           t('auth:signUp.button')
                         )}
                       </Button>
-                    </>
-                  )}
                 </form>
               </TabsContent>
             </Tabs>
