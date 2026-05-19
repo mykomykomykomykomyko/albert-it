@@ -380,15 +380,8 @@ const Auth = () => {
         return;
       }
 
-      // V5/V6: Block email/password signup for domains requiring SSO
-      if (emailValidation?.requiresSSO) {
-        setError(t('auth:signUp.ssoRequired.errorMessage', { 
-          defaultValue: "Government of Alberta email addresses must sign in using Microsoft. Please use the 'Sign in with Microsoft' button." 
-        }));
-        isSubmitting.current = false;
-        setLoading(false);
-        return;
-      }
+
+
 
       // V25: Validate password strength
       if (!isPasswordValid(password)) {
